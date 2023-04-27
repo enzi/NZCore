@@ -1,6 +1,7 @@
-# Entities.Exposed
+# NZCore
 Helpful extensions for Entities, NativeContainer extensions and custom NativeContainers that I've used over the years in my codebase.
-Credits for DynamicHashMap and batch methods for NativeList/MultiHashMap go to [tertle](https://forum.unity.com/members/tertle.33474/).
+Credits for DynamicHashMap and batch add methods for NativeList/MultiHashMap go to [tertle](https://forum.unity.com/members/tertle.33474/).
+There's also a new ResizeBufferCapacity by him but it's still very experimental and has a bug with subscenes data on new imports of a project.
 
 Note about Entities 1.0:
 Unity has listened to our requirements and Entities 1.0 has changed ComponentDataFromEntity to ComponentLookup and added methods to to get RefRO/RW structs of an IComponentData.
