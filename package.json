@@ -1,0 +1,14 @@
+{
+  "name": "com.nzcore",
+  "displayName": "NZCore",
+  "version": "0.1.0",
+  "unity": "2020.1",
+  "dependencies": {
+    "com.unity.entities": "1.0.0-exp.8"
+  },
+  "unityRelease": "9f1",
+  "keywords": [
+    "dots",
+    "unity"
+  ]
+}
