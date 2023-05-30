@@ -106,7 +106,7 @@ namespace NZCore
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
 
             int ii = 0;
-            for (int k = 0; k < JobsUtility.MaxJobThreadCount; k++)
+            for (int k = 0; k < JobsUtility.ThreadIndexCount; k++)
             {
                 var blockCount = Keys.BlockCount(k);
                 ref var threadList = ref Keys.GetUnsafeList(k);
@@ -198,8 +198,8 @@ namespace NZCore
 
         public void Dispose()
         {
-            next->Dispose();
-            buckets->Dispose();
+            UnsafeList<MultipleArrayIndexer>.Destroy(next, ref m_Allocator);
+            UnsafeList<MultipleArrayIndexer>.Destroy(buckets, ref m_Allocator);
         }
     }
     

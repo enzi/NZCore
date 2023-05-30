@@ -126,7 +126,7 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new SharedComponentLookup<T>(typeIndex, access, isReadOnly);
 #else
-            return new SharedComponentLookup<T>(typeIndex, access, isReadOnly);
+            return new SharedComponentLookup<T>(typeIndex, access);
 #endif
         }
         

@@ -50,7 +50,7 @@ namespace NZCore
             return unsafeArrayHashMap;
         }
 
-        public void SetArrays(NativeArray<TValue> valueArray)
+        public void SetArrays(ref NativeArray<TValue> valueArray)
         {
             //if (!keyArray.IsCreated || !valueArray.IsCreated)
             //    throw new Exception("Key or values are not created!");
@@ -96,17 +96,19 @@ namespace NZCore
             allocatedIndexLength = 0;
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
+        //[MethodImpl(MethodImplOptions.NoInlining)]
         private void CalculateBuckets()
         {
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
 
-            TValue* keyArrayPtr = (TValue*) (Values + keyOffset);
+            //TValue* keyArrayPtr = (TValue*) (Values + keyOffset);
+            TKey* keyArrayPtr = (TKey*) (Values + keyOffset);
             
             for (int i = 0; i < allocatedIndexLength; i++)
             {
                 //var bucketIndex = GetKey(i).GetHashCode() & bucketCapacityMask;
-                var bucketIndex = UnsafeUtility.As<TValue, TKey>(ref keyArrayPtr[i]).GetHashCode() & bucketCapacityMask;
+                //var bucketIndex = UnsafeUtility.As<TValue, TKey>(ref keyArrayPtr[i]).GetHashCode() & bucketCapacityMask;
+                var bucketIndex = keyArrayPtr[i].GetHashCode() & bucketCapacityMask;
                 
                 (*next)[i] = (*buckets)[bucketIndex];
                 (*buckets)[bucketIndex] = i;
@@ -182,8 +184,8 @@ namespace NZCore
 
         public void Dispose()
         {
-            next->Dispose();
-            buckets->Dispose();
+            UnsafeList<int>.Destroy(next, ref m_Allocator);
+            UnsafeList<int>.Destroy(buckets, ref m_Allocator);
         }
     }
     

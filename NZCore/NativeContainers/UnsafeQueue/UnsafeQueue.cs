@@ -205,7 +205,7 @@ namespace NZCore
 
             var data = (UnsafeQueueData*)Memory.Unmanaged.Allocate(
                 queueDataSize
-                + JobsUtility.CacheLineSize * JobsUtility.MaxJobThreadCount
+                + JobsUtility.CacheLineSize * JobsUtility.ThreadIndexCount
                 , JobsUtility.CacheLineSize
                 , label
             );
@@ -217,7 +217,7 @@ namespace NZCore
             data->m_MaxItems = (UnsafeQueueBlockPoolData.m_BlockSize - UnsafeUtility.SizeOf<UnsafeQueueBlockHeader>()) / UnsafeUtility.SizeOf<T>();
 
             data->m_CurrentRead = 0;
-            for (int threadIndex = 0; threadIndex < JobsUtility.MaxJobThreadCount; ++threadIndex)
+            for (int threadIndex = 0; threadIndex < JobsUtility.ThreadIndexCount; ++threadIndex)
             {
                 data->SetCurrentWriteBlockTLS(threadIndex, null);
             }
@@ -398,7 +398,7 @@ namespace NZCore
                     m_Buffer->m_LastBlock = IntPtr.Zero;
                 }
 
-                for (int threadIndex = 0; threadIndex < JobsUtility.MaxJobThreadCount; ++threadIndex)
+                for (int threadIndex = 0; threadIndex < JobsUtility.ThreadIndexCount; ++threadIndex)
                 {
                     if (m_Buffer->GetCurrentWriteBlockTLS(threadIndex) == firstBlock)
                     {
@@ -460,7 +460,7 @@ namespace NZCore
             m_Buffer->m_LastBlock = IntPtr.Zero;
             m_Buffer->m_CurrentRead = 0;
 
-            for (int threadIndex = 0; threadIndex < JobsUtility.MaxJobThreadCount; ++threadIndex)
+            for (int threadIndex = 0; threadIndex < JobsUtility.ThreadIndexCount; ++threadIndex)
             {
                 m_Buffer->SetCurrentWriteBlockTLS(threadIndex, null);
             }

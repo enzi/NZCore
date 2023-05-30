@@ -50,9 +50,9 @@ namespace NZCore
             return _unsafeArrayHashMap->TryGetFirstRefValue(key, out var temp0, out var temp1);
         }
 
-        public void SetArrays(NativeArray<TValue> valueArray)
+        public void SetArrays(ref NativeArray<TValue> valueArray)
         {
-            _unsafeArrayHashMap->SetArrays(valueArray);
+            _unsafeArrayHashMap->SetArrays(ref valueArray);
         }
         
         // public void PrintValues()
@@ -119,7 +119,7 @@ namespace NZCore
 
             public void Execute()
             {
-                hashmap.SetArrays(values);
+                hashmap.SetArrays(ref values);
             }
         }
     }

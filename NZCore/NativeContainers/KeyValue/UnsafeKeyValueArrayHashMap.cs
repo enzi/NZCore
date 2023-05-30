@@ -172,8 +172,8 @@ namespace NZCore
 
         public void Dispose()
         {
-            next->Dispose();
-            buckets->Dispose();
+            UnsafeList<int>.Destroy(next, ref m_Allocator);
+            UnsafeList<int>.Destroy(buckets, ref m_Allocator);
         }
     }
     
