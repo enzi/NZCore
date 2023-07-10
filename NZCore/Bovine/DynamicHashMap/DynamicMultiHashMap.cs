@@ -97,7 +97,7 @@ namespace NZCore.Core.Iterators
         /// <param name="key"> The key of the value to get. </param>
         /// <param name="item"> If key is found item parameter will contain value. </param>
         /// <returns> Returns true if key is found, otherwise returns false. </returns>
-        public bool TryGetValue(TKey key, out TValue item)
+        public bool TryGetValue(TKey key, out TValue* item)
         {
             return DynamicHashMapBase<TKey, TValue>.TryGetFirstValueAtomic(this.BufferReadOnly, key, out item, out _);
         }
@@ -107,7 +107,7 @@ namespace NZCore.Core.Iterators
         /// <param name="item">Output value.</param>
         /// <param name="it">Iterator.</param>
         /// <returns>Returns true if the container contains the key.</returns>
-        public bool TryGetFirstValue(TKey key, out TValue item, out NativeParallelMultiHashMapIterator<TKey> it)
+        public bool TryGetFirstValue(TKey key, out TValue* item, out NativeParallelMultiHashMapIterator<TKey> it)
         {
             return DynamicHashMapBase<TKey, TValue>.TryGetFirstValueAtomic(this.BufferReadOnly, key, out item, out it);
         }
@@ -118,7 +118,7 @@ namespace NZCore.Core.Iterators
         /// <param name="item">Output value.</param>
         /// <param name="it">Iterator.</param>
         /// <returns>Returns true if next value for the key is found.</returns>
-        public bool TryGetNextValue(out TValue item, ref NativeParallelMultiHashMapIterator<TKey> it)
+        public bool TryGetNextValue(out TValue* item, ref NativeParallelMultiHashMapIterator<TKey> it)
         {
             return DynamicHashMapBase<TKey, TValue>.TryGetNextValueAtomic(this.BufferReadOnly, out item, ref it);
         }

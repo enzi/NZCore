@@ -3,9 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace NZCore
 {
@@ -20,27 +18,32 @@ namespace NZCore
         private int allocatedIndexLength;
         private int keyOffset;
         
-        //[NativeDisableUnsafePtrRestriction] internal byte* Keys;
-        [NativeDisableUnsafePtrRestriction] private byte* Values;
+        [NativeDisableUnsafePtrRestriction] private byte* values;
+        [NativeDisableUnsafePtrRestriction] private int* buckets;
+        [NativeDisableUnsafePtrRestriction] private int* next;
+        
+        [NativeDisableUnsafePtrRestriction] private UnsafeList<int>* bucketsAndNextList;
 
-        [NativeDisableUnsafePtrRestriction] private UnsafeList<int>* buckets;
-        [NativeDisableUnsafePtrRestriction] private UnsafeList<int>* next;
+        private AllocatorManager.AllocatorHandle m_Allocator;
 
-        internal AllocatorManager.AllocatorHandle m_Allocator;
+        public int Length => allocatedIndexLength;
+        
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal static UnsafeArrayHashMap<TKey, TValue>* Create<U>(int initialCapacity, int keyOffset, ref U allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
-            where U : unmanaged, AllocatorManager.IAllocator
+        internal static UnsafeArrayHashMap<TKey, TValue>* Create<TAllocator>(int keyOffset, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+            where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
             UnsafeArrayHashMap<TKey, TValue>* unsafeArrayHashMap = allocator.Allocate(default(UnsafeArrayHashMap<TKey, TValue>), 1);
 
             unsafeArrayHashMap->m_Allocator = allocator.Handle;
             
-            //unsafeArrayHashMap->Keys = null;
-            unsafeArrayHashMap->Values = null;
+            unsafeArrayHashMap->values = null;
             
-            unsafeArrayHashMap->next = UnsafeList<int>.Create(initialCapacity, allocator.Handle, options);
-            unsafeArrayHashMap->buckets = UnsafeList<int>.Create(initialCapacity * 2, allocator.Handle, options);
+            var listPtr = UnsafeList<int>.Create(0, allocator.Handle, options);
+            unsafeArrayHashMap->bucketsAndNextList = listPtr;
+            
+            unsafeArrayHashMap->next = unsafeArrayHashMap->bucketsAndNextList->Ptr;
+            unsafeArrayHashMap->buckets = unsafeArrayHashMap->bucketsAndNextList->Ptr;
 
             unsafeArrayHashMap->keyCapacity = 0;
             unsafeArrayHashMap->bucketCapacityMask = 0;
@@ -50,20 +53,16 @@ namespace NZCore
             return unsafeArrayHashMap;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetArrays(ref NativeArray<TValue> valueArray)
         {
-            //if (!keyArray.IsCreated || !valueArray.IsCreated)
-            //    throw new Exception("Key or values are not created!");
-            //if (keyArray.Length != valueArray.Length)
-            //   throw new Exception("Key and value length is not the same!");
             if (valueArray.Length == 0)
             {
-                allocatedIndexLength = 0;
+                Clear();
                 return;
             }
             
-            //Keys = (byte*) keyArray.GetUnsafeReadOnlyPtr();
-            Values = (byte*) valueArray.GetUnsafeReadOnlyPtr();
+            values = (byte*) valueArray.GetUnsafeReadOnlyPtr();
 
             int length = valueArray.Length;
             int bucketLength = length * 2;
@@ -73,71 +72,71 @@ namespace NZCore
             bucketCapacityMask = bucketLength - 1;
 
             //Debug.Log($"Set next/buckets cap to {length}/{bucketLength}");
-            next->Resize(length, NativeArrayOptions.UninitializedMemory);
-            buckets->Resize(bucketLength, NativeArrayOptions.UninitializedMemory);
-            UnsafeUtility.MemSet(next->Ptr, 0xFF, length * 4); // sets everything to max, Unity uses the same method in their NativeHashMap clear
-            UnsafeUtility.MemSet(buckets->Ptr, 0xFF, bucketLength * 4);
+            
+            bucketsAndNextList->Resize(length + bucketLength, NativeArrayOptions.UninitializedMemory);
+            next = bucketsAndNextList->Ptr;
+            buckets = bucketsAndNextList->Ptr + length;
+            
+            UnsafeUtility.MemSet(next, 0xFF, length * 4); // sets everything to max, Unity uses the same method in their NativeHashMap clear
+            UnsafeUtility.MemSet(buckets, 0xFF, bucketLength * 4);
             
             allocatedIndexLength = length;
-            
-            //Debug.Log($"SetArrays with allocatedIndexLength {allocatedIndexLength}");
-            
-            CalculateBuckets();
         }
 
         private void Clear()
         {
             // set all to -1
-            UnsafeUtility.MemSet(buckets->Ptr, 0xff, (bucketCapacityMask + 1) * 4);
-            UnsafeUtility.MemSet(next->Ptr, 0xff, (keyCapacity) * 4);
-            next->m_length = 0;
-            buckets->m_length = 0;
+            UnsafeUtility.MemSet(buckets, 0xFF, (bucketCapacityMask + 1) * 4);
+            UnsafeUtility.MemSet(next, 0xFF, (keyCapacity) * 4);
             
             allocatedIndexLength = 0;
         }
 
-        //[MethodImpl(MethodImplOptions.NoInlining)]
-        private void CalculateBuckets()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalculateBuckets()
         {
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
 
-            //TValue* keyArrayPtr = (TValue*) (Values + keyOffset);
-            TKey* keyArrayPtr = (TKey*) (Values + keyOffset);
+            byte* keyArrayPtr = (values + keyOffset);
+            var size = sizeof(TValue);
             
             for (int i = 0; i < allocatedIndexLength; i++)
             {
-                //var bucketIndex = GetKey(i).GetHashCode() & bucketCapacityMask;
-                //var bucketIndex = UnsafeUtility.As<TValue, TKey>(ref keyArrayPtr[i]).GetHashCode() & bucketCapacityMask;
-                var bucketIndex = keyArrayPtr[i].GetHashCode() & bucketCapacityMask;
+                var bucketIndex = (*(TKey*) keyArrayPtr).GetHashCode() & bucketCapacityMask;
                 
-                (*next)[i] = (*buckets)[bucketIndex];
-                (*buckets)[bucketIndex] = i;
+                next[i] = buckets[bucketIndex];
+                buckets[bucketIndex] = i;
+
+                keyArrayPtr += size;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TKey* GetKeyArrayPtr()
+        {
+            return (TKey*)(values + keyOffset);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private TKey GetKey(int index)
         {
-            return *(TKey*) (Values + index * sizeof(TValue) + keyOffset);
+            return *(TKey*) (values + index * sizeof(TValue) + keyOffset);
         }
 
         public bool TryGetFirstRefValue(TKey key, out byte* item, out ArrayHashMapIterator<TKey> it)            
         {
-            it.key = key;
+            it.Key = key;
             
             if (allocatedIndexLength <= 0)
             {
                 it.EntryIndex = it.NextEntryIndex = -1;
                 item = null;
-                //it.keyPtr = null;
                 return false;
             }
 
-            //it.keyPtr = (TValue*) Values + keyOffset;
-
             // First find the slot based on the hash            
             int bucket = key.GetHashCode() & bucketCapacityMask;
-            it.EntryIndex = it.NextEntryIndex = (*buckets)[bucket];
+            it.EntryIndex = it.NextEntryIndex = buckets[bucket];
             return TryGetNextRefValue(out item, ref it);
         }
 
@@ -149,34 +148,67 @@ namespace NZCore
             item = null;
            
             if (entryIdx < 0 || entryIdx >= keyCapacity)
-            {
                 return false;
-            }
             
+            byte* keyArrayPtr = (values + keyOffset);
+            var size = sizeof(TValue);
             
-            //while (!(*(TKey*) (Keys + entryIdx * sizeof(TKey))).Equals(it.key))
-            while (!GetKey(entryIdx).Equals(it.key))
-            //while (UnsafeUtility.As<TValue, TKey>(ref it.keyPtr[entryIdx]).Equals(it.key))
+            while(!(*(TKey*) keyArrayPtr).Equals(it.Key))
             {
-                entryIdx = (*next)[entryIdx];
+                entryIdx = next[entryIdx];
                 if (entryIdx < 0 || entryIdx >= keyCapacity)
                 {
                     return false;
                 }
+
+                keyArrayPtr += size;
             }
 
-            it.NextEntryIndex = (*next)[entryIdx];
+            it.NextEntryIndex = next[entryIdx];
             it.EntryIndex = entryIdx;
 
             // Read the value
-            item = Values + entryIdx * sizeof(TValue);
+            item = values + entryIdx * sizeof(TValue);
+
+            return true;
+        }
+        
+        public bool TryPeekFirstRefValue(TKey key)            
+        {
+            if (allocatedIndexLength <= 0)
+                return false;
+
+            // First find the slot based on the hash            
+            int bucket = key.GetHashCode() & bucketCapacityMask;
+            return TryPeekNextRefValue(key, buckets[bucket]);
+        }
+
+        public bool TryPeekNextRefValue(TKey key, int entryIdx)           
+        {
+            if (entryIdx < 0 || entryIdx >= keyCapacity)
+            {
+                return false;
+            }            
+            
+            byte* keyArrayPtr = (values + keyOffset);
+            var size = sizeof(TValue);
+            
+            while(!(*(TKey*) keyArrayPtr).Equals(key))
+            {
+                entryIdx = next[entryIdx];
+                if (entryIdx < 0 || entryIdx >= keyCapacity)
+                {
+                    return false;
+                }
+
+                keyArrayPtr += size;
+            }
 
             return true;
         }
         
         public static void Destroy(UnsafeArrayHashMap<TKey, TValue>* hashMap)
         {
-            //CheckNull(listData);
             var allocator = hashMap->m_Allocator;
             hashMap->Dispose();
             AllocatorManager.Free(allocator, hashMap);
@@ -184,8 +216,7 @@ namespace NZCore
 
         public void Dispose()
         {
-            UnsafeList<int>.Destroy(next, ref m_Allocator);
-            UnsafeList<int>.Destroy(buckets, ref m_Allocator);
+            UnsafeList<int>.Destroy(bucketsAndNextList, ref m_Allocator);
         }
     }
     
@@ -193,40 +224,35 @@ namespace NZCore
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
-        public TKey key;
+        public bool IsFirst;
+        public TKey Key;
         public UnsafeArrayHashMap<TKey, TValue>* Map;
         private ArrayHashMapIterator<TKey> iterator;
         
         private byte* value;
-        public bool isFirst;
+        
 
         public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(value);
 
         public bool MoveNext()
         {
             //Avoids going beyond the end of the collection.
-            if (!isFirst) 
+            if (!IsFirst) 
                 return Map->TryGetNextRefValue(out value, ref iterator);
             
-            isFirst = false;
-            return Map->TryGetFirstRefValue(key, out value, out iterator);
+            IsFirst = false;
+            return Map->TryGetFirstRefValue(Key, out value, out iterator);
 
         }
     }
         
-    public unsafe struct ArrayHashMapIterator<TKey>
+    public struct ArrayHashMapIterator<TKey>
         where TKey : unmanaged
-        //where TValue : unmanaged
     {
-        internal TKey key;
+        internal TKey Key;
         internal int NextEntryIndex;
         internal int EntryIndex;
-        //internal TValue* keyPtr;
 
-        /// <summary>
-        /// Returns the entry index.
-        /// </summary>
-        /// <returns>The entry index.</returns>
         public int GetEntryIndex() => EntryIndex;
     }
 }

@@ -13,11 +13,10 @@ namespace NZCore
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
-        [NativeDisableUnsafePtrRestriction]
-        internal UnsafeParallelListHashMap<TKey, TValue>* _unsafeParallelListHashMap;
+        [NativeDisableUnsafePtrRestriction] private UnsafeParallelListHashMap<TKey, TValue>* _unsafeParallelListHashMap;
         
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        internal AtomicSafetyHandle m_Safety;
+        private AtomicSafetyHandle m_Safety;
         static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<ParallelListHashMap<TKey, TValue>>();
 #endif
 
@@ -34,7 +33,7 @@ namespace NZCore
         }
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal void Initialize<U>(int initialCapacity, ref U allocator) where U : unmanaged, AllocatorManager.IAllocator
+        private void Initialize<TAllocator>(int initialCapacity, ref TAllocator allocator) where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
@@ -52,7 +51,7 @@ namespace NZCore
         
         public bool ContainsKey(TKey key)
         {
-            return _unsafeParallelListHashMap->TryGetFirstRefValue(key, out var temp0, out var temp1);
+            return _unsafeParallelListHashMap->TryPeekFirstRefValue(key);
         }
 
         public void SetArrays(UnsafeParallelList<TKey> keyArray, UnsafeParallelList<TValue> valueArray)
@@ -99,8 +98,8 @@ namespace NZCore
             return new UnsafeParallelListHashMapEnumerator<TKey, TValue>
             {
                 Map = _unsafeParallelListHashMap, 
-                key = key, 
-                isFirst = true
+                Key = key, 
+                IsFirst = true
             };
         }
     }

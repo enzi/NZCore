@@ -1,6 +1,9 @@
-﻿using System;
+﻿using System.Runtime.CompilerServices;
+using Unity.Burst.Intrinsics;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace NZCore
 {
@@ -106,6 +109,18 @@ namespace NZCore
         {
             var typeIndexInArchetype = ChunkDataUtility.GetIndexInTypeArray(chunk.m_Chunk->Archetype, bufferComponentTypeHandle.m_TypeIndex);
             return (typeIndexInArchetype != -1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool DetermineFastPath(this v128 chunkEnabledMask)
+        {
+            int edgeCount = 
+                math.countbits(chunkEnabledMask.ULong0 ^ (chunkEnabledMask.ULong0 << 1)) +
+                math.countbits(chunkEnabledMask.ULong1 ^ (chunkEnabledMask.ULong1 << 1)) - 1;
+            
+            Debug.Log($"edgeCount {edgeCount}");
+            
+            return edgeCount <= 4;
         }
     }
 }

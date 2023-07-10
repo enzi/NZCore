@@ -2,6 +2,8 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using Unity.Burst;
+
 namespace NZCore.Core.Iterators
 {
     using System;
@@ -18,8 +20,8 @@ namespace NZCore.Core.Iterators
         {
             var data = buffer.AsData<TKey, TValue>();
 
-            UnsafeUtility.MemSet(data->Buckets, 0xff, (data->BucketCapacityMask + 1) * 4);
-            UnsafeUtility.MemSet(data->Next, 0xff, data->KeyCapacity * 4);
+            UnsafeUtility.MemSet(DynamicHashMapData.GetBuckets(data), 0xff, (data->BucketCapacityMask + 1) * 4);
+            UnsafeUtility.MemSet(DynamicHashMapData.GetNexts(data), 0xff, data->KeyCapacity * 4);
 
             data->FirstFreeIDX = -1;
 
@@ -46,7 +48,7 @@ namespace NZCore.Core.Iterators
 
             if (idx >= 0)
             {
-                data->FirstFreeIDX = ((int*)data->Next)[idx];
+                data->FirstFreeIDX = ((int*)DynamicHashMapData.GetNexts(data))[idx];
             }
             else
             {
@@ -56,19 +58,50 @@ namespace NZCore.Core.Iterators
             CheckIndexOutOfBounds(data, idx);
 
             // Write the new value to the entry
-            UnsafeUtility.WriteArrayElement(data->Keys, idx, key);
-            UnsafeUtility.WriteArrayElement(data->Values, idx, item);
+            UnsafeUtility.WriteArrayElement(DynamicHashMapData.GetKeys(data), idx, key);
+            UnsafeUtility.WriteArrayElement(DynamicHashMapData.GetValues(data), idx, item);
 
             int bucket = key.GetHashCode() & data->BucketCapacityMask;
 
             // Add the index to the hash-map
-            int* buckets = (int*)data->Buckets;
-            var nextPtrs = (int*)data->Next;
+            var buckets = (int*)DynamicHashMapData.GetBuckets(data);
+            var nextPtrs = (int*)DynamicHashMapData.GetNexts(data);
 
             nextPtrs[idx] = buckets[bucket];
             buckets[bucket] = idx;
 
             return true;
+        }
+        
+        internal static void AddBatchUnsafe(DynamicBuffer<byte> buffer, [NoAlias] TKey* keys, [NoAlias] TValue* values, int length)
+        {
+            var data = buffer.AsData<TKey, TValue>();
+
+            var oldLength = DynamicHashMapData.GetCount(data);
+            var newLength = oldLength + length;
+
+            if (data->KeyCapacity < newLength)
+            {
+                DynamicHashMapData.ReallocateHashMap<TKey, TValue>(buffer, newLength, DynamicHashMapData.GetBucketSize(newLength), out data);
+            }
+
+            var keyPtr = (TKey*)DynamicHashMapData.GetKeys(data) + oldLength;
+            var valuePtr = (TValue*)DynamicHashMapData.GetValues(data) + oldLength;
+
+            UnsafeUtility.MemCpy(keyPtr, keys, length * UnsafeUtility.SizeOf<TKey>());
+            UnsafeUtility.MemCpy(valuePtr, values, length * UnsafeUtility.SizeOf<TValue>());
+
+            var buckets = (int*)DynamicHashMapData.GetBuckets(data);
+            var nextPtrs = (int*)DynamicHashMapData.GetNexts(data) + oldLength;
+
+            for (var idx = 0; idx < length; idx++)
+            {
+                var bucket = keys[idx].GetHashCode() & data->BucketCapacityMask;
+                nextPtrs[idx] = buckets[bucket];
+                buckets[bucket] = oldLength + idx;
+            }
+
+            data->AllocatedIndexLength += length;
         }
 
         internal static int Remove(DynamicBuffer<byte> buffer, TKey key, bool isMultiHashMap)
@@ -83,15 +116,17 @@ namespace NZCore.Core.Iterators
             var removed = 0;
 
             // First find the slot based on the hash
-            var buckets = (int*)data->Buckets;
-            var nextPtrs = (int*)data->Next;
+            var buckets = (int*)DynamicHashMapData.GetBuckets(data);
+            var nextPtrs = (int*)DynamicHashMapData.GetNexts(data);
             var bucket = key.GetHashCode() & data->BucketCapacityMask;
             var prevEntry = -1;
             var entryIdx = buckets[bucket];
+            
+            var keys = DynamicHashMapData.GetKeys(data);
 
             while (entryIdx >= 0 && entryIdx < data->KeyCapacity)
             {
-                if (UnsafeUtility.ReadArrayElement<TKey>(data->Keys, entryIdx).Equals(key))
+                if (UnsafeUtility.ReadArrayElement<TKey>(keys, entryIdx).Equals(key))
                 {
                     ++removed;
 
@@ -137,11 +172,11 @@ namespace NZCore.Core.Iterators
                 return false;
             }
 
-            UnsafeUtility.WriteArrayElement(data->Values, entryIdx, item);
+            UnsafeUtility.WriteArrayElement(DynamicHashMapData.GetValues(data), entryIdx, item);
             return true;
         }
 
-        internal static bool TryGetFirstValueAtomic(DynamicHashMapData* data, TKey key, out TValue item, out NativeParallelMultiHashMapIterator<TKey> it)
+        internal static bool TryGetFirstValueAtomic(DynamicHashMapData* data, TKey key, out TValue* item, out NativeParallelMultiHashMapIterator<TKey> it)
         {
             it.key = key;
 
@@ -153,13 +188,13 @@ namespace NZCore.Core.Iterators
             }
 
             // First find the slot based on the hash
-            int* buckets = (int*)data->Buckets;
+            var buckets = (int*)DynamicHashMapData.GetBuckets(data);
             int bucket = key.GetHashCode() & data->BucketCapacityMask;
             it.EntryIndex = it.NextEntryIndex = buckets[bucket];
             return TryGetNextValueAtomic(data, out item, ref it);
         }
 
-        internal static bool TryGetNextValueAtomic(DynamicHashMapData* data, out TValue item, ref NativeParallelMultiHashMapIterator<TKey> it)
+        internal static bool TryGetNextValueAtomic(DynamicHashMapData* data, out TValue* item, ref NativeParallelMultiHashMapIterator<TKey> it)
         {
             int entryIdx = it.NextEntryIndex;
             it.NextEntryIndex = -1;
@@ -169,9 +204,11 @@ namespace NZCore.Core.Iterators
             {
                 return false;
             }
+            
+            var keys = DynamicHashMapData.GetKeys(data);
 
-            int* nextPtrs = (int*)data->Next;
-            while (!UnsafeUtility.ReadArrayElement<TKey>(data->Keys, entryIdx).Equals(it.key))
+            int* nextPtrs = (int*)DynamicHashMapData.GetNexts(data);
+            while (!UnsafeUtility.ReadArrayElement<TKey>(keys, entryIdx).Equals(it.key))
             {
                 entryIdx = nextPtrs[entryIdx];
                 if (entryIdx < 0 || entryIdx >= data->KeyCapacity)
@@ -184,7 +221,8 @@ namespace NZCore.Core.Iterators
             it.EntryIndex = entryIdx;
 
             // Read the value
-            item = UnsafeUtility.ReadArrayElement<TValue>(data->Values, entryIdx);
+            //item = UnsafeUtility.ReadArrayElement<TValue>(DynamicHashMapData.GetValues(data), entryIdx);
+            item = (TValue*) (DynamicHashMapData.GetValues(data) + entryIdx * sizeof(TValue));
 
             return true;
         }
@@ -197,7 +235,7 @@ namespace NZCore.Core.Iterators
                 return;
             }
 
-            var buckets = (int*)data->Buckets;
+            var buckets = (int*)DynamicHashMapData.GetBuckets(data);
             var keyCapacity = (uint)data->KeyCapacity;
             var prevNextPtr = buckets + (key.GetHashCode() & data->BucketCapacityMask);
             var entryIdx = *prevNextPtr;
@@ -207,9 +245,9 @@ namespace NZCore.Core.Iterators
                 return;
             }
 
-            var nextPtrs = (int*)data->Next;
-            var keys = data->Keys;
-            var values = data->Values;
+            var nextPtrs = (int*)DynamicHashMapData.GetNexts(data);
+            var keys = DynamicHashMapData.GetKeys(data);
+            var values = DynamicHashMapData.GetValues(data);
 
             do
             {
@@ -240,7 +278,7 @@ namespace NZCore.Core.Iterators
                 return false;
             }
 
-            var buckets = (int*)data->Buckets;
+            var buckets = (int*)DynamicHashMapData.GetBuckets(data);
             var keyCapacity = (uint)data->KeyCapacity;
             var prevNextPtr = buckets + (key.GetHashCode() & data->BucketCapacityMask);
             var entryIdx = *prevNextPtr;
@@ -250,9 +288,9 @@ namespace NZCore.Core.Iterators
                 return false;
             }
 
-            var nextPtrs = (int*)data->Next;
-            var keys = data->Keys;
-            var values = data->Values;
+            var nextPtrs = (int*)DynamicHashMapData.GetNexts(data);
+            var keys = DynamicHashMapData.GetKeys(data);
+            var values = DynamicHashMapData.GetValues(data);
 
             do
             {

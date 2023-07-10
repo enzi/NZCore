@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -17,19 +18,21 @@ namespace NZCore
         [NativeDisableUnsafePtrRestriction] private UnsafeArrayHashMap<TKey, TValue>* _unsafeArrayHashMap;
         
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        internal AtomicSafetyHandle m_Safety;
-        static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<ArrayHashMap<TKey, TValue>>();
+        private AtomicSafetyHandle m_Safety;
+        private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<ArrayHashMap<TKey, TValue>>();
 #endif
 
-        public ArrayHashMap(int initialCapacity, int keyOffset, AllocatorManager.AllocatorHandle allocator)
+        public int Length => _unsafeArrayHashMap->Length;
+
+        public ArrayHashMap(int keyOffset, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
             AllocatorManager.AllocatorHandle temp = allocator;
-            Initialize(initialCapacity, keyOffset, ref temp);
+            Initialize(keyOffset, ref temp);
         }
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        private void Initialize<U>(int initialCapacity, int keyOffset, ref U allocator) where U : unmanaged, AllocatorManager.IAllocator
+        private void Initialize<TAllocator>(int keyOffset, ref TAllocator allocator) where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
@@ -41,20 +44,41 @@ namespace NZCore
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
             
-            _unsafeArrayHashMap = UnsafeArrayHashMap<TKey, TValue>.Create(initialCapacity, keyOffset, ref allocator);
+            _unsafeArrayHashMap = UnsafeArrayHashMap<TKey, TValue>.Create(keyOffset, ref allocator);
             
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(TKey key)
         {
-            return _unsafeArrayHashMap->TryGetFirstRefValue(key, out var temp0, out var temp1);
+            return _unsafeArrayHashMap->TryPeekFirstRefValue(key);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetArrays(ref NativeList<TValue> list)
+        {
+            var array = list.AsArray();
+            _unsafeArrayHashMap->SetArrays(ref array);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetArrays(ref NativeArray<TValue> valueArray)
         {
             _unsafeArrayHashMap->SetArrays(ref valueArray);
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalculateBuckets()
+        {
+            _unsafeArrayHashMap->CalculateBuckets();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TKey* GetKeyArrayPtr()
+        {
+            return _unsafeArrayHashMap->GetKeyArrayPtr();
+        }
+
         // public void PrintValues()
         // {
         //     //Debug.Log($"PrintValues with length {allocatedIndexLength}");
@@ -80,6 +104,7 @@ namespace NZCore
         //     }
         // }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -89,37 +114,52 @@ namespace NZCore
             UnsafeArrayHashMap<TKey,TValue>.Destroy(_unsafeArrayHashMap);
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ArrayHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key)
         {
             return new ArrayHashMapEnumerator<TKey, TValue>
             {
                 Map = _unsafeArrayHashMap, 
-                key = key, 
-                isFirst = true
+                Key = key, 
+                IsFirst = true
             };
         }
         
         // helper jobs
         
-        public JobHandle CalculateBuckets(NativeArray<TValue> values, JobHandle Dependency)
+        public JobHandle ScheduleCalculateBuckets(ref NativeList<TValue> values, JobHandle dependency)
         {
             return new CalculateBucketsJob()
             {
-                hashmap = this,
-                values = values
-            }.Schedule(Dependency);
+                Hashmap = this,
+                Values = values
+            }.Schedule(dependency);
         }
         
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob
         {
-            [ReadOnly] public NativeArray<TValue> values;
+            [ReadOnly] public NativeList<TValue> Values;
 
-            public ArrayHashMap<TKey, TValue> hashmap;
+            public ArrayHashMap<TKey, TValue> Hashmap;
 
             public void Execute()
             {
-                hashmap.SetArrays(ref values);
+                Hashmap.SetArrays(ref Values);
+                Hashmap.CalculateBuckets();
+            }
+        }
+        
+        [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
+        public struct SetArraysJob : IJob
+        {
+            [ReadOnly] 
+            public NativeArray<TValue> Values;
+            public ArrayHashMap<TKey, TValue> Hashmap;
+
+            public void Execute()
+            {
+                Hashmap.SetArrays(ref Values);
             }
         }
     }

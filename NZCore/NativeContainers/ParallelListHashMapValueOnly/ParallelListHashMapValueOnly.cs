@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -10,18 +11,19 @@ namespace NZCore
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]
-    public unsafe struct KeyValueArrayHashMap<TKey, TValue> : IDisposable
+    public unsafe struct ParallelListHashMapValueOnly<TKey, TValue> : IDisposable
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
-        [NativeDisableUnsafePtrRestriction] private UnsafeKeyValueArrayHashMap<TKey, TValue>* _unsafeKeyValueArrayHashMap;
+        [NativeDisableUnsafePtrRestriction] 
+        private UnsafeParallelListHashMapValueOnly<TKey, TValue>* _unsafeParallelListHashMap;
         
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle safetyHandle;
-        static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<KeyValueArrayHashMap<TKey, TValue>>();
+        private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ParallelListHashMapValueOnly<TKey, TValue>>();
 #endif
 
-        public KeyValueArrayHashMap(int initialCapacity, int keyOffset, AllocatorManager.AllocatorHandle allocator)
+        public ParallelListHashMapValueOnly(int initialCapacity, int keyOffset, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
             AllocatorManager.AllocatorHandle temp = allocator;
@@ -29,7 +31,7 @@ namespace NZCore
         }
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        private void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator) where TAllocator : unmanaged, AllocatorManager.IAllocator
+        internal void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator) where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             safetyHandle = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
@@ -37,27 +39,29 @@ namespace NZCore
             if (UnsafeUtility.IsNativeContainerType<TKey>() || UnsafeUtility.IsNativeContainerType<TValue>())
                 AtomicSafetyHandle.SetNestedContainer(safetyHandle, true);
 
-            CollectionHelper.SetStaticSafetyId<KeyValueArrayHashMap<TKey, TValue>>(ref safetyHandle, ref staticSafetyId.Data);
+            CollectionHelper.SetStaticSafetyId<ParallelListHashMap<TKey, TValue>>(ref safetyHandle, ref staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(safetyHandle, true);
 #endif
             
-            _unsafeKeyValueArrayHashMap = UnsafeKeyValueArrayHashMap<TKey, TValue>.Create(initialCapacity, keyOffset, ref allocator);
+            _unsafeParallelListHashMap = UnsafeParallelListHashMapValueOnly<TKey, TValue>.Create(initialCapacity, keyOffset, ref allocator);
             
         }
         
         public bool ContainsKey(TKey key)
         {
-            return _unsafeKeyValueArrayHashMap->TryPeekFirstRefValue(key);
+            return _unsafeParallelListHashMap->TryPeekFirstRefValue(key);
         }
 
-        public void SetArrays(NativeArray<TKey> keysArray, NativeArray<TValue> valueArray)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetArrays(ParallelList<TValue> valueArray)
         {
-            _unsafeKeyValueArrayHashMap->SetArrays(keysArray, valueArray);
+            _unsafeParallelListHashMap->SetArrays(*valueArray._unsafeParallelList);
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalculateBuckets()
         {
-            _unsafeKeyValueArrayHashMap->CalculateBuckets();
+            _unsafeParallelListHashMap->CalculateBuckets();
         }
         
         // public void PrintValues()
@@ -91,14 +95,14 @@ namespace NZCore
             CollectionHelper.DisposeSafetyHandle(ref safetyHandle);
 #endif
             
-            UnsafeKeyValueArrayHashMap<TKey, TValue>.Destroy(_unsafeKeyValueArrayHashMap);
+            UnsafeParallelListHashMapValueOnly<TKey,TValue>.Destroy(_unsafeParallelListHashMap);
         }
         
-        public KeyValueArrayHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key)
+        public UnsafeParallelListHashMapValueOnlyEnumerator<TKey, TValue> GetValuesForKey(TKey key)
         {
-            return new KeyValueArrayHashMapEnumerator<TKey, TValue>
+            return new UnsafeParallelListHashMapValueOnlyEnumerator<TKey, TValue>
             {
-                Map = _unsafeKeyValueArrayHashMap, 
+                Map = _unsafeParallelListHashMap, 
                 Key = key, 
                 IsFirst = true
             };
@@ -106,27 +110,25 @@ namespace NZCore
         
         // helper jobs
         
-        public JobHandle ScheduleCalculateBuckets(NativeArray<TKey> keysArray, NativeArray<TValue> valuesArray, JobHandle dependency)
+        public JobHandle ScheduleCalculateBuckets(ParallelList<TValue> values, JobHandle dependency)
         {
             return new CalculateBucketsJob()
             {
                 Hashmap = this,
-                Keys = keysArray,
-                Values = valuesArray
+                Values = values
             }.Schedule(dependency);
         }
         
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob
         {
-            [ReadOnly] public NativeArray<TKey> Keys;
-            [ReadOnly] public NativeArray<TValue> Values;
+            [ReadOnly] public ParallelList<TValue> Values;
 
-            public KeyValueArrayHashMap<TKey, TValue> Hashmap;
+            public ParallelListHashMapValueOnly<TKey, TValue> Hashmap;
 
             public void Execute()
             {
-                Hashmap.SetArrays(Keys, Values);
+                Hashmap.SetArrays(Values);
                 Hashmap.CalculateBuckets();
             }
         }

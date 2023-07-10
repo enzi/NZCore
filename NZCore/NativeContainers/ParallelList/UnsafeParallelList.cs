@@ -14,80 +14,84 @@ namespace NZCore
         where T : unmanaged
     {
         [NativeDisableUnsafePtrRestriction] private UnsafeParallelListHeader* header;
-        [NativeDisableUnsafePtrRestriction] private PerThreadList* m_perThreadLists;
-        [NativeDisableUnsafePtrRestriction] private UnsafeParallelListRange* Ranges;
+        [NativeDisableUnsafePtrRestriction] private byte* perThreadLists;
+        [NativeDisableUnsafePtrRestriction] private UnsafeParallelListRange* ranges;
 
-        private AllocatorManager.AllocatorHandle m_Allocator;
+        private AllocatorManager.AllocatorHandle allocator;
         public bool IsCreated;
 
         public int Length => Count();
-        
-        
+
+
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal static UnsafeParallelList<T>* Create<U>(int initialCapacity, ref U allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
-            where U : unmanaged, AllocatorManager.IAllocator
+        internal static UnsafeParallelList<T>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+            where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
             UnsafeParallelList<T>* unsafeParallelList = allocator.Allocate(default(UnsafeParallelList<T>), 1);
 
-            //unsafeParallelList->self = unsafeParallelList;
-            unsafeParallelList->m_Allocator = allocator.Handle;
-            
-            int size = UnsafeUtility.SizeOf<PerThreadList>();
-            int align = UnsafeUtility.AlignOf<PerThreadList>();
+            unsafeParallelList->allocator = allocator.Handle;
+
+            int align = 16;
             int maxThreadCount = JobsUtility.ThreadIndexCount;
 
-            unsafeParallelList->m_perThreadLists = (PerThreadList*)UnsafeUtility.Malloc(size * maxThreadCount, align, allocator.ToAllocator);
-            
+            var perThreadListSize = JobsUtility.CacheLineSize * maxThreadCount;
+            unsafeParallelList->perThreadLists = (byte*)UnsafeUtility.Malloc(perThreadListSize, align, allocator.ToAllocator);
+
             for (int i = 0; i < maxThreadCount; i++)
             {
-                unsafeParallelList->m_perThreadLists[i].list = UnsafeList<T>.Create(initialCapacity, allocator.ToAllocator, NativeArrayOptions.UninitializedMemory);
+                unsafeParallelList->GetPerThreadList(i).List = new UnsafeList<T>(initialCapacity, allocator.ToAllocator, NativeArrayOptions.UninitializedMemory);
             }
-            
+
             int allocationSize = sizeof(UnsafeParallelListHeader);
-            byte* buffer = (byte*)Memory.Unmanaged.Allocate(allocationSize, UnsafeUtility.AlignOf<UnsafeParallelListHeader>(), allocator.ToAllocator);   // could be just temp memory
+            byte* buffer = (byte*)Memory.Unmanaged.Allocate(allocationSize, UnsafeUtility.AlignOf<UnsafeParallelListHeader>(), allocator.ToAllocator); // could be just temp memory
             UnsafeUtility.MemClear(buffer, allocationSize);
 
             unsafeParallelList->header = (UnsafeParallelListHeader*)buffer;
 
-            unsafeParallelList->header->chunkCount = 0;
-            unsafeParallelList->Ranges = null;
-            
+            unsafeParallelList->header->ChunkCount = 0;
+            unsafeParallelList->ranges = null;
+
             unsafeParallelList->IsCreated = true;
 
             return unsafeParallelList;
         }
 
+        private ref PerThreadList GetPerThreadList(int index)
+        {
+            return ref UnsafeUtility.AsRef<PerThreadList>(perThreadLists + index * JobsUtility.CacheLineSize);
+        }
+
         public void SetChunkCount(int chunkCount)
         {
-            bool sameChunkCount = chunkCount == header->chunkCount;
-            bool allocatedRanges = Ranges != null;
+            bool sameChunkCount = chunkCount == header->ChunkCount;
+            bool allocatedRanges = ranges != null;
             int allocationSize = sizeof(UnsafeParallelListRange) * chunkCount;
 
             if (sameChunkCount && allocatedRanges)
             {
-                UnsafeUtility.MemClear(Ranges, allocationSize);
+                UnsafeUtility.MemClear(ranges, allocationSize);
             }
             else
             {
                 if (allocatedRanges)
                     DeallocateRanges();
 
-                header->chunkCount = chunkCount;
+                header->ChunkCount = chunkCount;
             
-                Ranges = (UnsafeParallelListRange*)Memory.Unmanaged.Allocate(allocationSize, UnsafeUtility.AlignOf<UnsafeParallelListRange>(), m_Allocator);
+                ranges = (UnsafeParallelListRange*)Memory.Unmanaged.Allocate(allocationSize, UnsafeUtility.AlignOf<UnsafeParallelListRange>(), allocator);
             
-                UnsafeUtility.MemClear(Ranges, allocationSize);
+                UnsafeUtility.MemClear(ranges, allocationSize);
             }
         }
 
         public int GetChunkCount()
         {
-            return header->chunkCount;
+            return header->ChunkCount;
         }
 
         private void DeallocateRanges()
         {
-            Memory.Unmanaged.Free(Ranges, m_Allocator);
+            Memory.Unmanaged.Free(ranges, allocator);
         }
         
         public void Clear()
@@ -97,16 +101,17 @@ namespace NZCore
 
             for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
             {
-                var parallelList = m_perThreadLists + i;
+                ref var parallelList = ref GetPerThreadList(i);
 
-                parallelList->list->Clear();
+                parallelList.List.Clear();
             }
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write(in T value, int threadIndex)
         {
-            m_perThreadLists[threadIndex].list->Add(in value);
+            ref var parallelList = ref GetPerThreadList(threadIndex);
+            parallelList.List.Add(in value);
         }
 
         public int Count()
@@ -114,7 +119,8 @@ namespace NZCore
             int result = 0;
             for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
             {
-                result += m_perThreadLists[i].list->m_length;
+                ref var parallelList = ref GetPerThreadList(i);
+                result += parallelList.List.m_length;
             }
             return result;
         }
@@ -122,19 +128,19 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref UnsafeList<T> GetUnsafeList(int threadId)
         {
-            return ref *m_perThreadLists[threadId].list;
+            return ref GetPerThreadList(threadId).List;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte* GetUnsafePtr(int threadId)
         {
-            return (byte*) m_perThreadLists[threadId].list->Ptr;
+            return (byte*) GetPerThreadList(threadId).List.Ptr;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int BlockCount(int threadId)
         {
-            return m_perThreadLists[threadId].list->m_length;
+            return GetPerThreadList(threadId).List.m_length;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -143,7 +149,7 @@ namespace NZCore
             int count = 0;
             
             for (int i = 0; i < threadId && i < JobsUtility.ThreadIndexCount; i++)
-                count += m_perThreadLists[i].list->m_length;
+                count += GetPerThreadList(i).List.m_length;
 
             return count;
         }
@@ -154,13 +160,12 @@ namespace NZCore
             for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
             {
                 lengths[i] = count;
-                count += m_perThreadLists[i].list->m_length;
+                count += GetPerThreadList(i).List.m_length;
             }
         }
 
         public NativeArray<int> GetStartIndexArray(ref SystemState state)
         {
-            //NativeArray<int> lengths = new NativeArray<int>(JobsUtility.ThreadIndexCount, Allocator.TempJob);
             NativeArray<int> lengths = new NativeArray<int>();
             lengths.Initialize(JobsUtility.ThreadIndexCount, state.WorldUpdateAllocator, NativeArrayOptions.UninitializedMemory);
 
@@ -168,7 +173,7 @@ namespace NZCore
             for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
             {
                 lengths[i] = count;
-                count += m_perThreadLists[i].list->m_length;
+                count += GetPerThreadList(i).List.m_length;
             }
 
             return lengths;
@@ -196,8 +201,7 @@ namespace NZCore
         
         public static void Destroy(UnsafeParallelList<T>* unsafeParallelList)
         {
-            //CheckNull(listData);
-            var allocator = unsafeParallelList->m_Allocator;
+            var allocator = unsafeParallelList->allocator;
             unsafeParallelList->Dispose();
             AllocatorManager.Free(allocator, unsafeParallelList);
         }
@@ -209,35 +213,31 @@ namespace NZCore
 
             for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
             {
-                var threadList = m_perThreadLists[i];
-                
-                UnsafeList<T>.Destroy(threadList.list, ref m_Allocator);
+                GetPerThreadList(i).List.Dispose();
             }
             
-            UnsafeUtility.Free(m_perThreadLists, m_Allocator.ToAllocator);
+            UnsafeUtility.Free(perThreadLists, allocator.ToAllocator);
 
             DeallocateRanges();
-            Memory.Unmanaged.Free(header, m_Allocator);
+            Memory.Unmanaged.Free(header, allocator);
             header = null;
-
-            //UnsafeUtility.Free(self, m_Allocator.ToAllocator);
             
-            m_Allocator = Allocator.None;
+            allocator = Allocator.None;
         }
 
         public bool CheckRangesForNull()
         {
-            return Ranges == null;
+            return ranges == null;
         }
 
         [BurstCompile]
         private struct DisposeJob : IJob
         {
-            public UnsafeParallelList<T> list;
+            public UnsafeParallelList<T> List;
 
             public void Execute()
             {
-                list.Dispose();
+                List.Dispose();
             }
         }
 
@@ -245,108 +245,101 @@ namespace NZCore
         {
             var jobHandle = new DisposeJob()
             {
-                list = this
+                List = this
             }.Schedule(inputDeps);
             return jobHandle;
         }
 
-        public struct PerThreadList
+        private struct PerThreadList
         {
-            public UnsafeList<T>* list;
+            public UnsafeList<T> List; // 24 bytes
         }
 
         private struct UnsafeParallelListHeader
         {
-            
-            public int chunkCount;
+            public int ChunkCount;
         }
 
         private struct UnsafeParallelListRange
         {
-            public int listIndex;
-            public int startIndex;
+            public int ListIndex;
+            public int StartIndex;
             public int ElementCount;
         }
 
         public struct ChunkWriter
         {
             [NativeDisableUnsafePtrRestriction]
-            private readonly PerThreadList* m_perThreadLists;
+            private readonly byte* perThreadListsPtr;
             [NativeDisableUnsafePtrRestriction]
-            private UnsafeList<T>* m_List;
+            private UnsafeList<T>* list;
             [NativeDisableUnsafePtrRestriction]
-            private readonly UnsafeParallelListRange* m_Ranges;
+            private readonly UnsafeParallelListRange* ranges;
             
-            [NativeSetThreadIndex]
-            int m_ThreadIndex;
+            [NativeSetThreadIndex] 
+            private int threadIndex;
 
-            private int m_ChunkIndex;
-            private int m_StartIndex;
+            private int chunkIndex;
+            private int startIndex;
 
             internal ChunkWriter(ref UnsafeParallelList<T> stream)
             {
-                m_perThreadLists = stream.m_perThreadLists;
-                m_Ranges = stream.Ranges;
+                perThreadListsPtr = stream.perThreadLists;
+                ranges = stream.ranges;
                 
-                m_ChunkIndex = int.MinValue;
-                m_ThreadIndex = 0;
-                m_StartIndex = 0;
-                m_List = null;
+                chunkIndex = int.MinValue;
+                threadIndex = 0;
+                startIndex = 0;
+                list = default;
             }
             
-            public void BeginForEachChunk(int chunkIndex)
+            public void BeginForEachChunk(int newChunkIndex)
             {
-                m_List = m_perThreadLists[m_ThreadIndex].list;
+                chunkIndex = newChunkIndex;
                 
-                m_ChunkIndex = chunkIndex;
-                m_StartIndex = m_List->m_length;
+                list = (UnsafeList<T>*) (perThreadListsPtr + newChunkIndex * JobsUtility.CacheLineSize);
+                startIndex = list->m_length;
             }
             
             public void Write(in T value)
             {
-                m_List->Add(in value);
+                list->Add(in value);
             }
 
             public void WriteMemCpy(ref T value)
             {
-                var idx = m_List->m_length;
+                var idx = list->m_length;
 
-                if (m_List->m_length + 1 > m_List->Capacity)
-                {
-                    m_List->Resize(idx + 1);
-                }
+                if (list->m_length + 1 > list->Capacity)
+                    list->Resize(idx + 1);
                 else
-                {
-                    m_List->m_length += 1;
-                }
-                
-                //UnsafeUtility.WriteArrayElement(Ptr, idx, value);
-                
-                UnsafeUtility.MemCpy(m_List->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
+                    list->m_length += 1;
+
+                UnsafeUtility.MemCpy(list->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
             }
             
             public void EndForEachChunk()
             {
-                m_Ranges[m_ChunkIndex] = new UnsafeParallelListRange()
+                ranges[chunkIndex] = new UnsafeParallelListRange()
                 {
-                    ElementCount = m_List->m_length - m_StartIndex,
-                    startIndex = m_StartIndex,
-                    listIndex = m_ThreadIndex
+                    ElementCount = list->m_length - startIndex,
+                    StartIndex = startIndex,
+                    ListIndex = threadIndex
                 };
             }
 
-            public void SetManualThreadIndex(int threadIndex)
+            public void SetManualThreadIndex(int newThreadIndex)
             {
-                m_ThreadIndex = threadIndex;
+                threadIndex = newThreadIndex;
             }
         }
 
         public struct ChunkReader
         {
             [NativeDisableUnsafePtrRestriction]
-            private readonly PerThreadList* m_perThreadLists;
+            private readonly byte* perThreadListsPtr;
             [NativeDisableUnsafePtrRestriction]
-            private readonly UnsafeParallelListRange* m_Ranges;
+            private readonly UnsafeParallelListRange* ranges;
             [NativeDisableUnsafePtrRestriction]
             private byte* ptr;
             
@@ -355,8 +348,8 @@ namespace NZCore
             
             internal ChunkReader(ref UnsafeParallelList<T> stream)
             {
-                m_perThreadLists = stream.m_perThreadLists;
-                m_Ranges = stream.Ranges;
+                perThreadListsPtr = stream.perThreadLists;
+                ranges = stream.ranges;
                 
                 size = UnsafeUtility.SizeOf<T>();
                 currentIndex = 0;
@@ -365,25 +358,28 @@ namespace NZCore
             
             public int BeginForEachChunk(int chunkIndex)
             {
-                if (m_Ranges == null)
+                if (ranges == null)
                     return 0;
                 
-                var range = m_Ranges[chunkIndex];
-                int m_RemainingItemCount = range.ElementCount;
-                
-                ptr = m_RemainingItemCount > 0 ? (byte*) m_perThreadLists[range.listIndex].list->Ptr : null;
-                currentIndex = m_RemainingItemCount > 0 ? m_Ranges[chunkIndex].startIndex : 0;
-                
-                //Debug.Log($"[{m_ThreadIndex}] - BeginForEachChunk chunkIndex {chunkIndex} startIndex {currentIndex} count: {m_Ranges[chunkIndex].ElementCount}");
+                var range = ranges[chunkIndex];
+                int remainingItemCount = range.ElementCount;
 
-                return m_RemainingItemCount;
+                if (remainingItemCount > 0)
+                {
+                    ptr = (byte*) ((UnsafeList<T>*) (perThreadListsPtr + chunkIndex * JobsUtility.CacheLineSize))->Ptr;
+                    currentIndex = ranges[chunkIndex].StartIndex;
+                }
+                else
+                {
+                    ptr = null;
+                    currentIndex = 0;
+                }
+
+                return remainingItemCount;
             }
             
             public ref T Read()
             {
-                // int index = currentIndex;
-                // currentIndex++;
-                // return ref UnsafeUtility.AsRef<T>(ptr + index * size);
                 ref var returnValue = ref UnsafeUtility.AsRef<T>(ptr + currentIndex * size);
                 currentIndex++;
                 return ref returnValue;
@@ -396,108 +392,104 @@ namespace NZCore
 
             public void Reset(int chunkIndex)
             {
-                var range = m_Ranges[chunkIndex];
-                int m_RemainingItemCount = range.ElementCount;
-                currentIndex = m_RemainingItemCount > 0 ? m_Ranges[chunkIndex].startIndex : 0;
+                var range = ranges[chunkIndex];
+                currentIndex = range.ElementCount > 0 ? ranges[chunkIndex].StartIndex : 0;
             }
 
             public int GetListIndex(int chunkIndex)
             {
-                var range = m_Ranges[chunkIndex];
-                return range.listIndex;
+                var range = ranges[chunkIndex];
+                return range.ListIndex;
             }
         }
         
         public struct ThreadWriter
         {
             [NativeDisableUnsafePtrRestriction]
-            private readonly PerThreadList* m_perThreadLists;
+            private readonly byte* perThreadListsPtr;
             [NativeDisableUnsafePtrRestriction]
-            private UnsafeList<T>* m_List;
+            private UnsafeList<T>* list;
             
-            [NativeSetThreadIndex]
-            int m_ThreadIndex;
+            [NativeSetThreadIndex] private int threadIndex;
 
             internal ThreadWriter(ref UnsafeParallelList<T> stream)
             {
-                m_perThreadLists = stream.m_perThreadLists;
+                perThreadListsPtr = stream.perThreadLists;
                 
-                m_ThreadIndex = 0;
-                m_List = null;
+                threadIndex = 0;
+                list = null;
             }
             
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Begin()
             {
-                m_List = m_perThreadLists[m_ThreadIndex].list;
+                list = (UnsafeList<T>*) (perThreadListsPtr + threadIndex * JobsUtility.CacheLineSize);
             }
             
-            public void Begin(int threadIndex)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Begin(int newThreadIndex)
             {
-                m_List = m_perThreadLists[threadIndex].list;
+                threadIndex = newThreadIndex;
+                list = (UnsafeList<T>*) (perThreadListsPtr + newThreadIndex * JobsUtility.CacheLineSize);
             }
             
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Write(in T value)
             {
-                m_List->Add(in value);
+                list->Add(in value);
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void WriteMemCpy(ref T value)
             {
-                var idx = m_List->m_length;
+                var idx = list->m_length;
 
-                if (m_List->m_length + 1 > m_List->Capacity)
-                {
-                    m_List->Resize(idx + 1);
-                }
+                if (list->m_length + 1 > list->Capacity)
+                    list->Resize(idx + 1);
                 else
-                {
-                    m_List->m_length += 1;
-                }
-                
-                //UnsafeUtility.WriteArrayElement(Ptr, idx, value);
-                
-                UnsafeUtility.MemCpy(m_List->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
+                    list->m_length += 1;
+
+                UnsafeUtility.MemCpy(list->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
             }
         }
 
         public struct ThreadReader
         {
-            [NativeDisableUnsafePtrRestriction]
-            public PerThreadList* m_perThreadLists;
-            [NativeDisableUnsafePtrRestriction]
-            public T* ptr;
+            [NativeDisableUnsafePtrRestriction] 
+            private readonly byte* perThreadListsPtr;
+            [NativeDisableUnsafePtrRestriction] 
+            private T* ptr;
             
-            [NativeSetThreadIndex]
-            int m_ThreadIndex;
-            
-            public int currentIndex;
+            [NativeSetThreadIndex] private int threadIndex;
+
+            private int currentIndex;
             
             internal ThreadReader(ref UnsafeParallelList<T> stream)
             {
-                m_perThreadLists = stream.m_perThreadLists;
+                perThreadListsPtr = stream.perThreadLists;
                 
-                m_ThreadIndex = 0;
+                threadIndex = 0;
                 currentIndex = 0;
                 ptr = null;
             }
             
             public int Begin()
             {
-                var list = m_perThreadLists[m_ThreadIndex].list;
-                ptr = list->Ptr;
+                var tmpPtr = (UnsafeList<T>*) (perThreadListsPtr + threadIndex * JobsUtility.CacheLineSize);
+                ptr = tmpPtr->Ptr;
 
                 currentIndex = 0;
 
-                return list->Length;
+                return tmpPtr->Length;
             }
             
-            public int Begin(int threadIndex)
+            public int Begin(int newThreadIndex)
             {
-                var list = m_perThreadLists[threadIndex].list;
+                var list = (UnsafeList<T>*) (perThreadListsPtr + newThreadIndex * JobsUtility.CacheLineSize);
                 ptr = list->Ptr;
 
                 currentIndex = 0;
-                m_ThreadIndex = threadIndex;
+                threadIndex = newThreadIndex;
 
                 return list->Length;
             }

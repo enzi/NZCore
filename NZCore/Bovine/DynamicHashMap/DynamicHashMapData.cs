@@ -2,11 +2,12 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using System.Runtime.CompilerServices;
+
 namespace NZCore.Core.Iterators
 {
     using System;
     using System.Diagnostics;
-    using System.Runtime.InteropServices;
     using Unity.Collections;
     using Unity.Collections.LowLevel.Unsafe;
     using Unity.Entities;
@@ -14,37 +15,29 @@ namespace NZCore.Core.Iterators
     using Unity.Mathematics;
     using Debug = UnityEngine.Debug;
 
-    [StructLayout(LayoutKind.Explicit)]
-    [GenerateTestsForBurstCompatibility]
     internal unsafe struct DynamicHashMapData
     {
-        [FieldOffset(0)]
-        internal byte* Values;
-
-        // 4-byte padding on 32-bit architectures here
-        [FieldOffset(8)]
-        internal byte* Keys;
-
-        // 4-byte padding on 32-bit architectures here
-        [FieldOffset(16)]
-        internal byte* Next;
-
-        // 4-byte padding on 32-bit architectures here
-        [FieldOffset(24)]
-        internal byte* Buckets;
-
-        // 4-byte padding on 32-bit architectures here
-        [FieldOffset(32)]
+        internal int ValuesOffset;
+        internal int KeysOffset;
+        internal int NextOffset;
+        internal int BucketsOffset;
         internal int KeyCapacity;
-
-        [FieldOffset(36)]
         internal int BucketCapacityMask; // = bucket capacity - 1
-
-        [FieldOffset(40)]
         internal int AllocatedIndexLength;
-
-        [FieldOffset(44)]
         internal int FirstFreeIDX;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static byte* GetValues(DynamicHashMapData* data) => ((byte*)data + data->ValuesOffset);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static byte* GetKeys(DynamicHashMapData* data) => ((byte*)data + data->KeysOffset);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static byte* GetBuckets(DynamicHashMapData* data) => ((byte*)data + data->BucketsOffset);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static byte* GetNexts(DynamicHashMapData* data) => ((byte*)data + data->NextOffset);
+
 
         internal static int GetBucketSize(int capacity)
         {
@@ -83,17 +76,16 @@ namespace NZCore.Core.Iterators
             buffer.ResizeUninitialized(hashMapDataSize + totalSize);
 
             var data = buffer.AsData<TKey, TValue>();
-            var ptr = (byte*)data;
 
             data->KeyCapacity = length;
             data->BucketCapacityMask = bucketLength - 1;
 
-            data->Values = ptr + hashMapDataSize;
-            data->Keys = data->Values + keyOffset;
-            data->Next = data->Values + nextOffset;
-            data->Buckets = data->Values + bucketOffset;
-
+            data->ValuesOffset = hashMapDataSize;
+            data->KeysOffset = hashMapDataSize + keyOffset;
+            data->NextOffset = hashMapDataSize + nextOffset;
+            data->BucketsOffset = hashMapDataSize + bucketOffset;
             outBuf = data;
+
         }
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int), typeof(int), typeof(int) })]
@@ -124,10 +116,10 @@ namespace NZCore.Core.Iterators
             var oldNext = new NativeArray<int>(data->KeyCapacity, Allocator.Temp);
             var oldBuckets = new NativeArray<int>(data->BucketCapacityMask + 1, Allocator.Temp);
 
-            UnsafeUtility.MemCpy(oldValue.GetUnsafePtr(), data->Values, data->KeyCapacity * UnsafeUtility.SizeOf<TValue>());
-            UnsafeUtility.MemCpy(oldKeys.GetUnsafePtr(), data->Keys, data->KeyCapacity * UnsafeUtility.SizeOf<TKey>());
-            UnsafeUtility.MemCpy(oldNext.GetUnsafePtr(), data->Next, data->KeyCapacity * UnsafeUtility.SizeOf<int>());
-            UnsafeUtility.MemCpy(oldBuckets.GetUnsafePtr(), data->Buckets, (data->BucketCapacityMask + 1) * UnsafeUtility.SizeOf<int>());
+            UnsafeUtility.MemCpy(oldValue.GetUnsafePtr(), GetValues(data), data->KeyCapacity * UnsafeUtility.SizeOf<TValue>());
+            UnsafeUtility.MemCpy(oldKeys.GetUnsafePtr(), GetKeys(data), data->KeyCapacity * UnsafeUtility.SizeOf<TKey>());
+            UnsafeUtility.MemCpy(oldNext.GetUnsafePtr(), GetNexts(data), data->KeyCapacity * UnsafeUtility.SizeOf<int>());
+            UnsafeUtility.MemCpy(oldBuckets.GetUnsafePtr(), GetBuckets(data), (data->BucketCapacityMask + 1) * UnsafeUtility.SizeOf<int>());
 
             var oldAllocatedIndexLength = data->AllocatedIndexLength;
 
@@ -179,10 +171,10 @@ namespace NZCore.Core.Iterators
                 data->AllocatedIndexLength = oldAllocatedIndexLength;
             }
 
-            data->Values = newValues;
-            data->Keys = newKeys;
-            data->Next = newNext;
-            data->Buckets = newBuckets;
+            data->ValuesOffset = hashMapDataSize;
+            data->KeysOffset = hashMapDataSize + keyOffset;
+            data->NextOffset = hashMapDataSize + nextOffset;
+            data->BucketsOffset = hashMapDataSize + bucketOffset;
             data->KeyCapacity = newCapacity;
             data->BucketCapacityMask = newBucketCapacity - 1;
         }
@@ -194,7 +186,7 @@ namespace NZCore.Core.Iterators
                 return true;
             }
 
-            var bucketArray = (int*)data->Buckets;
+            var bucketArray = (int*)GetBuckets(data);
             var capacityMask = data->BucketCapacityMask;
 
             for (int i = 0; i <= capacityMask; ++i)
@@ -217,7 +209,7 @@ namespace NZCore.Core.Iterators
                 return 0;
             }
 
-            var bucketNext = (int*)data->Next;
+            var bucketNext = (int*)GetNexts(data);
             var freeListSize = 0;
 
             for (var freeIdx = data->FirstFreeIDX; freeIdx >= 0; freeIdx = bucketNext[freeIdx])
@@ -232,8 +224,10 @@ namespace NZCore.Core.Iterators
         internal static void GetKeyArray<TKey>(DynamicHashMapData* data, NativeArray<TKey> result)
             where TKey : unmanaged
         {
-            var bucketArray = (int*)data->Buckets;
-            var bucketNext = (int*)data->Next;
+            var bucketArray = (int*)GetBuckets(data);
+            var bucketNext = (int*)GetNexts(data);
+            var keys = GetKeys(data);
+
 
             for (int i = 0, count = 0, max = result.Length; i <= data->BucketCapacityMask && count < max; ++i)
             {
@@ -241,7 +235,7 @@ namespace NZCore.Core.Iterators
 
                 while (bucket != -1)
                 {
-                    result[count++] = UnsafeUtility.ReadArrayElement<TKey>(data->Keys, bucket);
+                    result[count++] = UnsafeUtility.ReadArrayElement<TKey>(keys, bucket);
                     bucket = bucketNext[bucket];
                 }
             }
@@ -251,8 +245,10 @@ namespace NZCore.Core.Iterators
         internal static void GetValueArray<TValue>(DynamicHashMapData* data, NativeArray<TValue> result)
             where TValue : unmanaged
         {
-            var bucketArray = (int*)data->Buckets;
-            var bucketNext = (int*)data->Next;
+            var bucketArray = (int*)GetBuckets(data);
+            var bucketNext = (int*)GetNexts(data);
+            var values = GetValues(data);
+
 
             for (int i = 0, count = 0, max = result.Length, capacityMask = data->BucketCapacityMask; i <= capacityMask && count < max; ++i)
             {
@@ -260,7 +256,7 @@ namespace NZCore.Core.Iterators
 
                 while (bucket != -1)
                 {
-                    result[count++] = UnsafeUtility.ReadArrayElement<TValue>(data->Values, bucket);
+                    result[count++] = UnsafeUtility.ReadArrayElement<TValue>(values, bucket);
                     bucket = bucketNext[bucket];
                 }
             }
@@ -271,8 +267,11 @@ namespace NZCore.Core.Iterators
             where TKey : unmanaged
             where TValue : unmanaged
         {
-            var bucketArray = (int*)data->Buckets;
-            var bucketNext = (int*)data->Next;
+            var bucketArray = (int*)GetBuckets(data);
+            var bucketNext = (int*)GetNexts(data);
+            var values = GetValues(data);
+            var keys = GetKeys(data);
+
 
             for (int i = 0, count = 0, max = result.Length, capacityMask = data->BucketCapacityMask; i <= capacityMask && count < max; ++i)
             {
@@ -280,8 +279,8 @@ namespace NZCore.Core.Iterators
 
                 while (bucket != -1)
                 {
-                    result.Keys[count] = UnsafeUtility.ReadArrayElement<TKey>(data->Keys, bucket);
-                    result.Values[count] = UnsafeUtility.ReadArrayElement<TValue>(data->Values, bucket);
+                    result.Keys[count] = UnsafeUtility.ReadArrayElement<TKey>(keys, bucket);
+                    result.Values[count] = UnsafeUtility.ReadArrayElement<TValue>(values, bucket);
                     count++;
                     bucket = bucketNext[bucket];
                 }

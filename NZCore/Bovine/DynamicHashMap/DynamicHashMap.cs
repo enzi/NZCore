@@ -2,6 +2,8 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using System.Runtime.CompilerServices;
+
 namespace NZCore.Core.Iterators
 {
     using System;
@@ -63,7 +65,7 @@ namespace NZCore.Core.Iterators
             {
                 if (this.TryGetValue(key, out var res))
                 {
-                    return res;
+                    return *res;
                 }
 
                 ThrowKeyNotPresent(key);
@@ -132,7 +134,7 @@ namespace NZCore.Core.Iterators
         /// <param name="key"> The key of the value to get. </param>
         /// <param name="item"> If key is found item parameter will contain value. </param>
         /// <returns> Returns true if key is found, otherwise returns false. </returns>
-        public bool TryGetValue(TKey key, out TValue item)
+        public bool TryGetValue(TKey key, out TValue* item)
         {
             return DynamicHashMapBase<TKey, TValue>.TryGetFirstValueAtomic(this.BufferReadOnly, key, out item, out _);
         }
@@ -184,6 +186,11 @@ namespace NZCore.Core.Iterators
             DynamicHashMapData.GetKeyValueArrays(this.BufferReadOnly, result);
             return result;
         }
+        
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(this);
+        }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         private static void CheckSize(DynamicBuffer<byte> buffer)
@@ -207,6 +214,73 @@ namespace NZCore.Core.Iterators
 
             DynamicHashMapData.AllocateHashMap<TKey, TValue>(this.data, 0, 0, out _);
             this.Clear();
+        }
+
+        [NativeContainer]
+        [NativeContainerIsReadOnly]
+        public struct Enumerator
+        {
+            private readonly DynamicHashMapData* data;
+            private readonly int capacityMask;
+            private readonly byte* keys;
+            private readonly byte* values;
+            private readonly int* bucketArray;
+            private readonly int* bucketNext;
+            
+            private byte* key;
+            private byte* value;
+
+            private int currentIndex;
+            private int currentBucketIndex;
+
+            public Enumerator(DynamicHashMap<TKey, TValue> hashMap)
+            {
+                data = hashMap.BufferReadOnly;
+                keys = DynamicHashMapData.GetKeys(data);
+                values = DynamicHashMapData.GetValues(data);
+                bucketArray = (int*) DynamicHashMapData.GetBuckets(data);
+                bucketNext = (int*) DynamicHashMapData.GetNexts(data);
+
+                currentBucketIndex = -1;
+                currentIndex = 0;
+                capacityMask = data->BucketCapacityMask;
+
+                key = null;
+                value = null;
+            }
+
+            public void Dispose() { }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                if (currentBucketIndex == -1)
+                {
+                    do
+                    {
+                        if (currentIndex <= capacityMask)
+                        {
+                            currentBucketIndex = bucketArray[currentIndex];
+                            currentIndex++;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    } while (currentBucketIndex == -1);
+                }
+                
+                // if (currentBucketIndex == -1) // not needed (?)
+                //     return false;
+
+                key = keys + currentBucketIndex * sizeof(TKey);
+                value = values + currentBucketIndex * sizeof(TValue);
+                currentBucketIndex = bucketNext[currentBucketIndex];
+                return true;
+            }
+
+            public ref TKey CurrentKey => ref UnsafeUtility.AsRef<TKey>(key);
+            public ref TValue CurrentValue => ref UnsafeUtility.AsRef<TValue>(value);
         }
     }
     

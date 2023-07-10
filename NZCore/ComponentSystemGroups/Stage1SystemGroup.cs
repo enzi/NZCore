@@ -9,7 +9,6 @@ namespace NZCore
     {
     }
 
-
     [UpdateInGroup(typeof(NZSpellCastingSimulationSystemGroup))]
     public partial class Stage1SystemGroup : ComponentSystemGroup
     {
@@ -24,11 +23,6 @@ namespace NZCore
     [UpdateInGroup(typeof(NZSpellCastingSimulationSystemGroup))]
     [UpdateAfter(typeof(Stage1SystemGroup))]
     public partial class NZStatsSystemGroup : ComponentSystemGroup
-    {
-    }
-
-    [UpdateInGroup(typeof(Stage2SystemGroup))]
-    public partial class EndStage2CommandBufferSystem : EntityCommandBufferSystem
     {
     }
 
@@ -52,7 +46,6 @@ namespace NZCore
 
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
     [UpdateInGroup(typeof(SimulationSystemGroup), OrderLast = true)]
-    //[UpdateAfter(typeof(EndSimulationEntityCommandBufferSystem))]
     public partial class DestroyEntityCommandBufferSystem : EntityCommandBufferSystem
     {
         public unsafe struct Singleton : IComponentData, IECBSingleton
