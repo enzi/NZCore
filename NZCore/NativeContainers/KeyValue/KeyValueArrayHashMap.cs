@@ -17,8 +17,8 @@ namespace NZCore
         [NativeDisableUnsafePtrRestriction] private UnsafeKeyValueArrayHashMap<TKey, TValue>* _unsafeKeyValueArrayHashMap;
         
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        private AtomicSafetyHandle safetyHandle;
-        static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<KeyValueArrayHashMap<TKey, TValue>>();
+        private AtomicSafetyHandle m_Safety;
+        private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<KeyValueArrayHashMap<TKey, TValue>>();
 #endif
 
         public KeyValueArrayHashMap(int initialCapacity, int keyOffset, AllocatorManager.AllocatorHandle allocator)
@@ -32,13 +32,13 @@ namespace NZCore
         private void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator) where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            safetyHandle = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
+            m_Safety = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
 
             if (UnsafeUtility.IsNativeContainerType<TKey>() || UnsafeUtility.IsNativeContainerType<TValue>())
-                AtomicSafetyHandle.SetNestedContainer(safetyHandle, true);
+                AtomicSafetyHandle.SetNestedContainer(m_Safety, true);
 
-            CollectionHelper.SetStaticSafetyId<KeyValueArrayHashMap<TKey, TValue>>(ref safetyHandle, ref staticSafetyId.Data);
-            AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(safetyHandle, true);
+            CollectionHelper.SetStaticSafetyId<KeyValueArrayHashMap<TKey, TValue>>(ref m_Safety, ref staticSafetyId.Data);
+            AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
             
             _unsafeKeyValueArrayHashMap = UnsafeKeyValueArrayHashMap<TKey, TValue>.Create(initialCapacity, keyOffset, ref allocator);
@@ -88,7 +88,7 @@ namespace NZCore
         public void Dispose()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            CollectionHelper.DisposeSafetyHandle(ref safetyHandle);
+            CollectionHelper.DisposeSafetyHandle(ref m_Safety);
 #endif
             
             UnsafeKeyValueArrayHashMap<TKey, TValue>.Destroy(_unsafeKeyValueArrayHashMap);

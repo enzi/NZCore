@@ -17,7 +17,7 @@ namespace NZCore
         
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_Safety;
-        static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<ParallelListHashMap<TKey, TValue>>();
+        private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<ParallelListHashMap<TKey, TValue>>();
 #endif
 
         public ParallelListHashMap(AllocatorManager.AllocatorHandle allocator)

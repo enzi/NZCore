@@ -1,7 +1,7 @@
 {
   "name": "com.nzcore",
   "displayName": "NZCore",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "unity": "2020.1",
   "dependencies": {
     "com.unity.entities": "1.0.0-exp.8"

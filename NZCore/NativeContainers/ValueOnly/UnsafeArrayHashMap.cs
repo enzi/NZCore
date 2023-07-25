@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Unity;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -71,7 +72,7 @@ namespace NZCore
             bucketLength = math.ceilpow2(bucketLength);
             bucketCapacityMask = bucketLength - 1;
 
-            //Debug.Log($"Set next/buckets cap to {length}/{bucketLength}");
+            //Debug.Log($"Set next/buckets cap to {length}/{bucketLength} - keyOffset: {keyOffset}");
             
             bucketsAndNextList->Resize(length + bucketLength, NativeArrayOptions.UninitializedMemory);
             next = bucketsAndNextList->Ptr;
@@ -143,21 +144,26 @@ namespace NZCore
         public bool TryGetNextRefValue(out byte* item, ref ArrayHashMapIterator<TKey> it)           
         {
             int entryIdx = it.NextEntryIndex;
-            it.NextEntryIndex = -1;
-            it.EntryIndex = -1;
-            item = null;
-           
+
             if (entryIdx < 0 || entryIdx >= keyCapacity)
+            {
+                it.NextEntryIndex = -1;
+                it.EntryIndex = -1;
+                item = null;
                 return false;
-            
-            byte* keyArrayPtr = (values + keyOffset);
+            }
+
             var size = sizeof(TValue);
-            
+            byte* keyArrayPtr = values + keyOffset + entryIdx * size;
+
             while(!(*(TKey*) keyArrayPtr).Equals(it.Key))
             {
                 entryIdx = next[entryIdx];
                 if (entryIdx < 0 || entryIdx >= keyCapacity)
                 {
+                    it.NextEntryIndex = -1;
+                    it.EntryIndex = -1;
+                    item = null;
                     return false;
                 }
 
@@ -166,8 +172,6 @@ namespace NZCore
 
             it.NextEntryIndex = next[entryIdx];
             it.EntryIndex = entryIdx;
-
-            // Read the value
             item = values + entryIdx * sizeof(TValue);
 
             return true;
@@ -190,9 +194,9 @@ namespace NZCore
                 return false;
             }            
             
-            byte* keyArrayPtr = (values + keyOffset);
             var size = sizeof(TValue);
-            
+            byte* keyArrayPtr = values + keyOffset + entryIdx * size;
+
             while(!(*(TKey*) keyArrayPtr).Equals(key))
             {
                 entryIdx = next[entryIdx];
@@ -231,8 +235,9 @@ namespace NZCore
         
         private byte* value;
         
-
         public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(value);
+        public TValue* CurrentPtr => (TValue*)value;
+        public int CurrentIndex => iterator.EntryIndex;
 
         public bool MoveNext()
         {

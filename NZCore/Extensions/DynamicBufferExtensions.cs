@@ -68,8 +68,22 @@ namespace NZCore
             ref var tmp = ref UnsafeUtility.As<DynamicBuffer<T>, DynamicBufferExposed<T>>(ref buffer);
             return (BufferHeaderExposed*) tmp.m_Buffer;
         }
-        
-        
+
+
+        public static void AddBytes<TBuffer, TData>(this DynamicBuffer<TBuffer> buffer, TData data)
+            where TData : unmanaged
+            where TBuffer : unmanaged
+        {
+            CheckWriteAccess(buffer);
+            
+            int elemSize = UnsafeUtility.SizeOf<TData>();
+            int oldLength = buffer.Length;
+            buffer.ResizeUninitialized(oldLength + elemSize);
+            var ptrToData = UnsafeUtility.AddressOf(ref data);
+            
+            var basePtr = (byte*)buffer.GetUnsafePtr();
+            UnsafeUtility.MemCpy(basePtr + oldLength, ptrToData, elemSize);
+        }
     }
     
     [StructLayout(LayoutKind.Explicit)]

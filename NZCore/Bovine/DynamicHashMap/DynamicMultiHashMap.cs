@@ -2,6 +2,8 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using System.Runtime.CompilerServices;
+
 namespace NZCore.Core.Iterators
 {
     using System;
@@ -189,6 +191,16 @@ namespace NZCore.Core.Iterators
             DynamicHashMapData.GetKeyValueArrays(this.BufferReadOnly, result);
             return result;
         }
+        
+        public Enumerator GetEnumerator(TKey key)
+        {
+            return new Enumerator()
+            {
+                isFirst = 1, 
+                key = key,
+                hashmap = BufferReadOnly
+            };
+        }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         private static void CheckSize(DynamicBuffer<byte> buffer)
@@ -206,6 +218,35 @@ namespace NZCore.Core.Iterators
 
             DynamicHashMapData.AllocateHashMap<TKey, TValue>(this.data, 0, 0, out _);
             this.Clear();
+        }
+        
+        [NativeContainer]
+        [NativeContainerIsReadOnly]
+        public struct Enumerator
+        {
+            internal DynamicHashMapData* hashmap;
+            internal TKey key;
+            internal byte isFirst;
+            
+            private TValue* value;
+            private NativeParallelMultiHashMapIterator<TKey> iterator;
+
+            public void Dispose() { }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                if (isFirst == 1)
+                {
+                    isFirst = 0;
+                    return !DynamicHashMapData.IsEmpty(hashmap) && DynamicHashMapBase<TKey, TValue>.TryGetFirstValueAtomic(hashmap, key, out value, out iterator);
+                }
+
+                return DynamicHashMapBase<TKey, TValue>.TryGetNextValueAtomic(hashmap, out value, ref iterator);
+            }
+
+            //public ref TKey CurrentKey => ref UnsafeUtility.AsRef<TKey>(key);
+            public ref TValue CurrentValue => ref UnsafeUtility.AsRef<TValue>(value);
         }
     }
 }

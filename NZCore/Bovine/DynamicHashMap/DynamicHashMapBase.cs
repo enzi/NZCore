@@ -226,6 +226,37 @@ namespace NZCore.Core.Iterators
 
             return true;
         }
+        
+        internal static bool TryPeekFirstValueAtomic(DynamicHashMapData* data, TKey key)
+        {
+            if (data->AllocatedIndexLength <= 0)
+                return false;
+
+            // First find the slot based on the hash
+            var buckets = (int*)DynamicHashMapData.GetBuckets(data);
+            int bucket = key.GetHashCode() & data->BucketCapacityMask;
+            return TryPeekNextValueAtomic(data, key, buckets[bucket]);
+        }
+
+        internal static bool TryPeekNextValueAtomic(DynamicHashMapData* data, TKey key, int entryIdx)
+        {
+            if (entryIdx < 0 || entryIdx >= data->KeyCapacity)
+                return false;
+
+            var keys = DynamicHashMapData.GetKeys(data);
+
+            int* nextPtrs = (int*)DynamicHashMapData.GetNexts(data);
+            while (!UnsafeUtility.ReadArrayElement<TKey>(keys, entryIdx).Equals(key))
+            {
+                entryIdx = nextPtrs[entryIdx];
+                if (entryIdx < 0 || entryIdx >= data->KeyCapacity)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
         internal static void RemoveKeyValue<TValueEq>(DynamicHashMapData* data, TKey key, TValueEq value)
             where TValueEq : unmanaged, IEquatable<TValueEq>

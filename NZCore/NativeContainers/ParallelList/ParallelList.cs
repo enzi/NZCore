@@ -166,7 +166,7 @@ namespace NZCore
             private UnsafeParallelList<T>.ChunkWriter chunkWriter;
             
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            private readonly AtomicSafetyHandle safetyHandle;
+            private readonly AtomicSafetyHandle m_Safety;
             private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ChunkWriter>();
 #endif
             
@@ -175,8 +175,8 @@ namespace NZCore
                 chunkWriter = parallelList._unsafeParallelList->AsChunkWriter();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                safetyHandle = parallelList.m_Safety;
-                CollectionHelper.SetStaticSafetyId(ref safetyHandle, ref staticSafetyId.Data, "NZCore.ChunkWriter");
+                m_Safety = parallelList.m_Safety;
+                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ChunkWriter");
 
                 if (parallelList._unsafeParallelList->CheckRangesForNull())
                     Debug.LogError($"Ranges have not been allocated. SetChunkCount(int chunkCount) before writing something.");// {Environment.StackTrace}");
@@ -222,7 +222,7 @@ namespace NZCore
             private UnsafeParallelList<T>.ChunkReader chunkReader;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            private AtomicSafetyHandle safetyHandle;
+            private AtomicSafetyHandle m_Safety;
             private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ChunkReader>();
 #endif
 
@@ -231,8 +231,8 @@ namespace NZCore
                 chunkReader = stream._unsafeParallelList->AsChunkReader();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                safetyHandle = stream.m_Safety;
-                CollectionHelper.SetStaticSafetyId(ref safetyHandle, ref staticSafetyId.Data, "NZCore.ChunkReader");
+                m_Safety = stream.m_Safety;
+                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ChunkReader");
 #endif
             }
             
@@ -275,7 +275,7 @@ namespace NZCore
             private UnsafeParallelList<T>.ThreadWriter threadWriter;
             
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            private readonly AtomicSafetyHandle safetyHandle;
+            private AtomicSafetyHandle m_Safety;
             private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ThreadWriter>();
 #endif
             
@@ -284,8 +284,8 @@ namespace NZCore
                 threadWriter = parallelList._unsafeParallelList->AsThreadWriter();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                safetyHandle = parallelList.m_Safety;
-                CollectionHelper.SetStaticSafetyId(ref safetyHandle, ref staticSafetyId.Data, "NZCore.ThreadWriter");
+                m_Safety = parallelList.m_Safety;
+                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ThreadWriter");
 #endif
             }
             
@@ -322,7 +322,7 @@ namespace NZCore
             private UnsafeParallelList<T>.ThreadReader threadReader;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            private AtomicSafetyHandle safetyHandle;
+            private AtomicSafetyHandle m_Safety;
             private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ThreadReader>();
 #endif
 
@@ -331,8 +331,8 @@ namespace NZCore
                 threadReader = stream._unsafeParallelList->AsThreadReader();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                safetyHandle = stream.m_Safety;
-                CollectionHelper.SetStaticSafetyId(ref safetyHandle, ref staticSafetyId.Data, "NZCore.ThreadReader");
+                m_Safety = stream.m_Safety;
+                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ThreadReader");
 #endif
             }
             

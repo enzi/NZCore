@@ -19,7 +19,7 @@ namespace NZCore
         private UnsafeParallelListHashMapValueOnly<TKey, TValue>* _unsafeParallelListHashMap;
         
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        private AtomicSafetyHandle safetyHandle;
+        private AtomicSafetyHandle m_Safety;
         private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ParallelListHashMapValueOnly<TKey, TValue>>();
 #endif
 
@@ -34,13 +34,13 @@ namespace NZCore
         internal void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator) where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            safetyHandle = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
+            m_Safety = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
 
             if (UnsafeUtility.IsNativeContainerType<TKey>() || UnsafeUtility.IsNativeContainerType<TValue>())
-                AtomicSafetyHandle.SetNestedContainer(safetyHandle, true);
+                AtomicSafetyHandle.SetNestedContainer(m_Safety, true);
 
-            CollectionHelper.SetStaticSafetyId<ParallelListHashMap<TKey, TValue>>(ref safetyHandle, ref staticSafetyId.Data);
-            AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(safetyHandle, true);
+            CollectionHelper.SetStaticSafetyId<ParallelListHashMap<TKey, TValue>>(ref m_Safety, ref staticSafetyId.Data);
+            AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
             
             _unsafeParallelListHashMap = UnsafeParallelListHashMapValueOnly<TKey, TValue>.Create(initialCapacity, keyOffset, ref allocator);
@@ -92,7 +92,7 @@ namespace NZCore
         public void Dispose()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            CollectionHelper.DisposeSafetyHandle(ref safetyHandle);
+            CollectionHelper.DisposeSafetyHandle(ref m_Safety);
 #endif
             
             UnsafeParallelListHashMapValueOnly<TKey,TValue>.Destroy(_unsafeParallelListHashMap);

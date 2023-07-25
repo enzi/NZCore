@@ -61,10 +61,7 @@ namespace NZCore
             it.NextEntryIndex = nextPtrs[entryIdx];
             it.EntryIndex = entryIdx;
 
-            // Read the value
             valuePtr = data->values + entryIdx * sizeof(TValue);
-            //item = UnsafeUtility.ReadArrayElement<TValue>(data->values, entryIdx);
-            //*(T*) ((IntPtr) source + (IntPtr) ((long) index * (long) sizeof (T)))
 
             return true;
         }
