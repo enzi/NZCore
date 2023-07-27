@@ -123,6 +123,12 @@ namespace NZCore
         {
             return *(TKey*) (values + index * sizeof(TValue) + keyOffset);
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private TValue GetValue(int index)
+        {
+            return *(TValue*) (values + index * sizeof(TValue));
+        }
 
         public bool TryGetFirstRefValue(TKey key, out byte* item, out ArrayHashMapIterator<TKey> it)            
         {
@@ -153,10 +159,7 @@ namespace NZCore
                 return false;
             }
 
-            var size = sizeof(TValue);
-            byte* keyArrayPtr = values + keyOffset + entryIdx * size;
-
-            while(!(*(TKey*) keyArrayPtr).Equals(it.Key))
+            while(!GetKey(entryIdx).Equals(it.Key))
             {
                 entryIdx = next[entryIdx];
                 if (entryIdx < 0 || entryIdx >= keyCapacity)
@@ -166,8 +169,6 @@ namespace NZCore
                     item = null;
                     return false;
                 }
-
-                keyArrayPtr += size;
             }
 
             it.NextEntryIndex = next[entryIdx];
@@ -194,21 +195,32 @@ namespace NZCore
                 return false;
             }            
             
-            var size = sizeof(TValue);
-            byte* keyArrayPtr = values + keyOffset + entryIdx * size;
-
-            while(!(*(TKey*) keyArrayPtr).Equals(key))
+            while(!GetKey(entryIdx).Equals(key))
             {
                 entryIdx = next[entryIdx];
                 if (entryIdx < 0 || entryIdx >= keyCapacity)
                 {
                     return false;
                 }
-
-                keyArrayPtr += size;
             }
 
             return true;
+        }
+
+        public void GetKeyValueArrays(NativeKeyValueArrays<TKey, TValue> result)
+        {
+            for (int i = 0, count = 0, max = result.Length, capacityMask = bucketCapacityMask; i <= capacityMask && count < max; ++i)
+            {
+                int bucket = buckets[i];
+
+                while (bucket != -1)
+                {
+                    result.Keys[count] = GetKey(bucket); //UnsafeUtility.ReadArrayElement<TKey>(values + keyOffset, bucket);
+                    result.Values[count] = GetValue(bucket);
+                    count++;
+                    bucket = next[bucket];
+                }
+            }
         }
         
         public static void Destroy(UnsafeArrayHashMap<TKey, TValue>* hashMap)

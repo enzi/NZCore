@@ -49,17 +49,6 @@ namespace NZCore
             return entityInChunk.IndexInChunk;
         }
         
-        public static ComponentLookup<T> GetComponentDataFromEntity<T>(this EntityManager entityManager, bool isReadOnly = false)
-            where T : unmanaged, IComponentData
-        {
-            return entityManager.GetComponentDataFromEntity<T>(isReadOnly);
-        }
-        
-        public static EntityStorageInfoLookup GetStorageInfoFromEntity(this EntityManager entityManager)
-        {
-            return entityManager.GetStorageInfoFromEntity();
-        }
-        
         public static StorageInfoExposed GetStorageInfoExposed(this ComponentSystemBase systemBase)
         {
             return new StorageInfoExposed(systemBase.EntityManager.GetCheckedEntityDataAccess()->EntityComponentStore);

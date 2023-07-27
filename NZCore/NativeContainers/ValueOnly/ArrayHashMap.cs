@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
@@ -11,6 +13,7 @@ namespace NZCore
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]
+    [DebuggerTypeProxy(typeof(ArrayHashMapDebuggerTypeProxy<,>))]
     public unsafe struct ArrayHashMap<TKey, TValue> : IDisposable
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
@@ -79,30 +82,12 @@ namespace NZCore
             return _unsafeArrayHashMap->GetKeyArrayPtr();
         }
 
-        // public void PrintValues()
-        // {
-        //     //Debug.Log($"PrintValues with length {allocatedIndexLength}");
-        //     for (int i = 0; i < allocatedIndexLength; i++)
-        //     {
-        //         var key = (*(TKey*)(Keys + i * sizeof(TKey)));
-        //         Debug.Log($"Key: {key}");
-        //     }
-        //     for (int i = 0; i < allocatedIndexLength; i++)
-        //     {
-        //         var value = (*(TValue*)(Values + i * sizeof(TValue)));
-        //         Debug.Log($"value: {value}");
-        //     }
-        //     for (int i = 0; i < allocatedIndexLength; i++)
-        //     {
-        //         var nextValue = (*(int*)(next + i * sizeof(int)));
-        //         Debug.Log($"nextValue: {nextValue}");
-        //     }
-        //     for (int i = 0; i < (bucketCapacityMask + 1); i++)
-        //     {
-        //         var bucketValue = (*(int*)(buckets + i * sizeof(int)));
-        //         Debug.Log($"bucketValue: {bucketValue}");
-        //     }
-        // }
+        public NativeKeyValueArrays<TKey, TValue> GetKeyValueArrays(Allocator allocator)
+        {
+            var result = new NativeKeyValueArrays<TKey, TValue>(Length, allocator, NativeArrayOptions.UninitializedMemory);
+            _unsafeArrayHashMap->GetKeyValueArrays(result);
+            return result;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
@@ -162,5 +147,35 @@ namespace NZCore
                 Hashmap.SetArrays(ref Values);
             }
         }
+    }
+    
+    internal sealed class ArrayHashMapDebuggerTypeProxy<TKey, TValue>
+        where TKey : unmanaged, IEquatable<TKey>
+        where TValue : unmanaged
+    {
+#if !NET_DOTS
+        private ArrayHashMap<TKey, TValue> target;
+
+        public ArrayHashMapDebuggerTypeProxy(ArrayHashMap<TKey, TValue> target)
+        {
+            this.target = target;
+        }
+
+        public List<Pair<TKey, TValue>> Items
+        {
+            get
+            {
+                var result = new List<Pair<TKey, TValue>>();
+
+                using var kva = target.GetKeyValueArrays(Allocator.Temp);
+                for (var i = 0; i < kva.Length; ++i)
+                {
+                    result.Add(new Pair<TKey, TValue>(kva.Keys[i], kva.Values[i]));
+                }
+
+                return result;
+            }
+        }
+#endif
     }
 }
