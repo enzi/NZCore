@@ -80,37 +80,6 @@ namespace NZCore
             return chunk->Buffer + (offset + sizeOf * index);
         }
 
-//         public static void* GetComponentDataPtrRW<T>(this ArchetypeChunk chunk, ref ComponentTypeHandle<T> chunkComponentTypeHandle)
-//         {
-// #if ENABLE_UNITY_COLLECTIONS_CHECKS
-//             if (chunkComponentTypeHandle.m_IsZeroSized == 0)
-//                 throw new ArgumentException($"ArchetypeChunk.GetNativeArray<{typeof(T)}> cannot be called on zero-sized IComponentData");
-//             
-//             AtomicSafetyHandle.CheckWriteAndThrow(chunkComponentTypeHandle.m_Safety);
-//             if (chunkComponentTypeHandle.IsReadOnly)
-//                 throw new InvalidOperationException(
-//                     "Provided ComponentTypeHandle is read-only; can't get a read/write pointer to component data");
-// #endif
-//
-//             var m_Chunk = chunk.m_Chunk;
-//
-//             ChunkDataUtility.GetIndexInTypeArray(m_Chunk->Archetype, chunkComponentTypeHandle.m_TypeIndex, ref chunkComponentTypeHandle.m_LookupCache.IndexInArchetype);
-//             if (chunkComponentTypeHandle.m_LookupCache.IndexInArchetype == -1)
-//                 return null;
-//
-//             byte* ptr = GetComponentDataRW(m_Chunk, 0, chunkComponentTypeHandle.m_LookupCache.IndexInArchetype, chunkComponentTypeHandle.GlobalSystemVersion);
-//             var archetype = m_Chunk->Archetype;
-//             var batchStartOffset = chunk.m_BatchStartEntityIndex * archetype->SizeOfs[chunkComponentTypeHandle.m_LookupCache.IndexInArchetype];
-//             return ptr + batchStartOffset;
-//         }
-        
-        public static bool Has<T>(this ArchetypeChunk chunk, ref BufferTypeHandleFast<T> bufferComponentTypeHandle)
-            where T : struct, IBufferElementData
-        {
-            var typeIndexInArchetype = ChunkDataUtility.GetIndexInTypeArray(chunk.m_Chunk->Archetype, bufferComponentTypeHandle.m_TypeIndex);
-            return (typeIndexInArchetype != -1);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool DetermineFastPath(this v128 chunkEnabledMask)
         {

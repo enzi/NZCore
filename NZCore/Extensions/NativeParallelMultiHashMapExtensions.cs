@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -111,10 +112,10 @@ namespace NZCore
                 if (isFirst)
                 {
                     isFirst = false;
-                    return !hashmap.IsEmpty && hashmap.m_MultiHashMapData.TryGetFirstRefValue(ref value, ref iterator);
+                    return TryGetFirstRefValue<TKey, TValue>(hashmap.m_MultiHashMapData.m_Buffer, out value, ref iterator);
                 }
 
-                return hashmap.m_MultiHashMapData.TryGetNextRefValue(ref value, ref iterator);
+                return TryGetNextRefValue<TKey, TValue>(hashmap.m_MultiHashMapData.m_Buffer, out value, ref iterator);
             }
 
             /// <summary>
@@ -128,33 +129,26 @@ namespace NZCore
             /// <value>The current value.</value>
             public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(value);
         }
-
-        private static unsafe bool TryGetFirstRefValue<TKey, TValue>(
-            this UnsafeParallelMultiHashMap<TKey, TValue> hashMapData,
-            ref byte* itemPtr, 
-            ref NativeParallelMultiHashMapIterator<TKey> it)
+        
+        private static unsafe bool TryGetFirstRefValue<TKey, TValue>(UnsafeParallelHashMapData* data, out byte* itemPtr, ref NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            var data = hashMapData.m_Buffer;
-
             if (data->allocatedIndexLength <= 0)
             {
+                it.EntryIndex = it.NextEntryIndex = -1;
                 itemPtr = null;
                 return false;
             }
 
             // First find the slot based on the hash
-            int bucket = it.key.GetHashCode() & data->bucketCapacityMask;
             int* buckets = (int*)data->buckets;
+            int bucket = it.key.GetHashCode() & data->bucketCapacityMask;
             it.EntryIndex = it.NextEntryIndex = buckets[bucket];
-            return hashMapData.TryGetNextRefValue(ref itemPtr, ref it);
+            return TryGetNextRefValue<TKey, TValue>(data, out itemPtr, ref it);
         }
 
-        private static unsafe bool TryGetNextRefValue<TKey, TValue>(
-            this UnsafeParallelMultiHashMap<TKey, TValue> hashMapData,
-            ref byte* itemPtr,
-            ref NativeParallelMultiHashMapIterator<TKey> it)
+        private static unsafe bool TryGetNextRefValue<TKey, TValue>(UnsafeParallelHashMapData* data, out byte* itemPtr, ref NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
@@ -164,7 +158,6 @@ namespace NZCore
             it.EntryIndex = -1;
             itemPtr = null;
 
-            var data = hashMapData.m_Buffer;
             if (entryIdx < 0 || entryIdx >= data->keyCapacity)
             {
                 return false;
