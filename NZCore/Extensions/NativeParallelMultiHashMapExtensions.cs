@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -51,8 +53,8 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            var data = hashMap.GetUnsafeBucketData();
-
+            UnsafeParallelHashMapBucketData data = hashMap.GetUnsafeBucketData();
+            
             var buckets = (int*)data.buckets;
             var nextPtrs = (int*)data.next;
 
@@ -65,7 +67,111 @@ namespace NZCore
 
             hashMap.m_MultiHashMapData.m_Buffer->allocatedIndexLength = keys.Length;
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static unsafe void AddBatchUnsafe<TKey, TValue>(
+            [NoAlias] this NativeParallelMultiHashMap<TKey, TValue>.ParallelWriter hashMap,
+            [NoAlias] NativeArray<TKey> keys,
+            [NoAlias] NativeArray<TValue> values)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            //CheckLengthsMatch(keys.Length, values.Length);
+            AddBatchUnsafe(hashMap, (TKey*)keys.GetUnsafeReadOnlyPtr(), (TValue*)values.GetUnsafeReadOnlyPtr(), keys.Length);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static unsafe void AddBatchUnsafe<TKey, TValue>(
+            [NoAlias] this NativeParallelMultiHashMap<TKey, TValue>.ParallelWriter hashMap, 
+            [NoAlias] TKey* keys, 
+            [NoAlias] TValue* values, 
+            int length) where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged
+        {
+            hashMap.m_Writer.m_Buffer->AddBatchUnsafeParallel(keys, values, length);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static unsafe void AddBatchUnsafeParallel<TKey, TValue>(
+            [NoAlias] this ref UnsafeParallelHashMapData data,
+            [NoAlias] TKey* keys,
+            [NoAlias] TValue* values,
+            int length)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            var newLength = Interlocked.Add(ref data.allocatedIndexLength, length);
+            var oldLength = newLength - length;
+
+            var keyPtr = (TKey*)data.keys + oldLength;
+            var valuePtr = (TValue*)data.values + oldLength;
+
+            UnsafeUtility.MemCpy(keyPtr, keys, length * UnsafeUtility.SizeOf<TKey>());
+            UnsafeUtility.MemCpy(valuePtr, values, length * UnsafeUtility.SizeOf<TValue>());
+
+            var buckets = (int*)data.buckets;
+            var nextPtrs = (int*)data.next + oldLength;
+
+            for (var idx = 0; idx < length; idx++)
+            {
+                var hash = keys[idx].GetHashCode() & data.bucketCapacityMask;
+                var index = oldLength + idx;
+                var next = Interlocked.Exchange(ref UnsafeUtility.ArrayElementAsRef<int>(buckets, hash), index);
+                nextPtrs[idx] = next;
+            }
+        }
         
+        public static unsafe void AddBatchUnsafe<TKey, TValue>(
+            [NoAlias] this NativeParallelMultiHashMap<TKey, TValue> hashMap,
+            [NoAlias] NativeArray<TKey> keys,
+            [NoAlias] NativeArray<TValue> values)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            //CheckLengthsMatch(keys.Length, values.Length);
+            AddBatchUnsafe(hashMap, (TKey*)keys.GetUnsafeReadOnlyPtr(), (TValue*)values.GetUnsafeReadOnlyPtr(), keys.Length);
+        }
+
+        public static unsafe void AddBatchUnsafe<TKey, TValue>(
+            [NoAlias] this NativeParallelMultiHashMap<TKey, TValue> hashMap,
+            [NoAlias] TKey* keys,
+            [NoAlias] TValue* values,
+            int length)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(hashMap.m_Safety);
+#endif
+
+            var oldLength = hashMap.Count();
+            var newLength = oldLength + length;
+
+            if (hashMap.Capacity < newLength)
+            {
+                hashMap.Capacity = newLength;
+            }
+
+            var data = hashMap.GetUnsafeBucketData();
+
+            var keyPtr = (TKey*)data.keys + oldLength;
+            var valuePtr = (TValue*)data.values + oldLength;
+
+            UnsafeUtility.MemCpy(keyPtr, keys, length * UnsafeUtility.SizeOf<TKey>());
+            UnsafeUtility.MemCpy(valuePtr, values, length * UnsafeUtility.SizeOf<TValue>());
+
+            var buckets = (int*)data.buckets;
+            var nextPtrs = (int*)data.next + oldLength;
+
+            for (var idx = 0; idx < length; idx++)
+            {
+                var bucket = keys[idx].GetHashCode() & data.bucketCapacityMask;
+                nextPtrs[idx] = buckets[bucket];
+                buckets[bucket] = oldLength + idx;
+            }
+
+            hashMap.m_MultiHashMapData.m_Buffer->allocatedIndexLength += length;
+        }
+
         public static RefEnumerator<TKey, TValue> GetRefValuesForKey<TKey, TValue>(
             this NativeParallelMultiHashMap<TKey, TValue> hashmap,
             TKey key)

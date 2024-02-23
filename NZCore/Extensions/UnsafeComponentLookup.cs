@@ -8,20 +8,19 @@ namespace NZCore
     [NativeContainer]
     public unsafe struct UnsafeComponentLookup<T> where T : unmanaged, IComponentData
     {
-        [NativeDisableUnsafePtrRestriction]
-        readonly EntityDataAccess*       m_Access;
-        LookupCache                      m_Cache;
+        [NativeDisableUnsafePtrRestriction] readonly EntityDataAccess* m_Access;
+        LookupCache m_Cache;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        internal AtomicSafetyHandle      m_Safety;
+        internal AtomicSafetyHandle m_Safety;
 #endif
-        readonly TypeIndex               m_TypeIndex;
-        uint                             m_GlobalSystemVersion;
-        readonly byte                    m_IsZeroSized;          // cache of whether T is zero-sized
-        
+        readonly TypeIndex m_TypeIndex;
+        uint m_GlobalSystemVersion;
+        readonly byte m_IsZeroSized; // cache of whether T is zero-sized
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        readonly byte                    m_IsReadOnly;
+        readonly byte m_IsReadOnly;
 #endif
-        
+
 
         internal uint GlobalSystemVersion => m_GlobalSystemVersion;
 
@@ -72,7 +71,7 @@ namespace NZCore
             // NOTE: We could in theory fetch all this data from m_Access.EntityComponentStore and void the SystemState from being passed in.
             //       That would unfortunately allow this API to be called from a job. So we use the required system parameter as a way of signifying to the user that this can only be invoked from main thread system code.
             //       Additionally this makes the API symmetric to ComponentTypeHandle.
-            m_GlobalSystemVersion =  systemState.m_EntityComponentStore->GlobalSystemVersion;
+            m_GlobalSystemVersion = systemState.m_EntityComponentStore->GlobalSystemVersion;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             var safetyHandles = &m_Access->DependencyManager->Safety;
@@ -130,7 +129,6 @@ namespace NZCore
         /// </remarks>
         public bool TryGetComponent(Entity entity, out T componentData)
         {
-
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
@@ -147,12 +145,14 @@ namespace NZCore
                 componentData = default;
                 return false;
             }
+
             void* ptr = ecs->GetOptionalComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
             if (ptr == null)
             {
                 componentData = default;
                 return false;
             }
+
             UnsafeUtility.CopyPtrToStructure(ptr, out componentData);
             return true;
         }
@@ -175,12 +175,12 @@ namespace NZCore
         {
             var ecs = m_Access->EntityComponentStore;
             var chunk = ecs->GetChunk(entity);
-            var archetype = chunk->Archetype;
+            var archetype = ecs->GetArchetype(chunk);
             if (Hint.Unlikely(archetype != m_Cache.Archetype))
                 m_Cache.Update(archetype, m_TypeIndex);
             var typeIndexInArchetype = m_Cache.IndexInArchetype;
             if (typeIndexInArchetype == -1) return false;
-            var chunkVersion = chunk->GetChangeVersion(typeIndexInArchetype);
+            var chunkVersion = archetype->Chunks.GetChangeVersion(typeIndexInArchetype, chunk.ListIndex);
 
             return ChangeVersionUtility.DidChange(chunkVersion, version);
         }
@@ -287,7 +287,7 @@ namespace NZCore
 #endif
             m_Access->SetComponentEnabled(entity, m_TypeIndex, value, ref m_Cache);
         }
-        
+
         /// <summary>
         /// Checks whether the <see cref="IComponentData"/> of type T is enabled on the specified system using a <see cref="SystemHandle"/>.
         /// For the purposes of EntityQuery matching, a system with a disabled component will behave as if it does not
@@ -373,7 +373,7 @@ namespace NZCore
                     : ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRW<T> (ptr, m_Safety);
+            return new RefRW<T>(ptr, m_Safety);
 #else
             return new RefRW<T> (ptr);
 #endif
@@ -398,7 +398,7 @@ namespace NZCore
 
             void* ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRO<T> (ptr, m_Safety);
+            return new RefRO<T>(ptr, m_Safety);
 #else
             return new RefRO<T> (ptr);
 #endif
@@ -432,7 +432,7 @@ namespace NZCore
                     : ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRW<T> (ptr, m_Safety);
+            return new RefRW<T>(ptr, m_Safety);
 #else
             return new RefRW<T> (ptr);
 #endif
@@ -490,16 +490,14 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);
 
-            int indexInBitField;
-            int* ptrChunkDisabledCount;
             var ptr =
                 isReadOnly
-                    ? ecs->GetEnabledRawRO(entity, m_TypeIndex, ref m_Cache, out indexInBitField, out ptrChunkDisabledCount)
+                    ? ecs->GetEnabledRawRO(entity, m_TypeIndex, ref m_Cache, out var indexInBitField, out var ptrChunkDisabledCount)
                     : ecs->GetEnabledRawRW(entity, m_TypeIndex, ref m_Cache, m_GlobalSystemVersion, out indexInBitField, out ptrChunkDisabledCount);
 
             return new EnabledRefRW<T2>(MakeSafeBitRef(ptr, indexInBitField), ptrChunkDisabledCount);
         }
-        
+
         /// <summary>
         /// Gets a safe reference to the component enabled state.
         /// </summary>
@@ -520,11 +518,9 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);
 
-            int indexInBitField;
-            int* ptrChunkDisabledCount;
             var ptr =
                 isReadOnly
-                    ? ecs->GetEnabledRawRO(entity, m_TypeIndex, ref m_Cache, out indexInBitField, out ptrChunkDisabledCount)
+                    ? ecs->GetEnabledRawRO(entity, m_TypeIndex, ref m_Cache, out var indexInBitField, out var ptrChunkDisabledCount)
                     : ecs->GetEnabledRawRW(entity, m_TypeIndex, ref m_Cache, m_GlobalSystemVersion, out indexInBitField, out ptrChunkDisabledCount);
 
             return new EnabledRefRW<T2>(MakeSafeBitRef(ptr, indexInBitField), ptrChunkDisabledCount);
@@ -548,7 +544,7 @@ namespace NZCore
             var ptr = ecs->GetEnabledRawRO(entity, m_TypeIndex, ref m_Cache, out indexInBitField, out _);
             return new EnabledRefRO<T2>(MakeSafeBitRef(ptr, indexInBitField));
         }
-        
+
         /// <summary>
         /// Gets a safe reference to the component enabled state.
         /// </summary>
@@ -575,7 +571,6 @@ namespace NZCore
         ////////////////////////////////////////////////////////////////////
         /// Added methods and difference between default ComponentLookup ///
         ////////////////////////////////////////////////////////////////////
-        
         public void* GetPtrRO(Entity entity)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -586,7 +581,7 @@ namespace NZCore
 
             return m_IsZeroSized != 0 ? default(void*) : ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
         }
-        
+
         public void* GetPtrRW(Entity entity)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -597,7 +592,7 @@ namespace NZCore
 
             return m_IsZeroSized != 0 ? null : ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
         }
-        
+
         public ref T GetRef(Entity entity, bool bumpVersion)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -609,10 +604,8 @@ namespace NZCore
             if (m_IsZeroSized != 0)
                 throw new ArgumentException($"UnsafeComponentLookup<{typeof(T)}> indexer can not index the component because it is zero sized, you can use Exists instead.");
 
-            void* ptr = bumpVersion ? 
-                ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache) :
-                ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
-            
+            void* ptr = bumpVersion ? ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache) : ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
+
             return ref UnsafeUtility.AsRef<T>(ptr);
         }
 
@@ -626,11 +619,11 @@ namespace NZCore
                 ptr = null;
                 return false;
             }
-            
+
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex);
 
-            ptr = (T*) ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
+            ptr = (T*)ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
             return true;
         }
 
@@ -644,41 +637,44 @@ namespace NZCore
         {
             throw new NotImplementedException();
         }
-        
+
         public bool TryGetComponentRefRW<TInner>(Entity entity, out TInner* ptr)
             where TInner : unmanaged
         {
             throw new NotImplementedException();
         }
-        
+
         public void SetChangeVersion(Entity entity)
         {
             var ecs = m_Access->EntityComponentStore;
             var chunk = ecs->GetChunk(entity);
-            
-            //if (Hint.Unlikely(m_Cache.Archetype != chunk->Archetype)) // test this optimization
-            if (m_Cache.IndexInArchetype == -1)
-                m_Cache.Update(chunk->Archetype, m_TypeIndex);
+            var archetype = ecs->GetArchetype(chunk);
 
-            chunk->SetChangeVersion(m_Cache.IndexInArchetype, m_GlobalSystemVersion);
+            if (Hint.Unlikely(archetype != m_Cache.Archetype))
+                m_Cache.Update(archetype, m_TypeIndex);
+
+            archetype->Chunks.SetChangeVersion(m_Cache.IndexInArchetype, chunk.ListIndex, m_GlobalSystemVersion);
         }
 
-        internal Chunk* GetChunk(Entity entity)
+        internal ChunkIndex GetChunk(Entity entity)
         {
             var ecs = m_Access->EntityComponentStore;
             return ecs->GetChunk(entity);
         }
-        
+
         public uint ReportChunkVersion(Entity entity)
         {
             var ecs = m_Access->EntityComponentStore;
             var chunk = ecs->GetChunk(entity);
+            var archetype = ecs->GetArchetype(chunk);
+            if (Hint.Unlikely(archetype != m_Cache.Archetype))
+                m_Cache.Update(archetype, m_TypeIndex);
 
-            var typeIndexInArchetype = ChunkDataUtility.GetIndexInTypeArray(chunk->Archetype, m_TypeIndex);
-            if (typeIndexInArchetype == -1) 
+            var typeIndexInArchetype = m_Cache.IndexInArchetype;
+            if (typeIndexInArchetype == -1)
                 return 0;
-            
-            var chunkVersion = chunk->GetChangeVersion(typeIndexInArchetype);
+
+            var chunkVersion = archetype->Chunks.GetChangeVersion(typeIndexInArchetype, chunk.ListIndex);
             return chunkVersion;
         }
 

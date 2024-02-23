@@ -1,0 +1,24 @@
+{
+  "name": "NZCore.UI",
+  "rootNamespace": "",
+  "references": [
+    "Unity.Mathematics",
+    "Unity.Burst",
+    "Unity.Collections",
+    "Unity.Entities",
+    "Unity.Entities.Hybrid",
+    "Unity.Entities.UI.Editor",
+    "Unity.Physics",
+    "NZCore",
+    "NZCore.Hybrid"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

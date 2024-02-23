@@ -1,93 +1,110 @@
-using System.Threading;
+using System.Diagnostics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
+using Unity.Entities;
+using Unity.Mathematics;
 
 namespace NZCore
 {
-    public unsafe struct NativeListExtended<T> where T : unmanaged
+    public static unsafe class NativeListExtensions
     {
-        public int increaseCount;
-        public int currentIndex;
-
-        [NativeDisableUnsafePtrRestriction] public UnsafeList<T>* list;
-        [NativeDisableUnsafePtrRestriction] public T* currentPtr;
-
-        public void Add(in T item)
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private static void CheckWriteAccess<T>(NativeList<T> list)
+            where T : unmanaged
         {
-            if (currentPtr == null || currentIndex >= increaseCount)
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(list.m_Safety);
+#endif
+        }
+        
+        public static void AddArrayToBlob<T>(this NativeList<T> nativeList, ref BlobBuilder builder, ref BlobArray<T> blobArray) 
+            where T : unmanaged
+        {
+            nativeList.AsArray().AddArrayToBlob(ref builder, ref blobArray);
+        }
+        
+        public static unsafe void AddToByteList<TData>(this NativeList<byte> list, TData data)
+            where TData : unmanaged
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            CheckWriteAccess(list);
+#endif
+            
+            int byteSize = UnsafeUtility.SizeOf<TData>();
+            var ptrToData = (byte*) UnsafeUtility.AddressOf(ref data);
+
+            AddToByteList(list, ptrToData, byteSize);
+        }
+		
+        public static unsafe void AddToByteList(this NativeList<byte> list, byte* ptrToData, int byteSize)
+        {
+            int oldLength = list.Length;
+            list.ResizeUninitialized(oldLength + byteSize);
+            
+            var basePtr = (byte*) list.GetUnsafePtr();
+            UnsafeUtility.MemCpy(basePtr + oldLength, ptrToData, byteSize);
+        }
+
+        public static void MemCpy(this NativeList<byte> list, byte* ptr, int size)
+        {
+            UnsafeUtility.MemCpy(list.m_ListData->Ptr, ptr, size);
+        }
+
+        public static void MemClear(this NativeList<byte> list)
+        {
+            UnsafeUtility.MemClear(list.m_ListData->Ptr, list.m_ListData->m_capacity);
+        }
+
+        public static void ReinterpretLengthAndCapacity<T>(this NativeList<byte> list)
+            where T : unmanaged
+        {
+            var size = UnsafeUtility.SizeOf<T>();
+
+            ReinterpretLengthAndCapacity(list, size);
+        }
+        
+        public static void ReinterpretLengthAndCapacity(this NativeList<byte> list, int size)
+        {
+            list.m_ListData->m_length /= size;
+            list.m_ListData->m_capacity /= size;
+        }
+        
+        public static void SetLengthNoResizeMemClear(this NativeList<byte> list, int size)
+        {
+            list.m_ListData->m_length = size;
+            list.MemClear();
+        }
+        
+        public static void ResizeExact<T>(this NativeList<T> list, int newCapacity)
+            where T : unmanaged
+        {
+            newCapacity = math.max(0, newCapacity);
+            var listPtr = list.m_ListData;
+            var allocator = listPtr->Allocator;
+
+            CollectionHelper.CheckAllocator(allocator);
+            T* newPointer = null;
+
+            var alignOf = UnsafeUtility.AlignOf<T>();
+            var sizeOf = sizeof(T);
+
+            if (newCapacity > 0)
             {
-                if (ReserveNoResize(list, increaseCount, out currentPtr, out currentIndex))
+                newPointer = (T*)allocator.Allocate(sizeOf, alignOf, newCapacity);
+
+                if (listPtr->Ptr != null && listPtr->m_capacity > 0)
                 {
-                    currentIndex = 0;
-                }                
-                else
-                {
-                    Debug.LogError($"Adding item failed! Could not reserve more memory. Capacity exceeded! index {currentIndex} length {list->m_length} capacity {list->m_capacity} increaseCount {increaseCount}");
-                    return;
+                    var itemsToCopy = math.min(newCapacity, listPtr->Capacity);
+                    var bytesToCopy = itemsToCopy * sizeOf;
+                    UnsafeUtility.MemCpy(newPointer, listPtr->Ptr, bytesToCopy);
                 }
             }
 
-            //UnsafeUtility.WriteArrayElement(currentPtr, currentIndex, item);
-            *(T*)((byte*)currentPtr + currentIndex * sizeof(T)) = item;
+            allocator.Free(listPtr->Ptr, listPtr->Capacity);
 
-            //Debug.Log("Writing '" + item.ToString() + "' to index: " + currentIndex + " ptr: " + new IntPtr((void*)currentPtr).ToString("X"));
-            currentIndex++;
+            listPtr->Ptr = newPointer;
+            listPtr->m_capacity = newCapacity;
+            listPtr->m_length = math.min(listPtr->m_length, newCapacity);
         }
-
-        public void AddRange(ref UnsafeList<T> listToAdd)
-        {
-            //list->AddRangeNoResize(listToAdd);
-            int count = listToAdd.m_length;
-
-            var sizeOf = sizeof(T);
-            void* dst = (byte*)list->Ptr + list->m_length * sizeOf;
-            UnsafeUtility.MemCpy(dst, listToAdd.Ptr, count * sizeOf);
-            list->m_length += count;
-        }
-
-        public void FillEmpty()
-        {
-            if (currentPtr == null)
-                return;
-            
-            //UnsafeUtility.MemSet(currentPtr + currentIndex * sizeof(T), 0, (increaseCount - currentIndex) * sizeof(T));
-
-            while (currentIndex < increaseCount)
-            {
-                *(T*)((byte*)currentPtr + currentIndex * sizeof(T)) = default(T);
-                currentIndex++;
-            }
-        }
-
-        public static bool ReserveNoResize(UnsafeList<T>* list, int length, out T* ptr, out int idx)
-        {
-            if (list->m_length + length > list->m_capacity)
-            {
-                idx = 0;
-                ptr = null;
-                return false;
-            }
-
-            idx = Interlocked.Add(ref list->m_length, length) - length;
-            ptr = (T*)(((byte*)list->Ptr) + (idx * UnsafeUtility.SizeOf<T>()));
-
-            return true;
-        }
-    }
-
-    public static unsafe class NativeListExtensions
-    {
-        public static NativeListExtended<T> GetExtendedList<T>(this ref NativeList<T>.ParallelWriter nativeList, int increaseCount = 10) where T : unmanaged
-        {
-            NativeListExtended<T> newList = new NativeListExtended<T>
-            {
-                list = nativeList.ListData,
-                increaseCount = increaseCount,
-                currentIndex = -1,
-                currentPtr = null
-            };
-            return newList;
-        }        
     }
 }

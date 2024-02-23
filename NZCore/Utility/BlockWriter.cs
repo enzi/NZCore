@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace NZCore.Stats.Editor
+namespace NZCore.Editor
 {
     public class BlockWriter
     {

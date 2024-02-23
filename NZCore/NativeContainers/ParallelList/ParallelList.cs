@@ -2,12 +2,14 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
+using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 namespace NZCore
@@ -76,6 +78,11 @@ namespace NZCore
             _unsafeParallelList->SetChunkCount(chunkCount);
         }
 
+        public byte* GetPerThreadListPtr()
+        {
+            return _unsafeParallelList->GetPerThreadListPtr();
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref UnsafeList<T> GetUnsafeList(int threadIndex)
         {
@@ -101,9 +108,9 @@ namespace NZCore
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void GetStartIndexArray(ref NativeArray<int> lengths)
+        public int GetStartIndexArray(ref NativeArray<int> lengths)
         {
-            _unsafeParallelList->GetStartIndexArray(ref lengths);
+            return _unsafeParallelList->GetStartIndexArray(ref lengths);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -156,6 +163,16 @@ namespace NZCore
         public ThreadWriter AsThreadWriter()
         {
             return new ThreadWriter(ref this);
+        }
+        
+        public void Report()
+        {
+            for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
+            {
+                ref UnsafeList<T> parallelList = ref _unsafeParallelList->GetUnsafeList(i);
+                
+                Debug.Log($"Thread {i} has {parallelList.Length} elements.");
+            }
         }
 
         [NativeContainer]
@@ -211,6 +228,11 @@ namespace NZCore
             public void SetManualThreadIndex(int threadIndex)
             {
                 chunkWriter.SetManualThreadIndex(threadIndex);
+            }
+            
+            public int GetThreadIndex()
+            {
+                return chunkWriter.GetThreadIndex();
             }
         }
 
@@ -312,6 +334,11 @@ namespace NZCore
             {
                 threadWriter.WriteMemCpy(ref value);
             }
+
+            public int GetThreadIndex()
+            {
+                return threadWriter.GetThreadIndex();
+            }
         }
 
         [NativeContainer]
@@ -363,80 +390,50 @@ namespace NZCore
         
         // helper jobs
 
-        public JobHandle CopyToArrayMulti(ref NativeList<T> list, ref SystemState state, JobHandle dependency)
-        {
-            NativeArray<int> startIndexArray = new NativeArray<int>();
-            startIndexArray.Initialize(JobsUtility.ThreadIndexCount, state.WorldUpdateAllocator, NativeArrayOptions.UninitializedMemory);
-
-            var prepareHandle = new PrepareParallelListCopyJob()
-            {
-                StartIndexArray = startIndexArray,
-                ParallelList = this,
-                List = list
-            }.Schedule(dependency);
-            
-            var copyHandle = new ParallelListToArrayMultiThreaded()
-            {
-                StartIndexArray = startIndexArray,
-                ParallelList = this,
-                Array = list
-            }.ScheduleParallel(JobsUtility.ThreadIndexCount, 1, prepareHandle);
-
-            return copyHandle;
-        }
-        
-        [BurstCompile]
-        public struct PrepareParallelListCopyJob : IJob
-        {
-            [ReadOnly] public ParallelList<T> ParallelList;
-            public NativeList<T> List; 
-            public NativeArray<int> StartIndexArray;
-            
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Execute()
-            {
-                List.ResizeUninitialized(List.Length + ParallelList.Length);
-                ParallelList.GetStartIndexArray(ref StartIndexArray);
-            }
-        }
-        
-        [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
-        public struct ParallelListToArrayMultiThreaded : IJobFor
-        {
-            [ReadOnly] public NativeArray<int> StartIndexArray;
-            [ReadOnly] public ParallelList<T> ParallelList;
-            [NativeDisableContainerSafetyRestriction] public NativeList<T> Array; 
-        
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Execute(int index)
-            {
-                ref var threadList = ref ParallelList.GetUnsafeList(index);
-                
-                if (threadList.Length == 0)
-                    return;
-
-                var sizeOf = sizeof(T);
-                var listPtr = Array.GetUnsafePtr();
-                var threadListPtr = threadList.Ptr;
-                //int startIndex = parallelList.GetBlockCountToIndex(index);
-
-                void* dst = listPtr + StartIndexArray[index];
-                
-                UnsafeUtility.MemCpy(dst, threadListPtr, threadList.Length * sizeOf);
-            }
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public JobHandle CopyToArraySingle(ref NativeList<T> nativeList, JobHandle dependency)
+        public JobHandle CopyToArraySingle(
+            ref NativeList<T> nativeList, 
+            JobHandle dependency)
         {
             return new UnsafeParallelListToArraySingleThreaded()
             {
                 ParallelList = _unsafeParallelList,
-                Array = nativeList.m_ListData
+                List = nativeList.m_ListData
             }.Schedule(dependency);
         }
         
-        [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
+        public JobHandle CopyToArraySingleAndIndex<TKey>(
+            ref NativeList<T> nativeList, 
+            ref ArrayHashMap<TKey, T> arrayHashMap, 
+            JobHandle dependency,
+            ParallelListToArrayAndIndexSingleThreaded<TKey> jobParam = default)
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            return new ParallelListToArrayAndIndexSingleThreaded<TKey>()
+            {
+                ParallelList = this,
+                List = nativeList,
+                ArrayHashMap = arrayHashMap
+            }.Schedule(dependency);
+        }
+        
+        public JobHandle CopyToArraySingleAndIndex<TKey>(
+            ref NativeList<T> nativeList, 
+            ref ArrayHashMap<TKey, T> arrayHashMap, 
+            ref ArrayHashMap<TKey, T> arrayHashMap2, 
+            JobHandle dependency, 
+            ParallelListToArrayAndIndexSingleThreadedForTwoMaps<TKey> jobParam = default)
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            return new ParallelListToArrayAndIndexSingleThreadedForTwoMaps<TKey>()
+            {
+                ParallelList = this,
+                List = nativeList,
+                ArrayHashMap1 = arrayHashMap,
+                ArrayHashMap2 = arrayHashMap2
+            }.Schedule(dependency);
+        }
+
+        [BurstCompile]
         public struct ParallelListToArraySingleThreaded : IJob
         {
             [ReadOnly] 
@@ -447,28 +444,27 @@ namespace NZCore
             public void Execute()
             {
                 int parallelListLength = ParallelList.Length;
-
-                if (Array.Capacity < Array.Length + parallelListLength)
-                    Array.Capacity = Array.Length + parallelListLength;
+                int oldArrayLength = Array.Length;
+                
+                Array.ResizeUninitialized(oldArrayLength + parallelListLength);
 
                 //Debug.Log($"Copying {parallelListLength} elements");
                 
                 var sizeOf = sizeof(T);
+                UnsafeList<T>* listData = Array.m_ListData;
                 
                 for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
                     ref var threadList = ref ParallelList.GetUnsafeList(i);
-                    //array.AddRangeNoResize(threadList.Ptr, threadList.m_length);
-                    
-                    
-                    void* dst = (byte*)Array.m_ListData->Ptr + Array.m_ListData->m_length * sizeOf;
+
+                    void* dst = ((byte*)listData->Ptr) + oldArrayLength * sizeOf;
                     UnsafeUtility.MemCpy(dst, threadList.Ptr, threadList.m_length * sizeOf);
-                    Array.m_ListData->m_length += threadList.m_length;
+                    oldArrayLength += threadList.m_length;
                 }
             }
         }
-        
-        [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
+
+        [BurstCompile]
         public struct UnsafeParallelListToArraySingleThreaded : IJob
         {
             [NativeDisableUnsafePtrRestriction]
@@ -476,29 +472,351 @@ namespace NZCore
             public UnsafeParallelList<T>* ParallelList;
             
             [NativeDisableUnsafePtrRestriction]
-            public UnsafeList<T>* Array;
+            public UnsafeList<T>* List;
         
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.NoInlining)]
             public void Execute()
             {
                 int parallelListLength = ParallelList->Length;
+                int oldListLength = List->Length;
+                
+                List->Resize(oldListLength + parallelListLength, NativeArrayOptions.UninitializedMemory);
+                byte* listPtr = (byte*) List->Ptr;
+                //Debug.Log($"Copying {parallelListLength} elements");
+                
+                var sizeOf = sizeof(T);
+                UnsafeParallelList<T>.PerThreadList* perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*) ParallelList->GetPerThreadListPtr();
 
-                if (Array->Capacity < Array->Length + parallelListLength)
-                    Array->Capacity = Array->Length + parallelListLength;
+                for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
+                {
+                    //ref var threadList = ref ParallelList->GetUnsafeList(i);
+                    var threadList = perThreadListPtr[i].List;
+                    //array.AddRangeNoResize(threadList.Ptr, threadList.m_length);
+                    
+                    void* dst = listPtr + oldListLength * sizeOf;
+                    UnsafeUtility.MemCpy(dst, threadList.Ptr, threadList.m_length * sizeOf);
+                    oldListLength += threadList.m_length;
+                }
+            }
+        }
+        
+        [BurstCompile]
+        public struct ParallelListToArrayAndIndexSingleThreaded<TKey> : IJob
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            [ReadOnly] public ParallelList<T> ParallelList;
+            public NativeList<T> List;
+            public ArrayHashMap<TKey, T> ArrayHashMap;
+
+            public void Execute()
+            {
+                int parallelListLength = ParallelList.Length;
+                int oldListLength = List.Length;
+                int newLength = oldListLength + parallelListLength;
+
+                List.ResizeUninitialized(newLength);
+                ArrayHashMap.SetCapacity(newLength);
+                byte* listPtr = (byte*) List.m_ListData->Ptr;
 
                 //Debug.Log($"Copying {parallelListLength} elements");
                 
                 var sizeOf = sizeof(T);
 
+                UnsafeParallelList<T>.PerThreadList* perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*) ParallelList.GetPerThreadListPtr();
+                
+                byte* dst = listPtr + oldListLength * sizeOf;
+                
                 for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
-                    ref var threadList = ref ParallelList->GetUnsafeList(i);
-                    //array.AddRangeNoResize(threadList.Ptr, threadList.m_length);
+                    //var threadList = ParallelList.GetUnsafeList(i);
+                    var threadList = perThreadListPtr[i].List;
+                    var tmpByteLength = threadList.m_length * sizeOf;
                     
-                    void* dst = ((byte*)Array->Ptr) + Array->m_length * sizeOf;
-                    UnsafeUtility.MemCpy(dst, threadList.Ptr, threadList.m_length * sizeOf);
-                    Array->m_length += threadList.m_length;
+                    UnsafeUtility.MemCpy(dst, threadList.Ptr, tmpByteLength);
+                    dst += tmpByteLength;
+                    
+                    //ArrayHashMap.CalculateBucketsSingle(threadList.Ptr, threadList.m_length);
                 }
+                
+                ArrayHashMap.SetValuesPtr(listPtr);
+                ArrayHashMap.CalculateBuckets(oldListLength, parallelListLength);
+            }
+        }
+        
+        [BurstCompile]
+        public struct ParallelListToArrayAndIndexSingleThreadedForTwoMaps<TKey> : IJob
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            [ReadOnly] public ParallelList<T> ParallelList;
+            public NativeList<T> List;
+            public ArrayHashMap<TKey, T> ArrayHashMap1;
+            public ArrayHashMap<TKey, T> ArrayHashMap2;
+
+            public void Execute()
+            {
+                int parallelListLength = ParallelList.Length;
+                int oldListLength = List.Length;
+                int newLength = oldListLength + parallelListLength;
+
+                List.ResizeUninitialized(newLength);
+
+                byte* listPtr = (byte*) List.m_ListData->Ptr;
+
+                //Debug.Log($"Copying {parallelListLength} elements");
+                
+                var sizeOf = sizeof(T);
+
+                UnsafeParallelList<T>.PerThreadList* perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*) ParallelList.GetPerThreadListPtr();
+
+                byte* dst = listPtr + oldListLength * sizeOf;
+                
+                for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
+                {
+                    //var threadList = ParallelList.GetUnsafeList(i);
+                    var threadList = perThreadListPtr[i].List;
+                    var tmpByteLength = threadList.m_length * sizeOf;
+                    
+                    UnsafeUtility.MemCpy(dst, threadList.Ptr, tmpByteLength);
+                    dst += tmpByteLength;
+                    
+                    //ArrayHashMap.CalculateBucketsSingle(threadList.Ptr, threadList.m_length);
+                }
+                
+                ArrayHashMap1.SetCapacity(newLength);
+                ArrayHashMap1.SetValuesPtr(listPtr);
+                ArrayHashMap1.CalculateBuckets(oldListLength, parallelListLength);
+                
+                ArrayHashMap2.SetCapacity(newLength);
+                ArrayHashMap2.SetValuesPtr(listPtr);
+                ArrayHashMap2.CalculateBuckets(oldListLength, parallelListLength);
+            }
+        }
+        
+        
+        /////////////////////////////// 
+        /// parallel
+        ///////////////////////////////
+        
+        public JobHandle CopyToArrayMulti(
+            ref NativeList<T> list, 
+            JobHandle dependency)
+        {
+            var prepareHandle = new PrepareParallelListCopyJob()
+            {
+                ParallelList = this,
+                List = list
+            }.Schedule(dependency);
+
+            var copyHandle = new ParallelListToArrayMultiThreaded()
+            {
+                ParallelList = this,
+                List = list
+            }.ScheduleParallel(JobsUtility.ThreadIndexCount, 1, prepareHandle);
+
+            return copyHandle;
+        }
+        
+        public JobHandle CopyToArrayParallelAndIndex<TKey>(ref NativeList<T> nativeList, ref ArrayHashMap<TKey, T> arrayHashMap, JobHandle dependency)
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            var prepareHandle = new PrepareParallelListCopyAndIndexJob<TKey>()
+            {
+                ParallelList = this,
+                List = nativeList,
+                ArrayHashMap = arrayHashMap
+            }.Schedule(dependency);
+            
+            var copyAndIndexHandle = new ParallelListToArrayAndIndexMultiThreaded<TKey>()
+            {
+                ParallelList = this,
+                List = nativeList,
+                ArrayHashMap = arrayHashMap
+            }.ScheduleParallel(JobsUtility.ThreadIndexCount, 1, prepareHandle);
+
+            return copyAndIndexHandle;
+        }
+
+        public JobHandle CopyToArrayParallelAndIndex<TKey>(ref NativeList<T> nativeList, ref ArrayHashMap<TKey, T> arrayHashMap, ref ArrayHashMap<TKey, T> arrayHashMap2, JobHandle dependency)
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            var prepareHandle = new PrepareParallelListCopyAndIndexJobForTwoMaps<TKey>()
+            {
+                ParallelList = this,
+                List = nativeList,
+                ArrayHashMap = arrayHashMap,
+                ArrayHashMap2 = arrayHashMap2
+            }.Schedule(dependency);
+            
+            var copyAndIndexHandle1 = new ParallelListToArrayAndIndexMultiThreadedForTwoMaps<TKey>()
+            {
+                ParallelList = this,
+                List = nativeList,
+                ArrayHashMap1 = arrayHashMap,
+                ArrayHashMap2 = arrayHashMap2
+            }.ScheduleParallel(JobsUtility.ThreadIndexCount, 1, prepareHandle);
+
+            return copyAndIndexHandle1;
+        }
+        
+        [BurstCompile]
+        public struct PrepareParallelListCopyJob : IJob
+        {
+            [ReadOnly] public ParallelList<T> ParallelList;
+            public NativeList<T> List; 
+            
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public void Execute()
+            {
+                int parallelListCount = ParallelList.Length;
+                List.SetCapacity(List.Length + parallelListCount);
+            }
+        }
+        
+        [BurstCompile]
+        public struct ParallelListToArrayMultiThreaded : IJobFor
+        {
+            [ReadOnly] public ParallelList<T> ParallelList;
+            [NativeDisableContainerSafetyRestriction] public NativeList<T> List; 
+        
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public void Execute(int index)
+            {
+                var threadList = ParallelList.GetUnsafeList(index);
+                int threadListLength = threadList.Length;
+                
+                if (threadListLength == 0)
+                    return;
+
+                var sizeOf = sizeof(T);
+
+                void* dst = List.GetUnsafePtr() + List.m_ListData->m_length;
+                Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+                UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
+            }
+        }
+        
+        [BurstCompile]
+        public struct PrepareParallelListCopyAndIndexJob<TKey> : IJob
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            [ReadOnly] public ParallelList<T> ParallelList;
+            public NativeList<T> List; 
+            public ArrayHashMap<TKey, T> ArrayHashMap;
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public void Execute()
+            {
+                int parallelListCount = ParallelList.Length;
+                List.SetCapacity(List.Length + parallelListCount);
+                //List.Clear();
+                ArrayHashMap.SetCapacity(List.Length + parallelListCount);
+                ArrayHashMap.SetValuesPtr((byte*) List.m_ListData->Ptr);
+            }
+        }
+        
+        
+        [BurstCompile]
+        public struct PrepareParallelListCopyAndIndexJobForTwoMaps<TKey> : IJob
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            [ReadOnly] public ParallelList<T> ParallelList;
+            public NativeList<T> List; 
+            public ArrayHashMap<TKey, T> ArrayHashMap;
+            public ArrayHashMap<TKey, T> ArrayHashMap2;
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public void Execute()
+            {
+                int parallelListCount = ParallelList.Length;
+                List.SetCapacity(List.Length + parallelListCount);
+                
+                ArrayHashMap.SetCapacity(List.Length + parallelListCount);
+                ArrayHashMap.SetValuesPtr((byte*) List.m_ListData->Ptr);
+                
+                ArrayHashMap2.SetCapacity(List.Length + parallelListCount);
+                ArrayHashMap2.SetValuesPtr((byte*) List.m_ListData->Ptr);
+            }
+        }
+
+        [BurstCompile]
+        public struct ParallelListToArrayAndIndexMultiThreaded<TKey> : IJobFor
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            [ReadOnly] public ParallelList<T> ParallelList;
+            [NativeDisableContainerSafetyRestriction] public NativeList<T> List; 
+            [NativeDisableContainerSafetyRestriction] public ArrayHashMap<TKey, T> ArrayHashMap;
+
+            //[MethodImpl(MethodImplOptions.NoInlining)]
+            public void Execute(int index)
+            {
+                var threadList = ParallelList.GetUnsafeList(index);
+                int threadListLength = threadList.Length;
+                
+                if (threadListLength == 0)
+                    return;
+
+                var sizeOf = sizeof(T);
+                //void* dst = List.GetUnsafePtr() + List.m_ListData->m_length;
+                //Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+                var newLength = Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+                void* dst = List.GetUnsafePtr() + (newLength - threadListLength);
+                UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
+                
+                ArrayHashMap.CalculateBucketsParallel(threadList.Ptr, threadList.m_length);
+            }
+        }
+        
+        [BurstCompile]
+        public struct ParallelListToArrayAndIndexMultiThreadedForTwoMaps<TKey> : IJobFor
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            [ReadOnly] public ParallelList<T> ParallelList;
+            [NativeDisableContainerSafetyRestriction] public NativeList<T> List; 
+            [NativeDisableContainerSafetyRestriction] public ArrayHashMap<TKey, T> ArrayHashMap1;
+            [NativeDisableContainerSafetyRestriction] public ArrayHashMap<TKey, T> ArrayHashMap2;
+
+            [NativeDisableContainerSafetyRestriction]
+            private NativeList<T> tmpList1;
+
+            public void Execute(int index)
+            {
+                var threadList = ParallelList.GetUnsafeList(index);
+                int threadListLength = threadList.Length;
+                
+                if (threadListLength == 0)
+                    return;
+
+                // if (!tmpList1.IsCreated)
+                // {
+                //     tmpList1 = new NativeList<T>(threadListLength, Allocator.Temp);
+                // }
+                // else
+                // {
+                //     tmpList1.Clear();
+                // }
+                //
+                var sizeOf = UnsafeUtility.SizeOf<T>();
+                //
+                // tmpList1.ResizeUninitialized(threadListLength);
+                // var tmpListArray = tmpList1.AsArray();
+                // var tmpListPtr = (T*) tmpListArray.GetUnsafeReadOnlyPtr();
+                //
+                // for (int i = 0; i < threadListLength; i++)
+                // {
+                //     tmpListArray[i] = threadList[i];
+                // }
+
+                
+                var newLength = Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+                void* dst = List.GetUnsafePtr() + (newLength - threadListLength);
+                //UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
+                UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
+                
+                //ArrayHashMap1.CalculateBucketsParallel(tmpListPtr, threadListLength);
+                //ArrayHashMap2.CalculateBucketsParallel(tmpListPtr, threadListLength);
+                
+                //ArrayHashMap1.CalculateBucketsParallel(threadList.Ptr, threadListLength);
+                ArrayHashMap2.CalculateBucketsParallel(threadList.Ptr, threadListLength);
             }
         }
     }

@@ -1,8 +1,9 @@
-﻿using Unity.Entities;
+﻿using NZCore;
+using Unity.Entities;
 
 namespace NZSpellCasting
 {
-    [UpdateInGroup(typeof(InitializationSystemGroup), OrderLast = true)]
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class NZSpellCastingSpawnSystemGroup : ComponentSystemGroup
     {
     }

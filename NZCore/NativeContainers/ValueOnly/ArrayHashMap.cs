@@ -56,12 +56,22 @@ namespace NZCore
         {
             return _unsafeArrayHashMap->TryPeekFirstRefValue(key);
         }
+
+        public void SetCapacity(int capacity)
+        {
+            _unsafeArrayHashMap->SetCapacity(capacity);
+        }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetArrays(ref NativeList<TValue> list)
+        public void SetArrays([NoAlias] ref NativeList<TValue> list)
         {
             var array = list.AsArray();
             _unsafeArrayHashMap->SetArrays(ref array);
+        }
+
+        public void SetValuesPtr(byte* newPtr)
+        {
+            _unsafeArrayHashMap->SetValuePtr(newPtr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,9 +81,27 @@ namespace NZCore
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalculateBuckets(int oldLength, int newLength)
+        {
+            _unsafeArrayHashMap->CalculateBuckets(oldLength, newLength);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalculateBuckets()
         {
             _unsafeArrayHashMap->CalculateBuckets();
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalculateBucketsSingle(TValue* valueArray, int length)
+        {
+            _unsafeArrayHashMap->CalculateBucketsSingle(valueArray, length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalculateBucketsParallel(TValue* valueArray, int length)
+        {
+            _unsafeArrayHashMap->CalculateBucketsParallel(valueArray, length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -124,8 +152,9 @@ namespace NZCore
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob
         {
-            [ReadOnly] public NativeList<TValue> Values;
+            [ReadOnly] [NoAlias]public NativeList<TValue> Values;
 
+            [NoAlias]
             public ArrayHashMap<TKey, TValue> Hashmap;
 
             public void Execute()

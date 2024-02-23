@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Unity;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Mathematics;
 
 namespace NZCore
@@ -14,18 +17,19 @@ namespace NZCore
         where TKey : unmanaged, IEquatable<TKey> 
         where TValue : unmanaged
     {
-        private int keyCapacity;
-        private int bucketCapacityMask;
-        private int allocatedIndexLength;
-        private int keyOffset;
-        
         [NativeDisableUnsafePtrRestriction] private byte* values;
         [NativeDisableUnsafePtrRestriction] private int* buckets;
         [NativeDisableUnsafePtrRestriction] private int* next;
         
         [NativeDisableUnsafePtrRestriction] private UnsafeList<int>* bucketsAndNextList;
+        
+        private int keyCapacity;
+        private int bucketCapacityMask;
+        private int allocatedIndexLength;
+        private int keyOffset;
 
-        private AllocatorManager.AllocatorHandle m_Allocator;
+        private AllocatorManager.AllocatorHandle m_Allocator; // 8 bytes
+        // should be 56 bytes
 
         public int Length => allocatedIndexLength;
         
@@ -34,14 +38,12 @@ namespace NZCore
         internal static UnsafeArrayHashMap<TKey, TValue>* Create<TAllocator>(int keyOffset, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
-            UnsafeArrayHashMap<TKey, TValue>* unsafeArrayHashMap = allocator.Allocate(default(UnsafeArrayHashMap<TKey, TValue>), 1);
+            UnsafeArrayHashMap<TKey, TValue>* unsafeArrayHashMap = (UnsafeArrayHashMap<TKey, TValue>*)allocator.Allocate(UnsafeUtility.SizeOf<UnsafeArrayHashMap<TKey, TValue>>(), JobsUtility.CacheLineSize, 1);
 
             unsafeArrayHashMap->m_Allocator = allocator.Handle;
             
             unsafeArrayHashMap->values = null;
-            
-            var listPtr = UnsafeList<int>.Create(0, allocator.Handle, options);
-            unsafeArrayHashMap->bucketsAndNextList = listPtr;
+            unsafeArrayHashMap->bucketsAndNextList = UnsafeList<int>.Create(0, allocator.Handle, options);
             
             unsafeArrayHashMap->next = unsafeArrayHashMap->bucketsAndNextList->Ptr;
             unsafeArrayHashMap->buckets = unsafeArrayHashMap->bucketsAndNextList->Ptr;
@@ -55,32 +57,44 @@ namespace NZCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetArrays(ref NativeArray<TValue> valueArray)
+        public void SetCapacity(int capacity)
         {
-            if (valueArray.Length == 0)
-            {
-                Clear();
-                return;
-            }
-            
-            values = (byte*) valueArray.GetUnsafeReadOnlyPtr();
-
-            int length = valueArray.Length;
+            int length = capacity;
             int bucketLength = length * 2;
 
             keyCapacity = length;
             bucketLength = math.ceilpow2(bucketLength);
             bucketCapacityMask = bucketLength - 1;
-
-            //Debug.Log($"Set next/buckets cap to {length}/{bucketLength} - keyOffset: {keyOffset}");
             
-            bucketsAndNextList->Resize(length + bucketLength, NativeArrayOptions.UninitializedMemory);
+            var sizeOfInt = UnsafeUtility.SizeOf<int>();
+            var nextSize = CollectionHelper.Align(sizeOfInt * length, JobsUtility.CacheLineSize) / sizeOfInt;
+            var bucketSize = CollectionHelper.Align(sizeOfInt * bucketLength, JobsUtility.CacheLineSize) / sizeOfInt;
+                
+            //Debug.Log($"Set next/buckets cap to {length}/{bucketLength} to {nextSize}/{bucketSize} - keyOffset: {keyOffset}");
+            
+            bucketsAndNextList->Resize(nextSize + bucketSize, NativeArrayOptions.UninitializedMemory);
             next = bucketsAndNextList->Ptr;
-            buckets = bucketsAndNextList->Ptr + length;
+            buckets = bucketsAndNextList->Ptr + nextSize;
             
-            UnsafeUtility.MemSet(next, 0xFF, length * 4); // sets everything to max, Unity uses the same method in their NativeHashMap clear
-            UnsafeUtility.MemSet(buckets, 0xFF, bucketLength * 4);
+            UnsafeUtility.MemSet(bucketsAndNextList->Ptr, 0xFF, (nextSize + bucketSize) * 4); // sets everything to -1
+
+            allocatedIndexLength = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetArrays([NoAlias] ref NativeArray<TValue> valueArray)
+        {
+            int length = valueArray.Length;
             
+            if (length == 0)
+            {
+                Clear();
+                return;
+            }
+
+            SetCapacity(length);
+            
+            values = (byte*) valueArray.GetUnsafeReadOnlyPtr();
             allocatedIndexLength = length;
         }
 
@@ -92,12 +106,10 @@ namespace NZCore
             
             allocatedIndexLength = 0;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalculateBuckets()
         {
-            //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
-
             byte* keyArrayPtr = (values + keyOffset);
             var size = sizeof(TValue);
             
@@ -107,6 +119,85 @@ namespace NZCore
                 
                 next[i] = buckets[bucketIndex];
                 buckets[bucketIndex] = i;
+
+                keyArrayPtr += size;
+            }
+        }
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalculateBuckets(int oldLength, int length)
+        {
+            //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
+
+            byte* keyArrayPtr = (values + keyOffset);
+            var size = sizeof(TValue);
+            
+            int* nextPtrs = next + oldLength;
+            
+            for (int i = 0; i < length; i++)
+            {
+                var bucketIndex = (*(TKey*) keyArrayPtr).GetHashCode() & bucketCapacityMask;
+                
+                nextPtrs[i] = buckets[bucketIndex];
+                buckets[bucketIndex] = oldLength + i;
+
+                keyArrayPtr += size;
+            }
+
+            allocatedIndexLength = oldLength + length;
+        }
+        
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalculateBucketsSingle(TValue* valueArray, int length)
+        {
+            if (length == 0)
+                return;
+            
+            //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} length: {length}");
+
+            var oldLength = allocatedIndexLength;
+            allocatedIndexLength += length;
+
+            byte* keyArrayPtr = ((byte*) valueArray + keyOffset);
+            var size = sizeof(TValue);
+            
+            int* nextPtrs = next + oldLength;
+            
+            for (int i = 0; i < length; i++)
+            {
+                var key = *(TKey*)keyArrayPtr;
+                var bucketIndex = key.GetHashCode() & bucketCapacityMask;
+
+                nextPtrs[i] = buckets[bucketIndex];
+                buckets[bucketIndex] = oldLength + i;
+
+                keyArrayPtr += size;
+            }
+        }
+        
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalculateBucketsParallel(TValue* valueArray, int length)
+        {
+            //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
+            
+            // leave it here as learning experience. another thread could change allocatedIndexLength so it's not safe to read here and write to oldLength
+            //var oldLength = allocatedIndexLength;
+            //var newLength = Interlocked.Add(ref allocatedIndexLength, length);
+            
+            var newLength = Interlocked.Add(ref allocatedIndexLength, length);
+            var oldLength = newLength - length;
+
+            byte* keyArrayPtr = ((byte*) valueArray + keyOffset);
+            var size = sizeof(TValue);
+            
+            var nextPtrs = next + oldLength;
+            
+            for (int i = 0; i < length; i++)
+            {
+                var bucketIndex = (*(TKey*) keyArrayPtr).GetHashCode() & bucketCapacityMask;
+                var index = oldLength + i;
+                var nextIndex = Interlocked.Exchange(ref UnsafeUtility.ArrayElementAsRef<int>(buckets, bucketIndex), index);
+                nextPtrs[i] = nextIndex;
 
                 keyArrayPtr += size;
             }
@@ -128,6 +219,11 @@ namespace NZCore
         private TValue GetValue(int index)
         {
             return *(TValue*) (values + index * sizeof(TValue));
+        }
+
+        public void SetValuePtr(byte* newPtr)
+        {
+            values = newPtr;
         }
 
         public bool TryGetFirstRefValue(TKey key, out byte* item, out ArrayHashMapIterator<TKey> it)            
@@ -215,7 +311,7 @@ namespace NZCore
 
                 while (bucket != -1)
                 {
-                    result.Keys[count] = GetKey(bucket); //UnsafeUtility.ReadArrayElement<TKey>(values + keyOffset, bucket);
+                    result.Keys[count] = GetKey(bucket);
                     result.Values[count] = GetValue(bucket);
                     count++;
                     bucket = next[bucket];
@@ -232,7 +328,8 @@ namespace NZCore
 
         public void Dispose()
         {
-            UnsafeList<int>.Destroy(bucketsAndNextList, ref m_Allocator);
+            if (bucketsAndNextList->IsCreated)
+                UnsafeList<int>.Destroy(bucketsAndNextList, ref m_Allocator);
         }
     }
     

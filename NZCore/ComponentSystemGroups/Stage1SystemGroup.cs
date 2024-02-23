@@ -1,11 +1,22 @@
-﻿using Unity.Collections;
+﻿using NZSpellCasting;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
 namespace NZCore
 {
-    [UpdateAfter(typeof(FixedStepSimulationSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     public partial class NZSpellCastingSimulationSystemGroup : ComponentSystemGroup
+    {
+    }
+    
+    [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
+    public partial class NZEffectsInitializationSystemGroup : ComponentSystemGroup
+    {
+    }
+    
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    public partial class NZSpellCastingPresentationSystemGroup : ComponentSystemGroup
     {
     }
 
@@ -21,13 +32,19 @@ namespace NZCore
     }
 
     [UpdateInGroup(typeof(NZSpellCastingSimulationSystemGroup))]
-    [UpdateAfter(typeof(Stage1SystemGroup))]
+    [UpdateAfter(typeof(Stage2SystemGroup))]
+    public partial class NZEffectsSystemGroup : ComponentSystemGroup
+    {
+    }
+    
+    [UpdateInGroup(typeof(NZSpellCastingSimulationSystemGroup))]
+    [UpdateAfter(typeof(NZEffectsSystemGroup))]
     public partial class NZStatsSystemGroup : ComponentSystemGroup
     {
     }
 
     [UpdateInGroup(typeof(NZSpellCastingSimulationSystemGroup))]
-    [UpdateAfter(typeof(Stage2SystemGroup))]
+    [UpdateAfter(typeof(NZStatsSystemGroup))]
     public partial class Stage5SystemGroup : ComponentSystemGroup
     {
     }
@@ -37,48 +54,21 @@ namespace NZCore
     public partial class Stage6SystemGroup : ComponentSystemGroup
     {
     }
+    
+    // [UpdateInGroup(typeof(NZSpellCastingSimulationSystemGroup))]
+    // [UpdateAfter(typeof(Stage6SystemGroup))]
+    // public partial class FixedPresentationGroup : ComponentSystemGroup
+    // {
+    // }
 
     [UpdateInGroup(typeof(NZSpellCastingSimulationSystemGroup))]
     [UpdateAfter(typeof(Stage6SystemGroup))]
-    public partial class Stage7SystemGroup : ComponentSystemGroup
+    public partial class NZClearSystemGroup : ComponentSystemGroup
     {
     }
-
-    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
-    [UpdateInGroup(typeof(SimulationSystemGroup), OrderLast = true)]
-    public partial class DestroyEntityCommandBufferSystem : EntityCommandBufferSystem
+    
+    [UpdateInGroup(typeof(PresentationSystemGroup), OrderLast = true)]
+    public partial class NZClearPresentationSystemGroup : ComponentSystemGroup
     {
-        public unsafe struct Singleton : IComponentData, IECBSingleton
-        {
-            private UnsafeList<EntityCommandBuffer>* pendingBuffers;
-            private AllocatorManager.AllocatorHandle allocator;
-
-            public EntityCommandBuffer CreateCommandBuffer(WorldUnmanaged world)
-            {
-                return EntityCommandBufferSystem.CreateCommandBuffer(ref *pendingBuffers, allocator, world);
-            }
-
-            public void SetPendingBufferList(ref UnsafeList<EntityCommandBuffer> buffers)
-            {
-                pendingBuffers = (UnsafeList<EntityCommandBuffer>*)UnsafeUtility.AddressOf(ref buffers);
-            }
-
-            public void SetAllocator(Allocator allocatorIn)
-            {
-                allocator = allocatorIn;
-            }
-
-            public void SetAllocator(AllocatorManager.AllocatorHandle allocatorIn)
-            {
-                allocator = allocatorIn;
-            }
-        }
-        
-        protected override void OnCreate()
-        {
-            base.OnCreate();
-
-            this.RegisterSingleton<Singleton>(ref PendingBuffers, World.Unmanaged);
-        }
     }
 }

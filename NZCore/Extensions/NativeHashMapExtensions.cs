@@ -7,12 +7,27 @@ namespace NZCore
 	/// <summary> Extensions for <see cref="NativeHashMap{TKey,TValue}"/>. </summary>
     public static class NativeHashMapExtensions
     {
-        public static unsafe bool TryGetValue<TKey, TValue>(NativeParallelHashMap<TKey, TValue> hashMap, TKey key, out void* valuePtr)
+        public static unsafe bool TryGetRefValue<TKey, TValue>(this NativeHashMap<TKey, TValue> hashMap, TKey key, out TValue* item)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            NativeParallelMultiHashMapIterator<TKey> tempIt;
-            return TryGetFirstRefValueAtomic<TKey, TValue>(hashMap.m_HashMapData.m_Buffer, key, out valuePtr, out tempIt);
+            var idx = hashMap.m_Data->Find(key);
+
+            if (-1 != idx)
+            {
+                item = (TValue*) (hashMap.m_Data->Ptr + (UnsafeUtility.SizeOf<TValue>() * idx));// UnsafeUtility.ReadArrayElement<TValue>(hashMap.m_Data->Ptr, idx);
+                return true;
+            }
+
+            item = default;
+            return false;
+        }
+        
+        public static unsafe bool TryGetRefValue<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> hashMap, TKey key, out void* valuePtr)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            return TryGetFirstRefValueAtomic<TKey, TValue>(hashMap.m_HashMapData.m_Buffer, key, out valuePtr, out var _);
         }
         
         internal static unsafe bool TryGetFirstRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, TKey key, out void* valuePtr, out NativeParallelMultiHashMapIterator<TKey> it)
