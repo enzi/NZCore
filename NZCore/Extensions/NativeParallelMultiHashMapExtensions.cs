@@ -127,7 +127,6 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            //CheckLengthsMatch(keys.Length, values.Length);
             AddBatchUnsafe(hashMap, (TKey*)keys.GetUnsafeReadOnlyPtr(), (TValue*)values.GetUnsafeReadOnlyPtr(), keys.Length);
         }
 
@@ -209,10 +208,6 @@ namespace NZCore
 
             public void Dispose() { }
 
-            /// <summary>
-            /// Advances the enumerator to the next value of the key.
-            /// </summary>
-            /// <returns>True if <see cref="Current"/> is valid to read after the call.</returns>
             public bool MoveNext()
             {
                 if (isFirst)
@@ -224,15 +219,7 @@ namespace NZCore
                 return TryGetNextRefValue<TKey, TValue>(hashmap.m_MultiHashMapData.m_Buffer, out value, ref iterator);
             }
 
-            /// <summary>
-            /// Resets the enumerator to its initial state.
-            /// </summary>
             public void Reset() => isFirst = true;
-
-            /// <summary>
-            /// The current value.
-            /// </summary>
-            /// <value>The current value.</value>
             public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(value);
         }
         
@@ -258,7 +245,6 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            //CheckRead();
             int entryIdx = it.NextEntryIndex;
             it.NextEntryIndex = -1;
             it.EntryIndex = -1;

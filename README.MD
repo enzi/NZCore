@@ -3,18 +3,47 @@ Helpful extensions for Entities, NativeContainer extensions and custom NativeCon
 Credits for DynamicHashMap and batch add methods for NativeList/MultiHashMap go to [tertle](https://forum.unity.com/members/tertle.33474/).
 There's also a new ResizeBufferCapacity by him but it's still very experimental and has a bug with subscenes data on new imports of a project.
 
+Some highlights:
+- Asset Management
+  - Auto incrementing ScriptableObjects
+  - Create blobs from ScriptableObjects
+- Extensions for
+  - Archetypes
+  - Chunk
+  - NativeContainers
+  - Components and DynamicBuffers
+  - UnsafeComponentLookup
+  - World
+- Lots of small helpers
+  - Bits
+  - Bytes
+  - Generic math
+  - Logical comparisons (non generic yet)
+  - SerializableGuid
+- Custom Native Containers
+  - ParallelList
+  - UnsafeGenericStack
+  - KeyValueArrayHashMap (turns any kind of array into a hashmap)
+  - UnsafeQueue
+  - ArrayHashMap
+- Custom Systems
+  - Destruction Pipeline
+- Utility
+  - BigDouble
+  - BlockWriter (for easier code generation)
+- UIToolkit helpers
+
+Most is not documented at all. I'm sorry. I'll do so when I find the time for it.
+
 Note about Entities 1.0:
 Unity has listened to our requirements and Entities 1.0 has changed ComponentDataFromEntity to ComponentLookup and added methods to to get RefRO/RW structs of an IComponentData.
 This makes UnsafeCDFE not as important as it once was. However, there's still a bit of value found because you
 can directly get a ref value and not the struct wrapper and getting the pointers is easier, without relying on calling
 UnsafeUtility.AddressOf on a RefRW/RO. 
 
-Unity.Entities.Exposed namespace:
-
-The main purpose is to get pointers and references from ComponentDataFromEntity
-
+NZCore namespace:
 ```
-using Unity.Entities.Exposed;
+using NZCore;
 ```
 
 Inside System - change:
@@ -116,7 +145,7 @@ ValueOnly:
 The same principle as KeyValue with the exception that there's no key array because the key is *inside* the value array.
 For that to work, the type and offset to the key has to be set.
 
-Unity.Entities.Exposed namespace:
+NZCore namespace:
 Helpful access to internal data of Entities.
 This includes Blobs, Chunks, DynamicBuffers, EntityManager, FixedList, StorageInfo and World.
 The MVP of this namespace is 
@@ -132,18 +161,6 @@ a call to SetChangeVersion with the handle bumps the version. That way any jobs 
 NZNativeContainers.Extensions namespace:
 
 A bunch of extensions for NativeList and NativeMultiHashMap.
-Core parts were written by [tertle](https://forum.unity.com/members/tertle.33474/)
-
-(GetExtendedList has been supserseded by ParallelList)
-NativeList.ParallelWriter has an extension method GetExtendedList(int increaseCount = 10) to get a NativeListExtended version from it.
-A NativeListExtended doesn't allocate memory on every Add, instead it reserves blocks of elements, defined by the increaseCount.
-With this, several threads can write to a NativeList without getting stalled by Interlocked increasing the length.
-
-Best usage is when the final length is known. If not, another helper extension, FillEmpty can be used to fill in those elements at the end of a Job.
-
-NativeMultiHashMap can be allocated in advance and with a call to GetKeyAndValueLists(out keys, out values), 2 NativeLists can be created that 
-can be used to directly write to the keys and values.
-Paired with the NativeListExtended this is a very fast way to produce NativeMultiHashMap data.
-At the end of writing, CalculateBuckets needs to be called.
+Parts were written by [tertle](https://forum.unity.com/members/tertle.33474/) and can be found in the NZCore\Bovine folder.
 
 Also provided is an extension method, GetRefValuesForKey which will return an enumerator that is able to get ref values from the NativeMultiHashMap.

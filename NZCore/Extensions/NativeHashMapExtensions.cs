@@ -4,7 +4,6 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace NZCore
 {
-	/// <summary> Extensions for <see cref="NativeHashMap{TKey,TValue}"/>. </summary>
     public static class NativeHashMapExtensions
     {
         public static unsafe bool TryGetRefValue<TKey, TValue>(this NativeHashMap<TKey, TValue> hashMap, TKey key, out TValue* item)
@@ -15,7 +14,7 @@ namespace NZCore
 
             if (-1 != idx)
             {
-                item = (TValue*) (hashMap.m_Data->Ptr + (UnsafeUtility.SizeOf<TValue>() * idx));// UnsafeUtility.ReadArrayElement<TValue>(hashMap.m_Data->Ptr, idx);
+                item = (TValue*) (hashMap.m_Data->Ptr + (UnsafeUtility.SizeOf<TValue>() * idx));
                 return true;
             }
 

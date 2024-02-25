@@ -105,8 +105,6 @@ namespace NZCore
                 math.countbits(chunkEnabledMask.ULong0 ^ (chunkEnabledMask.ULong0 << 1)) +
                 math.countbits(chunkEnabledMask.ULong1 ^ (chunkEnabledMask.ULong1 << 1)) - 1;
             
-            Debug.Log($"edgeCount {edgeCount}");
-            
             return edgeCount <= 4;
         }
         

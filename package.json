@@ -2,7 +2,7 @@
   "name": "com.enzisoft.nzcore",
   "displayName": "NZCore Library",
   "version": "0.6.0",
-  "unity": "2022.3",  
+  "unity": "2022.3",
   "dependencies": {
     "com.unity.entities": "1.2.0-pre.6"
   },
