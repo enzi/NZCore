@@ -1,6 +1,4 @@
 ﻿using NZSpellCasting;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
 namespace NZCore

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using BovineLabs.Core.UI;
 using NZCore.UIToolkit;
-using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UIElements;
 

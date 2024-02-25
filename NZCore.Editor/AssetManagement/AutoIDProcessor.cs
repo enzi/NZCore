@@ -6,26 +6,27 @@ using UnityEngine;
 
 namespace NZCore.AssetManagement
 {
-    public abstract class AutoIDProcessor : AssetPostprocessor
+    public class AutoIDProcessor : AssetPostprocessor
     {
         // ReSharper disable once Unity.IncorrectMethodSignature
+        // ReSharper disable once UnusedMember.Local
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths, bool didDomainReload)
         {
             if (didDomainReload)
                 return;
-
+    
             var processors = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(t => t.GetTypes())
                 .Where(t => !t.IsAbstract && t.GetInterfaces().Contains(typeof(IAutoIDProcessor)))
                 .Select(t => (IAutoIDProcessor)Activator.CreateInstance(t))
                 .ToList();
-
+    
             if (processors.Count == 0)
             {
                 //Debug.LogError("No IAutoIDProcessor found");
                 return;
             }
-
+    
             foreach (var processor in processors)
             {
                 processor.Process(importedAssets, deletedAssets, movedAssets, movedFromAssetPaths);
@@ -33,9 +34,8 @@ namespace NZCore.AssetManagement
         }
     }
     
-    public abstract class AutoIDProcessor<T, TChangeProcessor> : IAutoIDProcessor
+    public abstract class AutoIDProcessor<T> : IAutoIDProcessor
         where T :  ScriptableObjectWithAutoID
-        where TChangeProcessor : struct, IChangeProcessor
     {
         public void Process(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
@@ -109,7 +109,7 @@ namespace NZCore.AssetManagement
 
                 var keyList = map.Select(m => m.Key).ToList();
 
-                bool hasErrors = false;
+                //bool hasErrors = false;
 
                 foreach (var key in keyList)
                 {
@@ -118,7 +118,7 @@ namespace NZCore.AssetManagement
                     if (value.Count <= 1) 
                         continue;
 
-                    hasErrors = true;
+                    //hasErrors = true;
                     
                     foreach (var element in value)
                     {
@@ -156,9 +156,6 @@ namespace NZCore.AssetManagement
                     //     didChange = true;
                     // }
                 }
-                
-                if (hasErrors)
-                    return;
             }
 
             // if (rootFolder != null)
@@ -168,16 +165,6 @@ namespace NZCore.AssetManagement
             //         if (deletedAsset.Contains(rootFolder))
             //             didChange = true;
             //     }
-            // }
-            //
-            // if (didChange)
-            // {
-            //     // DidChange and subsequent codegen is handled via a button in the SO now
-            //     // generating code on every change is not cool 
-            //     //TChangeProcessor changeProcessor = default;
-            //     //changeProcessor.DidChange(allAssets);
-            //      
-            //     //AssetDatabase.ForceReserializeAssets();
             // }
         }
 

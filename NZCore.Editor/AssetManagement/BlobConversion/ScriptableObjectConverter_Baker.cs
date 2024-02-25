@@ -20,7 +20,7 @@ namespace NZCore
             Debug.Log($"Running ScriptableObjectConverter for {converter.name}");    
             converter.GatherScriptableObjects();
             
-            foreach (var guid in converter.scriptableObjects)
+            foreach (var guid in converter.ScriptableObjects)
             {
                 var assetPath = AssetDatabase.GUIDToAssetPath(guid);
                 Debug.Log($"Converting SO: {assetPath} " + typeof(TSOClass));
@@ -71,7 +71,7 @@ namespace NZCore
             //Debug.Log($"Running ScriptableObjectConverter for {converter.name}");    
             converter.GatherScriptableObjects();
             
-            foreach (var guid in converter.scriptableObjects)
+            foreach (var guid in converter.ScriptableObjects)
             {
                 var assetPath = AssetDatabase.GUIDToAssetPath(guid);
                 //Debug.Log($"Converting SO: {assetPath} " + typeof(TSOClass));

@@ -2,7 +2,6 @@ using NZCore.Components;
 using NZSpellCasting;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Entities.Hybrid.Baking;
 using UnityEngine;
 
 namespace NZCore

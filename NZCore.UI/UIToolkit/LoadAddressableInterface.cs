@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NZCore.Hybrid;
+﻿using NZCore.Hybrid;
 using NZCore.UIToolkit;
 using Unity.Entities;
 using UnityEngine;

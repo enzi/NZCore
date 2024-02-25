@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using Unity.Entities.UI;
+using UnityEngine;
 using UnityEngine.UIElements;
-using Unity.Entities.UI;
 
 namespace NZCore.Editor
 {

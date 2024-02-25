@@ -134,6 +134,7 @@ namespace NZCore.Editor
             return propertyFields;
         }
         
+        // ReSharper disable once UnusedMember.Local
         private static Type GetPropertyType(SerializedProperty property)
         {
             Type parentType = property.serializedObject.targetObject.GetType();

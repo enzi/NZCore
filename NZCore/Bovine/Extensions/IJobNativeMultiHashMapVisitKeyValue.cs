@@ -1,12 +1,12 @@
-﻿namespace NZCore
-{
-    using System;
-    using System.Diagnostics.CodeAnalysis;
-    using Unity.Collections;
-    using Unity.Collections.LowLevel.Unsafe;
-    using Unity.Jobs;
-    using Unity.Jobs.LowLevel.Unsafe;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
+using Unity.Jobs.LowLevel.Unsafe;
 
+namespace NZCore
+{
     /// <summary> Job that visits each key value pair in a <see cref="NativeParallelMultiHashMap{TKey,TValue}" />. </summary>
     /// <typeparam name="TKey">The key type of the hash map.</typeparam>
     /// <typeparam name="TValue">The value type of the hash map.</typeparam>

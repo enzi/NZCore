@@ -2,10 +2,10 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using System;
+
 namespace NZCore.Core.Iterators
 {
-    using System;
-
     public static unsafe class UnsafeDynamicHashMapExtensions
     {
         public static bool FindFirst<TKey, TValue>(this DynamicMultiHashMap<TKey, TValue> hashMap, TKey key, TValue value, out TValue* result)

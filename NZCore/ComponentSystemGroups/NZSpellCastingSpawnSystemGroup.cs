@@ -1,5 +1,4 @@
-﻿using NZCore;
-using Unity.Entities;
+﻿using Unity.Entities;
 
 namespace NZSpellCasting
 {

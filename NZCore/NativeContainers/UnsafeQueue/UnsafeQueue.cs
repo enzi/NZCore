@@ -1,12 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Burst;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
-using System.Diagnostics;
 
 namespace NZCore
 {

@@ -2,17 +2,17 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
+using Unity.Jobs.LowLevel.Unsafe;
+using Unity.Mathematics;
 
 namespace NZCore.Core.Iterators
 {
-    using System;
-    using System.Diagnostics;
-    using Unity.Collections;
-    using Unity.Collections.LowLevel.Unsafe;
-    using Unity.Entities;
-    using Unity.Jobs.LowLevel.Unsafe;
-    using Unity.Mathematics;
     using Debug = UnityEngine.Debug;
 
     internal unsafe struct DynamicHashMapData

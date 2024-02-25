@@ -4,7 +4,6 @@ using BovineLabs.Core.UI;
 using NZSpellCasting.UI;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Entities;
 using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit

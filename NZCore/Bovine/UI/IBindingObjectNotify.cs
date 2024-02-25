@@ -2,15 +2,15 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using Unity.Burst;
+using Unity.Collections;
+using UnityEngine.UIElements;
+
 namespace BovineLabs.Core.UI
 {
-    using System.Collections.Generic;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.InteropServices;
-    using Unity.Burst;
-    using Unity.Collections;
-    using UnityEngine.UIElements;
-
     public delegate void OnPropertyChangedDelegate(in FixedString64Bytes property);
 
     public static class BindingObjectCollection

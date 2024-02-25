@@ -2,16 +2,16 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 
 namespace NZCore.Core.Iterators
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using Unity.Collections;
-    using Unity.Collections.LowLevel.Unsafe;
-    using Unity.Entities;
     using CollectionHelper = Unity.Collections.CollectionHelper;
 
     //[DebuggerDisplay("Count = {Count()}, Capacity = {Capacity}, IsCreated = {IsCreated}, IsEmpty = {IsEmpty}")]

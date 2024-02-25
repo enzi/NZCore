@@ -2,16 +2,15 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 
 namespace NZCore.Core.Iterators
 {
-    using System;
-    using System.Diagnostics;
-    using Unity.Collections;
-    using Unity.Collections.LowLevel.Unsafe;
-    using Unity.Entities;
-
     public interface IDynamicMultiHashMap<TKey, TValue> : IDynamicHashMapBase<TKey, TValue>
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged

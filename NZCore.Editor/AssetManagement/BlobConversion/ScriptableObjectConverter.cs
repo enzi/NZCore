@@ -7,16 +7,16 @@ public abstract class ScriptableObjectConverterBase<SOType> : MonoBehaviour
     where SOType : ScriptableObject
 {
     //[HideInInspector]
-    public List<string> scriptableObjects;
+    public List<string> ScriptableObjects;
 
-    public bool autoLoad = false;
-    public bool update = false;
+    public bool AutoLoad;
+    public bool ForceUpdate;
     
     public void GatherScriptableObjects()
     {
-        scriptableObjects = new List<string>();
+        ScriptableObjects = new List<string>();
         
-        if (!autoLoad)
+        if (!AutoLoad)
             return; 
 
         //Debug.Log($"Find t: {typeof(SOType)}");
@@ -24,16 +24,16 @@ public abstract class ScriptableObjectConverterBase<SOType> : MonoBehaviour
 
         foreach (var guid in guids)
         {
-            scriptableObjects.Add(guid);
+            ScriptableObjects.Add(guid);
         }
     }
 
     public void Update()
     {
-        if (update)
-        {
-            update = false;
-            GatherScriptableObjects();
-        }
+        if (!ForceUpdate) 
+            return;
+        
+        ForceUpdate = false;
+        GatherScriptableObjects();
     }
 }

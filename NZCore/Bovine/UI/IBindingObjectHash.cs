@@ -2,10 +2,10 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using UnityEngine.UIElements;
+
 namespace BovineLabs.Core.UI
 {
-    using UnityEngine.UIElements;
-
     public interface IBindingObjectHash<T> : IBindingObject<T>, IDataSourceViewHashProvider
         where T : unmanaged, IBindingObjectHashData
     {
