@@ -1,4 +1,5 @@
-﻿using NZCore.Hybrid;
+﻿#if UNITY_2023_3_0
+using NZCore.Hybrid;
 using NZCore.UIToolkit;
 using Unity.Entities;
 using UnityEngine;
@@ -57,3 +58,4 @@ namespace NZSpellCasting.UI
         }
     }
 }
+#endif

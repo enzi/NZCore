@@ -1,3 +1,4 @@
+#if UNITY_2023_3_0
 using System;
 using System.Runtime.InteropServices;
 using BovineLabs.Core.UI;
@@ -134,3 +135,4 @@ namespace NZCore.UIToolkit
         }
     }
 }
+#endif

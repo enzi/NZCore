@@ -2,6 +2,7 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+#if UNITY_2023_3_0
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -105,3 +106,4 @@ namespace BovineLabs.Core.UI
         }
     }
 }
+#endif

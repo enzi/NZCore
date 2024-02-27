@@ -1,3 +1,4 @@
+#if UNITY_2023_3_0
 using System.Collections;
 using NZCore.UIToolkit;
 using Unity.Properties;
@@ -36,3 +37,4 @@ namespace NZCore.UI
         }
     }
 }
+#endif

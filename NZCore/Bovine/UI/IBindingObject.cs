@@ -2,6 +2,7 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+#if UNITY_2023_3_0
 namespace BovineLabs.Core.UI
 {
     public interface IBindingObject
@@ -28,3 +29,4 @@ namespace BovineLabs.Core.UI
         T* Ptr { set; }
     }
 }
+#endif

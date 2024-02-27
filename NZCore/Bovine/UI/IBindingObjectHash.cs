@@ -2,6 +2,7 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+#if UNITY_2023_3_0
 using UnityEngine.UIElements;
 
 namespace BovineLabs.Core.UI
@@ -20,3 +21,4 @@ namespace BovineLabs.Core.UI
         long Version { get; set; }
     }
 }
+#endif

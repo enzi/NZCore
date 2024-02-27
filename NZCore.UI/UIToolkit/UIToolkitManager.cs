@@ -1,3 +1,4 @@
+#if UNITY_2023_3_0
 using System.Collections.Generic;
 using BovineLabs.Core.UI;
 using NZCore.UIToolkit;
@@ -143,3 +144,4 @@ namespace NZSpellCasting.UI
         }
     }
 }
+#endif

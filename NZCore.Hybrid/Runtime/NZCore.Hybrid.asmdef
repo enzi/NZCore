@@ -1,0 +1,26 @@
+{
+    "name": "NZCore.Hybrid",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Entities",
+        "Unity.Entities.Hybrid",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.AI.Navigation",
+        "Unity.Mathematics",
+        "NZCore",
+        "Unity.Transforms",
+        "Unity.ResourceManager",
+        "Unity.Physics.Hybrid",
+        "Unity.Addressables"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
