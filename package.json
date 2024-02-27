@@ -4,7 +4,8 @@
   "version": "0.6.0",
   "unity": "2022.3",
   "dependencies": {
-    "com.unity.entities": "1.2.0-pre.6"
+    "com.unity.entities": "1.0.16",
+    "com.unity.addressables": "1.21.20"
   },
   "type": "library"
 }
