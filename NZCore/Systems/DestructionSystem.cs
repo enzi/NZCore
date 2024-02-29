@@ -62,7 +62,7 @@ namespace NZCore
                 }
             }
             
-            Debug.Log($"Adding {child} to {parent} - {destroyMethod}");
+            //Debug.Log($"Adding {child} to {parent} - {destroyMethod}");
 
             if (map.TryGetRefValue(parent, out var listPtr))
             {

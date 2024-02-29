@@ -53,7 +53,7 @@ namespace NZCore
                 {
                     var cleanupData = SystemAPI.GetComponent<RemoveFromLinkedEntityGroupCleanup>(removedEntity);
 
-                    Debug.Log($"Get leg from {cleanupData.Parent} - removing {removedEntity}");
+                    //Debug.Log($"Get leg from {cleanupData.Parent} - removing {removedEntity}");
                     if (SystemAPI.HasBuffer<LinkedEntityGroup>(cleanupData.Parent))
                     {
                         var leg = SystemAPI.GetBuffer<LinkedEntityGroup>(cleanupData.Parent);
