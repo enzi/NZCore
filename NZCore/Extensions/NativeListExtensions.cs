@@ -106,5 +106,17 @@ namespace NZCore
             listPtr->m_capacity = newCapacity;
             listPtr->m_length = math.min(listPtr->m_length, newCapacity);
         }
+        
+        public static void Remove<T>(this NativeList<T> list, T element)
+            where T : unmanaged
+        {
+            for (int i = list.Length - 1; i >= 0; i --)
+            {
+                if (list[i].GetHashCode() != element.GetHashCode()) 
+                    continue;
+                
+                list.RemoveAt(i);
+            }
+        }
     }
 }

@@ -68,6 +68,9 @@ namespace NZCore.Hybrid
             
             foreach (var index in entitiesToRemove)
             {
+                if (index >= entitiesList.Length)
+                    continue;
+                
                 var trackedEntity = entitiesList[index];
                 
                 if (trackedEntity.DestroyHybridWithEntity == 1)

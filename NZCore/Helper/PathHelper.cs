@@ -14,7 +14,7 @@ namespace NZCore
         }
         public static string GetOrCreateCodeGeneratedPath(string path)
         {
-            return GetOrCreatePath("Assets/NZSpellCasting/CodeGenerated/", path);
+            return GetOrCreatePath("Assets/NZSpellCasting.CodeGenerated/", path);
         }
     }
 }
