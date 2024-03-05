@@ -17,7 +17,7 @@ namespace NZCore.Core.Iterators
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
             Assert.AreEqual(1, UnsafeUtility.SizeOf<TBuffer>());
 #endif
             return new DynamicHashMap<TKey, TValue>(buffer.Reinterpret<byte>());
@@ -28,7 +28,7 @@ namespace NZCore.Core.Iterators
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
             Assert.AreEqual(1, UnsafeUtility.SizeOf<TBuffer>());
 #endif
             return new DynamicMultiHashMap<TKey, TValue>(buffer.Reinterpret<byte>());

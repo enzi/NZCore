@@ -11,7 +11,8 @@ namespace NZCore
         GreaterThan,
         LesserThan,
         GreaterEqual,
-        LesserEqual
+        LesserEqual,
+        HasFlag
     }
     
     [Serializable]

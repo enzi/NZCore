@@ -340,6 +340,7 @@ namespace NZCore.Core.Iterators
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
         private static void CheckIndexOutOfBounds(DynamicHashMapData* data, int idx)
         {
             if (idx < 0 || idx >= data->KeyCapacity)

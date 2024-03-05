@@ -318,6 +318,7 @@ namespace NZCore.Core.Iterators
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
         private static void CheckHashMapReallocateDoesNotShrink(DynamicHashMapData* data, int newCapacity)
         {
             if (data->KeyCapacity > newCapacity)

@@ -119,6 +119,7 @@ namespace NZCore
         }
         
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
         private static void CheckInitialCapacity(int initialCapacity)
         {
             if (initialCapacity < 0)
@@ -126,6 +127,7 @@ namespace NZCore
         }
         
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
         private static void CheckTotalSize(int initialCapacity, long totalSize)
         {
             // Make sure we cannot allocate more than int.MaxValue (2,147,483,647 bytes)

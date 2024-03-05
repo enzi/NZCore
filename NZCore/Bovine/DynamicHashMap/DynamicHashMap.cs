@@ -193,6 +193,7 @@ namespace NZCore.Core.Iterators
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
         private static void CheckSize(DynamicBuffer<byte> buffer)
         {
             if (buffer.Length != 0 && buffer.Length < UnsafeUtility.SizeOf<DynamicHashMapData>())
@@ -202,6 +203,7 @@ namespace NZCore.Core.Iterators
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
         private static void ThrowKeyNotPresent(TKey key)
         {
             throw new ArgumentException($"Key: {key} is not present in the NativeHashMap.");

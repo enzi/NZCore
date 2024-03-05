@@ -23,6 +23,8 @@ namespace NZCore.Helper
                     return leftValue >= rightValue;
                 case ConditionLogicValueComparison.LesserEqual:
                     return leftValue <= rightValue;
+                case ConditionLogicValueComparison.HasFlag:
+                    return ((int) leftValue & (int) rightValue) == (int) rightValue;
             }
 
             return false;

@@ -172,7 +172,7 @@ namespace NZCore
                 typeHandle.m_LookupCache.Update(archetype, typeHandle.m_TypeIndex);
             }
 
-#if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (Hint.Unlikely(typeHandle.IsReadOnly))
             {
                 throw new InvalidOperationException("Provided ComponentTypeHandle is read-only; can't get a read/write pointer to component data");
