@@ -1,7 +1,7 @@
 ﻿using Unity.Entities;
 using UnityEngine.UIElements;
 
-namespace NZSpellCasting
+namespace NZCore.UIToolkit
 {
     public class UIRootSingleton : IComponentData
     {

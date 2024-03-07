@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace NZSpellCasting
+namespace NZCore
 {
     public static class InterlockedExtensions
     {

@@ -8,7 +8,7 @@ namespace NZCore.Editor
 {
     public static class EnumCodeGenerator
     {
-        public static string GetSourceCodeForEnum<T>(this List<T> allAssets, string enumName, Type enumType, bool flagEnum = false, string defaultNone = "None", string defaultNamespace = "NZSpellCasting")
+        public static string GetSourceCodeForEnum<T>(this List<T> allAssets, string enumName, Type enumType, bool flagEnum = false, string defaultNone = "None", string defaultNamespace = "NZCore")
             where T : ScriptableObject, IAutoID
         {
             BlockWriter bw = new BlockWriter();

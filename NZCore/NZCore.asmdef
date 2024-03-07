@@ -8,7 +8,8 @@
         "Unity.Entities",
         "Unity.Entities.Hybrid",
         "Unity.Entities.UI.Editor",
-        "Unity.Physics"
+        "Unity.Physics",
+        "NZSpellCasting.SystemGroups"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

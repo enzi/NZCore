@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NZSpellCasting
+namespace NZCore
 {
     public interface IGenericValue<T> : IEquatable<T>
     {

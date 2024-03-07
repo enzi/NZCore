@@ -5,7 +5,7 @@ using NZCore.UIToolkit;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace NZSpellCasting.UI
+namespace NZCore.UIToolkit
 {
     public class UIToolkitManager : MonoBehaviour
     {

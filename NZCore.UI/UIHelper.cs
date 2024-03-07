@@ -2,7 +2,6 @@
 using System;
 using System.Runtime.InteropServices;
 using BovineLabs.Core.UI;
-using NZSpellCasting.UI;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.UIElements;

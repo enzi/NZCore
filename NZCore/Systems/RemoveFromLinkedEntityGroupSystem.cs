@@ -1,8 +1,6 @@
 using NZCore.Components;
-using NZSpellCasting;
 using Unity.Collections;
 using Unity.Entities;
-using UnityEngine;
 
 namespace NZCore
 {

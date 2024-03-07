@@ -1,6 +1,6 @@
 using Unity.Entities;
 
-namespace NZSpellCasting
+namespace NZCore
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class NZDestroySystemGroup : ComponentSystemGroup

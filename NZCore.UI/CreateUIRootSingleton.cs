@@ -3,7 +3,7 @@ using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace NZSpellCasting.UI
+namespace NZCore.UIToolkit
 {
     public interface IUICreator
     {

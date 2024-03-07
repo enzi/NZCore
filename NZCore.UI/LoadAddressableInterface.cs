@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.U2D;
 using UnityEngine.UIElements;
 
-namespace NZSpellCasting.UI
+namespace NZCore.UIToolkit
 {
     [RequireComponent(typeof(UIToolkitManager))]
     public class LoadAddressableInterface : MonoBehaviour

@@ -8,6 +8,8 @@ namespace NZCore
         Multiply,
         Divide,
         PowerAtoB,
-        PowerBtoA
+        PowerBtoA,
+        Min,
+        Max
     }
 }

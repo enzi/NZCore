@@ -1,10 +1,9 @@
 #if UNITY_2023_3_0
 using System.Collections;
-using NZCore.UIToolkit;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
-namespace NZCore.UI
+namespace NZCore.UIToolkit
 {
     [UxmlElement]
     public partial class ArrayContainer : VisualElement
