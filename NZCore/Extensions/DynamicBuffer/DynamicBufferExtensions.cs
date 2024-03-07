@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
@@ -110,12 +111,39 @@ namespace NZCore
             UnsafeUtility.MemCpy(basePtr + oldLength, ptrToData, byteSize);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BufferHeaderExposed* GetBufferHeader<T>(this ref BufferAccessor<T> bufferAccessor, int index)
             where T : unmanaged, IBufferElementData
         {
-            var exposed = UnsafeUtility.As<BufferAccessor<T>, BufferAccessorExposed<T>>(ref bufferAccessor);
-            
+            ref var exposed = ref GetBufferAccessorHeader(ref bufferAccessor);
             return (BufferHeaderExposed*)(exposed.m_BasePointer + index * exposed.m_Stride);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref BufferAccessorExposed<T> GetBufferAccessorHeader<T>(this ref BufferAccessor<T> bufferAccessor)
+            where T : unmanaged, IBufferElementData
+        {
+            var ptr = UnsafeUtility.AddressOf(ref bufferAccessor);
+            return ref UnsafeUtility.AsRef<BufferAccessorExposed<T>>(ptr);
+        }
+
+        public static bool IsEmpty<T>(this ref BufferAccessor<T> bufferAccessor)
+            where T : unmanaged, IBufferElementData
+        {
+            ref var exposed = ref bufferAccessor.GetBufferAccessorHeader();
+
+            byte* basePointer = exposed.m_BasePointer;
+            var stride = exposed.m_Stride;
+            int length = exposed.m_Length;
+
+            int count = 0;
+            for (int i = 0; i < length; i++)
+            {
+                var tmp = ((BufferHeaderExposed*) (basePointer + i * stride));
+                count += tmp->Length;
+            }
+
+            return count == 0;
         }
     }
 }
