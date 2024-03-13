@@ -38,11 +38,17 @@ namespace NZCore.UIToolkit
 
             if (state)
             {
+                if (visualElement.ClassListContains(visibleClass)) 
+                    return;
+                
                 visualElement.RemoveFromClassList(hiddenClass);
                 visualElement.AddToClassList(visibleClass);
             }
             else
             {
+                if (visualElement.ClassListContains(hiddenClass)) 
+                    return;
+                
                 visualElement.RemoveFromClassList(visibleClass);
                 visualElement.AddToClassList(hiddenClass);
             }
