@@ -125,18 +125,23 @@ namespace NZCore
                 
                 foreach (var entity in entities)
                 {
+                    //Debug.Log($"Destroying {entity}");
+                    state.EntityManager.DestroyEntity(entity);
+                    
                     if (!destructionMap.Map.TryGetValue(entity, out var list))
                         continue;
-                    
+
                     list.Dispose();
                     destructionMap.Map.Remove(entity);
                 }
                 
                 //Debug.Log("Running destroyQuery");
-                state.EntityManager.DestroyEntity(destroyQuery);
+                
+                // todo, this throws the error, which is actually wrong -.-
+                // ArgumentException: DestroyEntity(EntityQuery query) is destroying entity Entity(1089:1) 'BaseMonsterPrefab' which
+                // contains a LinkedEntityGroup and the entity Entity(1089:1) 'BaseMonsterPrefab' in that group is not included in the query. 
+                //state.EntityManager.DestroyEntity(destroyQuery);
             }
-
-            
         }
     }
 }

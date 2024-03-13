@@ -1,4 +1,6 @@
-﻿using Unity.Entities;
+﻿using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 
 namespace NZCore
 {
@@ -37,6 +39,18 @@ namespace NZCore
 
             for (int i = 0; i < buffer.Length; i++)
                 tmp2[i] = buffer[i];
+        }
+
+        public static T* CopyBlob<T>(this ref BlobAssetReference<T> blobReference)
+            where T : unmanaged
+        {
+            var header = blobReference.m_data.Header;
+            var length = header->Length;
+
+            var copyPtr = UnsafeUtility.Malloc(length, 16, Allocator.Persistent);
+            
+            UnsafeUtility.MemCpy(copyPtr, blobReference.m_data.m_Ptr, length);
+            return (T*) copyPtr;
         }
     }
 }

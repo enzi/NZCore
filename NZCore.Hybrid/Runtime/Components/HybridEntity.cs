@@ -9,11 +9,11 @@ namespace NZCore.Hybrid
     {
         public Entity Entity = Entity.Null;
         
-        public static void LinkEntityToGameObject(EntityCommandBuffer ecb, Entity entity, GameObject go, bool setTransform = true)
+        public static void LinkEntityToGameObject(EntityCommandBuffer ecb, Entity entity, GameObject go, bool setTransform, bool destroyWithEntity)
         {
             var transform = go.transform;
             
-            World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<TransformEntityMapping>().AddTransform(transform, entity);
+            World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<TransformEntityMapping>().AddTransform(transform, entity, destroyWithEntity);
 
             if (setTransform)
             {
@@ -30,11 +30,11 @@ namespace NZCore.Hybrid
             }
         }
         
-        public static void LinkEntityToGameObject(EntityManager entityManager, Entity entity, GameObject go, bool setTransform = true)
+        public static void LinkEntityToGameObject(EntityManager entityManager, Entity entity, GameObject go, bool setTransform, bool destroyWithEntity)
         {
             var transform = go.transform;
             
-            World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<TransformEntityMapping>().AddTransform(transform, entity);
+            World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<TransformEntityMapping>().AddTransform(transform, entity, destroyWithEntity);
 
             if (setTransform)
             {
@@ -54,41 +54,45 @@ namespace NZCore.Hybrid
     
     public class HybridSpawnPrefab : IComponentData
     {
-        public Entity hybridEntity;
-        public GameObject prefab;
-        public bool setTransform;
+        public Entity HybridEntity;
+        public GameObject Prefab;
+        public byte SetTransform;
+        public byte DestroyWithEntity;
     }
 
     public class HybridSpawnPrefabFromPool : IComponentData
     {
-        public Entity hybridEntity;
-        public GameObject prefab;
-        public bool setTransform;
+        public Entity HybridEntity;
+        public GameObject Prefab;
+        public byte SetTransform;
+        public byte DestroyWithEntity;
     }
     
     public struct HybridSpawnAddressable : IComponentData
     {
-        public Entity hybridEntity;
-        public Hash128 addressableHash;
-        public bool setTransform;
+        public Entity HybridEntity;
+        public Hash128 AddressableHash;
+        public byte SetTransform;
+        public byte DestroyWithEntity;
     }
 
     public struct HybridSpawnAddressableFromPool : IComponentData
     {
-        public Entity hybridEntity;
-        public Hash128 addressableHash;
-        public bool setTransform;
+        public Entity HybridEntity;
+        public Hash128 AddressableHash;
+        public byte SetTransform;
+        public byte DestroyWithEntity;
     }
 
     public class WaitForHybridEntity : CustomYieldInstruction
     {
-        private readonly HybridEntity hybridEntity;
+        private readonly HybridEntity HybridEntity;
 
         public WaitForHybridEntity(HybridEntity hybridEntity)
         {
-            this.hybridEntity = hybridEntity;
+            this.HybridEntity = hybridEntity;
         }
 
-        public override bool keepWaiting => hybridEntity == null || hybridEntity.Entity == Entity.Null;
+        public override bool keepWaiting => HybridEntity == null || HybridEntity.Entity == Entity.Null;
     }
 }

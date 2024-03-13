@@ -118,5 +118,11 @@ namespace NZCore
                 list.RemoveAt(i);
             }
         }
+        
+        public static ref readonly T ElementAtRO<T>(this NativeList<T> list, int index)
+            where T : unmanaged
+        {
+            return ref UnsafeUtility.ArrayElementAsRef<T>(list.GetUnsafeReadOnlyPtr(), index);
+        }
     }
 }

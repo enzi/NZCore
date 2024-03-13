@@ -117,7 +117,7 @@ namespace NZCore
                 ecs->GetComponentDataWithTypeRO(entity, typeIndex) : 
                 ecs->GetComponentDataWithTypeRW(entity, typeIndex, ecs->GlobalSystemVersion);
         }
-        
+
         public static byte* GetComponentDataRaw(this EntityManager entityManager, TypeIndex typeIndex, Entity entity, bool isReadOnly)
         {
             var access = entityManager.GetCheckedEntityDataAccess();
@@ -125,10 +125,38 @@ namespace NZCore
             var entityInChunk = ecs->GetEntityInChunk(entity);
 
             LookupCache lookupCache = default;
-            
-            return isReadOnly ? 
-                ChunkDataUtility.GetOptionalComponentDataWithTypeRO(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk, typeIndex, ref lookupCache) : 
-                ChunkDataUtility.GetOptionalComponentDataWithTypeRW(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk, typeIndex, ecs->GlobalSystemVersion, ref lookupCache);
+
+            return isReadOnly
+                ? ChunkDataUtility.GetOptionalComponentDataWithTypeRO(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk, typeIndex, ref lookupCache)
+                : ChunkDataUtility.GetOptionalComponentDataWithTypeRW(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk, typeIndex, ecs->GlobalSystemVersion,
+                    ref lookupCache);
+        }
+        
+        ///////////////////////////////
+        /// Restore ComponentLookup ///
+        ///////////////////////////////
+
+        public static ComponentLookup<T> GetComponentLookup<T>(this EntityManager entityManager, bool isReadOnly = false)
+                where T : unmanaged, IComponentData
+        {
+            var typeIndex = TypeManager.GetTypeIndex<T>();
+            return GetComponentLookup<T>(entityManager, typeIndex, isReadOnly);
+        }
+
+        internal static ComponentLookup<T> GetComponentLookup<T>(this EntityManager entityManager, TypeIndex typeIndex, bool isReadOnly)
+            where T : unmanaged, IComponentData
+        {
+            var access = entityManager.GetCheckedEntityDataAccess();
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            var safetyHandles = &access->DependencyManager->Safety;
+#endif
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            return new ComponentLookup<T>(typeIndex, access, isReadOnly);
+#else
+        return new ComponentLookup<T>(typeIndex, access);
+#endif
         }
         
         /////////////////////////////

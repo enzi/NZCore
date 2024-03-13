@@ -87,7 +87,7 @@ namespace NZCore.Hybrid
                     }
                     else
                     {
-                        Debug.Log($"TransformEntityMapping - Destroying {tmpTransform.gameObject.name}");
+                        //Debug.Log($"TransformEntityMapping - Destroying {tmpTransform.gameObject.name}");
                     
                         weakAssetLoader.UnregisterEntity(trackedEntity.Entity);
                         Object.Destroy(tmpTransform.gameObject);    
@@ -148,7 +148,7 @@ namespace NZCore.Hybrid
             if (index < entitiesList.Length)
             {
                 var entityToFix = entitiesList[index].Entity;
-                Debug.Log($"fixing entity {entityToFix} with index {index}");
+                //Debug.Log($"fixing entity {entityToFix} with index {index}");
                 indexLookup[entityToFix] = index;
             }
         }
@@ -198,7 +198,7 @@ namespace NZCore.Hybrid
                 }
                 else
                 {
-                    Debug.Log($"Queuing destroying hybrid entity on {Entities[index].Entity}");
+                    //Debug.Log($"Queuing destroying hybrid entity on {Entities[index].Entity}");
                     EntitiesToRemove.AddNoResize(index);
                 }
             }

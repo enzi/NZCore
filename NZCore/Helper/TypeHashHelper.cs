@@ -15,7 +15,7 @@ namespace NZCore.Helper
             if (verbose)
                 Debug.Log($"Hashing {type.Name}");
 
-            var hash = HashTypeName(type);
+            var hash = HashTypeName(type, verbose);
             // If we shouldn't walk the type's fields just return the type name hash.
             // UnityEngine objects have their own serialization mechanism so exclude hashing their internals
             if (type.IsArray || type.IsPointer || type.IsPrimitive || type.IsEnum || (TypeManager.UnityEngineObjectType?.IsAssignableFrom(type) == true))
@@ -27,7 +27,7 @@ namespace NZCore.Helper
                 throw new ArgumentException($"'{type}' contains open generic parameters. Generic types must have all generic parameters specified to closed types when calculating stable type hashes");
 
             // Only non-pod and non-unityengine types could possibly have a version attribute
-            hash = TypeHash.CombineFNV1A64(hash, HashVersionAttribute(type));
+            hash = TypeHash.CombineFNV1A64(hash, HashVersionAttribute(type, verbose));
             if (verbose)
                 Debug.Log($"HashVersionAttribute: {hash}");
 
@@ -108,12 +108,13 @@ namespace NZCore.Helper
         {
             ulong hash = HashNamespace(type, verbose);
             hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Name));
-#if UNITY_2022_3_11F1_OR_NEWER
-            hash = CombineFNV1A64(hash, FNV1A64(type.Assembly.GetName().Name));
-#endif
+            hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Assembly.GetName().Name));
+
             foreach (var ga in type.GenericTypeArguments)
             {
                 hash = TypeHash.CombineFNV1A64(hash, HashTypeName(ga));
+                if (verbose)
+                    Debug.Log($"HashTypeName {ga.Name} - {hash}");
             }
 
             return hash;
@@ -145,7 +146,7 @@ namespace NZCore.Helper
             return hash;
         }
         
-        private static ulong HashVersionAttribute(Type type)
+        private static ulong HashVersionAttribute(Type type, bool verbose = false)
         {
             int version = 0;
 

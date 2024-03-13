@@ -24,6 +24,7 @@ namespace NZCore.Hybrid
         public AssetReference addressable;
         public bool setTransform;
         public bool usePooling;
+        public bool DestroyWithEntity;
 
 #if UNITY_EDITOR
 
@@ -113,18 +114,20 @@ namespace NZCore.Hybrid
                     {
                         AddComponentObject(presentationEntity, new HybridSpawnPrefabFromPool()
                         {
-                            hybridEntity = entity,
-                            prefab = authoring.prefab,
-                            setTransform = authoring.setTransform
+                            HybridEntity = entity,
+                            Prefab = authoring.prefab,
+                            SetTransform = authoring.setTransform.ToByte(),
+                            DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });
                     }
                     else
                     {
                         AddComponentObject(presentationEntity, new HybridSpawnPrefab()
                         {
-                            hybridEntity = entity,
-                            prefab = authoring.prefab,
-                            setTransform = authoring.setTransform
+                            HybridEntity = entity,
+                            Prefab = authoring.prefab,
+                            SetTransform = authoring.setTransform.ToByte(),
+                            DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });
                     }
                 }
@@ -134,18 +137,20 @@ namespace NZCore.Hybrid
                     {
                         AddComponent(presentationEntity, new HybridSpawnAddressableFromPool()
                         {
-                            hybridEntity = entity,
-                            addressableHash = new Hash128(authoring.addressable.AssetGUID),
-                            setTransform = authoring.setTransform
+                            HybridEntity = entity,
+                            AddressableHash = new Hash128(authoring.addressable.AssetGUID),
+                            SetTransform = authoring.setTransform.ToByte(),
+                            DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });
                     }
                     else
                     {
                         AddComponent(presentationEntity, new HybridSpawnAddressable()
                         {
-                            hybridEntity = entity,
-                            addressableHash = new Hash128(authoring.addressable.AssetGUID),
-                            setTransform = authoring.setTransform
+                            HybridEntity = entity,
+                            AddressableHash = new Hash128(authoring.addressable.AssetGUID),
+                            SetTransform = authoring.setTransform.ToByte(),
+                            DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });
                     }
                 }
