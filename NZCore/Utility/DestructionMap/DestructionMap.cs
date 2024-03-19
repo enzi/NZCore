@@ -36,7 +36,7 @@ namespace NZCore
                     DestroyMethod = destroyMethod,
                     Payload = payLoad
                 });
-                
+
                 Map.Add(parent, newList);
             }
         }
@@ -48,25 +48,23 @@ namespace NZCore
                 case ChildDestroyMethod.Destroy:
                 {
                     if (!state.EntityManager.HasComponent<DestroyEntity>(child))
-                    {
                         state.EntityManager.AddComponent<DestroyEntity>(child);
-                        state.EntityManager.SetComponentEnabled<DestroyEntity>(child, false);
-                    }
+
+                    state.EntityManager.SetComponentEnabled<DestroyEntity>(child, false);
 
                     break;
                 }
                 case ChildDestroyMethod.Cleanup:
                 {
                     if (!state.EntityManager.HasComponent<NZCleanupEntity>(child))
-                    {
                         state.EntityManager.AddComponent<NZCleanupEntity>(child);
-                        state.EntityManager.SetComponentEnabled<NZCleanupEntity>(child, false);
-                    }
+
+                    state.EntityManager.SetComponentEnabled<NZCleanupEntity>(child, false);
 
                     break;
                 }
             }
-            
+
             Add(parent, child, destroyMethod, payLoad);
         }
 
@@ -79,14 +77,14 @@ namespace NZCore
             {
                 if (entity == parent)
                     continue;
-                
+
                 Add(ref state, parent, entity, ChildDestroyMethod.Destroy);
             }
         }
 
         public void Remove(Entity parent, Entity child)
         {
-            if (!Map.TryGetRefValue(parent, out var listPtr)) 
+            if (!Map.TryGetRefValue(parent, out var listPtr))
                 return;
 
             var startIndex = listPtr->Length - 1;
@@ -130,7 +128,7 @@ namespace NZCore
             {
                 kvPair.Value.Dispose();
             }
-            
+
             Map.Dispose();
         }
     }

@@ -8,16 +8,15 @@ namespace NZCore.Hybrid
     {
         public GameObjectPoolSingleton()
         {
-            
         }
     }
-    
+
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class GameObjectPoolSystem : SystemBase
     {
         private Dictionary<int, Stack<GameObject>> Pool;
         private List<GameObject> activeObjects;
-        
+
 
         protected override void OnCreate()
         {
@@ -42,7 +41,7 @@ namespace NZCore.Hybrid
                 poolableObj.gameObject.SetActive(true);
 
                 freshInstance = false;
-                
+
                 return poolableObj;
             }
 
@@ -58,9 +57,9 @@ namespace NZCore.Hybrid
 
         public void Release(GameObject pooledObject)
         {
-            if (!pooledObject.TryGetComponent(out GameObjectPrefabID goPrefabId)) 
+            if (!pooledObject.TryGetComponent(out GameObjectPrefabID goPrefabId))
                 return;
-            
+
             var prefabId = goPrefabId.prefabId;
 
             pooledObject.SetActive(false);
@@ -78,7 +77,7 @@ namespace NZCore.Hybrid
             }
         }
 
-        public void Reset()
+        public void Unload()
         {
             Debug.Log("Pool Reset");
             int i = 0;
@@ -96,12 +95,12 @@ namespace NZCore.Hybrid
             foreach (var obj in MonoBehaviour.FindObjectsOfType<GameObjectPrefabID>())
             {
                 MonoBehaviour.Destroy(obj.gameObject);
-                
+
                 i++;
             }
-            
+
             Debug.Log($"Pool reset count: {i}");
-            
+
             Pool.Clear();
         }
     }

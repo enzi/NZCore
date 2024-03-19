@@ -26,7 +26,7 @@ namespace NZCore.Hybrid
     {
         public UnityObjectRef<Animator> Animator;
     }
-    
+
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class TransformEntityMapping : SystemBase
     {
@@ -65,18 +65,18 @@ namespace NZCore.Hybrid
             //Debug.Log(entitiesList.Length + " transforms in sync system");
             var deltaTime = SystemAPI.Time.DeltaTime;
             var weakAssetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
-            
+
             foreach (var index in entitiesToRemove)
             {
                 if (index >= entitiesList.Length)
                     continue;
-                
+
                 var trackedEntity = entitiesList[index];
-                
+
                 if (trackedEntity.DestroyHybridWithEntity == 1)
                 {
                     var tmpTransform = transformArray[index];
-                    
+
                     if (trackedEntity.DestroyDelay > 0)
                     {
                         delayedDestroyRequests.Add(new DelayedDestroyRequest()
@@ -88,30 +88,30 @@ namespace NZCore.Hybrid
                     else
                     {
                         //Debug.Log($"TransformEntityMapping - Destroying {tmpTransform.gameObject.name}");
-                    
+
                         weakAssetLoader.UnregisterEntity(trackedEntity.Entity);
-                        Object.Destroy(tmpTransform.gameObject);    
+                        Object.Destroy(tmpTransform.gameObject);
                     }
                 }
-                
+
                 RemoveEntity(index, ref trackedEntity);
             }
-            
-            for (var i = delayedDestroyRequests.Length - 1; i >= 0 ; i--)
+
+            for (var i = delayedDestroyRequests.Length - 1; i >= 0; i--)
             {
                 ref var delayedDestroyRequest = ref delayedDestroyRequests.ElementAt(i);
 
                 delayedDestroyRequest.Time -= deltaTime;
-                
+
                 if (delayedDestroyRequest.Time <= 0)
                 {
                     weakAssetLoader.UnregisterEntity(delayedDestroyRequest.Entity);
-                    Object.Destroy(delayedDestroyRequest.Object); 
-                    
+                    Object.Destroy(delayedDestroyRequest.Object);
+
                     delayedDestroyRequests.RemoveAt(i);
                 }
             }
-            
+
             entitiesToRemove.Clear();
 
             Dependency = new SyncPositionToEntityJob
@@ -129,12 +129,12 @@ namespace NZCore.Hybrid
             transformArray.Add(transform);
             indexLookup.Add(entity, entitiesList.Length);
             entitiesList.Add(new TrackedHybridEntity() { Entity = entity, DestroyHybridWithEntity = destroyHybridWithEntity.ToByte() });
-            
+
             hybridComponents.Add(new HybridComponents()
             {
                 Animator = transform.GetComponent<Animator>()
             });
-            
+
             entitiesToRemove.Capacity = entitiesList.Capacity;
         }
 
@@ -144,7 +144,7 @@ namespace NZCore.Hybrid
             entitiesList.RemoveAtSwapBack(index);
             hybridComponents.RemoveAtSwapBack(index);
             indexLookup.Remove(trackedEntity.Entity);
-            
+
             if (index < entitiesList.Length)
             {
                 var entityToFix = entitiesList[index].Entity;
@@ -180,6 +180,18 @@ namespace NZCore.Hybrid
 
             animator = null;
             return false;
+        }
+
+        public void Unload()
+        {
+            for (int i = transformArray.length - 1; i >= 0; i--)
+                transformArray.RemoveAtSwapBack(i);
+            indexLookup.Clear();
+            entitiesList.Clear();
+            hybridComponents.Clear();
+            entitiesToRemove.Clear();
+            hybridComponents.Clear();
+            delayedDestroyRequests.Clear();
         }
 
         [BurstCompile]
