@@ -11,13 +11,13 @@ public abstract class ScriptableObjectConverterBase<SOType> : MonoBehaviour
 
     public bool AutoLoad;
     public bool ForceUpdate;
-    
+
     public void GatherScriptableObjects()
     {
         ScriptableObjects = new List<string>();
-        
+
         if (!AutoLoad)
-            return; 
+            return;
 
         //Debug.Log($"Find t: {typeof(SOType)}");
         var guids = AssetDatabase.FindAssets("t: " + typeof(SOType));
@@ -30,9 +30,9 @@ public abstract class ScriptableObjectConverterBase<SOType> : MonoBehaviour
 
     public void Update()
     {
-        if (!ForceUpdate) 
+        if (!ForceUpdate)
             return;
-        
+
         ForceUpdate = false;
         GatherScriptableObjects();
     }
