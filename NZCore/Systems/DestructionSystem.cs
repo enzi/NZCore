@@ -35,6 +35,7 @@ namespace NZCore
         public void OnDestroy(ref SystemState state)
         {
             destructionMap.Dispose();
+            keysToRemove.Dispose();
         }
 
         [BurstCompile]
