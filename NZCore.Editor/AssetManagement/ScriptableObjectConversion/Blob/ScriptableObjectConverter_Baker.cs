@@ -20,9 +20,10 @@ namespace NZCore
             Debug.Log($"Running ScriptableObjectConverter for {converter.name}");
             converter.GatherScriptableObjects();
 
-            foreach (var guid in converter.ScriptableObjects)
+            foreach (var guidString in converter.ScriptableObjects)
             {
-                var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                var guid = Guid.Parse(guidString);
+                var assetPath = AssetDatabase.GUIDToAssetPath(guidString);
                 Debug.Log($"Converting SO: {assetPath} " + typeof(TSOClass));
 
                 var so = AssetDatabase.LoadAssetAtPath<TSOClass>(assetPath);
@@ -40,14 +41,14 @@ namespace NZCore
                 BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp);
 
                 ref var blob = ref blobBuilder.ConstructRoot<TBlobStruct>();
-                so.ToBlobData(this, ref blobBuilder, ref blob, blobReferenceEntity);
+                so.ToBlobData(this, ref blobBuilder, ref blob, blobReferenceEntity, guid);
                 var blobReference = blobBuilder.CreateBlobAssetReference<TBlobStruct>(Allocator.Persistent);
 
                 AddBlobAsset(ref blobReference, out _);
 
                 var blobReferenceComp = new TBlobReference()
                 {
-                    guid = Guid.Parse(guid),
+                    guid = Guid.Parse(guidString),
                     blob = blobReference
                 };
 
@@ -71,9 +72,10 @@ namespace NZCore
             //Debug.Log($"Running ScriptableObjectConverter for {converter.name}");    
             converter.GatherScriptableObjects();
 
-            foreach (var guid in converter.ScriptableObjects)
+            foreach (var guidString in converter.ScriptableObjects)
             {
-                var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                var guid = Guid.Parse(guidString);
+                var assetPath = AssetDatabase.GUIDToAssetPath(guidString);
                 //Debug.Log($"Converting SO: {assetPath} " + typeof(TSOClass));
 
                 var so = AssetDatabase.LoadAssetAtPath<TSOClass>(assetPath);
@@ -94,7 +96,7 @@ namespace NZCore
                 ref var blob1 = ref blobBuilder1.ConstructRoot<TBlobStruct1>();
                 ref var blob2 = ref blobBuilder2.ConstructRoot<TBlobStruct2>();
 
-                so.ToBlobData(this, ref blobBuilder1, ref blob1, ref blob2, blobReferenceEntity);
+                so.ToBlobData(this, ref blobBuilder1, ref blob1, ref blob2, blobReferenceEntity, guid);
 
                 var blobReference1 = blobBuilder1.CreateBlobAssetReference<TBlobStruct1>(Allocator.Persistent);
                 var blobReference2 = blobBuilder2.CreateBlobAssetReference<TBlobStruct2>(Allocator.Persistent);
@@ -102,10 +104,9 @@ namespace NZCore
                 AddBlobAsset(ref blobReference1, out _);
                 AddBlobAsset(ref blobReference2, out _);
 
-
                 var blobReferenceComp = new TBlobReference()
                 {
-                    guid = Guid.Parse(guid),
+                    guid = Guid.Parse(guidString),
                     blob1 = blobReference1,
                     blob2 = blobReference2
                 };
