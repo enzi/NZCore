@@ -1,4 +1,4 @@
-#if UNITY_2023_3_0
+#if UNITY_6000
 using Unity.Properties;
 using UnityEngine.UIElements;
 

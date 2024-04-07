@@ -2,7 +2,7 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
-#if UNITY_2023_3_0
+#if UNITY_6000
 namespace BovineLabs.Core.UI
 {
     public interface IBindingObject
