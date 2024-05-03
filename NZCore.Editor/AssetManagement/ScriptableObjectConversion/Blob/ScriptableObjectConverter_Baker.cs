@@ -17,14 +17,14 @@ namespace NZCore
             var entity = GetEntity(TransformUsageFlags.None);
             AddComponent<BakingOnlyEntity>(entity);
 
-            Debug.Log($"Running ScriptableObjectConverter for {converter.name}");
+            //Debug.Log($"Running ScriptableObjectConverter for {converter.name}");
             converter.GatherScriptableObjects();
 
             foreach (var guidString in converter.ScriptableObjects)
             {
                 var guid = Guid.Parse(guidString);
                 var assetPath = AssetDatabase.GUIDToAssetPath(guidString);
-                Debug.Log($"Converting SO: {assetPath} " + typeof(TSOClass));
+                //Debug.Log($"Converting SO: {assetPath} " + typeof(TSOClass));
 
                 var so = AssetDatabase.LoadAssetAtPath<TSOClass>(assetPath);
 
