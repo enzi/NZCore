@@ -6,18 +6,13 @@ using UnityEngine;
 public abstract class ScriptableObjectConverterBase<SOType> : MonoBehaviour
     where SOType : ScriptableObject
 {
-    //[HideInInspector]
-    public List<string> ScriptableObjects;
-
-    public bool AutoLoad;
     public bool ForceUpdate;
+
+    public List<string> ScriptableObjects;
 
     public void GatherScriptableObjects()
     {
         ScriptableObjects = new List<string>();
-
-        if (!AutoLoad)
-            return;
 
         //Debug.Log($"Find t: {typeof(SOType)}");
         var guids = AssetDatabase.FindAssets("t: " + typeof(SOType));

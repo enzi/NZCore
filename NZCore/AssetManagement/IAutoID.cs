@@ -2,9 +2,6 @@
 {
     public interface IAutoID
     {
-        public int AutoID
-        {
-            get;
-        }
+        public int AutoID { get; set; }
     }
 }

@@ -1,193 +1,215 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace NZCore.AssetManagement
 {
     public class AutoIDProcessor : AssetPostprocessor
     {
+        [UsedImplicitly]
         // ReSharper disable once Unity.IncorrectMethodSignature
-        // ReSharper disable once UnusedMember.Local
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths, bool didDomainReload)
         {
-            if (didDomainReload)
-                return;
-    
-            var processors = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(t => t.GetTypes())
-                .Where(t => !t.IsAbstract && t.GetInterfaces().Contains(typeof(IAutoIDProcessor)))
-                .Select(t => (IAutoIDProcessor)Activator.CreateInstance(t))
-                .ToList();
-    
-            if (processors.Count == 0)
+            if (didDomainReload || importedAssets.Length == 0)
             {
-                //Debug.LogError("No IAutoIDProcessor found");
                 return;
             }
-    
+
+            var processors = new Dictionary<Type, Processor>();
+
+            foreach (var assetPath in importedAssets)
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
+
+                if (asset == null)
+                {
+                    continue;
+                }
+
+                ProcessAsset(asset, processors);
+                foreach (var subAsset in AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath))
+                {
+                    ProcessAsset(subAsset, processors);
+                }
+            }
+
             foreach (var processor in processors)
             {
-                processor.Process(importedAssets, deletedAssets, movedAssets, movedFromAssetPaths);
+                UpdateManager(processor.Value.Type);
             }
         }
-    }
-    
-    public abstract class AutoIDProcessor<T> : IAutoIDProcessor
-        where T :  ScriptableObjectWithAutoID
-    {
-        public void Process(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+
+        private static void ProcessAsset(Object asset, Dictionary<Type, Processor> processors)
         {
-            //bool didChange = false;
-            Dictionary<int, List<T>> map = new Dictionary<int, List<T>>();
-            //List<ScriptableObjectWithAutoID> allAssets = new List<ScriptableObjectWithAutoID>();
-
-            var assetGuids = AssetDatabase.FindAssets($"t:{typeof(T).Name}");
-            
-            string rootFolder = null;
-            bool runResolvePath = false;
-
-            foreach (var assetGuid in assetGuids)
+            if (asset is not IAutoID)
             {
-                var assetPath = AssetDatabase.GUIDToAssetPath(assetGuid);
-                var asset = AssetDatabase.LoadAssetAtPath<T>(assetPath);
+                return;
+            }
 
-                rootFolder ??= GetRootFolder(assetPath);
-
-                if (!map.TryGetValue(asset.AutoID, out var list))
-                {
-                    list = new List<T>();
-                    map[asset.AutoID] = list;
-                }
-                else
-                {
-                    runResolvePath = true;
-                }
-                
-                list.Add(asset);
-                //allAssets.Add(asset);
-            } 
-
-            foreach (var importedAsset in importedAssets)
+            var assetType = asset.GetType();
+            if (!processors.TryGetValue(assetType, out var processor))
             {
-                var asset = AssetDatabase.LoadAssetAtPath<T>(importedAsset);
-            
-                if (asset == null)
-                    continue;
-            
-                if (map.TryGetValue(asset.AutoID, out var list) && (asset.AutoID == 0 || list.Count > 1))
+                processor = processors[assetType] = new Processor(assetType);
+            }
+
+            processor.Process(asset);
+        }
+
+        private static void UpdateManager(Type type)
+        {
+            var attribute = type.GetCustomAttribute<AutoIDManagerAttribute>();
+            if (attribute == null)
+            {
+                return;
+            }
+
+            var managerGuid = AssetDatabase.FindAssets($"t:{attribute.ManagerType}");
+
+            if (managerGuid.Length == 0)
+            {
+                Debug.LogError($"No manager found for {attribute.ManagerType}");
+                return;
+            }
+
+            if (managerGuid.Length > 1)
+            {
+                Debug.LogError($"More than one manager found for {attribute.ManagerType}");
+                return;
+            }
+
+            var manager = AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(managerGuid[0]));
+            if (manager == null)
+            {
+                Debug.LogError("Manager wasn't a ScriptableObject");
+                return;
+            }
+
+            var so = new SerializedObject(manager);
+            var sp = so.FindProperty(attribute.ContainerListProperty);
+            if (sp == null)
+            {
+                Debug.LogError($"Property {attribute.ContainerListProperty} not found for {attribute.ManagerType}");
+                return;
+            }
+
+            if (!sp.isArray)
+            {
+                Debug.LogError($"Property {attribute.ContainerListProperty} was not type of array for {attribute.ManagerType}");
+                return;
+            }
+
+            if (sp.arrayElementType != $"PPtr<${type.Name}>")
+            {
+                Debug.LogError($"Property {attribute.ContainerListProperty} was not type of {type.Name} for {attribute.ManagerType}");
+                return;
+            }
+
+            var objects = AssetDatabase.FindAssets($"t:{type.Name}")
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Distinct() // In case multi of same type on same path
+                .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
+                .Where(s => s.GetType() == type)
+                .ToList();
+
+            sp.arraySize = objects.Count;
+            for (var i = 0; i < objects.Count; i++)
+            {
+                sp.GetArrayElementAtIndex(i).objectReferenceValue = objects[i];
+            }
+
+            so.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssetIfDirty(manager);
+        }
+
+        private class Processor
+        {
+            public readonly Type Type;
+            private readonly string filter;
+            private Dictionary<int, int> map;
+
+            public Processor(Type type)
+            {
+                this.Type = type;
+                filter = $"t:{type.Name}";
+            }
+
+            private Dictionary<int, int> CreateMap()
+            {
+                var tmpMap = new Dictionary<int, int>();
+                var assetPaths = AssetDatabase.FindAssets(filter).Select(AssetDatabase.GUIDToAssetPath).Distinct();
+
+                foreach (var assetPath in assetPaths)
+                {
+                    var assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+
+                    foreach (var asset in assets)
+                    {
+                        // account for sub assets
+                        if (asset.GetType() != Type)
+                        {
+                            continue;
+                        }
+
+                        var id = ((IAutoID)asset).AutoID;
+                        map.TryGetValue(id, out var count);
+                        count++;
+                        map[id] = count;
+                    }
+                }
+
+                return tmpMap;
+            }
+
+            public void Process(Object asset)
+            {
+                map ??= CreateMap();
+
+                var autoIdAsset = (IAutoID)asset;
+
+                if (map.TryGetValue(autoIdAsset.AutoID, out var count) && (autoIdAsset.AutoID == 0 || count > 1))
                 {
                     var newId = GetFirstFreeID(map);
-                    
+
                     if (newId == -1)
                     {
                         Debug.LogError("AutoIDProcessor has run out of IDs!");
                         return;
                     }
-                    
-                    map[asset.AutoID].Remove(asset);
-                    asset.AutoID = newId;
-                    if (!map.TryGetValue(newId, out var newList))
-                    {
-                        newList = new List<T>();
-                        map.Add(newId, newList);
-                    }
-            
-                    newList.Add(asset);
-            
+
+                    map[autoIdAsset.AutoID] = count - 1;
+                    autoIdAsset.AutoID = newId;
+                    map[newId] = 1;
+
                     EditorUtility.SetDirty(asset);
                     AssetDatabase.SaveAssetIfDirty(asset);
-            
-                    //didChange = true;
                 }
             }
 
-            if (runResolvePath)
+            private static string GetRootFolder(string filePath)
             {
-                // resolve any assets that still have a count > 1
+                if (string.IsNullOrEmpty(filePath))
+                    return null;
 
-                var keyList = map.Select(m => m.Key).ToList();
+                int index = filePath.LastIndexOf('/');
+                return filePath.Substring(0, index).Replace("Assets", "");
+            }
 
-                //bool hasErrors = false;
-
-                foreach (var key in keyList)
+            private static int GetFirstFreeID(Dictionary<int, int> map)
+            {
+                // we start at 1 and reserve 0 for "None" states
+                for (var i = 1; i < int.MaxValue; i++)
                 {
-                    var value = map[key];
-
-                    if (value.Count <= 1) 
-                        continue;
-
-                    //hasErrors = true;
-                    
-                    foreach (var element in value)
-                    {
-                        Debug.LogError($"Conflicting ID in asset {element.name} -> {element.AutoID}");
-                    }
-
-                    // auto resolving is disabled
-                    // and deemed too dangerous :)
-                    //
-                    // while (value.Count > 1)
-                    // {
-                    //     var asset = value[^1];
-                    //     var newId = GetFirstFreeID(map);
-                    //
-                    //     if (newId == -1)
-                    //     {
-                    //         Debug.LogError("AutoIDProcessor has run out of IDs!");
-                    //         return;
-                    //     }
-                    //
-                    //     map[key].Remove(asset);
-                    //     asset.AutoID = newId;
-                    //
-                    //     if (!map.TryGetValue(newId, out var newList))
-                    //     {
-                    //         newList = new List<T>();
-                    //         map.Add(newId, newList);
-                    //     }
-                    //
-                    //     newList.Add(asset);
-                    //
-                    //     EditorUtility.SetDirty(asset);
-                    //     AssetDatabase.SaveAssetIfDirty(asset);
-                    //
-                    //     didChange = true;
-                    // }
+                    if (!map.ContainsKey(i))
+                        return i;
                 }
+
+                return -1;
             }
-
-            // if (rootFolder != null)
-            // {
-            //     foreach (var deletedAsset in deletedAssets)
-            //     {
-            //         if (deletedAsset.Contains(rootFolder))
-            //             didChange = true;
-            //     }
-            // }
-        }
-
-        private static string GetRootFolder(string filePath)
-        {
-            if (string.IsNullOrEmpty(filePath))
-                return null;
-
-            int index = filePath.LastIndexOf('/');
-            return filePath.Substring(0, index).Replace("Assets", "");
-        }
-
-        private static int GetFirstFreeID(Dictionary<int, List<T>> map)
-        {
-            // we start at 1 and reserve 0 for "None" states
-            // tbd if this makes sense
-            for (var i = 1; i < int.MaxValue; i++)
-            {
-                if (!map.ContainsKey(i))
-                    return i;
-            }
-
-            return -1;
         }
     }
 }
