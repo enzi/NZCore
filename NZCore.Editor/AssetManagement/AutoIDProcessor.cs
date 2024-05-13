@@ -134,7 +134,7 @@ namespace NZCore.AssetManagement
 
             public Processor(Type type)
             {
-                this.Type = type;
+                Type = type;
                 filter = $"t:{type.Name}";
             }
 
@@ -150,15 +150,15 @@ namespace NZCore.AssetManagement
                     foreach (var asset in assets)
                     {
                         // account for sub assets
-                        if (asset.GetType() != Type)
+                        if (asset == null || asset.GetType() != Type)
                         {
                             continue;
                         }
 
                         var id = ((IAutoID)asset).AutoID;
-                        map.TryGetValue(id, out var count);
+                        tmpMap.TryGetValue(id, out var count);
                         count++;
-                        map[id] = count;
+                        tmpMap[id] = count;
                     }
                 }
 
