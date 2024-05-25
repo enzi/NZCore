@@ -2,13 +2,13 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using Unity;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Scenes;
+
 namespace NZCore
 {
-    using Unity;
-    using Unity.Collections;
-    using Unity.Entities;
-    using Unity.Scenes;
-
     public struct SubSceneUtility
     {
         [ReadOnly] private ComponentLookup<SceneReference> sceneReferences;

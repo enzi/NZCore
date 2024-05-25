@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using BovineLabs.Core.UI;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
@@ -27,7 +26,7 @@ namespace NZCore.UIToolkit
             this.assetKey = assetKey;
             this.priority = priority;
             this.visibleOnInstantiate = visibleOnInstantiate;
-            
+
             handle = default;
             data = default;
         }
@@ -45,7 +44,7 @@ namespace NZCore.UIToolkit
 
             return ve;
         }
-        
+
         public VisualElement Load(VisualElement container, string elementName = null)
         {
             var (ve, binding) = UIToolkitManager.Instance.AddInterface<T>(uniqueKey.ToString(), assetKey.ToString(), container, elementName, priority, visibleOnInstantiate);
@@ -57,7 +56,7 @@ namespace NZCore.UIToolkit
 
             return ve;
         }
-        
+
         public void Unload()
         {
             var binding = UIToolkitManager.Instance.RemovePanel(uniqueKey.ToString());
@@ -76,7 +75,7 @@ namespace NZCore.UIToolkit
             }
         }
     }
-    
+
     // public unsafe struct UIHelperForPtr<T, TD>
     //     where T : IBindingPtrObject<TD>, new()
     //     where TD : unmanaged

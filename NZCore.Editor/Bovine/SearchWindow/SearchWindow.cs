@@ -4,14 +4,14 @@
 
 #nullable disable
 
+using System;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UIElements;
+
 namespace BovineLabs.Core.Editor.SearchWindow
 {
-    using System;
-    using System.Collections.Generic;
-    using UnityEditor;
-    using UnityEngine;
-    using UnityEngine.UIElements;
-
     /// <summary> Copy of com.unity.platforms\Editor\Unity.Build.Editor\SearchWindow\SearchWindow.cs. </summary>
     public class SearchWindow : EditorWindow
     {

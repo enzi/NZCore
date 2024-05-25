@@ -4,11 +4,11 @@
 
 #nullable disable
 
+using BovineLabs.Core.Editor.UI;
+using UnityEngine.UIElements;
+
 namespace BovineLabs.Core.Editor.SearchWindow
 {
-    using BovineLabs.Core.Editor.UI;
-    using UnityEngine.UIElements;
-
     internal class SearchViewItem : VisualElement
     {
         private static readonly UITemplate SearchItemTemplate = new(SearchWindow.RootUIPath + "SearchItem");

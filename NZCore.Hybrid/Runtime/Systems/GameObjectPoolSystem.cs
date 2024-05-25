@@ -6,23 +6,17 @@ namespace NZCore.Hybrid
 {
     public class GameObjectPoolSingleton : IComponentData
     {
-        public GameObjectPoolSingleton()
-        {
-        }
     }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class GameObjectPoolSystem : SystemBase
     {
         private Dictionary<int, Stack<GameObject>> Pool;
-        private List<GameObject> activeObjects;
 
 
         protected override void OnCreate()
         {
             Pool = new Dictionary<int, Stack<GameObject>>();
-            activeObjects = new List<GameObject>();
-
             Enabled = false; // this sytem has no Update
         }
 
@@ -45,7 +39,7 @@ namespace NZCore.Hybrid
                 return poolableObj;
             }
 
-            var inst = MonoBehaviour.Instantiate(prefab);
+            var inst = Object.Instantiate(prefab);
 
             var prefabId = inst.AddComponent<GameObjectPrefabID>();
             prefabId.prefabId = key;
@@ -86,15 +80,15 @@ namespace NZCore.Hybrid
                 while (entry.Value.Count > 0)
                 {
                     var obj = entry.Value.Pop();
-                    MonoBehaviour.Destroy(obj.gameObject);
+                    Object.Destroy(obj.gameObject);
 
                     i++;
                 }
             }
 
-            foreach (var obj in MonoBehaviour.FindObjectsOfType<GameObjectPrefabID>())
+            foreach (var obj in Object.FindObjectsByType<GameObjectPrefabID>(FindObjectsSortMode.None))
             {
-                MonoBehaviour.Destroy(obj.gameObject);
+                Object.Destroy(obj.gameObject);
 
                 i++;
             }

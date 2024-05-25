@@ -190,15 +190,6 @@ namespace NZCore.AssetManagement
                 }
             }
 
-            private static string GetRootFolder(string filePath)
-            {
-                if (string.IsNullOrEmpty(filePath))
-                    return null;
-
-                int index = filePath.LastIndexOf('/');
-                return filePath.Substring(0, index).Replace("Assets", "");
-            }
-
             private static int GetFirstFreeID(Dictionary<int, int> map)
             {
                 // we start at 1 and reserve 0 for "None" states

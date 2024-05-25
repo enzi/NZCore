@@ -1,7 +1,6 @@
 #if UNITY_6000
 using System.Collections.Generic;
 using BovineLabs.Core.UI;
-using NZCore.UIToolkit;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,7 +9,7 @@ namespace NZCore.UIToolkit
     public class UIToolkitManager : MonoBehaviour
     {
         public static UIToolkitManager Instance;
-        
+
         public UIAssetsSingleton Assets;
         public UIDocument UIDocument { get; private set; }
         public VisualElement Root { get; private set; }
@@ -18,13 +17,13 @@ namespace NZCore.UIToolkit
         public VisualElement DragImage { get; private set; }
         public VisualElement MainButtonsContainer { get; private set; }
 
-        private Dictionary<string, VisualElement> Lookup = new ();
+        private Dictionary<string, VisualElement> Lookup = new();
         private readonly Dictionary<string, (VisualElement Element, IBindingObject Binding)> loadedInterfaceAssets = new();
 
         public void Awake()
         {
             Instance = this;
-            
+
             UIDocument = GetComponent<UIDocument>();
             Root = UIDocument.rootVisualElement.Q<VisualElement>("root");
             DragContainer = UIDocument.rootVisualElement.Q<VisualElement>("dragContainer");
@@ -36,7 +35,7 @@ namespace NZCore.UIToolkit
         {
             //if (loadedInterfaceAssets.TryGetValue(key, out var container)) 
             //    return;
-            
+
             if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
             {
                 asset.CloneTreeSingle(containerName == null ? Root : Root.Q<VisualElement>(containerName), visibleOnInstantiate);
@@ -68,7 +67,7 @@ namespace NZCore.UIToolkit
 
                 if (elementName != null)
                     ve.name = elementName;
-                
+
                 loadedInterfaceAssets.Add(uniqueKey, (ve, binding));
 
                 return (ve, binding);
@@ -90,7 +89,7 @@ namespace NZCore.UIToolkit
             // var index = this.elements.IndexOf(e);
             // this.view.Insert(index, element);
         }
-        
+
         public (VisualElement, T) AddInterface<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int priority = 0, bool visibleOnInstantiate = true)
             where T : class, IBindingObject, new()
         {
@@ -98,7 +97,7 @@ namespace NZCore.UIToolkit
             // {
             //     return loadedBindings.TryGetValue(element, out var binding) ? (element, (T)binding) : (element, null);
             // }
-            
+
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
             {
                 return (Root, default);
@@ -112,7 +111,7 @@ namespace NZCore.UIToolkit
 
                 if (elementName != null)
                     ve.name = elementName;
-                
+
                 loadedInterfaceAssets.Add(uniqueKey, (ve, binding));
 
                 return (ve, binding);
@@ -156,7 +155,7 @@ namespace NZCore.UIToolkit
         {
             Lookup.Add(key, element);
         }
-        
+
         public bool TryGet(string tooltip, out VisualElement element)
         {
             return Lookup.TryGetValue(tooltip, out element);

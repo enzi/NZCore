@@ -3,12 +3,11 @@
 // </copyright>
 
 using Unity;
+using UnityEditor;
+using UnityEngine.UIElements;
 
 namespace BovineLabs.Core.Editor.UI
 {
-    using UnityEditor;
-    using UnityEngine.UIElements;
-
     /// <summary>
     /// Manages loading a pair of uxml/uss files in the same folder.
     /// Roughly based off Unity.Entities.Editor.UITemplate but quite stripped down for own uses.

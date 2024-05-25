@@ -4,16 +4,16 @@
 
 #nullable disable
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using BovineLabs.Core.Editor.UI;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UIElements;
+
 namespace BovineLabs.Core.Editor.SearchWindow
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using BovineLabs.Core.Editor.UI;
-    using UnityEditor;
-    using UnityEngine;
-    using UnityEngine.UIElements;
-
     public class SearchView : VisualElement
     {
         private static readonly UITemplate SearchViewTemplate = new(SearchWindow.RootUIPath + "SearchView");

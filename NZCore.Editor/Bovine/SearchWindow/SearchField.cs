@@ -4,11 +4,11 @@
 
 #nullable disable
 
+using BovineLabs.Core.Editor.UI;
+using UnityEngine.UIElements;
+
 namespace BovineLabs.Core.Editor.SearchWindow
 {
-    using BovineLabs.Core.Editor.UI;
-    using UnityEngine.UIElements;
-
     [UxmlElement]
     internal partial class SearchField : TextField
     {

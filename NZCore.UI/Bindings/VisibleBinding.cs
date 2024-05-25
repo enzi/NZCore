@@ -12,13 +12,12 @@ namespace NZCore.UIToolkit
             updateTrigger = BindingUpdateTrigger.OnSourceChanged;
         }
 
-        public object? dataSource => null;
+        public object dataSource => null;
 
-        [CreateProperty]
-        public PropertyPath dataSourcePath { get; set; }
+        [CreateProperty] public PropertyPath dataSourcePath { get; set; }
 
         [UxmlAttribute("data-source-path")]
-        public string? DataSourcePathString
+        public string DataSourcePathString
         {
             get => dataSourcePath.ToString();
             set => dataSourcePath = new PropertyPath(value);

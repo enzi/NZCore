@@ -4,13 +4,13 @@
 
 #nullable disable
 
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+
 namespace BovineLabs.Core.Editor.SearchWindow
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Linq;
-
     internal class TreeNode<T>
     {
         private readonly List<TreeNode<T>> children;

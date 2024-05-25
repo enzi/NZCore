@@ -4,13 +4,13 @@
 
 using System.Collections.Generic;
 using BovineLabs.Core.Editor.SearchWindow;
-//using BovineLabs.Core.Editor.SearchWindow;
 using Unity.Entities;
 using Unity.Entities.Editor;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+//using BovineLabs.Core.Editor.SearchWindow;
 using Resources = Unity.Entities.Editor.Resources;
 
 namespace NZCore.Editor
