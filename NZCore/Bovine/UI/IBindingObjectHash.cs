@@ -7,16 +7,16 @@ using UnityEngine.UIElements;
 
 namespace BovineLabs.Core.UI
 {
-    public interface IBindingObjectHash<T> : IBindingObject<T>, IDataSourceViewHashProvider
-        where T : unmanaged, IBindingObjectHashData
+    public interface IViewModelBindingHash<T> : IViewModelBinding<T>, IDataSourceViewHashProvider
+        where T : unmanaged, IModelBindingHashData
     {
         long IDataSourceViewHashProvider.GetViewHashCode()
         {
-            return this.Value.Version;
+            return Value.Version;
         }
     }
 
-    public interface IBindingObjectHashData
+    public interface IModelBindingHashData : IModelBinding
     {
         long Version { get; set; }
     }

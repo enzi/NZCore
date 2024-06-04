@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace NZCore.Helper
 {
@@ -14,7 +16,7 @@ namespace NZCore.Helper
             var mask = 1ul << shift;
             return 0ul != (ptr[idx] & mask);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Set(ulong* ptr, int pos, bool value)
         {
@@ -24,7 +26,7 @@ namespace NZCore.Helper
             var bits = (ptr[idx] & ~mask) | ((ulong)-Bitwise.FromBool(value) & mask);
             ptr[idx] = bits;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsSet(in v128 bitField, int pos)
         {
@@ -33,7 +35,7 @@ namespace NZCore.Helper
             var mask = 1ul << shift;
             return 0ul != (idx == 0 ? bitField.ULong0 & mask : bitField.ULong1 & mask);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Set(ref v128 bitField, int pos, bool value)
         {
@@ -51,6 +53,13 @@ namespace NZCore.Helper
                 var bits = bitField.ULong1 & ~mask | ((ulong)-Bitwise.FromBool(value) & mask);
                 bitField.ULong1 = bits;
             }
+        }
+
+        public static uint RoundToPowerOf2(uint value)
+        {
+            Debug.Assert(value > 0 && value <= (uint.MaxValue / 2) + 1);
+
+            return 1u << (32 - math.lzcnt(value - 1));
         }
     }
 }

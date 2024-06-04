@@ -5,7 +5,7 @@
 #if UNITY_6000
 namespace BovineLabs.Core.UI
 {
-    public interface IBindingObject
+    public interface IViewModelBinding
     {
         void Load()
         {
@@ -16,17 +16,10 @@ namespace BovineLabs.Core.UI
         }
     }
 
-
-    public unsafe interface IBindingObject<T> : IBindingObject
-        where T : unmanaged
+    public interface IViewModelBinding<T> : IViewModelBinding
+        where T : IModelBinding
     {
         ref T Value { get; }
-    }
-    
-    public unsafe interface IBindingPtrObject<T> : IBindingObject<T>
-        where T : unmanaged
-    {
-        T* Ptr { set; }
     }
 }
 #endif

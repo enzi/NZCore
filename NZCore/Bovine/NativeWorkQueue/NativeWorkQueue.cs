@@ -17,17 +17,13 @@ namespace NZCore
     public unsafe struct NativeWorkQueue<T>
         where T : unmanaged
     {
-        [NativeDisableUnsafePtrRestriction]
-        private readonly T* queue;
+        [NativeDisableUnsafePtrRestriction] private readonly T* queue;
 
-        [NativeDisableUnsafePtrRestriction]
-        private readonly int* queueWriteHead;
+        [NativeDisableUnsafePtrRestriction] private readonly int* queueWriteHead;
 
-        [NativeDisableUnsafePtrRestriction]
-        private readonly int* queueReadHead;
+        [NativeDisableUnsafePtrRestriction] private readonly int* queueReadHead;
 
-        [NativeDisableUnsafePtrRestriction]
-        private readonly int* currentRef;
+        [NativeDisableUnsafePtrRestriction] private readonly int* currentRef;
 
         private readonly AllocatorManager.AllocatorHandle allocator;
 
@@ -40,13 +36,11 @@ namespace NZCore
         {
             this.allocator = allocator.Handle;
             queue = (T*)allocator.Allocate(UnsafeUtility.SizeOf<T>(), UnsafeUtility.AlignOf<T>(), maxQueueSize);
-            queueWriteHead = (int*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<int>(), UnsafeUtility.AlignOf<int>(), allocator.ToAllocator); // TODO allocator?
+            queueWriteHead = (int*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<int>(), UnsafeUtility.AlignOf<int>(), allocator.ToAllocator);
             queueReadHead = (int*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<int>(), UnsafeUtility.AlignOf<int>(), allocator.ToAllocator);
             currentRef = (int*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<int>(), UnsafeUtility.AlignOf<int>(), allocator.ToAllocator);
 
             Capacity = maxQueueSize;
-
-            // UnsafeList<T>.Create(maxQueueSize, allocator);
 
             *queueWriteHead = 0;
             *queueReadHead = 0;
@@ -124,8 +118,7 @@ namespace NZCore
             do
             {
                 queueRef = ++*currentRef;
-            }
-            while (Hint.Unlikely(queueRef == 0));
+            } while (Hint.Unlikely(queueRef == 0));
 
             ptr = queue + *queueWriteHead - 1;
             return queueRef;
@@ -144,8 +137,7 @@ namespace NZCore
             do
             {
                 queueRef = ++*currentRef;
-            }
-            while (Hint.Unlikely(queueRef == 0));
+            } while (Hint.Unlikely(queueRef == 0));
 
             return queue + *queueWriteHead - 1;
         }
@@ -182,14 +174,11 @@ namespace NZCore
         [NativeContainerIsAtomicWriteOnly]
         public struct ParallelReader
         {
-            [NativeDisableUnsafePtrRestriction]
-            private readonly T* queue;
+            [NativeDisableUnsafePtrRestriction] private readonly T* queue;
 
-            [NativeDisableUnsafePtrRestriction]
-            private readonly int* queueReadHead;
+            [NativeDisableUnsafePtrRestriction] private readonly int* queueReadHead;
 
-            [NativeDisableUnsafePtrRestriction]
-            private readonly int* queueWriteHead;
+            [NativeDisableUnsafePtrRestriction] private readonly int* queueWriteHead;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             internal readonly AtomicSafetyHandle m_Safety;
@@ -249,14 +238,11 @@ namespace NZCore
         [NativeContainerIsAtomicWriteOnly]
         public struct ParallelWriter
         {
-            [NativeDisableUnsafePtrRestriction]
-            private readonly T* queue;
+            [NativeDisableUnsafePtrRestriction] private readonly T* queue;
 
-            [NativeDisableUnsafePtrRestriction]
-            private readonly int* queueWriteHead;
+            [NativeDisableUnsafePtrRestriction] private readonly int* queueWriteHead;
 
-            [NativeDisableUnsafePtrRestriction]
-            private readonly int* currentRef;
+            [NativeDisableUnsafePtrRestriction] private readonly int* currentRef;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             internal readonly AtomicSafetyHandle m_Safety;
@@ -306,8 +292,7 @@ namespace NZCore
                 do
                 {
                     queueRef = Interlocked.Increment(ref *currentRef);
-                }
-                while (Hint.Unlikely(queueRef == 0));
+                } while (Hint.Unlikely(queueRef == 0));
 
                 ptr = queue + idx;
                 return queueRef;
