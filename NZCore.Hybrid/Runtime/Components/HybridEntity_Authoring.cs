@@ -14,8 +14,8 @@ namespace NZCore.Hybrid
         GameObject,
         Addressable
     }
-    
-    
+
+
     [ExecuteInEditMode]
     public class HybridEntity_Authoring : MonoBehaviour
     {
@@ -77,7 +77,7 @@ namespace NZCore.Hybrid
             var matrix = Matrix4x4.TRS(tmpTransform.position, tmpTransform.rotation, tmpTransform.localScale);
             Graphics.DrawMesh(mesh, matrix, mat, gameObject.layer, drawCamera);
         }
-        
+
         private void OnDrawGizmos()
         {
             Gizmos.DrawCube(transform.position, Vector3.one);
@@ -102,7 +102,7 @@ namespace NZCore.Hybrid
                 var presentationEntity = CreateAdditionalEntity(TransformUsageFlags.None, false, authoring.name + "_PresentationSpawner");
 
                 //this.AddRemoveFromLinkedEntityGroup(presentationEntity, entity);
-                
+
                 AddComponent(presentationEntity, new RemoveFromLinkedEntityGroupCleanupSetup()
                 {
                     Parent = entity
@@ -154,10 +154,6 @@ namespace NZCore.Hybrid
                         });
                     }
                 }
-
-                // todo InvalidOperationException: Baking error: Attempt to set component Unity.Transforms.Translation for Baker Baker with authoring component HybridEntity_Authoring but the component was added by a different Baker LegacyBoxBaker
-                //SetComponent(entity, new Translation() { Value = authoring.transform.position });
-                //SetComponent(entity,new Rotation() { Value = authoring.transform.rotation });
             }
         }
     }

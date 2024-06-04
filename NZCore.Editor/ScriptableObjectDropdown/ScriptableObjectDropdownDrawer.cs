@@ -58,15 +58,12 @@ namespace NZCore.Editor
 
             var root = new PropertyField();
 
-            Label lbl = new Label(property.displayName);
-            root.Add(lbl);
-
             if (attr.UseFlags)
             {
             }
             else
             {
-                var popupField = new PopupField<DropdownWrapper>(choices, selectedIndex, FormatSelectedValueCallback, FormatListItemCallback);
+                var popupField = new PopupField<DropdownWrapper>(property.displayName, choices, selectedIndex, FormatSelectedValueCallback, FormatListItemCallback);
                 popupField.AddToClassList("unity-toggle__input");
 
                 popupField.RegisterCallback<ChangeEvent<DropdownWrapper>>((evt) =>
@@ -78,11 +75,10 @@ namespace NZCore.Editor
                     property.serializedObject.ApplyModifiedProperties();
                 });
 
+                popupField.AlignLabel();
+
                 root.Add(popupField);
             }
-
-
-            root.UpdateLabelWidth(lbl);
 
             return root;
         }

@@ -9,8 +9,10 @@ using UnityEngine.UIElements;
 namespace NZCore.UIToolkit
 {
     public unsafe struct UIHelper<T, TD>
-        where T : class, IBindingObjectNotify<TD>, new()
-        where TD : unmanaged, IBindingObjectNotifyData
+        where T : class, IViewModelBinding<TD>, new()
+        //where T : class, IBindingObject<TD>, new()
+        where TD : unmanaged, IModelBinding
+    //where TD : unmanaged, IBindingObject
     {
         private readonly FixedString128Bytes uniqueKey;
         private readonly FixedString128Bytes assetKey;

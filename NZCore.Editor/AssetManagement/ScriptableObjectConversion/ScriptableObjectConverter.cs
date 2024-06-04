@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -16,6 +17,8 @@ public abstract class ScriptableObjectConverterBase<SOType> : MonoBehaviour
 
         //Debug.Log($"Find t: {typeof(SOType)}");
         var guids = AssetDatabase.FindAssets("t: " + typeof(SOType));
+
+        Array.Sort(guids);
 
         foreach (var guid in guids)
         {

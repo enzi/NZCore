@@ -18,7 +18,7 @@ namespace NZCore.UIToolkit
         public VisualElement MainButtonsContainer { get; private set; }
 
         private Dictionary<string, VisualElement> Lookup = new();
-        private readonly Dictionary<string, (VisualElement Element, IBindingObject Binding)> loadedInterfaceAssets = new();
+        private readonly Dictionary<string, (VisualElement Element, IViewModelBinding Binding)> loadedInterfaceAssets = new();
 
         public void Awake()
         {
@@ -47,7 +47,7 @@ namespace NZCore.UIToolkit
         }
 
         public (VisualElement, T) AddInterface<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int priority = 0, bool visibleOnInstantiate = true)
-            where T : class, IBindingObject, new()
+            where T : class, IViewModelBinding, new()
         {
             // if (loadedInterfaceAssets.TryGetValue(key, out var element))
             // {
@@ -91,7 +91,7 @@ namespace NZCore.UIToolkit
         }
 
         public (VisualElement, T) AddInterface<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int priority = 0, bool visibleOnInstantiate = true)
-            where T : class, IBindingObject, new()
+            where T : class, IViewModelBinding, new()
         {
             // if (loadedInterfaceAssets.TryGetValue(key, out var element))
             // {
@@ -134,12 +134,12 @@ namespace NZCore.UIToolkit
             // this.view.Insert(index, element);
         }
 
-        public IBindingObject RemovePanel(string uniqueKey)
+        public IViewModelBinding RemovePanel(string uniqueKey)
         {
             return TryUnloadPanel(uniqueKey, out var panel) ? panel.Binding : null;
         }
 
-        public bool TryUnloadPanel(string uniqueKey, out (VisualElement Element, IBindingObject Binding) container)
+        public bool TryUnloadPanel(string uniqueKey, out (VisualElement Element, IViewModelBinding Binding) container)
         {
             if (loadedInterfaceAssets.TryGetValue(uniqueKey, out container))
             {

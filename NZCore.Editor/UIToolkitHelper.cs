@@ -15,7 +15,7 @@ namespace NZCore.Editor
 
             return header;
         }
-        
+
         /// <summary>
         /// Adds any kind of struct to the VisualElement root
         /// Used in the Entities inspector to show IComps and other data
@@ -29,6 +29,12 @@ namespace NZCore.Editor
             var content = new PropertyElement();
             root.Add(content);
             content.SetTarget(data);
+        }
+
+        public static VisualElement AlignLabel(this VisualElement root)
+        {
+            root.AddToClassList(BaseField<TextField>.alignedFieldUssClassName);
+            return root;
         }
     }
 }

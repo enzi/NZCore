@@ -13,20 +13,22 @@ namespace NZCore.UIToolkit
             return visualElement.resolvedStyle.display == DisplayStyle.Flex;
         }
 
-        public static void ToggleVisualElement(this VisualElement visualElement)
+        public static bool ToggleVisualElement(this VisualElement visualElement)
         {
             if (visualElement == null)
-                return;
+                return false;
 
             if (visualElement.resolvedStyle.display == DisplayStyle.Flex)
             {
                 visualElement.RemoveFromClassList(visibleClass);
                 visualElement.AddToClassList(hiddenClass);
+                return false;
             }
             else
             {
                 visualElement.RemoveFromClassList(hiddenClass);
                 visualElement.AddToClassList(visibleClass);
+                return true;
             }
         }
 
@@ -38,17 +40,17 @@ namespace NZCore.UIToolkit
 
             if (state)
             {
-                if (visualElement.ClassListContains(visibleClass)) 
+                if (visualElement.ClassListContains(visibleClass))
                     return;
-                
+
                 visualElement.RemoveFromClassList(hiddenClass);
                 visualElement.AddToClassList(visibleClass);
             }
             else
             {
-                if (visualElement.ClassListContains(hiddenClass)) 
+                if (visualElement.ClassListContains(hiddenClass))
                     return;
-                
+
                 visualElement.RemoveFromClassList(visibleClass);
                 visualElement.AddToClassList(hiddenClass);
             }
