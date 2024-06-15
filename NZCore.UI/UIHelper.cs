@@ -10,9 +10,7 @@ namespace NZCore.UIToolkit
 {
     public unsafe struct UIHelper<T, TD>
         where T : class, IViewModelBinding<TD>, new()
-        //where T : class, IBindingObject<TD>, new()
         where TD : unmanaged, IModelBinding
-    //where TD : unmanaged, IBindingObject
     {
         private readonly FixedString128Bytes uniqueKey;
         private readonly FixedString128Bytes assetKey;
@@ -35,9 +33,14 @@ namespace NZCore.UIToolkit
 
         public ref TD Model => ref UnsafeUtility.AsRef<TD>(data);
 
-        public VisualElement Load(string containerName = null, string elementName = null)
+        public VisualElement LoadInterface(string containerName = null, string elementName = null)
         {
-            var (ve, binding) = UIToolkitManager.Instance.AddInterface<T>(uniqueKey.ToString(), assetKey.ToString(), containerName, elementName, priority, visibleOnInstantiate);
+            return LoadInterface(UIToolkitManager.Instance.GetRoot(containerName), elementName);
+        }
+
+        public VisualElement LoadInterface(VisualElement container, string elementName = null)
+        {
+            var (ve, binding) = UIToolkitManager.Instance.AddBindableInterface<T>(uniqueKey.ToString(), assetKey.ToString(), container, elementName, priority, visibleOnInstantiate);
 
             handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
             data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
@@ -47,9 +50,14 @@ namespace NZCore.UIToolkit
             return ve;
         }
 
-        public VisualElement Load(VisualElement container, string elementName = null)
+        public VisualElement LoadPanel(string containerName = null, string elementName = null)
         {
-            var (ve, binding) = UIToolkitManager.Instance.AddInterface<T>(uniqueKey.ToString(), assetKey.ToString(), container, elementName, priority, visibleOnInstantiate);
+            return LoadPanel(UIToolkitManager.Instance.GetRoot(containerName), elementName);
+        }
+
+        public VisualElement LoadPanel(VisualElement container, string elementName = null)
+        {
+            var (ve, binding) = UIToolkitManager.Instance.AddBindablePanel<T>(uniqueKey.ToString(), assetKey.ToString(), container, elementName, priority, visibleOnInstantiate);
 
             handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
             data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
@@ -77,60 +85,5 @@ namespace NZCore.UIToolkit
             }
         }
     }
-
-    // public unsafe struct UIHelperForPtr<T, TD>
-    //     where T : IBindingPtrObject<TD>, new()
-    //     where TD : unmanaged
-    // {
-    //     private readonly FixedString128Bytes key;
-    //     private readonly int priority;
-    //     private readonly bool visibleOnInstantiate;
-    //
-    //     private GCHandle handle;
-    //     private TD* dataPtr;
-    //
-    //     public UIHelperForPtr(string key, int priority = 0, bool visibleOnInstantiate = true)
-    //     {
-    //         this.key = key;
-    //         this.priority = priority;
-    //         this.visibleOnInstantiate = visibleOnInstantiate;
-    //         
-    //         handle = default;
-    //         dataPtr = null;
-    //     }
-    //
-    //     public ref TD Model => ref UnsafeUtility.AsRef<TD>(dataPtr);
-    //     
-    //     public void Load(TD* ptr, string containerName = null, string elementName = null)
-    //     {
-    //         var binding = new T();
-    //         UIToolkitManager.Instance.AddInterface(key.ToString(), binding, containerName, elementName, priority, visibleOnInstantiate);
-    //
-    //         handle = GCHandle.Alloc(binding, GCHandleType.Pinned);
-    //         dataPtr = ptr;
-    //         binding.Ptr = ptr;
-    //
-    //         binding.Load();
-    //     }
-    //
-    //     public void Unload()
-    //     {
-    //         UIToolkitManager.Instance.RemovePanel(key.ToString());
-    //
-    //         if (handle.IsAllocated)
-    //         {
-    //             var obj = (T)this.handle.Target;
-    //             obj.Unload();
-    //             if (obj is IDisposable disposable)
-    //             {
-    //                 disposable.Dispose();
-    //             }
-    //
-    //             handle.Free();
-    //             handle = default;
-    //             dataPtr = null;
-    //         }
-    //     }
-    // }
 }
 #endif

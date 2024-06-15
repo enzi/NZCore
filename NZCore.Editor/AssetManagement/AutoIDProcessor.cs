@@ -40,6 +40,11 @@ namespace NZCore.AssetManagement
 
             foreach (var processor in processors)
             {
+                ClearManagers(processor.Value.Type);
+            }
+
+            foreach (var processor in processors)
+            {
                 UpdateManager(processor.Value.Type);
             }
         }
@@ -60,12 +65,38 @@ namespace NZCore.AssetManagement
             processor.Process(asset);
         }
 
-        private static void UpdateManager(Type type)
+        private static T GetCustomAttributeRecursive<T>(Type type, out Type baseType) where T : Attribute
         {
-            var attribute = type.GetCustomAttribute<AutoIDManagerAttribute>();
+            while (true)
+            {
+                var attribute = type.GetCustomAttribute<T>();
+
+                if (attribute != null)
+                {
+                    baseType = type;
+                    return attribute;
+                }
+
+                if (type.BaseType == null)
+                {
+                    baseType = null;
+                    return null;
+                }
+
+                type = type.BaseType;
+            }
+        }
+
+        private static bool TryGetManager(Type type, out ScriptableObject manager, out SerializedObject managerObject, out SerializedProperty containerListProperty)
+        {
+            manager = null;
+            managerObject = null;
+            containerListProperty = null;
+
+            var attribute = GetCustomAttributeRecursive<AutoIDManagerAttribute>(type, out var baseType);
             if (attribute == null)
             {
-                return;
+                return false;
             }
 
             var managerGuid = AssetDatabase.FindAssets($"t:{attribute.ManagerType}");
@@ -73,41 +104,53 @@ namespace NZCore.AssetManagement
             if (managerGuid.Length == 0)
             {
                 Debug.LogError($"No manager found for {attribute.ManagerType}");
-                return;
+                return false;
             }
 
             if (managerGuid.Length > 1)
             {
                 Debug.LogError($"More than one manager found for {attribute.ManagerType}");
-                return;
+                return false;
             }
 
-            var manager = AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(managerGuid[0]));
+            manager = AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(managerGuid[0]));
             if (manager == null)
             {
                 Debug.LogError("Manager wasn't a ScriptableObject");
-                return;
+                return false;
             }
 
-            var so = new SerializedObject(manager);
-            var sp = so.FindProperty(attribute.ContainerListProperty);
-            if (sp == null)
+            managerObject = new SerializedObject(manager);
+            containerListProperty = managerObject.FindProperty(attribute.ContainerListProperty);
+            if (containerListProperty == null)
             {
                 Debug.LogError($"Property {attribute.ContainerListProperty} not found for {attribute.ManagerType}");
-                return;
+                return false;
             }
 
-            if (!sp.isArray)
+            if (!containerListProperty.isArray)
             {
                 Debug.LogError($"Property {attribute.ContainerListProperty} was not type of array for {attribute.ManagerType}");
-                return;
+                return false;
             }
 
-            if (sp.arrayElementType != $"PPtr<${type.Name}>")
-            {
-                Debug.LogError($"Property {attribute.ContainerListProperty} was not type of {type.Name} for {attribute.ManagerType}");
+            return true;
+        }
+
+        private static void ClearManagers(Type type)
+        {
+            if (!TryGetManager(type, out var manager, out var managerObject, out var list))
                 return;
-            }
+
+            list.ClearArray();
+            managerObject.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssetIfDirty(manager);
+        }
+
+        private static void UpdateManager(Type type)
+        {
+            if (!TryGetManager(type, out var manager, out var managerObject, out var list))
+                return;
 
             var objects = AssetDatabase.FindAssets($"t:{type.Name}")
                 .Select(AssetDatabase.GUIDToAssetPath)
@@ -116,13 +159,13 @@ namespace NZCore.AssetManagement
                 .Where(s => s.GetType() == type)
                 .ToList();
 
-            sp.arraySize = objects.Count;
-            for (var i = 0; i < objects.Count; i++)
+            foreach (var obj in objects)
             {
-                sp.GetArrayElementAtIndex(i).objectReferenceValue = objects[i];
+                list.InsertArrayElementAtIndex(list.arraySize);
+                list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = obj;
             }
 
-            so.ApplyModifiedPropertiesWithoutUndo();
+            managerObject.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.SaveAssetIfDirty(manager);
         }
 

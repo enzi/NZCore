@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
@@ -56,13 +59,81 @@ namespace NZCore.UIToolkit
             }
         }
 
-        public static VisualElement CloneTreeSingle(this VisualTreeAsset vta, VisualElement target, bool visible = true)
+        /// <summary>
+        /// This method expects a VisualTreeAsset that has one root node
+        /// and discards the TemplateContainer
+        /// </summary>
+        public static VisualElement CloneSingleTree(this VisualTreeAsset vta, VisualElement target, bool visible = true)
         {
             vta.CloneTree(target, out int firstElementIndex, out int _);
             var ve = target.ElementAt(firstElementIndex);
             ve.AddToClassList(visible ? visibleClass : hiddenClass);
 
             return ve;
+        }
+
+        /// <summary>
+        /// This method expects a VisualTreeAsset that has one root node
+        /// and discards the TemplateContainer
+        /// </summary>
+        public static VisualElement CloneSingleTree(this VisualTreeAsset vta, bool visible = true)
+        {
+            var tmp = vta.Instantiate();
+
+            if (tmp.childCount != 1)
+            {
+                Debug.LogError($"{vta.name} has more than 1 root node!");
+                return null;
+            }
+
+            var ve = tmp.ElementAt(0);
+            ve.AddToClassList(visible ? visibleClass : hiddenClass);
+
+            var vea = vta.visualElementAssets[0];
+            vea.AssignClassListFromAssetToElement(ve);
+            vea.AssignStyleSheetFromAssetToElement(ve);
+            return ve;
+        }
+
+        private static void AssignClassListFromAssetToElement(
+            this VisualElementAsset asset,
+            VisualElement element)
+        {
+            if (asset.classes == null)
+            {
+                return;
+            }
+
+            foreach (var className in asset.classes)
+            {
+                element.AddToClassList(className);
+            }
+        }
+
+        private static void AssignStyleSheetFromAssetToElement(
+            this VisualElementAsset asset,
+            VisualElement element)
+        {
+            if (asset.hasStylesheetPaths)
+            {
+                foreach (var sheetPath in asset.stylesheetPaths)
+                {
+                    element.AddStyleSheetPath(sheetPath);
+                }
+            }
+
+            if (!asset.hasStylesheets)
+            {
+                return;
+            }
+
+            foreach (var styleSheet in asset.stylesheets)
+            {
+                if (styleSheet != null)
+                {
+                    element.styleSheets.Add(styleSheet);
+                }
+            }
         }
 
         public static List<T> GetActiveElements<T>(this VisualElement ve)

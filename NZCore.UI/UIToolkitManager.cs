@@ -1,4 +1,5 @@
 #if UNITY_6000
+using System;
 using System.Collections.Generic;
 using BovineLabs.Core.UI;
 using UnityEngine;
@@ -17,8 +18,13 @@ namespace NZCore.UIToolkit
         public VisualElement DragImage { get; private set; }
         public VisualElement MainButtonsContainer { get; private set; }
 
-        private Dictionary<string, VisualElement> Lookup = new();
-        private readonly Dictionary<string, (VisualElement Element, IViewModelBinding Binding)> loadedInterfaceAssets = new();
+        private readonly Dictionary<string, VisualElement> registeredElements = new();
+
+        //private readonly Dictionary<string, (VisualElement Element, IViewModelBinding Binding)> loadedPanels = new();
+        private readonly Dictionary<string, (VisualElement Element, IViewModelBinding Binding)> loadedPanels = new();
+        private readonly Dictionary<string, VisualElement> loadedInterfaces = new();
+
+        private readonly List<OrderedElement> sortedPanels = new();
 
         public void Awake()
         {
@@ -31,120 +37,290 @@ namespace NZCore.UIToolkit
             MainButtonsContainer = Root.Q<VisualElement>("mainButtonsContainer");
         }
 
-        public void AddInterface(string assetKey, string containerName = null, bool visibleOnInstantiate = true)
+        public VisualElement GetRoot(string containerName = null)
         {
-            //if (loadedInterfaceAssets.TryGetValue(key, out var container)) 
-            //    return;
-
-            if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
-            {
-                asset.CloneTreeSingle(containerName == null ? Root : Root.Q<VisualElement>(containerName), visibleOnInstantiate);
-            }
-            else
-            {
-                Debug.LogError($"Key {assetKey} was not found in assets!");
-            }
+            return containerName == null ? Root : Root.Q<VisualElement>(containerName);
         }
 
-        public (VisualElement, T) AddInterface<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int priority = 0, bool visibleOnInstantiate = true)
+        public VisualElement AddInterface(string assetKey, bool visibleOnInstantiate = true)
+        {
+            return AddInterface(assetKey, Root, visibleOnInstantiate);
+        }
+
+        public VisualElement AddInterface(string assetKey, string containerName = null, bool visibleOnInstantiate = true)
+        {
+            return AddInterface(assetKey, GetRoot(containerName), visibleOnInstantiate);
+        }
+
+        public VisualElement AddInterface(string assetKey, VisualElement rootContainer, bool visibleOnInstantiate = true)
+        {
+            if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
+            {
+                return asset.CloneSingleTree(rootContainer, visibleOnInstantiate);
+            }
+
+            Debug.LogError($"Key {assetKey} was not found in assets!");
+            return null;
+        }
+
+        public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
             where T : class, IViewModelBinding, new()
         {
-            // if (loadedInterfaceAssets.TryGetValue(key, out var element))
-            // {
-            //     return loadedBindings.TryGetValue(element, out var binding) ? (element, (T)binding) : (element, null);
-            // }
+            return AddBindableInterface<T>(uniqueKey, assetKey, Root, elementName, order, visibleOnInstantiate);
+        }
 
+        public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+            where T : class, IViewModelBinding, new()
+        {
+            VisualElement rootContainer = GetRoot(containerName);
+
+            return AddBindableInterface<T>(uniqueKey, assetKey, rootContainer, elementName, order, visibleOnInstantiate);
+        }
+
+        public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+            where T : class, IViewModelBinding, new()
+        {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
             {
                 return (Root, default);
             }
 
-            if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
+            if (TryLoad<T>(uniqueKey, assetKey, out var container, visibleOnInstantiate, elementName))
             {
-                var ve = asset.CloneTreeSingle(containerName == null ? Root : Root.Q<VisualElement>(containerName), visibleOnInstantiate);
-                var binding = new T();
-                ve.dataSource = binding;
-
-                if (elementName != null)
-                    ve.name = elementName;
-
-                loadedInterfaceAssets.Add(uniqueKey, (ve, binding));
-
-                return (ve, binding);
-            }
-            else
-            {
-                Debug.LogError($"Key {assetKey} was not found in assets!");
-
-                return (null, default);
+                rootContainer.Add(container.ve);
             }
 
-            //element.pickingMode = PickingMode.Ignore;
-            //element.AddToClassList(PanelClassName);
-            // var e = new OrderedElement(element, priority);
-            //
-            // this.elements.Add(e);
-            // this.elements.Sort();
-            //
-            // var index = this.elements.IndexOf(e);
-            // this.view.Insert(index, element);
+            return container;
         }
 
-        public (VisualElement, T) AddInterface<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int priority = 0, bool visibleOnInstantiate = true)
+        // Panel methods
+        // Panels are sorted
+
+        public VisualElement AddPanel(string uniqueKey, string assetKey, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        {
+            return AddPanel(uniqueKey, assetKey, Root, elementName, order, visibleOnInstantiate);
+        }
+
+        public VisualElement AddPanel(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        {
+            return AddPanel(uniqueKey, assetKey, GetRoot(containerName), elementName, order, visibleOnInstantiate);
+        }
+
+        public VisualElement AddPanel(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        {
+            if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
+            {
+                return Root;
+            }
+
+            if (TryLoad(uniqueKey, assetKey, out var ve, visibleOnInstantiate, elementName))
+            {
+                var oe = new OrderedElement(ve, order);
+                sortedPanels.Add(oe);
+                sortedPanels.Sort();
+
+                var index = sortedPanels.IndexOf(oe);
+                rootContainer.Insert(index, ve);
+            }
+
+            return ve;
+        }
+
+        public (VisualElement, T) AddBindablePanel<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
             where T : class, IViewModelBinding, new()
         {
-            // if (loadedInterfaceAssets.TryGetValue(key, out var element))
-            // {
-            //     return loadedBindings.TryGetValue(element, out var binding) ? (element, (T)binding) : (element, null);
-            // }
+            return AddBindablePanel<T>(uniqueKey, assetKey, GetRoot(containerName), elementName, order, visibleOnInstantiate);
+        }
 
+        public (VisualElement, T) AddBindablePanel<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+            where T : class, IViewModelBinding, new()
+        {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
             {
                 return (Root, default);
             }
 
-            if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
+            if (TryLoad<T>(uniqueKey, assetKey, out var container, visibleOnInstantiate, elementName))
             {
-                var ve = asset.CloneTreeSingle(rootContainer, visibleOnInstantiate);
-                var binding = new T();
-                ve.dataSource = binding;
+                var oe = new OrderedElement(container.ve, order);
+                sortedPanels.Add(oe);
+                sortedPanels.Sort();
 
-                if (elementName != null)
-                    ve.name = elementName;
-
-                loadedInterfaceAssets.Add(uniqueKey, (ve, binding));
-
-                return (ve, binding);
-            }
-            else
-            {
-                Debug.LogError($"Key {assetKey} was not found in assets!");
-
-                return (null, default);
+                var index = sortedPanels.IndexOf(oe);
+                rootContainer.Insert(index, container.ve);
             }
 
-            //element.pickingMode = PickingMode.Ignore;
-            //element.AddToClassList(PanelClassName);
-            // var e = new OrderedElement(element, priority);
-            //
-            // this.elements.Add(e);
-            // this.elements.Sort();
-            //
-            // var index = this.elements.IndexOf(e);
-            // this.view.Insert(index, element);
+            return container;
+        }
+
+        // public (VisualElement, T) AddInterface<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        //     where T : class, IViewModelBinding, new()
+        // {
+        //     // if (loadedInterfaceAssets.TryGetValue(key, out var element))
+        //     // {
+        //     //     return loadedBindings.TryGetValue(element, out var binding) ? (element, (T)binding) : (element, null);
+        //     // }
+        //
+        //     if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
+        //     {
+        //         return (Root, default);
+        //     }
+        //
+        //     if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
+        //     {
+        //         var ve = asset.CloneTreeSingle(rootContainer, visibleOnInstantiate);
+        //         var binding = new T();
+        //         ve.dataSource = binding;
+        //
+        //         if (elementName != null)
+        //             ve.name = elementName;
+        //
+        //         loadedInterfaceAssets.Add(uniqueKey, (ve, binding));
+        //         
+        //         activeElements.Add(new OrderedElement(ve, order));
+        //         activeElements.Sort();
+        //         
+        //         
+        //
+        //         return (ve, binding);
+        //     }
+        //     else
+        //     {
+        //         Debug.LogError($"Key {assetKey} was not found in assets!");
+        //
+        //         return (null, default);
+        //     }
+        //
+        //     //element.pickingMode = PickingMode.Ignore;
+        //     //element.AddToClassList(PanelClassName);
+        //     // var e = new OrderedElement(element, priority);
+        //     //
+        //     // this.elements.Add(e);
+        //     // this.elements.Sort();
+        //     //
+        //     // var index = this.elements.IndexOf(e);
+        //     // this.view.Insert(index, element);
+        // }
+
+        public bool UnloadOrderedPanel()
+        {
+            if (sortedPanels.Count == 0)
+                return false;
+
+            var topPanel = sortedPanels[^1];
+            // todo, destroy or hide?
+            //topPanel.VisualElement.RemoveFromHierarchy();
+            //topPanel.VisualElement.
+            sortedPanels.RemoveAt(sortedPanels.Count - 1);
+
+            return true;
         }
 
         public IViewModelBinding RemovePanel(string uniqueKey)
         {
-            return TryUnloadPanel(uniqueKey, out var panel) ? panel.Binding : null;
+            return TryUnload(uniqueKey, out var panel) ? panel.Binding : null;
         }
 
-        public bool TryUnloadPanel(string uniqueKey, out (VisualElement Element, IViewModelBinding Binding) container)
+        public bool TryLoad(string uniqueKey, string assetKey, out VisualElement ve, bool visibleOnInstantiate = true, string elementName = null)
         {
-            if (loadedInterfaceAssets.TryGetValue(uniqueKey, out container))
+            if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
+            {
+                ve = Root;
+                return true;
+            }
+
+            if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
+            {
+                ve = asset.CloneSingleTree(visibleOnInstantiate);
+
+                if (elementName != null)
+                    ve.name = elementName;
+
+                loadedPanels.Add(uniqueKey, (ve, default));
+
+                return true;
+            }
+            else
+            {
+                Debug.LogError($"Key {assetKey} was not found in assets!");
+
+                ve = Root;
+                return false;
+            }
+        }
+
+        public bool TryLoad<T>(string uniqueKey, string assetKey, VisualElement rootContainer, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true, string elementName = null)
+            where T : class, IViewModelBinding, new()
+        {
+            if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
+            {
+                container = (Root, default);
+                return true;
+            }
+
+            if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
+            {
+                var ve = asset.CloneSingleTree(rootContainer, visibleOnInstantiate);
+                var binding = new T();
+                ve.dataSource = binding;
+
+                if (elementName != null)
+                    ve.name = elementName;
+
+                loadedPanels.Add(uniqueKey, (ve, binding));
+
+                container = (ve, binding);
+
+                return true;
+            }
+            else
+            {
+                Debug.LogError($"Key {assetKey} was not found in assets!");
+
+                container = (Root, default);
+                return false;
+            }
+        }
+
+        public bool TryLoad<T>(string uniqueKey, string assetKey, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true, string elementName = null)
+            where T : class, IViewModelBinding, new()
+        {
+            if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
+            {
+                container = (Root, default);
+                return true;
+            }
+
+            if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
+            {
+                var ve = asset.CloneSingleTree(visibleOnInstantiate);
+                var binding = new T();
+                ve.dataSource = binding;
+
+                if (elementName != null)
+                    ve.name = elementName;
+
+                loadedPanels.Add(uniqueKey, (ve, binding));
+
+                container = (ve, binding);
+
+                return true;
+            }
+            else
+            {
+                Debug.LogError($"Key {assetKey} was not found in assets!");
+
+                container = (Root, default);
+                return false;
+            }
+        }
+
+        public bool TryUnload(string uniqueKey, out (VisualElement Element, IViewModelBinding Binding) container)
+        {
+            if (loadedPanels.TryGetValue(uniqueKey, out container))
             {
                 container.Element.RemoveFromHierarchy();
-                loadedInterfaceAssets.Remove(uniqueKey);
+                loadedPanels.Remove(uniqueKey);
                 return true;
             }
 
@@ -153,12 +329,41 @@ namespace NZCore.UIToolkit
 
         public void RegisterElement(string key, VisualElement element)
         {
-            Lookup.Add(key, element);
+            registeredElements.Add(key, element);
         }
 
         public bool TryGet(string tooltip, out VisualElement element)
         {
-            return Lookup.TryGetValue(tooltip, out element);
+            return registeredElements.TryGetValue(tooltip, out element);
+        }
+
+        private readonly struct OrderedElement : IComparable<OrderedElement>, IEquatable<OrderedElement>
+        {
+            private readonly VisualElement ve;
+            private readonly int order;
+
+            public VisualElement VisualElement => ve;
+
+            public OrderedElement(VisualElement visualElement, int order)
+            {
+                ve = visualElement;
+                this.order = order;
+            }
+
+            public int CompareTo(OrderedElement other)
+            {
+                return order.CompareTo(other.order);
+            }
+
+            public bool Equals(OrderedElement other)
+            {
+                return ve.Equals(other.ve);
+            }
+
+            public override int GetHashCode()
+            {
+                return ve.GetHashCode();
+            }
         }
     }
 }

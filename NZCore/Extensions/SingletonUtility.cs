@@ -15,6 +15,15 @@ namespace NZCore
             state.EntityManager.AddComponentData(singletonEntity, singletonData);
         }
 
+        public static void CreateSingleton<T>(this ref SystemState state, out T singletonData)
+            where T : unmanaged, IInitSingleton
+        {
+            var singletonEntity = state.EntityManager.CreateEntity();
+            singletonData = default;
+            singletonData.Init();
+            state.EntityManager.AddComponentData(singletonEntity, singletonData);
+        }
+
         public static void DisposeSingleton<T>(this ref SystemState state)
             where T : unmanaged, IComponentData, IDisposable
         {
