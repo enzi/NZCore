@@ -96,6 +96,22 @@ namespace NZCore.UIToolkit
         // Panel methods
         // Panels are sorted
 
+        public VisualElement AddPanel(string uniqueKey, VisualTreeAsset asset, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        {
+            var ve = CloneAndAdd(uniqueKey, asset, visibleOnInstantiate, elementName);
+            AddAsSortablePanel(ve, order);
+            
+            return ve;
+        }
+
+        public VisualElement AddPanel(string uniqueKey, VisualTreeAsset asset, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        {
+            var ve = CloneAndAdd(uniqueKey, asset, visibleOnInstantiate, elementName);
+            AddAsSortablePanel(rootContainer, ve, order);
+            
+            return ve;
+        }
+        
         public VisualElement AddPanel(string uniqueKey, string assetKey, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
         {
             return AddPanel(uniqueKey, assetKey, Root, elementName, order, visibleOnInstantiate);
@@ -115,15 +131,31 @@ namespace NZCore.UIToolkit
 
             if (TryLoad(uniqueKey, assetKey, out var ve, visibleOnInstantiate, elementName))
             {
-                var oe = new OrderedElement(ve, order);
-                sortedPanels.Add(oe);
-                sortedPanels.Sort();
-
-                var index = sortedPanels.IndexOf(oe);
-                rootContainer.Insert(index, ve);
+                AddAsSortablePanel(rootContainer, ve, order);
             }
 
             return ve;
+        }
+
+        /// <summary>
+        /// Adds a sortable panel ve, to the default Root with a given order
+        /// </summary>
+        private void AddAsSortablePanel(VisualElement ve, int order)
+        {
+            AddAsSortablePanel(Root, ve, order);
+        }
+        
+        /// <summary>
+        /// Adds a sortable panel ve, to the rootContainer with a given order
+        /// </summary>
+        private void AddAsSortablePanel(VisualElement rootContainer, VisualElement ve, int order)
+        {
+            var oe = new OrderedElement(ve, order);
+            sortedPanels.Add(oe);
+            sortedPanels.Sort();
+
+            var index = sortedPanels.IndexOf(oe);
+            rootContainer.Insert(index, ve);
         }
 
         public (VisualElement, T) AddBindablePanel<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
@@ -153,59 +185,12 @@ namespace NZCore.UIToolkit
             return container;
         }
 
-        // public (VisualElement, T) AddInterface<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
-        //     where T : class, IViewModelBinding, new()
-        // {
-        //     // if (loadedInterfaceAssets.TryGetValue(key, out var element))
-        //     // {
-        //     //     return loadedBindings.TryGetValue(element, out var binding) ? (element, (T)binding) : (element, null);
-        //     // }
-        //
-        //     if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
-        //     {
-        //         return (Root, default);
-        //     }
-        //
-        //     if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
-        //     {
-        //         var ve = asset.CloneTreeSingle(rootContainer, visibleOnInstantiate);
-        //         var binding = new T();
-        //         ve.dataSource = binding;
-        //
-        //         if (elementName != null)
-        //             ve.name = elementName;
-        //
-        //         loadedInterfaceAssets.Add(uniqueKey, (ve, binding));
-        //         
-        //         activeElements.Add(new OrderedElement(ve, order));
-        //         activeElements.Sort();
-        //         
-        //         
-        //
-        //         return (ve, binding);
-        //     }
-        //     else
-        //     {
-        //         Debug.LogError($"Key {assetKey} was not found in assets!");
-        //
-        //         return (null, default);
-        //     }
-        //
-        //     //element.pickingMode = PickingMode.Ignore;
-        //     //element.AddToClassList(PanelClassName);
-        //     // var e = new OrderedElement(element, priority);
-        //     //
-        //     // this.elements.Add(e);
-        //     // this.elements.Sort();
-        //     //
-        //     // var index = this.elements.IndexOf(e);
-        //     // this.view.Insert(index, element);
-        // }
-
         public bool UnloadOrderedPanel()
         {
             if (sortedPanels.Count == 0)
+            {
                 return false;
+            }
 
             var topPanel = sortedPanels[^1];
             // todo, destroy or hide?
@@ -231,13 +216,7 @@ namespace NZCore.UIToolkit
 
             if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
             {
-                ve = asset.CloneSingleTree(visibleOnInstantiate);
-
-                if (elementName != null)
-                    ve.name = elementName;
-
-                loadedPanels.Add(uniqueKey, (ve, default));
-
+                ve = CloneAndAdd(uniqueKey, asset, visibleOnInstantiate, elementName);
                 return true;
             }
             else
@@ -248,7 +227,23 @@ namespace NZCore.UIToolkit
                 return false;
             }
         }
+        
+        public VisualElement CloneAndAdd(string uniqueKey, VisualTreeAsset asset, bool visibleOnInstantiate = true, string elementName = null)
+        {
+            var ve = asset.CloneSingleTree(visibleOnInstantiate);
 
+            if (elementName != null)
+            {
+                ve.name = elementName;
+            }
+
+            loadedPanels.Add(uniqueKey, (ve, default));
+
+            return ve;
+        }
+
+        // Binding related methods
+        
         public bool TryLoad<T>(string uniqueKey, string assetKey, VisualElement rootContainer, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true, string elementName = null)
             where T : class, IViewModelBinding, new()
         {
@@ -293,16 +288,7 @@ namespace NZCore.UIToolkit
 
             if (Assets.VisualTreeAssets.TryGetValue(assetKey, out var asset))
             {
-                var ve = asset.CloneSingleTree(visibleOnInstantiate);
-                var binding = new T();
-                ve.dataSource = binding;
-
-                if (elementName != null)
-                    ve.name = elementName;
-
-                loadedPanels.Add(uniqueKey, (ve, binding));
-
-                container = (ve, binding);
+                Load(uniqueKey, asset, out container, visibleOnInstantiate, elementName);
 
                 return true;
             }
@@ -313,6 +299,21 @@ namespace NZCore.UIToolkit
                 container = (Root, default);
                 return false;
             }
+        }
+
+        public void Load<T>(string uniqueKey, VisualTreeAsset asset, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true, string elementName = null)
+            where T : class, IViewModelBinding, new()
+        {
+            var ve = asset.CloneSingleTree(visibleOnInstantiate);
+            var binding = new T();
+            ve.dataSource = binding;
+
+            if (elementName != null)
+                ve.name = elementName;
+
+            loadedPanels.Add(uniqueKey, (ve, binding));
+
+            container = (ve, binding);
         }
 
         public bool TryUnload(string uniqueKey, out (VisualElement Element, IViewModelBinding Binding) container)

@@ -41,21 +41,21 @@ namespace BovineLabs.Core.UI
         }
     }
 
-    public interface IViewModelViewModelViewModelBindingNotify<T> : IViewModelBinding<T>, IViewModelBindingNotify
+    public interface IViewModelBindingNotify<T> : IViewModelBinding<T>, IViewModelBindingNotify
         where T : unmanaged, IModelBindingNotify
     {
-        public static unsafe void Load(IViewModelViewModelViewModelBindingNotify<T> viewModelViewModelViewModelBindingNotify)
+        public static unsafe void Load(IViewModelBindingNotify<T> viewModelBindingNotify)
         {
-            var ptr = (IntPtr)UnsafeUtility.AddressOf(ref viewModelViewModelViewModelBindingNotify.Value);
-            Active.Objects[ptr] = viewModelViewModelViewModelBindingNotify;
-            viewModelViewModelViewModelBindingNotify.Value.Notify = Active.Notify;
+            var ptr = (IntPtr)UnsafeUtility.AddressOf(ref viewModelBindingNotify.Value);
+            Active.Objects[ptr] = viewModelBindingNotify;
+            viewModelBindingNotify.Value.Notify = Active.Notify;
         }
 
-        public static unsafe void Unload(IViewModelViewModelViewModelBindingNotify<T> viewModelViewModelViewModelBindingNotify)
+        public static unsafe void Unload(IViewModelBindingNotify<T> viewModelBindingNotify)
         {
-            var ptr = (IntPtr)UnsafeUtility.AddressOf(ref viewModelViewModelViewModelBindingNotify.Value);
+            var ptr = (IntPtr)UnsafeUtility.AddressOf(ref viewModelBindingNotify.Value);
             Active.Objects.Remove(ptr);
-            viewModelViewModelViewModelBindingNotify.Value.Notify = default;
+            viewModelBindingNotify.Value.Notify = default;
         }
 
         /// <inheritdoc/>

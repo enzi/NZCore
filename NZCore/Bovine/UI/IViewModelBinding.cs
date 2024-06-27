@@ -2,6 +2,8 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
+using UnityEngine.UIElements;
+
 #if UNITY_6000
 namespace BovineLabs.Core.UI
 {
