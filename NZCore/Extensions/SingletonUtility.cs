@@ -24,10 +24,20 @@ namespace NZCore
             state.EntityManager.AddComponentData(singletonEntity, singletonData);
         }
 
+        public static void CreateSingleton<T>(this ref SystemState state, out Entity singletonEntity, out T singletonData)
+            where T : unmanaged, IInitSingleton
+        {
+            singletonEntity = state.EntityManager.CreateEntity();
+            singletonData = default;
+            singletonData.Init();
+            state.EntityManager.AddComponentData(singletonEntity, singletonData);
+        }
+
         public static void DisposeSingleton<T>(this ref SystemState state)
             where T : unmanaged, IComponentData, IDisposable
         {
-            state.EntityManager.GetSingleton<T>().Dispose();
+            state.GetSingleton<T>().Dispose();
+            state.EntityManager.DestroyEntity(state.GetSingletonEntity<T>());
         }
     }
 }

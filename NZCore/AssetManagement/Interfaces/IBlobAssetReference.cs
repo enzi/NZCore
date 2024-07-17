@@ -9,7 +9,7 @@ namespace NZCore
         public BlobAssetReference<T> blob { get; set; }
         public Guid guid { get; set; }
     }
-    
+
     public interface IBlobAssetReference<T1, T2> : IComponentData
         where T1 : unmanaged
         where T2 : unmanaged

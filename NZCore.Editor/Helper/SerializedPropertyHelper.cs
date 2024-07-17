@@ -47,17 +47,16 @@ namespace NZCore.Editor
                     }
 
                     yield return currentProperty.Copy();
-                }
-                while (currentProperty.Next(false));
+                } while (currentProperty.Next(false));
             }
         }
 
         public static Dictionary<string, PropertyField> GetPropertyFieldDictionary(this SerializedProperty root)
         {
             Dictionary<string, PropertyField> propertyFields = new Dictionary<string, PropertyField>();
-            
+
             var list = GetChildren(root).ToList();
-            
+
             foreach (var serializedProperty in list)
             {
                 var tmp = new PropertyField(serializedProperty);
@@ -72,7 +71,7 @@ namespace NZCore.Editor
             Dictionary<string, PropertyField> propertyFields = new Dictionary<string, PropertyField>();
 
             var list = GetChildren(root).ToList();
-            
+
             foreach (var serializedProperty in list)
             {
                 var tmp = new PropertyField(serializedProperty);
@@ -92,27 +91,27 @@ namespace NZCore.Editor
         {
             if (serializedObject == null)
                 return null;
-           
+
             var iterator = serializedObject.GetIterator();
-            
-            if (!iterator.NextVisible(true)) 
+
+            if (!iterator.NextVisible(true))
                 return null;
-            
+
             Dictionary<string, PropertyField> propertyFields = new Dictionary<string, PropertyField>();
 
             do
             {
                 bool ignoreField = iterator.propertyPath == "m_Script";
-                
+
                 foreach (var ignoreString in ignored)
                 {
-                    if (iterator.name.Contains(ignoreString))
+                    if (iterator.name == ignoreString)
                         ignoreField = true;
                 }
-                
+
                 if (ignoreField)
                     continue;
-                
+
                 var propertyField = new PropertyField(iterator)
                 {
                     name = iterator.propertyPath,
@@ -126,14 +125,13 @@ namespace NZCore.Editor
 
                 if (autoBind)
                     propertyField.BindProperty(iterator);
-                
+
                 //Debug.Log($"Added {propertyField.name}");
-            }
-            while (iterator.NextVisible(false));
+            } while (iterator.NextVisible(false));
 
             return propertyFields;
         }
-        
+
         // ReSharper disable once UnusedMember.Local
         private static Type GetPropertyType(SerializedProperty property)
         {
@@ -143,6 +141,7 @@ namespace NZCore.Editor
             {
                 return fieldInfo.FieldType;
             }
+
             return null;
         }
     }

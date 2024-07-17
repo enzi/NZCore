@@ -16,7 +16,8 @@
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": false,
-    "precompiledReferences": [],
+  "precompiledReferences": [
+  ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

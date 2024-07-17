@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
+using NZCore.Editor;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -65,27 +66,6 @@ namespace NZCore.AssetManagement
             processor.Process(asset);
         }
 
-        private static T GetCustomAttributeRecursive<T>(Type type, out Type baseType) where T : Attribute
-        {
-            while (true)
-            {
-                var attribute = type.GetCustomAttribute<T>();
-
-                if (attribute != null)
-                {
-                    baseType = type;
-                    return attribute;
-                }
-
-                if (type.BaseType == null)
-                {
-                    baseType = null;
-                    return null;
-                }
-
-                type = type.BaseType;
-            }
-        }
 
         private static bool TryGetManager(Type type, out ScriptableObject manager, out SerializedObject managerObject, out SerializedProperty containerListProperty)
         {
@@ -93,7 +73,7 @@ namespace NZCore.AssetManagement
             managerObject = null;
             containerListProperty = null;
 
-            var attribute = GetCustomAttributeRecursive<AutoIDManagerAttribute>(type, out var baseType);
+            var attribute = type.GetCustomAttributeRecursive<AutoIDManagerAttribute>(out var baseType);
             if (attribute == null)
             {
                 return false;
@@ -154,7 +134,7 @@ namespace NZCore.AssetManagement
 
             var objects = AssetDatabase.FindAssets($"t:{type.Name}")
                 .Select(AssetDatabase.GUIDToAssetPath)
-                .Distinct() // In case multi of same type on same path
+                .Distinct()
                 .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
                 .Where(s => s.GetType() == type)
                 .ToList();
