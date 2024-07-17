@@ -12,17 +12,17 @@ namespace NZCore.Editor
             where T : ScriptableObject, IAutoID
         {
             BlockWriter bw = new BlockWriter();
-    
+
             bw.AppendLine("using System;");
             bw.AppendLine();
             bw.AppendLine($"namespace {defaultNamespace}");
             bw.BeginBlock();
-    
+
             bw.AppendLine($"[Serializable]");
 
             if (flagEnum)
                 bw.AppendLine("[Flags]");
-            
+
             bw.AppendLine($"public enum {enumName} : {enumType}");
             bw.BeginBlock();
 
@@ -48,7 +48,7 @@ namespace NZCore.Editor
             }
 
             bw.EndBlock();
-    
+
             bw.EndBlock();
 
             return bw.StringBuilder.ToString();
