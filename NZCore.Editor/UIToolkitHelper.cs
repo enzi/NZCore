@@ -36,5 +36,29 @@ namespace NZCore.Editor
             root.AddToClassList(BaseField<TextField>.alignedFieldUssClassName);
             return root;
         }
+
+        public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, ref byte* ptr)
+            where T : unmanaged
+        {
+            ref T data = ref *(T*)ptr;
+            root.AddBoldLabel($"{typeof(T).Name}");
+            root.AddStructInspector(data);
+            root.Add(new Label()); // just used as a break
+            ptr += sizeof(T);
+            return ref data;
+        }
+
+        public static void AddBoldLabel(this VisualElement root, string text)
+        {
+            var lbl = new Label(text)
+            {
+                style =
+                {
+                    unityFontStyleAndWeight = new StyleEnum<FontStyle>(FontStyle.Bold)
+                }
+            };
+
+            root.Add(lbl);
+        }
     }
 }
