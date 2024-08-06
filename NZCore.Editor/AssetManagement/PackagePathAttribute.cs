@@ -2,11 +2,11 @@ using System;
 
 namespace NZCore.Editor.AssetManagement
 {
-    public class DefaultAutoIDPathAttribute : Attribute
+    public class PackagePathAttribute : Attribute
     {
         public string Path;
 
-        public DefaultAutoIDPathAttribute(string path)
+        public PackagePathAttribute(string path)
         {
             Path = path;
         }

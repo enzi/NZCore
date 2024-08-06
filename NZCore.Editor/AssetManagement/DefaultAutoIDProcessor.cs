@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using Newtonsoft.Json;
 using NZCore.AssetManagement;
 using NZCore.AssetManagement.Interfaces;
+using NZCore.Utility;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -18,7 +19,7 @@ namespace NZCore.Editor.AssetManagement
         // ReSharper disable once Unity.IncorrectMethodSignature
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths, bool didDomainReload)
         {
-            if (didDomainReload || importedAssets.Length == 0)
+            if (didDomainReload || (importedAssets.Length == 0 && deletedAssets.Length != 0))
             {
                 return;
             }
@@ -28,19 +29,16 @@ namespace NZCore.Editor.AssetManagement
 
         private static void ProcessDefaultAutoIDs(string[] importedAssets)
         {
-            List<DefaultAutoIDData> newDataList = new List<DefaultAutoIDData>();
-
             foreach (var assetPath in importedAssets)
             {
                 var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
 
-                if (asset == null || asset is not ScriptableObjectWithAutoID autoID || asset is not IDefaultAutoID defaultAutoID)
+                if (asset == null || asset is not ScriptableObjectWithAutoID || asset is not IDefaultAutoID)
                 {
                     continue;
                 }
 
                 var assetType = asset.GetType();
-
                 ProcessDefaultAutoIDs(assetType);
             }
         }
@@ -83,22 +81,12 @@ namespace NZCore.Editor.AssetManagement
 
             var data = newDataList[0];
 
-            var attribute = data.AssetType.GetCustomAttributeRecursive<DefaultAutoIDPathAttribute>(out var baseType);
+            var attribute = data.AssetType.GetCustomAttributeRecursive<PackagePathAttribute>(out _);
+            var cscAttribute = data.AssetType.GetCustomAttributeRecursive<CscPathAttribute>(out _);
+
             if (attribute != null)
             {
-                var json = JsonConvert.SerializeObject(newDataList[0]);
-                var csVersion = $"/*{json}*/";
-                var path = $"Packages/com.nzspellcasting/{attribute.Path}";
-                var cscPath = $"{path}/csc.rsp";
-                var jsonPath = $"{path}/{data.StructName}.settings.cs";
-                var resolvedJsonPath = Path.GetFullPath(jsonPath);
-
-                File.WriteAllText(jsonPath, csVersion);
-
-                if (CompilerServiceUtility.AddAdditionalFiles(cscPath, resolvedJsonPath))
-                {
-                    // trigger a compile ?
-                }
+                CompilerServiceUtility.WriteJson(newDataList[0], data.StructName, attribute.Path, cscAttribute != null ? cscAttribute.Path : new[] { attribute.Path });
             }
             else
             {

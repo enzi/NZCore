@@ -21,14 +21,15 @@ namespace NZCore.Editor
 
             var soDefault = serializedObject.FindProperty("DefaultValue");
 
-            propertyFields["DefaultValue"].TrackPropertyValue(soDefault, property => { DefaultAutoIDProcessor.ProcessDefaultAutoIDs(target.GetType()); });
+            propertyFields["DefaultValue"].TrackPropertyValue(soDefault, (_) => { DefaultAutoIDProcessor.ProcessDefaultAutoIDs(target.GetType()); });
 
-            // Button btn = new Button(Click_CodeGen)
-            // {
-            //     text = "Codegen Enum"
-            // };
-            //
-            // root.Add(btn);
+            Button btn = new Button(Click_CodeGen)
+            {
+                text = "Update Data"
+            };
+
+            root.Add(btn);
+
 
             return root;
         }
