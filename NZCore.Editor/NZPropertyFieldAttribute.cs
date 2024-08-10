@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="NZPropertyFieldAttribute.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using UnityEngine;
 
 namespace NZCore.Editor
@@ -7,7 +11,7 @@ namespace NZCore.Editor
     public class NZPropertyFieldAttribute : PropertyAttribute
     {
         public bool Inline;
-        
+
         public NZPropertyFieldAttribute(bool inline)
         {
             Inline = inline;

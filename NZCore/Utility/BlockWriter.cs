@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿// <copyright project="NZCore" file="BlockWriter.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Text;
 
 namespace NZCore.Editor
 {
@@ -6,9 +10,9 @@ namespace NZCore.Editor
     {
         public readonly StringBuilder StringBuilder;
         private int indentLevel;
-        
+
         private const string Indent = "\t";
-        
+
         public BlockWriter(int indent = 0)
         {
             StringBuilder = new StringBuilder();
@@ -20,7 +24,7 @@ namespace NZCore.Editor
             this.StringBuilder = stringBuilder;
             indentLevel = indent;
         }
-        
+
         public void BeginBlock()
         {
             WriteIndent();
@@ -34,7 +38,7 @@ namespace NZCore.Editor
             StringBuilder.Append($"{{{text}\n");
             indentLevel++;
         }
-        
+
         public void EndBlock()
         {
             indentLevel--;
@@ -53,11 +57,11 @@ namespace NZCore.Editor
         {
             StringBuilder.Append('\n');
         }
-        
+
         public void AppendLine(string text)
         {
             WriteIndent();
-            
+
             StringBuilder.Append(text);
             StringBuilder.Append('\n');
         }
@@ -65,7 +69,7 @@ namespace NZCore.Editor
         public void AppendLine(int customIndent, string text)
         {
             WriteIndent();
-            
+
             if (customIndent > 0)
                 WriteIndent(customIndent);
 
@@ -88,7 +92,7 @@ namespace NZCore.Editor
         {
             WriteIndent(indentLevel);
         }
-        
+
         public void WriteIndent(int indentAmount)
         {
             for (var i = 0; i < indentAmount; i++)

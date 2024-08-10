@@ -1,5 +1,5 @@
-// <copyright file="SubSceneUtility.cs" company="BovineLabs">
-//     Copyright (c) BovineLabs. All rights reserved.
+// <copyright project="NZCore" file="SubSceneUtility.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
 // </copyright>
 
 using Unity;

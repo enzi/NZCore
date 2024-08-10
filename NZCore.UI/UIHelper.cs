@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="UIHelper.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 #if UNITY_6000
 using System;
 using System.Runtime.InteropServices;

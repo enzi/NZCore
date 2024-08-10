@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// <copyright project="NZCore" file="LoadAddressablesSystem.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -11,7 +15,7 @@ namespace NZCore.Hybrid
     {
         public FixedString512Bytes label;
     }
-    
+
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class LoadAddressablesSystem : SystemBase
     {
@@ -40,7 +44,7 @@ namespace NZCore.Hybrid
                 {
                     if (tmp.Asset == null)
                         tmp.Asset = tmp.Handle.Result;
-                    
+
                     prefab = tmp.Asset;
                     return true;
                 }
@@ -49,7 +53,7 @@ namespace NZCore.Hybrid
             {
                 //Debug.Log($"Loading Addressable {key.ToString()}");
                 var handle = Addressables.LoadAssetAsync<GameObject>(key.ToString());
-            
+
                 addressables.Add(key, new AddressableAndHandle<GameObject>()
                 {
                     Handle = handle
@@ -66,7 +70,7 @@ namespace NZCore.Hybrid
             {
                 pair.Value.Unload();
             }
-            
+
             addressables.Clear();
         }
     }

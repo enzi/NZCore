@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿// <copyright project="NZCore" file="DefaultAutoIDEditor.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using NZCore.AssetManagement;
 using NZCore.Editor.AssetManagement;
 using UnityEditor;
-using UnityEditor.Compilation;
 using UnityEditor.UIElements;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace NZCore.Editor
@@ -23,48 +23,7 @@ namespace NZCore.Editor
 
             propertyFields["DefaultValue"].TrackPropertyValue(soDefault, (_) => { DefaultAutoIDProcessor.ProcessDefaultAutoIDs(target.GetType()); });
 
-            Button btn = new Button(Click_CodeGen)
-            {
-                text = "Update Data"
-            };
-
-            root.Add(btn);
-
-
             return root;
-        }
-
-        private void Click_CodeGen()
-        {
-            RunDidChangeOnAssetType((ScriptableObjectWithAutoID)target);
-        }
-
-        private static void RunDidChangeOnAssetType(ScriptableObjectWithAutoID target)
-        {
-            var targetType = target.GetType();
-            Debug.Log($"Generating code for {targetType.Name} ...");
-
-            var assetPaths = AssetDatabase.FindAssets($"t:{targetType.Name}")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .ToList();
-
-            List<ScriptableObjectWithAutoID> allAssets = new List<ScriptableObjectWithAutoID>();
-
-            foreach (string assetPath in assetPaths)
-            {
-                var asset = AssetDatabase.LoadAssetAtPath(assetPath, targetType);
-
-                if (asset == null)
-                    continue;
-
-                allAssets.Add((ScriptableObjectWithAutoID)asset);
-            }
-
-            target.ChangeProcessor.DidChange(allAssets);
-
-            CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.None);
-
-            Debug.Log($"{targetType.Name} enum was created!");
         }
     }
 }

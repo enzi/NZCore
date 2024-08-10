@@ -1,4 +1,6 @@
-// Credits go to SearousK: https://forum.unity.com/threads/cannot-serialize-a-guid-field-in-class.156862/#post-6996680
+// <copyright project="NZCore" file="SerializedGuid.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
 
 using System;
 using UnityEngine;

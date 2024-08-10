@@ -1,4 +1,8 @@
-﻿#if UNITY_6000
+﻿// <copyright project="NZCore" file="LoadAddressableInterface.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+#if UNITY_6000
 using NZCore.Hybrid;
 using Unity.Entities;
 using UnityEngine;

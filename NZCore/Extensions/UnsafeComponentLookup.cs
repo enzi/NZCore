@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="UnsafeComponentLookup.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;

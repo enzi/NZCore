@@ -1,4 +1,8 @@
-﻿using NZCore.Components;
+﻿// <copyright project="NZCore" file="HybridEntity_Authoring.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using NZCore.Components;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.AddressableAssets;

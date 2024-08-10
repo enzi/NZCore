@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="TransformEntityMapping.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using NZCore.AssetManagement;
 using Unity.Burst;
 using Unity.Collections;

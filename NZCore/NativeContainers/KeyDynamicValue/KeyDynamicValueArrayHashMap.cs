@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="KeyDynamicValueArrayHashMap.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -15,7 +19,7 @@ namespace NZCore
         where TKeyInterpreter : unmanaged, IKeyInterpreter<TKey>
     {
         [NativeDisableUnsafePtrRestriction] private UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>* _unsafeKeyValueArrayHashMap;
-        
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_Safety;
         private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<KeyValueArrayHashMap<TKey, TKeyInterpreter>>();
@@ -40,11 +44,10 @@ namespace NZCore
             CollectionHelper.SetStaticSafetyId<KeyValueArrayHashMap<TKey, TKeyInterpreter>>(ref m_Safety, ref staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
-            
+
             _unsafeKeyValueArrayHashMap = UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>.Create(initialCapacity, ref allocator);
-            
         }
-        
+
         public bool ContainsKey(TKey key)
         {
             return _unsafeKeyValueArrayHashMap->TryPeekFirstRefValue(key);
@@ -54,12 +57,12 @@ namespace NZCore
         {
             _unsafeKeyValueArrayHashMap->SetArrays(keysArray, valueArray);
         }
-        
+
         public void CalculateBuckets()
         {
             _unsafeKeyValueArrayHashMap->CalculateBuckets();
         }
-        
+
         // public void PrintValues()
         // {
         //     //Debug.Log($"PrintValues with length {allocatedIndexLength}");
@@ -90,22 +93,22 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             CollectionHelper.DisposeSafetyHandle(ref m_Safety);
 #endif
-            
+
             UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>.Destroy(_unsafeKeyValueArrayHashMap);
         }
-        
+
         public KeyDynamicValueArrayHashMapEnumerator<TKey, TKeyInterpreter> GetValuesForKey(TKey key)
         {
             return new KeyDynamicValueArrayHashMapEnumerator<TKey, TKeyInterpreter>
             {
-                Map = _unsafeKeyValueArrayHashMap, 
-                Key = key, 
+                Map = _unsafeKeyValueArrayHashMap,
+                Key = key,
                 IsFirst = true
             };
         }
-        
+
         // helper jobs
-        
+
         public JobHandle ScheduleCalculateBuckets(NativeArray<TKey> keysArray, NativeArray<byte> valuesArray, JobHandle dependency)
         {
             return new CalculateBucketsJob()
@@ -115,7 +118,7 @@ namespace NZCore
                 Values = valuesArray
             }.Schedule(dependency);
         }
-        
+
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob
         {

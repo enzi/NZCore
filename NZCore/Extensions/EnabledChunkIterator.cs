@@ -1,4 +1,8 @@
-﻿using Unity.Burst.Intrinsics;
+﻿// <copyright project="NZCore" file="EnabledChunkIterator.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Burst.Intrinsics;
 using Unity.Entities;
 using Unity.Mathematics;
 

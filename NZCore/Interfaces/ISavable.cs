@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="ISavable.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System;
 
 namespace NZCore
@@ -5,7 +9,7 @@ namespace NZCore
     public interface ISavable
     {
     }
-    
+
     public interface ISavableObject : IDisposable
     {
         void Init();

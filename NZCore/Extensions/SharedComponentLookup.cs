@@ -1,4 +1,8 @@
-﻿using Unity.Collections.LowLevel.Unsafe;
+﻿// <copyright project="NZCore" file="SharedComponentLookup.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
 namespace NZCore
@@ -6,8 +10,7 @@ namespace NZCore
     [NativeContainer]
     public unsafe struct SharedComponentLookup<T> where T : unmanaged, ISharedComponentData
     {
-        [NativeDisableUnsafePtrRestriction]
-        private readonly EntityDataAccess* m_Access;
+        [NativeDisableUnsafePtrRestriction] private readonly EntityDataAccess* m_Access;
         private readonly TypeIndex m_TypeIndex;
         private LookupCache m_Cache;
 
@@ -15,7 +18,7 @@ namespace NZCore
         private AtomicSafetyHandle m_Safety;
         private readonly byte m_IsReadOnly;
 #endif
-      
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal SharedComponentLookup(TypeIndex typeIndex, EntityDataAccess* access, bool isReadOnly)
         {
@@ -45,7 +48,7 @@ namespace NZCore
                 return m_Access->GetSharedComponentData_Unmanaged<T>(entity);
             }
         }
-        
+
         // access by sharedCompIndex
         // probably very rare but less overhead than by entity
         // so it could be cached
@@ -68,7 +71,7 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
             return ecs->HasComponent(entity, m_TypeIndex, ref m_Cache);
         }
-        
+
         public bool TryGetComponent(Entity entity, out T sharedComp)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -79,7 +82,7 @@ namespace NZCore
                 sharedComp = default;
                 return false;
             }
-            
+
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex);
 
@@ -103,5 +106,4 @@ namespace NZCore
 #endif
         }
     }
-
 }

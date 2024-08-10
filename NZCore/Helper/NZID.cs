@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="NZID.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System;
 
 namespace NZCore.Helper
@@ -7,16 +11,16 @@ namespace NZCore.Helper
         private long currentTick;
         private long lastTime;
         private int sequence;
-     
+
         private readonly long generatorId;
-        
+
         private readonly long maskTime;
         private readonly long maskGenerator;
         private readonly long maskSequence;
 
         private readonly int bitShiftTime;
         private readonly int bitShiftGenerator;
-        
+
         public NZIDGenerator(int generatorId, DateTime epoch, byte timeBits = 41, byte generatorBits = 10, byte sequenceBits = 16)
         {
             currentTick = DateTime.UtcNow.Ticks;
@@ -40,11 +44,10 @@ namespace NZCore.Helper
 
         public long Create()
         {
-            
             while (true)
             {
                 currentTick = DateTime.UtcNow.Ticks;
-                
+
                 var timestamp = currentTick & maskTime;
 
                 if (timestamp < lastTime || currentTick < 0)
@@ -58,7 +61,7 @@ namespace NZCore.Helper
                     if (sequence >= maskSequence)
                     {
                         //var localTick = currentTick;
-                        
+
                         // SpinWait.SpinUntil(() =>
                         // {
                         //     //Debug.Log($"Spin to win {localTick}/{DateTime.UtcNow.Ticks}");

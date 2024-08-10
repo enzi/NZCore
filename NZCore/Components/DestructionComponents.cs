@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="DestructionComponents.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using Unity.Entities;
 
 namespace NZCore
@@ -8,11 +12,11 @@ namespace NZCore
         Destroy,
         Cleanup
     }
-    
+
     public struct DestroyEntity : IComponentData, IEnableableComponent
     {
     }
-    
+
     public struct NZCleanupEntity : IComponentData, IEnableableComponent
     {
     }

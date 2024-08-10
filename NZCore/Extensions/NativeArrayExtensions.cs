@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="NativeArrayExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -56,14 +60,14 @@ namespace NZCore
         {
             return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
         }
-        
+
         public static unsafe ref readonly T ElementAtRO<T>(this NativeArray<T> array, int index)
             where T : struct
         {
             return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafeReadOnlyPtr(), index);
         }
-        
-        public static void AddArrayToBlob<T>(this NativeArray<T> array, ref BlobBuilder builder, ref BlobArray<T> blobArray) 
+
+        public static void AddArrayToBlob<T>(this NativeArray<T> array, ref BlobBuilder builder, ref BlobArray<T> blobArray)
             where T : unmanaged
         {
             BlobBuilderArray<T> tmp2 = builder.Allocate(ref blobArray, array.Length);

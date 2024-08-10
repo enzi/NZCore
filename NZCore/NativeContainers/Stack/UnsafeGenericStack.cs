@@ -1,4 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+﻿// <copyright project="NZCore" file="UnsafeGenericStack.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -9,7 +13,7 @@ namespace NZCore
     {
         public int Offset;
     }
-    
+
     [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]
     public unsafe struct UnsafeGenericStack : INativeDisposable
     {
@@ -52,14 +56,14 @@ namespace NZCore
             where T : unmanaged
         {
             //list.Add(in item);
-            
+
             int byteSize = UnsafeUtility.SizeOf<T>();
             int oldLength = List.Length;
             List.Resize(oldLength + byteSize, NativeArrayOptions.UninitializedMemory);
             var ptrToData = UnsafeUtility.AddressOf(ref data);
-            
+
             UnsafeUtility.MemCpy(List.Ptr + oldLength, ptrToData, byteSize);
-            
+
             OffsetLookup.Add(new OffsetLookup()
             {
                 Offset = oldLength
@@ -90,15 +94,15 @@ namespace NZCore
         /// Pop the item on top of the stack.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T Pop<T>() 
+        public T Pop<T>()
             where T : unmanaged
         {
             //list.Resize(list.m_length - 1);
 
             var size = UnsafeUtility.SizeOf<T>();
-            
-            T data = *(T*) (List.Ptr + (List.m_length) - size);
-            
+
+            T data = *(T*)(List.Ptr + (List.m_length) - size);
+
             List.Resize(List.m_length - size);
             OffsetLookup.Resize(OffsetLookup.m_length - 1);
 
@@ -133,7 +137,7 @@ namespace NZCore
         {
             var handle1 = List.Dispose(inputDeps);
             var handle2 = OffsetLookup.Dispose(inputDeps);
-            
+
             return JobHandle.CombineDependencies(handle1, handle2);
         }
     }

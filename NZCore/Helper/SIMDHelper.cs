@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="SIMDHelper.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.CompilerServices;
 using NZCore.Helper.Intrinsics;
 using Unity.Burst.Intrinsics;

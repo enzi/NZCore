@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="AssemblyDefinitionValidator.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,9 +29,9 @@ namespace NZCore.Editor
             public string[] versionDefines;
             public bool noEngineReferences;
         }
-        
+
         private static readonly HashSet<string> AsmdefFilter = new() { ".Authoring" };
-        
+
         [MenuItem("NZCore/Validate Assembly Definitions")]
         public static void ValidateAssemblyDefinitions()
         {
@@ -38,12 +42,12 @@ namespace NZCore.Editor
             {
                 var filePath = AssetDatabase.GUIDToAssetPath(guid);
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
-                
+
                 if (!AsmdefFilter.Any(identifier => fileName.Contains(identifier)))
                 {
                     continue;
                 }
-                
+
                 var json = File.ReadAllText(filePath);
                 var asmdef = JsonUtility.FromJson<AssemblyDefinitionScheme>(json);
 
@@ -53,7 +57,7 @@ namespace NZCore.Editor
                     Debug.LogError($"Authoring asmdef has no constraint: {filePath}");
                 }
             }
-            
+
             if (missingCount == 0)
                 Debug.Log("AssemblyDefinitionValidator found no problems!");
         }

@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="ParallelListHashMap.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -14,7 +18,7 @@ namespace NZCore
         where TValue : unmanaged
     {
         [NativeDisableUnsafePtrRestriction] private UnsafeParallelListHashMap<TKey, TValue>* _unsafeParallelListHashMap;
-        
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_Safety;
         private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<ParallelListHashMap<TKey, TValue>>();
@@ -24,7 +28,7 @@ namespace NZCore
             : this(1, allocator)
         {
         }
-        
+
         public ParallelListHashMap(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
@@ -44,11 +48,10 @@ namespace NZCore
             CollectionHelper.SetStaticSafetyId<ParallelListHashMap<TKey, TValue>>(ref m_Safety, ref s_staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
-            
+
             _unsafeParallelListHashMap = UnsafeParallelListHashMap<TKey, TValue>.Create(initialCapacity, ref allocator);
-            
         }
-        
+
         public bool ContainsKey(TKey key)
         {
             return _unsafeParallelListHashMap->TryPeekFirstRefValue(key);
@@ -58,7 +61,7 @@ namespace NZCore
         {
             _unsafeParallelListHashMap->SetArrays(keyArray, valueArray);
         }
-        
+
         // public void PrintValues()
         // {
         //     //Debug.Log($"PrintValues with length {allocatedIndexLength}");
@@ -89,16 +92,16 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             CollectionHelper.DisposeSafetyHandle(ref m_Safety);
 #endif
-            
-            UnsafeParallelListHashMap<TKey,TValue>.Destroy(_unsafeParallelListHashMap);
+
+            UnsafeParallelListHashMap<TKey, TValue>.Destroy(_unsafeParallelListHashMap);
         }
-        
+
         public UnsafeParallelListHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key)
         {
             return new UnsafeParallelListHashMapEnumerator<TKey, TValue>
             {
-                Map = _unsafeParallelListHashMap, 
-                Key = key, 
+                Map = _unsafeParallelListHashMap,
+                Key = key,
                 IsFirst = true
             };
         }

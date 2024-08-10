@@ -1,4 +1,8 @@
-﻿using Unity.Collections;
+﻿// <copyright project="NZCore" file="DestroyEntityCommandBufferSystem.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
@@ -13,7 +17,7 @@ namespace NZCore
             base.OnCreate();
             this.RegisterSingleton<Singleton>(ref PendingBuffers, World.Unmanaged);
         }
-        
+
         public unsafe struct Singleton : IComponentData, IECBSingleton
         {
             private UnsafeList<EntityCommandBuffer>* pendingBuffers;

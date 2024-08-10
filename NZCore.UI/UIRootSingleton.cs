@@ -1,4 +1,8 @@
-﻿using Unity.Entities;
+﻿// <copyright project="NZCore" file="UIRootSingleton.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Entities;
 using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
@@ -9,7 +13,7 @@ namespace NZCore.UIToolkit
         public VisualElement root;
         public VisualElement dragElement;
         public VisualElement dragImage;
-        
+
         public VisualElement tooltip;
 
         public VisualElement mainButtonsContainer;

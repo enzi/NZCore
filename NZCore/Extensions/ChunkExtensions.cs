@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="ChunkExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.CompilerServices;
 using Unity.Burst.CompilerServices;
 using Unity.Burst.Intrinsics;
@@ -15,30 +19,30 @@ namespace NZCore
         {
             var ecs = chunk.m_EntityComponentStore;
             var archetype = ecs->GetArchetype(chunk.m_Chunk);
-            
+
             if (Hint.Unlikely(archetype != handle.m_LookupCache.Archetype))
                 handle.m_LookupCache.Update(archetype, handle.m_TypeIndex);
-            
+
             var typeIndexInArchetype = handle.m_LookupCache.IndexInArchetype;
             if (typeIndexInArchetype == -1)
                 return;
-            
+
             archetype->Chunks.SetChangeVersion(typeIndexInArchetype, chunk.m_Chunk.ListIndex, handle.GlobalSystemVersion);
         }
-        
+
         public static void SetChangeVersion<T>(this ArchetypeChunk chunk, ref BufferTypeHandle<T> handle)
             where T : unmanaged, IBufferElementData
         {
             var ecs = chunk.m_EntityComponentStore;
             var archetype = ecs->GetArchetype(chunk.m_Chunk);
-            
+
             if (Hint.Unlikely(archetype != handle.m_LookupCache.Archetype))
                 handle.m_LookupCache.Update(archetype, handle.m_TypeIndex);
-            
+
             var typeIndexInArchetype = handle.m_LookupCache.IndexInArchetype;
             if (typeIndexInArchetype == -1)
                 return;
-            
+
             archetype->Chunks.SetChangeVersion(typeIndexInArchetype, chunk.m_Chunk.ListIndex, handle.GlobalSystemVersion);
         }
 
@@ -51,12 +55,12 @@ namespace NZCore
             var ecs = chunk.m_EntityComponentStore;
             var archetype = ecs->GetArchetype(chunk.m_Chunk);
             var typeIndex = bufferTypeHandle.m_TypeIndex;
-            
+
             if (Hint.Unlikely(bufferTypeHandle.m_LookupCache.Archetype != archetype))
             {
                 bufferTypeHandle.m_LookupCache.Update(ecs->GetArchetype(chunk.m_Chunk), typeIndex);
             }
-            
+
             int typeIndexInArchetype = bufferTypeHandle.m_LookupCache.IndexInArchetype;
             if (typeIndexInArchetype == -1)
             {
@@ -66,7 +70,7 @@ namespace NZCore
                 return new BufferAccessor<T>(null, 0, 0, 0);
 #endif
             }
-            
+
             byte* ptr = (bufferTypeHandle.IsReadOnly)
                 ? ChunkDataUtility.GetComponentDataRO(chunk.m_Chunk, archetype, 0, typeIndexInArchetype)
                 : GetComponentDataRW(chunk.m_Chunk, archetype, 0, typeIndexInArchetype, bufferTypeHandle.GlobalSystemVersion, bumpVersion);
@@ -92,24 +96,24 @@ namespace NZCore
                 // Write Component to Chunk. ChangeVersion:Yes OrderVersion:No
                 archetype->Chunks.SetChangeVersion(indexInTypeArray, chunk.ListIndex, globalSystemVersion);
             }
-            
+
             return chunk.Buffer + (offset + sizeOf * index);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool DetermineFastPath(this v128 chunkEnabledMask)
         {
-            int edgeCount = 
+            int edgeCount =
                 math.countbits(chunkEnabledMask.ULong0 ^ (chunkEnabledMask.ULong0 << 1)) +
                 math.countbits(chunkEnabledMask.ULong1 ^ (chunkEnabledMask.ULong1 << 1)) - 1;
-            
+
             return edgeCount <= 4;
         }
-        
+
         public static byte* GetComponentDataRaw(this in ArchetypeChunk chunk, ref DynamicComponentTypeHandle dynamicHandle, bool isReadOnly, out ushort sizeOf)
         {
             var archetype = chunk.Archetype.Archetype;
-            
+
             var indexInTypeArray = ChunkDataUtility.GetIndexInTypeArray(archetype, dynamicHandle.m_TypeIndex);
 
             var offset = archetype->Offsets[indexInTypeArray];
@@ -122,11 +126,11 @@ namespace NZCore
 
             return chunk.m_Chunk.Buffer + offset;
         }
-        
+
         public static byte* GetComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex, bool isReadOnly, out ushort sizeOf)
         {
             var archetype = chunk.Archetype.Archetype;
-            
+
             var indexInTypeArray = ChunkDataUtility.GetIndexInTypeArray(archetype, typeIndex);
 
             var offset = archetype->Offsets[indexInTypeArray];
@@ -139,26 +143,26 @@ namespace NZCore
 
             return chunk.m_Chunk.Buffer + offset;
         }
-        
+
         public static byte* GetComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex, int indexInChunk, bool isReadOnly)
         {
             var ecs = chunk.m_EntityComponentStore;
-            
-            return isReadOnly ? 
-                ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, indexInChunk, typeIndex) : 
-                ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, indexInChunk, typeIndex, ecs->GlobalSystemVersion);
+
+            return isReadOnly
+                ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, indexInChunk, typeIndex)
+                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, indexInChunk, typeIndex, ecs->GlobalSystemVersion);
         }
-        
+
         public static byte* GetComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex, Entity entity, bool isReadOnly)
         {
             var ecs = chunk.m_EntityComponentStore;
             var entityInChunk = ecs->GetEntityInChunk(entity);
-            
-            return isReadOnly ? 
-                ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex) : 
-                ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex, ecs->GlobalSystemVersion);
+
+            return isReadOnly
+                ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex)
+                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex, ecs->GlobalSystemVersion);
         }
-        
+
         public static ulong* GetRequiredEnabledBitsPtrRW<T>(this in ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<T> typeHandle, out int* ptrChunkDisabledCount)
             where T : unmanaged, IComponentData, IEnableableComponent
         {
@@ -195,27 +199,27 @@ namespace NZCore
 
             return ptr;
         }
-        
+
         public static ref v128 GetRequiredEnabledBitsRW<T>(this in ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<T> typeHandle, out int* ptrChunkDisabledCount)
             where T : unmanaged, IComponentData, IEnableableComponent
         {
             var ptr = GetRequiredEnabledBitsPtrRW(archetypeChunk, ref typeHandle, out ptrChunkDisabledCount);
             return ref UnsafeUtility.AsRef<v128>(ptr);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UpdateChunkDisabledCount(this in ArchetypeChunk archetypeChunk, int* ptrChunkDisabledCount, ulong* enabledMaskPtr)
         {
             ref var bits = ref UnsafeUtility.AsRef<v128>(enabledMaskPtr);
             *ptrChunkDisabledCount = archetypeChunk.Count - math.countbits(bits.ULong0) - math.countbits(bits.ULong1);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UpdateChunkDisabledCount(this in ArchetypeChunk archetypeChunk, int* ptrChunkDisabledCount, in v128 bits)
         {
             *ptrChunkDisabledCount = archetypeChunk.Count - math.countbits(bits.ULong0) - math.countbits(bits.ULong1);
         }
-        
+
         public static BufferAccessor<T> GetRequiredBufferAccessor<T>(this ArchetypeChunk chunk, ref BufferTypeHandle<T> bufferTypeHandle)
             where T : unmanaged, IBufferElementData
         {

@@ -1,4 +1,8 @@
-﻿using System.Linq;
+﻿// <copyright project="NZCore" file="ReserializeEditor.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,11 +11,11 @@ namespace NZCore.Editor
     public class ReserializeEditor : EditorWindow
     {
         private string path = "Assets/";
-        
+
         [MenuItem("NZCore/Reserialize assets")]
         private static void Init()
         {
-            ReserializeEditor window = (ReserializeEditor) GetWindow(typeof(ReserializeEditor));
+            ReserializeEditor window = (ReserializeEditor)GetWindow(typeof(ReserializeEditor));
             window.Show();
         }
 
@@ -25,9 +29,9 @@ namespace NZCore.Editor
                 var paths = AssetDatabase.FindAssets("", new[] { path })
                     .Select(AssetDatabase.GUIDToAssetPath)
                     .ToArray();
-                
+
                 AssetDatabase.ForceReserializeAssets(paths, ForceReserializeAssetsOptions.ReserializeAssets);
-                
+
                 Debug.Log("Reserializing done!");
             }
         }

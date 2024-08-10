@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="DynamicBufferExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
@@ -8,25 +12,25 @@ namespace NZCore
 {
     public static unsafe class DynamicBufferExtensions
     {
-        public static void MemClear<T>(this DynamicBuffer<T> buffer) 
+        public static void MemClear<T>(this DynamicBuffer<T> buffer)
             where T : unmanaged, IBufferElementData
         {
             var ptr = buffer.GetUnsafePtr();
             UnsafeUtility.MemClear(ptr, buffer.Length);
         }
-        
-        public static void UnsafeClear<T>(this DynamicBuffer<T> buffer) 
+
+        public static void UnsafeClear<T>(this DynamicBuffer<T> buffer)
             where T : unmanaged, IBufferElementData
         {
             buffer.GetBufferHeader()->Length = 0;
         }
-        
+
         public static int GetInternalCapacity<T>(this BufferTypeHandle<T> bufferHandle)
             where T : unmanaged, IBufferElementData
         {
             return TypeManager.GetTypeInfo(bufferHandle.m_TypeIndex).BufferCapacity;
         }
-        
+
         public static int GetInternalCapacity<T>(this BufferLookup<T> bufferLookup)
             where T : unmanaged, IBufferElementData
         {
@@ -37,15 +41,15 @@ namespace NZCore
         public static void Remove<T>(this DynamicBuffer<T> buffer, T element)
             where T : unmanaged
         {
-            for (int i = buffer.Length - 1; i >= 0; i --)
+            for (int i = buffer.Length - 1; i >= 0; i--)
             {
-                if (buffer[i].GetHashCode() != element.GetHashCode()) 
+                if (buffer[i].GetHashCode() != element.GetHashCode())
                     continue;
-                
+
                 buffer.RemoveAt(i);
             }
         }
-        
+
         public static int RemoveAtSwapBackReportIndex<T>(this DynamicBuffer<T> buffer, int index)
             where T : unmanaged
         {
@@ -53,15 +57,15 @@ namespace NZCore
             // ref var l = ref buffer.Length;
             // l -= 1;
             // int newLength = l;
-            if (index == buffer.Length) 
+            if (index == buffer.Length)
                 return -1;
-            
-            byte* basePtr = (byte*) buffer.GetUnsafePtr();
+
+            byte* basePtr = (byte*)buffer.GetUnsafePtr();
             UnsafeUtility.WriteArrayElement(basePtr, index, UnsafeUtility.ReadArrayElement<T>(basePtr, buffer.Length));
 
             return index;
         }
-        
+
         public static void AddRange<T>(this DynamicBuffer<T> buffer, T* ptr, int length)
             where T : unmanaged
         {
@@ -74,7 +78,7 @@ namespace NZCore
             var basePtr = (byte*)buffer.GetUnsafePtr();
             UnsafeUtility.MemCpy(basePtr + ((long)oldLength * elemSize), ptr, (long)elemSize * length);
         }
-        
+
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         private static void CheckWriteAccess<T>(DynamicBuffer<T> buffer)
             where T : unmanaged
@@ -89,7 +93,7 @@ namespace NZCore
             where T : unmanaged
         {
             ref var bufferExposed = ref UnsafeUtility.As<DynamicBuffer<T>, DynamicBufferExposed<T>>(ref buffer);
-            return (BufferHeaderExposed*) bufferExposed.m_Buffer;
+            return (BufferHeaderExposed*)bufferExposed.m_Buffer;
         }
 
         public static void AddToByteBuffer<TBuffer, TData>(this DynamicBuffer<TBuffer> buffer, TData data)
@@ -101,12 +105,12 @@ namespace NZCore
             if (UnsafeUtility.SizeOf<TBuffer>() != 1)
                 throw new Exception("Usage is only designed for byte buffer!");
 #endif
-            
+
             int byteSize = UnsafeUtility.SizeOf<TData>();
             int oldLength = buffer.Length;
             buffer.ResizeUninitialized(oldLength + byteSize);
             var ptrToData = UnsafeUtility.AddressOf(ref data);
-            
+
             var basePtr = (byte*)buffer.GetUnsafePtr();
             UnsafeUtility.MemCpy(basePtr + oldLength, ptrToData, byteSize);
         }
@@ -139,7 +143,7 @@ namespace NZCore
             int count = 0;
             for (int i = 0; i < length; i++)
             {
-                var tmp = ((BufferHeaderExposed*) (basePointer + i * stride));
+                var tmp = ((BufferHeaderExposed*)(basePointer + i * stride));
                 count += tmp->Length;
             }
 

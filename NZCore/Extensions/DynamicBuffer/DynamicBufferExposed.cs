@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="DynamicBufferExposed.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;

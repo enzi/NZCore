@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="NativeParallelHashMapExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -14,9 +18,9 @@ namespace NZCore
         {
             return TryPeekFirstRefValue(hashmap.m_HashMapData.m_Buffer, key);
         }
-        
+
         private static unsafe bool TryPeekFirstRefValue<TKey>(
-            UnsafeParallelHashMapData* data, 
+            UnsafeParallelHashMapData* data,
             TKey key)
             where TKey : unmanaged, IEquatable<TKey>
         {

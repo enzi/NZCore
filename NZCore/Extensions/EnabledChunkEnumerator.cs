@@ -1,4 +1,8 @@
-﻿using System.Runtime.InteropServices;
+﻿// <copyright project="NZCore" file="EnabledChunkEnumerator.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections.LowLevel.Unsafe;
@@ -11,7 +15,7 @@ namespace NZCore
     {
         bool MoveNext(out int nextIndex);
     }
-    
+
     public delegate bool MoveNextFunction(ref EnabledChunkEnumerator_Base thiz, out int index);
 
     [BurstCompile]
@@ -35,13 +39,13 @@ namespace NZCore
         {
             entityIndexInChunk = 0;
             this.chunkEntityCount = chunkEntityCount;
-            
+
             Base = new EnabledChunkEnumerator_Base
             {
                 BaseFP = MoveNextFP
             };
         }
-        
+
         [BurstCompile]
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool MoveNext(
@@ -50,7 +54,7 @@ namespace NZCore
         {
             var ptr = UnsafeUtility.AddressOf(ref thiz);
             ref var enumerator = ref UnsafeUtility.AsRef<EnabledChunkEnumerator_NoMask>(ptr);
-            
+
             if (enumerator.entityIndexInChunk < enumerator.chunkEntityCount)
             {
                 nextIndex = enumerator.entityIndexInChunk;
@@ -62,7 +66,7 @@ namespace NZCore
             return false;
         }
     }
-    
+
     [BurstCompile]
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct EnabledChunkEnumerator_MaskFast
@@ -71,16 +75,16 @@ namespace NZCore
         private static readonly FunctionPointer<MoveNextFunction> MoveNextFP = BurstCompiler.CompileFunctionPointer<MoveNextFunction>(MoveNext);
 
         private readonly v128 chunkEnabledMask;
-        
+
         private int chunkEndIndex;
         private int entityIndexInChunk;
-        
+
         public EnabledChunkEnumerator_MaskFast(v128 chunkEnabledMask)
         {
             Base = new EnabledChunkEnumerator_Base { BaseFP = MoveNextFP };
-            
+
             this.chunkEnabledMask = chunkEnabledMask;
-            
+
             EnabledBitUtility.TryGetNextRange(chunkEnabledMask, 0, out entityIndexInChunk, out chunkEndIndex);
         }
 
@@ -91,7 +95,7 @@ namespace NZCore
         {
             var ptr = UnsafeUtility.AddressOf(ref thiz);
             ref var enumerator = ref UnsafeUtility.AsRef<EnabledChunkEnumerator_MaskFast>(ptr);
-            
+
             if (enumerator.entityIndexInChunk < enumerator.chunkEndIndex)
             {
                 nextIndex = enumerator.entityIndexInChunk;
@@ -109,18 +113,18 @@ namespace NZCore
             return false;
         }
     }
-    
+
     [BurstCompile]
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct EnabledChunkEnumerator_MaskSlow
     {
         private EnabledChunkEnumerator_Base Base;
-        
+
         private static readonly FunctionPointer<MoveNextFunction> MoveNextFP = BurstCompiler.CompileFunctionPointer<MoveNextFunction>(MoveNext);
 
         private readonly int chunkEntityCount;
         private readonly int count;
-        
+
         private ulong mask64_0;
         private ulong mask64_1;
 
@@ -129,11 +133,11 @@ namespace NZCore
         public EnabledChunkEnumerator_MaskSlow(v128 chunkEnabledMask, int chunkEntityCount)
         {
             Base = new EnabledChunkEnumerator_Base { BaseFP = MoveNextFP };
-            
+
             currentIndex = 0;
             this.chunkEntityCount = chunkEntityCount;
-            count = math.min(64,chunkEntityCount);
-            
+            count = math.min(64, chunkEntityCount);
+
             mask64_0 = chunkEnabledMask.ULong0;
             mask64_1 = chunkEnabledMask.ULong1;
         }
@@ -145,8 +149,8 @@ namespace NZCore
         {
             var ptr = UnsafeUtility.AddressOf(ref thiz);
             ref var enumerator = ref UnsafeUtility.AsRef<EnabledChunkEnumerator_MaskSlow>(ptr);
-        
-            while(enumerator.currentIndex < enumerator.count)
+
+            while (enumerator.currentIndex < enumerator.count)
             {
                 if ((enumerator.mask64_0 & 1) != 0)
                 {
@@ -160,7 +164,7 @@ namespace NZCore
                 enumerator.currentIndex++;
             }
 
-            while(enumerator.currentIndex < enumerator.chunkEntityCount)
+            while (enumerator.currentIndex < enumerator.chunkEntityCount)
             {
                 if ((enumerator.mask64_1 & 1) != 0)
                 {
@@ -178,7 +182,7 @@ namespace NZCore
             return false;
         }
     }
-    
+
     [BurstCompile]
     public unsafe struct EnabledChunkEnumerator
     {

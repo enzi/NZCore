@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="ByteHelper.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -13,7 +17,7 @@ namespace NZCore
             ptr += UnsafeUtility.SizeOf<T>();
             return ref val;
         }
-		
+
         public static unsafe ref T ReadFromPointerWithOffset<T>(ref byte* ptr, ref int offset)
             where T : unmanaged
         {
@@ -23,7 +27,7 @@ namespace NZCore
             offset += size;
             return ref val;
         }
-        
+
         public static unsafe ref T WriteToPointer<T>(ref byte* ptr, T payload)
             where T : unmanaged
         {
@@ -32,7 +36,7 @@ namespace NZCore
             ptr += UnsafeUtility.SizeOf<T>();
             return ref val;
         }
-        
+
         public static byte[] GetBytesFromStruct<T>(T str)
             where T : struct
         {
@@ -43,7 +47,7 @@ namespace NZCore
             {
                 throw new Exception($"The sizes are different for {typeof(T).Name} - {size} vs {size2}! Fix your struct!");
             }
-            
+
             byte[] arr = new byte[size];
 
             IntPtr ptr = IntPtr.Zero;
@@ -57,6 +61,7 @@ namespace NZCore
             {
                 Marshal.FreeHGlobal(ptr);
             }
+
             return arr;
         }
 

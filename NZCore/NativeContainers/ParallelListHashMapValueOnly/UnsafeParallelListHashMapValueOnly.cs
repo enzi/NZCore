@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="UnsafeParallelListHashMapValueOnly.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -11,14 +15,14 @@ namespace NZCore
     [StructLayout(LayoutKind.Sequential)]
     [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]
     public unsafe struct UnsafeParallelListHashMapValueOnly<TKey, TValue> : IDisposable
-        where TKey : unmanaged, IEquatable<TKey> 
+        where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
         [NativeDisableUnsafePtrRestriction] private UnsafeParallelList<TValue> Values;
 
         [NativeDisableUnsafePtrRestriction] private UnsafeList<MultipleArrayIndexerNoPointer>* buckets;
         [NativeDisableUnsafePtrRestriction] private UnsafeList<MultipleArrayIndexerNoPointer>* next;
-        
+
         private int keyCapacity;
         private int bucketCapacityMask;
         private int allocatedIndexLength;
@@ -28,15 +32,16 @@ namespace NZCore
 
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal static UnsafeParallelListHashMapValueOnly<TKey, TValue>* Create<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        internal static UnsafeParallelListHashMapValueOnly<TKey, TValue>* Create<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator,
+            NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
             UnsafeParallelListHashMapValueOnly<TKey, TValue>* unsafeArrayHashMap = allocator.Allocate(default(UnsafeParallelListHashMapValueOnly<TKey, TValue>), 1);
 
             unsafeArrayHashMap->allocator = allocator.Handle;
-            
+
             unsafeArrayHashMap->Values = default;
-            
+
             unsafeArrayHashMap->next = UnsafeList<MultipleArrayIndexerNoPointer>.Create(initialCapacity, allocator.Handle, options);
             unsafeArrayHashMap->buckets = UnsafeList<MultipleArrayIndexerNoPointer>.Create(initialCapacity * 2, allocator.Handle, options);
 
@@ -44,7 +49,7 @@ namespace NZCore
             unsafeArrayHashMap->bucketCapacityMask = 0;
             unsafeArrayHashMap->allocatedIndexLength = 0;
             unsafeArrayHashMap->keyOffset = keyOffset;
-            
+
             return unsafeArrayHashMap;
         }
 
@@ -62,10 +67,10 @@ namespace NZCore
             //Debug.Log($"Set next/buckets cap to {length}/{bucketLength}");
             next->Resize(length, NativeArrayOptions.UninitializedMemory);
             buckets->Resize(bucketLength, NativeArrayOptions.UninitializedMemory);
-             
+
             UnsafeUtility.MemSet(next->Ptr, 0xFF, length * 12); // 4 bytes for 3 ints -> 12
             UnsafeUtility.MemSet(buckets->Ptr, 0xFF, bucketLength * 12);
-            
+
             allocatedIndexLength = length;
         }
 
@@ -76,7 +81,7 @@ namespace NZCore
             UnsafeUtility.MemSet(buckets->Ptr, 0xFF, (bucketCapacityMask + 1) * 12);
             next->Clear();
             buckets->Clear();
-            
+
             allocatedIndexLength = 0;
         }
 
@@ -86,19 +91,19 @@ namespace NZCore
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
 
             var size = sizeof(TValue);
-            
+
             int ii = 0;
             for (int k = 0; k < JobsUtility.ThreadIndexCount; k++)
             {
                 ref var list = ref Values.GetUnsafeList(k);
                 var blockCount = list.Length;
-                
-                byte* keyArrayPtr = ((byte*) list.Ptr) + keyOffset;
-                
+
+                byte* keyArrayPtr = ((byte*)list.Ptr) + keyOffset;
+
                 for (int i = 0; i < blockCount; i++)
                 {
                     var bucketIndex = (*(TKey*)keyArrayPtr).GetHashCode() & bucketCapacityMask;
-                    
+
                     (*next)[ii] = (*buckets)[bucketIndex];
                     (*buckets)[bucketIndex] = new MultipleArrayIndexerNoPointer()
                     {
@@ -112,7 +117,7 @@ namespace NZCore
                 }
             }
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TKey* GetKeyArrayPtr(int k)
         {
@@ -122,12 +127,12 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private TKey GetKey(int k, int index)
         {
-            return *(TKey*) (((byte*)Values.GetUnsafeList(k).Ptr) + index * sizeof(TValue) + keyOffset);
+            return *(TKey*)(((byte*)Values.GetUnsafeList(k).Ptr) + index * sizeof(TValue) + keyOffset);
         }
 
-        public bool TryGetFirstRefValue(TKey key, out byte* item, out UnsafeParallelListHashMapValueOnlyIterator<TKey> it)            
+        public bool TryGetFirstRefValue(TKey key, out byte* item, out UnsafeParallelListHashMapValueOnlyIterator<TKey> it)
         {
-            it.Key = key;            
+            it.Key = key;
 
             if (allocatedIndexLength <= 0)
             {
@@ -142,19 +147,19 @@ namespace NZCore
             return TryGetNextRefValue(out item, ref it);
         }
 
-        public bool TryGetNextRefValue(out byte* item, ref UnsafeParallelListHashMapValueOnlyIterator<TKey> it)           
+        public bool TryGetNextRefValue(out byte* item, ref UnsafeParallelListHashMapValueOnlyIterator<TKey> it)
         {
             MultipleArrayIndexerNoPointer entryIdx = it.NextEntryIndex;
             it.NextEntryIndex = MultipleArrayIndexerNoPointer.Null;
             it.EntryIndex = MultipleArrayIndexerNoPointer.Null;
             item = null;
-           
+
             if (entryIdx.ListIndex < 0 || entryIdx.ElementIndex < 0)
             {
                 return false;
             }
-            
-            while(!GetKey(entryIdx.ListIndex, entryIdx.ElementIndex).Equals(it.Key))
+
+            while (!GetKey(entryIdx.ListIndex, entryIdx.ElementIndex).Equals(it.Key))
             {
                 entryIdx = (*next)[entryIdx.BucketIndex];
                 if (entryIdx.BucketIndex < 0 || entryIdx.BucketIndex >= keyCapacity)
@@ -165,14 +170,14 @@ namespace NZCore
 
             it.NextEntryIndex = (*next)[entryIdx.BucketIndex];
             it.EntryIndex = entryIdx;
-            
+
             // Read the value
             item = Values.GetUnsafePtr(entryIdx.ListIndex) + entryIdx.ElementIndex * sizeof(TValue);
 
             return true;
         }
-        
-        public bool TryPeekFirstRefValue(TKey key)            
+
+        public bool TryPeekFirstRefValue(TKey key)
         {
             if (allocatedIndexLength <= 0)
                 return false;
@@ -182,12 +187,12 @@ namespace NZCore
             return TryPeekNextRefValue(key, (*buckets)[bucket]);
         }
 
-        public bool TryPeekNextRefValue(TKey key, MultipleArrayIndexerNoPointer entryIdx)         
+        public bool TryPeekNextRefValue(TKey key, MultipleArrayIndexerNoPointer entryIdx)
         {
             if (entryIdx.ListIndex < 0 || entryIdx.ElementIndex < 0)
                 return false;
 
-            while(!GetKey(entryIdx.ListIndex, entryIdx.ElementIndex).Equals(key))
+            while (!GetKey(entryIdx.ListIndex, entryIdx.ElementIndex).Equals(key))
             {
                 entryIdx = (*next)[entryIdx.BucketIndex];
                 if (entryIdx.BucketIndex < 0 || entryIdx.BucketIndex >= keyCapacity)
@@ -198,7 +203,7 @@ namespace NZCore
 
             return true;
         }
-        
+
         public static void Destroy(UnsafeParallelListHashMapValueOnly<TKey, TValue>* hashMap)
         {
             var allocator = hashMap->allocator;
@@ -212,8 +217,8 @@ namespace NZCore
             UnsafeList<MultipleArrayIndexerNoPointer>.Destroy(buckets, ref allocator);
         }
     }
-    
-    public unsafe struct UnsafeParallelListHashMapValueOnlyEnumerator<TKey, TValue> 
+
+    public unsafe struct UnsafeParallelListHashMapValueOnlyEnumerator<TKey, TValue>
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
@@ -229,14 +234,14 @@ namespace NZCore
         public bool MoveNext()
         {
             //Avoids going beyond the end of the collection.
-            if (!IsFirst) 
+            if (!IsFirst)
                 return Map->TryGetNextRefValue(out value, ref iterator);
-            
+
             IsFirst = false;
             return Map->TryGetFirstRefValue(Key, out value, out iterator);
         }
     }
-        
+
     public struct UnsafeParallelListHashMapValueOnlyIterator<TKey>
         where TKey : unmanaged
     {
@@ -250,7 +255,7 @@ namespace NZCore
         /// <returns>The entry index.</returns>
         public MultipleArrayIndexerNoPointer GetEntryIndex() => EntryIndex;
     }
-    
+
     public struct MultipleArrayIndexerNoPointer
     {
         public int ListIndex;

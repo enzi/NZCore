@@ -1,4 +1,8 @@
-﻿using Unity.Properties;
+﻿// <copyright project="NZCore" file="BindableButton.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Properties;
 using UnityEngine.UIElements;
 
 namespace NZCore.UI
@@ -7,7 +11,7 @@ namespace NZCore.UI
     public partial class BindableButton : Button
     {
         private bool internalClicked;
-        
+
         public BindableButton()
         {
             clicked += TriggerClick;
@@ -15,7 +19,7 @@ namespace NZCore.UI
 
         [UxmlAttribute]
         [CreateProperty]
-        internal bool wasClicked 
+        internal bool wasClicked
         {
             get
             {

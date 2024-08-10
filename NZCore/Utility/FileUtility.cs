@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="FileUtility.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System.IO;
 
 namespace NZCore.Utility
@@ -6,18 +10,24 @@ namespace NZCore.Utility
     {
         public static bool WriteChanges(string path, string content)
         {
-            if (File.Exists(path))
-            {
-                var oldData = File.ReadAllText(path);
+            var hasChanges = CheckForChanges(path, content);
 
-                if (oldData == content)
-                {
-                    return false;
-                }
+            if (hasChanges)
+            {
+                File.WriteAllText(path, content);
             }
 
-            File.WriteAllText(path, content);
-            return true;
+            return hasChanges;
+        }
+
+        public static bool CheckForChanges(string path, string content)
+        {
+            if (!File.Exists(path))
+                return true;
+
+            var oldData = File.ReadAllText(path);
+
+            return oldData != content;
         }
     }
 }

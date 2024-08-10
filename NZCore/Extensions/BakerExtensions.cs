@@ -1,4 +1,8 @@
-﻿using Unity.Entities;
+﻿// <copyright project="NZCore" file="BakerExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Entities;
 using UnityEngine;
 
 namespace NZCore

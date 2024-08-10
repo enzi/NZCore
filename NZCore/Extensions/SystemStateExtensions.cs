@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="SystemStateExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;

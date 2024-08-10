@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="GenericMathProcessor.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using UnityEngine;
 
 namespace NZCore
@@ -11,7 +15,7 @@ namespace NZCore
         {
             var processor = default(TProcessor);
             ref var currentValue = ref *(T*)valuePtr;
-            
+
             switch (mathOperator)
             {
                 case MathOperator.Set:
@@ -34,7 +38,7 @@ namespace NZCore
                         currentValue = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.Subtract:
@@ -45,7 +49,7 @@ namespace NZCore
                         currentValue = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.Multiply:
@@ -56,7 +60,7 @@ namespace NZCore
                         currentValue = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.Divide:
@@ -67,7 +71,7 @@ namespace NZCore
                         currentValue = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.PowerAtoB:
@@ -78,7 +82,7 @@ namespace NZCore
                         currentValue = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.PowerBtoA:
@@ -100,6 +104,7 @@ namespace NZCore
                         currentValue = newValue;
                         return true;
                     }
+
                     break;
                 }
                 case MathOperator.Max:
@@ -110,6 +115,7 @@ namespace NZCore
                         currentValue = newValue;
                         return true;
                     }
+
                     break;
                 }
                 default:
@@ -118,14 +124,14 @@ namespace NZCore
 
             return false;
         }
-        
+
         public static unsafe bool ProcessValuesWithMinMax<T, TProcessor>(byte* valuePtr, MathOperator mathOperator, T changeValue, T minValue, T maxValue)
             where T : unmanaged, IEquatable<T>
             where TProcessor : struct, IGenericValueCalculator<T>
         {
             var processor = default(TProcessor);
             ref var value = ref *(T*)valuePtr;
-            
+
             switch (mathOperator)
             {
                 case MathOperator.Set:
@@ -133,7 +139,7 @@ namespace NZCore
                     var newValue = changeValue;
                     newValue = processor.Min(newValue, maxValue);
                     newValue = processor.Max(newValue, minValue);
-                    
+
                     if (!newValue.Equals(value))
                     {
                         Debug.Log($"SET {value} = {newValue}");
@@ -148,13 +154,13 @@ namespace NZCore
                     var newValue = processor.Add(value, changeValue);
                     newValue = processor.Min(newValue, maxValue);
                     newValue = processor.Max(newValue, minValue);
-                    
+
                     if (!newValue.Equals(value))
                     {
                         value = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.Subtract:
@@ -162,13 +168,13 @@ namespace NZCore
                     var newValue = processor.Subtract(value, changeValue);
                     newValue = processor.Min(newValue, maxValue);
                     newValue = processor.Max(newValue, minValue);
-                    
+
                     if (!newValue.Equals(value))
                     {
                         value = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.Multiply:
@@ -176,13 +182,13 @@ namespace NZCore
                     var newValue = processor.Multiply(value, changeValue);
                     newValue = processor.Min(newValue, maxValue);
                     newValue = processor.Max(newValue, minValue);
-                    
+
                     if (!newValue.Equals(value))
                     {
                         value = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.Divide:
@@ -190,13 +196,13 @@ namespace NZCore
                     var newValue = processor.Divide(value, changeValue);
                     newValue = processor.Min(newValue, maxValue);
                     newValue = processor.Max(newValue, minValue);
-                    
+
                     if (!newValue.Equals(value))
                     {
                         value = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.PowerAtoB:
@@ -204,13 +210,13 @@ namespace NZCore
                     var newValue = processor.PowerAtoB(value, changeValue);
                     newValue = processor.Min(newValue, maxValue);
                     newValue = processor.Max(newValue, minValue);
-                    
+
                     if (!newValue.Equals(value))
                     {
                         value = newValue;
                         return true;
                     }
-                    
+
                     break;
                 }
                 case MathOperator.PowerBtoA:
@@ -218,7 +224,7 @@ namespace NZCore
                     var newValue = processor.PowerBtoA(value, changeValue);
                     newValue = processor.Min(newValue, maxValue);
                     newValue = processor.Max(newValue, minValue);
-                    
+
                     if (!newValue.Equals(value))
                     {
                         value = newValue;
@@ -241,21 +247,21 @@ namespace NZCore
             ref T valueA = ref *(T*)valuePtrToA;
             valueA = ProcessValues<T, TProcessor>(valueA, valuePtrToB, mathOperator);
         }
-        
+
         public static unsafe T ProcessValues<T, TProcessor>(byte* valuePtrToA, T valueB, MathOperator mathOperator)
             where T : unmanaged, IEquatable<T>
             where TProcessor : struct, IGenericValueCalculator<T>
         {
             return ProcessValues<T, TProcessor>(*(T*)valuePtrToA, valueB, mathOperator);
         }
-        
+
         public static unsafe T ProcessValues<T, TProcessor>(T valueA, byte* valuePtrToB, MathOperator mathOperator)
             where T : unmanaged, IEquatable<T>
             where TProcessor : struct, IGenericValueCalculator<T>
         {
             return ProcessValues<T, TProcessor>(valueA, *(T*)valuePtrToB, mathOperator);
         }
-        
+
         public static T ProcessValues<T, TProcessor>(T valueA, T valueB, MathOperator mathOperator)
             where T : unmanaged, IEquatable<T>
             where TProcessor : struct, IGenericValueCalculator<T>

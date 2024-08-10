@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="UIToolkitManager.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 #if UNITY_6000
 using System;
 using System.Collections.Generic;
@@ -100,7 +104,7 @@ namespace NZCore.UIToolkit
         {
             var ve = CloneAndAdd(uniqueKey, asset, visibleOnInstantiate, elementName);
             AddAsSortablePanel(ve, order);
-            
+
             return ve;
         }
 
@@ -108,10 +112,10 @@ namespace NZCore.UIToolkit
         {
             var ve = CloneAndAdd(uniqueKey, asset, visibleOnInstantiate, elementName);
             AddAsSortablePanel(rootContainer, ve, order);
-            
+
             return ve;
         }
-        
+
         public VisualElement AddPanel(string uniqueKey, string assetKey, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
         {
             return AddPanel(uniqueKey, assetKey, Root, elementName, order, visibleOnInstantiate);
@@ -144,7 +148,7 @@ namespace NZCore.UIToolkit
         {
             AddAsSortablePanel(Root, ve, order);
         }
-        
+
         /// <summary>
         /// Adds a sortable panel ve, to the rootContainer with a given order
         /// </summary>
@@ -227,7 +231,7 @@ namespace NZCore.UIToolkit
                 return false;
             }
         }
-        
+
         public VisualElement CloneAndAdd(string uniqueKey, VisualTreeAsset asset, bool visibleOnInstantiate = true, string elementName = null)
         {
             var ve = asset.CloneSingleTree(visibleOnInstantiate);
@@ -243,7 +247,7 @@ namespace NZCore.UIToolkit
         }
 
         // Binding related methods
-        
+
         public bool TryLoad<T>(string uniqueKey, string assetKey, VisualElement rootContainer, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true, string elementName = null)
             where T : class, IViewModelBinding, new()
         {

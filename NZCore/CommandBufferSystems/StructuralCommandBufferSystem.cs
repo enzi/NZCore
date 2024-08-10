@@ -1,4 +1,8 @@
-﻿using Unity.Collections;
+﻿// <copyright project="NZCore" file="StructuralCommandBufferSystem.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
@@ -27,7 +31,7 @@ namespace NZCore
 
             public void SetPendingBufferList(ref UnsafeList<EntityCommandBuffer> buffers)
             {
-                pendingBuffers = (UnsafeList<EntityCommandBuffer>*) UnsafeUtility.AddressOf(ref buffers);
+                pendingBuffers = (UnsafeList<EntityCommandBuffer>*)UnsafeUtility.AddressOf(ref buffers);
             }
 
             public void SetAllocator(Allocator allocatorIn)

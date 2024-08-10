@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="UnsafeKeyValueArrayHashMap.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -10,14 +14,14 @@ namespace NZCore
     [StructLayout(LayoutKind.Sequential)]
     [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]
     public unsafe struct UnsafeKeyValueArrayHashMap<TKey, TValue> : IDisposable
-        where TKey : unmanaged, IEquatable<TKey> 
+        where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
         private int keyCapacity;
         private int bucketCapacityMask;
         private int allocatedIndexLength;
         private int keyOffset;
-        
+
         [NativeDisableUnsafePtrRestriction] private TKey* Keys;
         [NativeDisableUnsafePtrRestriction] private TValue* Values;
 
@@ -27,16 +31,17 @@ namespace NZCore
         private AllocatorManager.AllocatorHandle m_Allocator;
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal static UnsafeKeyValueArrayHashMap<TKey, TValue>* Create<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        internal static UnsafeKeyValueArrayHashMap<TKey, TValue>* Create<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator,
+            NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
             UnsafeKeyValueArrayHashMap<TKey, TValue>* unsafeArrayHashMap = allocator.Allocate(default(UnsafeKeyValueArrayHashMap<TKey, TValue>), 1);
 
             unsafeArrayHashMap->m_Allocator = allocator.Handle;
-            
+
             unsafeArrayHashMap->Keys = null;
             unsafeArrayHashMap->Values = null;
-            
+
             unsafeArrayHashMap->next = UnsafeList<int>.Create(initialCapacity, allocator.Handle, options);
             unsafeArrayHashMap->buckets = UnsafeList<int>.Create(initialCapacity * 2, allocator.Handle, options);
 
@@ -44,7 +49,7 @@ namespace NZCore
             unsafeArrayHashMap->bucketCapacityMask = 0;
             unsafeArrayHashMap->allocatedIndexLength = 0;
             unsafeArrayHashMap->keyOffset = keyOffset;
-            
+
             return unsafeArrayHashMap;
         }
 
@@ -53,16 +58,16 @@ namespace NZCore
             if (!keyArray.IsCreated || !valueArray.IsCreated)
                 throw new Exception("Key or values are not created!");
             if (keyArray.Length != valueArray.Length)
-               throw new Exception("Key and value length is not the same!");
-            
+                throw new Exception("Key and value length is not the same!");
+
             if (valueArray.Length == 0)
             {
                 allocatedIndexLength = 0;
                 return;
             }
-            
-            Keys = (TKey*) keyArray.GetUnsafeReadOnlyPtr();
-            Values = (TValue*) valueArray.GetUnsafeReadOnlyPtr();
+
+            Keys = (TKey*)keyArray.GetUnsafeReadOnlyPtr();
+            Values = (TValue*)valueArray.GetUnsafeReadOnlyPtr();
 
             int length = valueArray.Length;
             int bucketLength = length * 2;
@@ -74,12 +79,12 @@ namespace NZCore
             //Debug.Log($"Set next/buckets cap to {length}/{bucketLength}");
             next->Resize(length, NativeArrayOptions.UninitializedMemory);
             buckets->Resize(bucketLength, NativeArrayOptions.UninitializedMemory);
-            
+
             UnsafeUtility.MemSet(next->Ptr, 0xFF, length * 4); // sets everything to max, Unity uses the same method in their NativeHashMap clear
             UnsafeUtility.MemSet(buckets->Ptr, 0xFF, bucketLength * 4);
-            
+
             allocatedIndexLength = length;
-            
+
             //Debug.Log($"SetArrays with allocatedIndexLength {allocatedIndexLength}");
         }
 
@@ -88,10 +93,10 @@ namespace NZCore
             // set all to -1
             UnsafeUtility.MemSet(next->Ptr, 0xff, (keyCapacity) * 4);
             UnsafeUtility.MemSet(buckets->Ptr, 0xff, (bucketCapacityMask + 1) * 4);
-            
+
             next->m_length = 0;
             buckets->m_length = 0;
-            
+
             allocatedIndexLength = 0;
         }
 
@@ -99,20 +104,20 @@ namespace NZCore
         public void CalculateBuckets()
         {
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
-            
+
             for (int i = 0; i < allocatedIndexLength; i++)
             {
                 var bucketIndex = Keys[i].GetHashCode() & bucketCapacityMask;
-                
+
                 (*next)[i] = (*buckets)[bucketIndex];
                 (*buckets)[bucketIndex] = i;
             }
         }
 
-        public bool TryGetFirstRefValue(TKey key, out TValue* item, out KeyValueArrayHashMapIterator<TKey> it)            
+        public bool TryGetFirstRefValue(TKey key, out TValue* item, out KeyValueArrayHashMapIterator<TKey> it)
         {
             it.Key = key;
-            
+
             if (allocatedIndexLength <= 0)
             {
                 it.EntryIndex = it.NextEntryIndex = -1;
@@ -126,18 +131,18 @@ namespace NZCore
             return TryGetNextRefValue(out item, ref it);
         }
 
-        public bool TryGetNextRefValue(out TValue* item, ref KeyValueArrayHashMapIterator<TKey> it)           
+        public bool TryGetNextRefValue(out TValue* item, ref KeyValueArrayHashMapIterator<TKey> it)
         {
             int entryIdx = it.NextEntryIndex;
             it.NextEntryIndex = -1;
             it.EntryIndex = -1;
             item = null;
-           
+
             if (entryIdx < 0 || entryIdx >= keyCapacity)
             {
                 return false;
             }
-            
+
             while (!Keys[entryIdx].Equals(it.Key))
             {
                 entryIdx = (*next)[entryIdx];
@@ -155,8 +160,8 @@ namespace NZCore
 
             return true;
         }
-        
-        public bool TryPeekFirstRefValue(TKey key)            
+
+        public bool TryPeekFirstRefValue(TKey key)
         {
             if (allocatedIndexLength <= 0)
                 return false;
@@ -166,7 +171,7 @@ namespace NZCore
             return TryPeekNextRefValue(key, (*buckets)[bucket]);
         }
 
-        public bool TryPeekNextRefValue(TKey key, int entryIdx)           
+        public bool TryPeekNextRefValue(TKey key, int entryIdx)
         {
             if (entryIdx < 0 || entryIdx >= keyCapacity)
                 return false;
@@ -174,14 +179,14 @@ namespace NZCore
             while (!Keys[entryIdx].Equals(key))
             {
                 entryIdx = (*next)[entryIdx];
-                
+
                 if (entryIdx < 0 || entryIdx >= keyCapacity)
                     return false;
             }
 
             return true;
         }
-        
+
         public static void Destroy(UnsafeKeyValueArrayHashMap<TKey, TValue>* hashMap)
         {
             var allocator = hashMap->m_Allocator;
@@ -195,15 +200,15 @@ namespace NZCore
             UnsafeList<int>.Destroy(buckets, ref m_Allocator);
         }
     }
-    
-    public unsafe struct KeyValueArrayHashMapEnumerator<TKey, TValue> 
+
+    public unsafe struct KeyValueArrayHashMapEnumerator<TKey, TValue>
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
         public UnsafeKeyValueArrayHashMap<TKey, TValue>* Map;
         public TKey Key;
         public bool IsFirst;
-        
+
         private KeyValueArrayHashMapIterator<TKey> iterator;
         private TValue* value;
 
@@ -212,15 +217,14 @@ namespace NZCore
         public bool MoveNext()
         {
             //Avoids going beyond the end of the collection.
-            if (!IsFirst) 
+            if (!IsFirst)
                 return Map->TryGetNextRefValue(out value, ref iterator);
-            
+
             IsFirst = false;
             return Map->TryGetFirstRefValue(Key, out value, out iterator);
-
         }
     }
-        
+
     public struct KeyValueArrayHashMapIterator<TKey>
         where TKey : unmanaged
     {

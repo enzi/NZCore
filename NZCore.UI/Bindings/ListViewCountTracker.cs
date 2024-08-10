@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="ListViewCountTracker.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 #if UNITY_6000
 using System.Collections.Generic;
 using UnityEngine.UIElements;
@@ -32,9 +36,9 @@ namespace NZCore.UIToolkit
             if (context.targetElement is not ListView listView)
                 return new BindingResult(BindingStatus.Failure, "'ListViewCountTracker' should only be added to a 'ListView'");
 
-            if (!m_CachedCount.TryGetValue(listView, out var previousCount) || previousCount == listView.itemsSource?.Count) 
+            if (!m_CachedCount.TryGetValue(listView, out var previousCount) || previousCount == listView.itemsSource?.Count)
                 return new BindingResult(BindingStatus.Failure, "");
-            
+
             listView.RefreshItems();
             m_CachedCount[listView] = listView.itemsSource?.Count ?? -1;
 

@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// <copyright project="NZCore" file="ScriptableObjectDropdownDrawer.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Collections.Generic;
 using NZCore.AssetManagement;
 using NZCore.UIToolkit;
 using UnityEditor;

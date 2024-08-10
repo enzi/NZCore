@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="RemoveFromLinkedEntityGroupSystem.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using NZCore.Components;
 using Unity.Collections;
 using Unity.Entities;
@@ -9,14 +13,14 @@ namespace NZCore
     {
         private EntityQuery addedQuery;
         private EntityQuery removedQuery;
-        
+
         public void OnCreate(ref SystemState state)
         {
             addedQuery = SystemAPI.QueryBuilder()
                 .WithAll<RemoveFromLinkedEntityGroupCleanupSetup>()
                 .WithNone<RemoveFromLinkedEntityGroupCleanup>()
                 .Build();
-            
+
             removedQuery = SystemAPI.QueryBuilder()
                 .WithAll<RemoveFromLinkedEntityGroupCleanup>()
                 .WithNone<RemoveFromLinkedEntityGroupCleanupSetup>()
@@ -60,7 +64,7 @@ namespace NZCore
 
                     destructionMap.Remove(cleanupData.Parent, removedEntity);
                 }
-                
+
                 state.EntityManager.RemoveComponent<RemoveFromLinkedEntityGroupCleanup>(removedQuery);
             }
         }

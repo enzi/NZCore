@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// <copyright project="NZCore" file="AddressablesHelper.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -17,7 +21,7 @@ namespace NZCore.Hybrid
             Addressables.Release(Handle);
         }
     }
-    
+
     public class AddressablesAndHandles<T> where T : class
     {
         public readonly Dictionary<string, T> Assets = new();
@@ -30,7 +34,7 @@ namespace NZCore.Hybrid
                 // release the handle
                 Addressables.Release(pair.Value);
             }
-            
+
             Assets.Clear();
             Handles.Clear();
         }

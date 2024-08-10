@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="ConditionLogicValueComparison.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 
 namespace NZCore
 {
@@ -14,7 +18,7 @@ namespace NZCore
         LesserEqual,
         HasFlag
     }
-    
+
     [Serializable]
     public enum ConditionLogicalConnection : byte
     {

@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="NativeHashMapExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -14,21 +18,21 @@ namespace NZCore
 
             if (-1 != idx)
             {
-                item = (TValue*) (hashMap.m_Data->Ptr + (UnsafeUtility.SizeOf<TValue>() * idx));
+                item = (TValue*)(hashMap.m_Data->Ptr + (UnsafeUtility.SizeOf<TValue>() * idx));
                 return true;
             }
 
             item = default;
             return false;
         }
-        
+
         public static unsafe bool TryGetRefValue<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> hashMap, TKey key, out void* valuePtr)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
             return TryGetFirstRefValueAtomic<TKey, TValue>(hashMap.m_HashMapData.m_Buffer, key, out valuePtr, out var _);
         }
-        
+
         internal static unsafe bool TryGetFirstRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, TKey key, out void* valuePtr, out NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged

@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="UnsafeQueue.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -15,7 +19,7 @@ namespace NZCore
         public UnsafeQueueBlockHeader* m_NextBlock;
         public int m_NumItems;
     }
-    
+
     [StructLayout(LayoutKind.Sequential)]
     internal unsafe struct UnsafeQueueBlockPoolData
     {
@@ -53,8 +57,7 @@ namespace NZCore
                 }
 
                 checkBlock = (UnsafeQueueBlockHeader*)Interlocked.CompareExchange(ref m_FirstBlock, (IntPtr)block->m_NextBlock, (IntPtr)block);
-            }
-            while (checkBlock != block);
+            } while (checkBlock != block);
 
             Interlocked.Exchange(ref m_AllocLock, 0);
 
@@ -82,11 +85,10 @@ namespace NZCore
                 nextPtr = checkBlock;
                 block->m_NextBlock = checkBlock;
                 checkBlock = (UnsafeQueueBlockHeader*)Interlocked.CompareExchange(ref m_FirstBlock, (IntPtr)block, (IntPtr)checkBlock);
-            }
-            while (checkBlock != nextPtr);
+            } while (checkBlock != nextPtr);
         }
     }
-    
+
     internal unsafe class UnsafeQueueBlockPool
     {
         private static readonly SharedStatic<IntPtr> Data = SharedStatic<IntPtr>.GetOrCreate<UnsafeQueueBlockPool>();
@@ -111,10 +113,12 @@ namespace NZCore
                     block->m_NextBlock = prev;
                     prev = block;
                 }
+
                 data->m_FirstBlock = (IntPtr)prev;
 
                 AppDomainOnDomainUnload();
             }
+
             return data;
         }
 
@@ -139,19 +143,20 @@ namespace NZCore
                 Memory.Unmanaged.Free(block, Allocator.Persistent);
                 --data->m_NumBlocks;
             }
+
             Memory.Unmanaged.Free(data, Allocator.Persistent);
             *pData = null;
         }
 #endif
     }
-    
+
     [StructLayout(LayoutKind.Sequential)]
     internal unsafe struct UnsafeQueueData
     {
         public IntPtr m_FirstBlock;
         public IntPtr m_LastBlock;
         public int m_CurrentRead;
-        
+
         private int m_MaxItems;
         private byte* m_CurrentWriteBlockTLS;
 
@@ -198,7 +203,7 @@ namespace NZCore
 
             return currentWriteBlock;
         }
-        
+
         public static void AllocateQueue<T>(AllocatorManager.AllocatorHandle label, out UnsafeQueueData* outBuf) where T : struct
         {
             var queueDataSize = CollectionHelper.Align(UnsafeUtility.SizeOf<UnsafeQueueData>(), JobsUtility.CacheLineSize);
@@ -239,7 +244,7 @@ namespace NZCore
             Memory.Unmanaged.Free(data, allocation);
         }
     }
-    
+
     /// <summary>
     /// An unmanaged queue.
     /// </summary>
@@ -281,10 +286,10 @@ namespace NZCore
             int count = 0;
             var currentRead = m_Buffer->m_CurrentRead;
 
-            for (UnsafeQueueBlockHeader* block = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock
-                    ; block != null
-                    ; block = block->m_NextBlock
-            )
+            for (UnsafeQueueBlockHeader* block = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
+                 block != null;
+                 block = block->m_NextBlock
+                )
             {
                 count += block->m_NumItems;
 
@@ -309,10 +314,10 @@ namespace NZCore
             {
                 int count = 0;
 
-                for (UnsafeQueueBlockHeader* block = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock
-                     ; block != null
-                     ; block = block->m_NextBlock
-                )
+                for (UnsafeQueueBlockHeader* block = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
+                     block != null;
+                     block = block->m_NextBlock
+                    )
                 {
                     count += block->m_NumItems;
                 }
@@ -493,7 +498,7 @@ namespace NZCore
                 Data = new UnsafeQueueDispose
                 {
                     m_Buffer = m_Buffer,
-                    m_QueuePool = m_QueuePool, 
+                    m_QueuePool = m_QueuePool,
                     m_AllocatorLabel = m_AllocatorLabel
                 }
             }.Schedule(inputDeps);
@@ -528,14 +533,11 @@ namespace NZCore
         [NativeContainerIsAtomicWriteOnly]
         public unsafe struct ParallelWriter
         {
-            [NativeDisableUnsafePtrRestriction]
-            internal UnsafeQueueData* m_Buffer;
+            [NativeDisableUnsafePtrRestriction] internal UnsafeQueueData* m_Buffer;
 
-            [NativeDisableUnsafePtrRestriction]
-            internal UnsafeQueueBlockPoolData* m_QueuePool;
+            [NativeDisableUnsafePtrRestriction] internal UnsafeQueueBlockPoolData* m_QueuePool;
 
-            [NativeSetThreadIndex]
-            internal int m_ThreadIndex;
+            [NativeSetThreadIndex] internal int m_ThreadIndex;
 
             /// <summary>
             /// Adds an element at the front of the queue.
@@ -566,15 +568,13 @@ namespace NZCore
             throw new InvalidOperationException("Trying to read from an empty queue.");
         }
     }
-    
+
     [NativeContainer]
     internal unsafe struct UnsafeQueueDispose
     {
-        [NativeDisableUnsafePtrRestriction]
-        internal UnsafeQueueData* m_Buffer;
+        [NativeDisableUnsafePtrRestriction] internal UnsafeQueueData* m_Buffer;
 
-        [NativeDisableUnsafePtrRestriction]
-        internal UnsafeQueueBlockPoolData* m_QueuePool;
+        [NativeDisableUnsafePtrRestriction] internal UnsafeQueueBlockPoolData* m_QueuePool;
 
         internal AllocatorManager.AllocatorHandle m_AllocatorLabel;
 

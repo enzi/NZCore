@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="CompilerServiceUtility.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
@@ -55,6 +59,17 @@ namespace NZCore
 
             File.WriteAllLines(cscPath, lines);
             return true;
+        }
+
+        public static bool CheckForJsonChanges(object assets, string structName, string packagePath)
+        {
+            var json = JsonConvert.SerializeObject(assets);
+            var csVersion = $"/*{json}*/";
+            var path = $"Packages/{packagePath}";
+            var jsonPath = $"{path}/{structName}.settings.cs";
+            var resolvedJsonPath = Path.GetFullPath(jsonPath);
+
+            return FileUtility.CheckForChanges(resolvedJsonPath, csVersion);
         }
 
         public static void WriteJson(object assets, string structName, string packagePath, params string[] cscPaths)

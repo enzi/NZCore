@@ -1,4 +1,6 @@
-// Credits go to SearousK: https://forum.unity.com/threads/cannot-serialize-a-guid-field-in-class.156862/#post-6996680
+// <copyright project="NZCore" file="SerializableGuidPropertyDrawer.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
 
 using System;
 using UnityEditor;
@@ -13,21 +15,21 @@ namespace NZCore.Editor
     {
         private readonly float ySep = 20;
         private float buttonSize;
-        
+
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             var root = new VisualElement();
-            
+
             SerializedProperty serializedGuid = property.FindPropertyRelative("serializedGuid");
-            
+
             var propGuid = new PropertyField(serializedGuid);
             propGuid.BindProperty(serializedGuid);
-            
+
             Button btnNewGuid = new Button
             {
                 text = "NEW GUID"
             };
-            
+
             btnNewGuid.style.width = new Length(50, LengthUnit.Percent);
 
             btnNewGuid.clicked += () =>

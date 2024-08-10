@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="ScriptableObjectDropdownAttribute.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using UnityEngine;
 
 namespace NZCore.Editor
@@ -7,6 +11,7 @@ namespace NZCore.Editor
     public class ScriptableObjectDropdownAttribute : PropertyAttribute
     {
         public bool UseFlags;
+
         public ScriptableObjectDropdownAttribute(bool useFlags = false)
         {
             UseFlags = useFlags;

@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="EntityRemapSystem.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using NZSpellCasting;
 using Unity.Collections;
 using Unity.Entities;
@@ -10,7 +14,7 @@ namespace NZCore
         public int DeferredEntityIndex;
         public int DeferredEntityVersion;
     }
-    
+
     [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
     [UpdateAfter(typeof(BeginEffectsSystemGroupCommandBufferSystem))]
     public partial struct EntityRemapSystem : ISystem
@@ -22,7 +26,7 @@ namespace NZCore
             state.EntityManager.AddBuffer<EntityRemapBuffer>(entity);
         }
     }
-    
+
     [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
     public partial struct EntityRemapClearSystem : ISystem
     {
@@ -44,7 +48,7 @@ namespace NZCore
                 DeferredEntityVersion = deferredEntity.Version
             });
         }
-        
+
         public static void AddRemapEntityParallel(this ref EntityCommandBuffer.ParallelWriter commandBuffer, int threadIndex, Entity remapEntity, Entity deferredEntity)
         {
             commandBuffer.AppendToBuffer(threadIndex, remapEntity, new EntityRemapBuffer()
@@ -65,7 +69,7 @@ namespace NZCore
                     return true;
                 }
             }
-            
+
             remappedEntity = Entity.Null;
             return false;
         }

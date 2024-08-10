@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="UnsafeListExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -6,7 +10,7 @@ namespace NZCore
 {
     public static unsafe class UnsafeListExtensions
     {
-        public static void  ResizeExact<T>(this ref UnsafeList<T> list, int newCapacity)
+        public static void ResizeExact<T>(this ref UnsafeList<T> list, int newCapacity)
             where T : unmanaged
         {
             newCapacity = math.max(0, newCapacity);
@@ -35,23 +39,23 @@ namespace NZCore
             list.m_capacity = newCapacity;
             list.m_length = math.min(list.m_length, newCapacity);
         }
-        
+
         public static void SetLengthNoResizeMemClear(this ref UnsafeList<byte> list, int size)
         {
             list.m_length = size;
             list.MemClear();
         }
-        
+
         public static void MemCpy(this ref UnsafeList<byte> list, byte* ptr, int size)
         {
             UnsafeUtility.MemCpy(list.Ptr, ptr, size);
         }
-        
+
         public static void MemClear(this ref UnsafeList<byte> list)
         {
             UnsafeUtility.MemClear(list.Ptr, list.m_capacity);
         }
-        
+
         public static void ReinterpretLengthAndCapacity(this ref UnsafeList<byte> list, int size)
         {
             list.m_length /= size;

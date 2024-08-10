@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="NZProgressBar.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using Unity.Properties;

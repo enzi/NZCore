@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="ParallelListHashMapValueOnly.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
@@ -15,9 +19,8 @@ namespace NZCore
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
-        [NativeDisableUnsafePtrRestriction] 
-        private UnsafeParallelListHashMapValueOnly<TKey, TValue>* _unsafeParallelListHashMap;
-        
+        [NativeDisableUnsafePtrRestriction] private UnsafeParallelListHashMapValueOnly<TKey, TValue>* _unsafeParallelListHashMap;
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_Safety;
         private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ParallelListHashMapValueOnly<TKey, TValue>>();
@@ -42,11 +45,10 @@ namespace NZCore
             CollectionHelper.SetStaticSafetyId<ParallelListHashMap<TKey, TValue>>(ref m_Safety, ref staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
-            
+
             _unsafeParallelListHashMap = UnsafeParallelListHashMapValueOnly<TKey, TValue>.Create(initialCapacity, keyOffset, ref allocator);
-            
         }
-        
+
         public bool ContainsKey(TKey key)
         {
             return _unsafeParallelListHashMap->TryPeekFirstRefValue(key);
@@ -57,13 +59,13 @@ namespace NZCore
         {
             _unsafeParallelListHashMap->SetArrays(*valueArray._unsafeParallelList);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalculateBuckets()
         {
             _unsafeParallelListHashMap->CalculateBuckets();
         }
-        
+
         // public void PrintValues()
         // {
         //     //Debug.Log($"PrintValues with length {allocatedIndexLength}");
@@ -94,22 +96,22 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             CollectionHelper.DisposeSafetyHandle(ref m_Safety);
 #endif
-            
-            UnsafeParallelListHashMapValueOnly<TKey,TValue>.Destroy(_unsafeParallelListHashMap);
+
+            UnsafeParallelListHashMapValueOnly<TKey, TValue>.Destroy(_unsafeParallelListHashMap);
         }
-        
+
         public UnsafeParallelListHashMapValueOnlyEnumerator<TKey, TValue> GetValuesForKey(TKey key)
         {
             return new UnsafeParallelListHashMapValueOnlyEnumerator<TKey, TValue>
             {
-                Map = _unsafeParallelListHashMap, 
-                Key = key, 
+                Map = _unsafeParallelListHashMap,
+                Key = key,
                 IsFirst = true
             };
         }
-        
+
         // helper jobs
-        
+
         public JobHandle ScheduleCalculateBuckets(ParallelList<TValue> values, JobHandle dependency)
         {
             return new CalculateBucketsJob()
@@ -118,7 +120,7 @@ namespace NZCore
                 Values = values
             }.Schedule(dependency);
         }
-        
+
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob
         {

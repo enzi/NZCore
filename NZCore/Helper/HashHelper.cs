@@ -1,4 +1,8 @@
-﻿using Unity.Entities;
+﻿// <copyright project="NZCore" file="HashHelper.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Entities;
 
 namespace NZSpellCasting
 {
@@ -12,7 +16,7 @@ namespace NZSpellCasting
             result = prime * result + type;
             return result;
         }
-        
+
         public static int GetEntityAndIntegerHash(Entity entity, int type)
         {
             const int prime = 31;
@@ -21,7 +25,7 @@ namespace NZSpellCasting
             result = prime * result + type;
             return result;
         }
-        
+
         public static int GetEntityAndSpellIdHash(Entity entity, int spellId)
         {
             const int prime = 31;

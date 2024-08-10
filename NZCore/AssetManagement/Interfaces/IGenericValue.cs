@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="IGenericValue.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 
 namespace NZCore
 {

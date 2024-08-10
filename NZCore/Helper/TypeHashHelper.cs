@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="TypeHashHelper.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -9,7 +13,7 @@ namespace NZCore.Helper
     public static class TypeHashIgnoreSafety
     {
         const ulong kFNV1A64OffsetBasis = 14695981039346656037;
-        
+
         public static ulong HashType(Type type, bool verbose = false)
         {
             if (verbose)
@@ -32,7 +36,7 @@ namespace NZCore.Helper
                 Debug.Log($"HashVersionAttribute: {hash}");
 
             var fields = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            
+
             ulong fieldsLength = (ulong)fields.Length;
             ulong fieldIndex = 0;
             for (ulong i = 0; i < fieldsLength; i++)
@@ -103,7 +107,7 @@ namespace NZCore.Helper
 
             return hash;
         }
-        
+
         private static ulong HashTypeName(Type type, bool verbose = false)
         {
             ulong hash = HashNamespace(type, verbose);
@@ -119,7 +123,7 @@ namespace NZCore.Helper
 
             return hash;
         }
-        
+
         private static ulong HashNamespace(Type type, bool verbose = false)
         {
             var hash = kFNV1A64OffsetBasis;
@@ -132,7 +136,7 @@ namespace NZCore.Helper
                 if (verbose)
                     Debug.Log($"HashNamespace {type.DeclaringType.Name} - {hash}");
                 hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.DeclaringType.Name));
-                
+
                 if (verbose)
                     Debug.Log($"HashNamespace {type.DeclaringType.Name} - {hash}");
             }
@@ -145,7 +149,7 @@ namespace NZCore.Helper
 
             return hash;
         }
-        
+
         private static ulong HashVersionAttribute(Type type, bool verbose = false)
         {
             int version = 0;

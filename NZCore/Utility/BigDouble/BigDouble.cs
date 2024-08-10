@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="BigDouble.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Globalization;
 using Unity.Burst;
 using Unity.Collections;
@@ -9,20 +13,24 @@ namespace NZCore
     public struct BigDouble : IFormattable, IComparable, IComparable<BigDouble>, IEquatable<BigDouble>
     {
         public const double Tolerance = 1e-18;
+
         //for example: if two exponents are more than 17 apart, consider adding them together pointless, just return the larger one
         internal const int MaxSignificantDigits = 17;
+
         internal const long ExpLimit = long.MaxValue;
+
         //the largest exponent that can appear in a Double, though not all mantissas are valid here.
         internal const long DoubleExpMax = 308;
+
         //The smallest exponent that can appear in a Double, though not all mantissas are valid here.
         internal const long DoubleExpMin = -324;
-       
+
         internal readonly double mantissa;
         internal readonly long exponent;
-        
+
         public double Mantissa => mantissa;
         public long Exponent => exponent;
-        
+
         public readonly static BigDouble Zero = FromMantissaExponentNoNormalize(0, 0);
         public readonly static BigDouble One = FromMantissaExponentNoNormalize(1, 0);
         public readonly static BigDouble NaN = FromMantissaExponentNoNormalize(double.NaN, long.MinValue);
@@ -83,6 +91,7 @@ namespace NZCore
             {
                 return FromMantissaExponentNoNormalize(mantissa, exponent);
             }
+
             if (IsZero(mantissa))
             {
                 return Zero;
@@ -101,7 +110,7 @@ namespace NZCore
 
             return FromMantissaExponentNoNormalize(mantissa, exponent + tempExponent);
         }
-        
+
         [BurstDiscard]
         public static BigDouble Parse(string value)
         {
@@ -126,7 +135,7 @@ namespace NZCore
 
             return result;
         }
-        
+
         public double ToDouble()
         {
             if (IsNaN(this))
@@ -165,7 +174,7 @@ namespace NZCore
 
         public static BigDouble Negate(BigDouble value) => FromMantissaExponentNoNormalize(-value.Mantissa, value.Exponent);
 
-        public static int Sign(BigDouble value) => (int) math.sign(value.Mantissa);
+        public static int Sign(BigDouble value) => (int)math.sign(value.Mantissa);
 
         public static BigDouble Round(BigDouble value)
         {
@@ -394,13 +403,13 @@ namespace NZCore
         {
             if (
                 IsZero(Mantissa) || IsZero(other.Mantissa)
-                || IsNaN(this) || IsNaN(other)
-                || IsInfinity(this) || IsInfinity(other))
+                                 || IsNaN(this) || IsNaN(other)
+                                 || IsInfinity(this) || IsInfinity(other))
             {
                 // Let Double handle these cases.
                 return Mantissa.CompareTo(other.Mantissa);
             }
-            
+
             switch (Mantissa)
             {
                 case > 0 when other.Mantissa < 0:
@@ -433,19 +442,19 @@ namespace NZCore
         public bool Equals(BigDouble other)
         {
             return !IsNaN(this) && !IsNaN(other) && (AreSameInfinity(this, other)
-                || Exponent == other.Exponent && AreEqual(Mantissa, other.Mantissa));
+                                                     || Exponent == other.Exponent && AreEqual(Mantissa, other.Mantissa));
         }
-        
+
         public bool Equals(BigDouble other, double tolerance)
         {
             return !IsNaN(this) && !IsNaN(other) && (AreSameInfinity(this, other)
-                || Abs(this - other) <= Max(Abs(this), Abs(other)) * tolerance);
+                                                     || Abs(this - other) <= Max(Abs(this), Abs(other)) * tolerance);
         }
 
         private static bool AreSameInfinity(BigDouble first, BigDouble second)
         {
             return IsPositiveInfinity(first) && IsPositiveInfinity(second)
-                || IsNegativeInfinity(first) && IsNegativeInfinity(second);
+                   || IsNegativeInfinity(first) && IsNegativeInfinity(second);
         }
 
         public static bool operator ==(BigDouble left, BigDouble right)
@@ -464,6 +473,7 @@ namespace NZCore
             {
                 return false;
             }
+
             if (IsZero(a.Mantissa)) return b.Mantissa > 0;
             if (IsZero(b.Mantissa)) return a.Mantissa < 0;
             if (a.Exponent == b.Exponent) return a.Mantissa < b.Mantissa;
@@ -487,6 +497,7 @@ namespace NZCore
             {
                 return false;
             }
+
             if (IsZero(a.Mantissa)) return b.Mantissa < 0;
             if (IsZero(b.Mantissa)) return a.Mantissa > 0;
             if (a.Exponent == b.Exponent) return a.Mantissa > b.Mantissa;
@@ -510,6 +521,7 @@ namespace NZCore
             {
                 return NaN;
             }
+
             return left > right ? left : right;
         }
 
@@ -519,6 +531,7 @@ namespace NZCore
             {
                 return NaN;
             }
+
             return left > right ? right : left;
         }
 
@@ -561,8 +574,8 @@ namespace NZCore
         public static BigDouble Pow10(double power)
         {
             return IsInteger(power)
-                ? Pow10((long) power)
-                : Normalize(math.pow(10, power % 1), (long) math.trunc(power));
+                ? Pow10((long)power)
+                : Normalize(math.pow(10, power % 1), (long)math.trunc(power));
         }
 
         public static BigDouble Pow10(long power)
@@ -583,10 +596,12 @@ namespace NZCore
             }
 
             var mantissa = math.pow(value.Mantissa, power);
-            return double.IsInfinity(mantissa) ?
+            return double.IsInfinity(mantissa)
+                ?
                 // TODO: This is rather dumb, but works anyway
                 // Power is too big for our mantissa, so we do multiple Pow with smaller powers.
-                Pow(Pow(value, 2), (double) power / 2) : Normalize(mantissa, value.Exponent * power);
+                Pow(Pow(value, 2), (double)power / 2)
+                : Normalize(mantissa, value.Exponent * power);
         }
 
         public static BigDouble Pow(BigDouble value, double power)
@@ -597,6 +612,7 @@ namespace NZCore
             {
                 return NaN;
             }
+
             return Is10(value) && powerIsInteger ? Pow10(power) : PowInternal(value, power);
         }
 
@@ -619,7 +635,7 @@ namespace NZCore
                 newMantissa = math.pow(value.Mantissa, other);
                 if (IsFinite(newMantissa))
                 {
-                    return Normalize(newMantissa, (long) temp);
+                    return Normalize(newMantissa, (long)temp);
                 }
             }
 
@@ -630,7 +646,7 @@ namespace NZCore
             newMantissa = math.pow(10, other * math.log10(value.Mantissa) + residue);
             if (IsFinite(newMantissa))
             {
-                return Normalize(newMantissa, (long) newexponent);
+                return Normalize(newMantissa, (long)newexponent);
             }
 
             //UN-SAFETY: This should return NaN when mantissa is negative and value is noninteger.
@@ -664,9 +680,11 @@ namespace NZCore
                 return new BigDouble(double.NaN);
             }
 
-            return value.Exponent % 2 != 0 ?
+            return value.Exponent % 2 != 0
+                ?
                 // mod of a negative number is negative, so != means '1 or -1'
-                Normalize(math.sqrt(value.Mantissa) * 3.16227766016838, (long) math.floor(value.Exponent / 2.0)) : Normalize(math.sqrt(value.Mantissa), (long) math.floor(value.Exponent / 2.0));
+                Normalize(math.sqrt(value.Mantissa) * 3.16227766016838, (long)math.floor(value.Exponent / 2.0))
+                : Normalize(math.sqrt(value.Mantissa), (long)math.floor(value.Exponent / 2.0));
         }
 
         public static BigDouble Cbrt(BigDouble value)
@@ -684,12 +702,14 @@ namespace NZCore
             var mod = value.Exponent % 3;
             if (mod == 1 || mod == -1)
             {
-                return Normalize(newmantissa * 2.1544346900318837, (long) math.floor(value.Exponent / 3.0));
+                return Normalize(newmantissa * 2.1544346900318837, (long)math.floor(value.Exponent / 3.0));
             }
 
-            return mod != 0 ? Normalize(newmantissa * 4.6415888336127789, (long) math.floor(value.Exponent / 3.0)) :
+            return mod != 0
+                ? Normalize(newmantissa * 4.6415888336127789, (long)math.floor(value.Exponent / 3.0))
+                :
                 //mod != 0 at this point means 'mod == 2 || mod == -2'
-                Normalize(newmantissa, (long) math.floor(value.Exponent / 3.0));
+                Normalize(newmantissa, (long)math.floor(value.Exponent / 3.0));
         }
 
         public static BigDouble Sinh(BigDouble value)
@@ -742,7 +762,7 @@ namespace NZCore
         {
             return !double.IsNaN(value) && !double.IsInfinity(value);
         }
-        
+
 
         /// <summary>
         /// We need this lookup table because math.pow(10, exponent) when exponent's absolute value
@@ -752,14 +772,17 @@ namespace NZCore
         public struct PowersOf10
         {
             private static readonly SharedStatic<NativeArray<double>> Powers = SharedStatic<NativeArray<double>>.GetOrCreate<PowersOf10, PowersFieldKey>();
-            private class PowersFieldKey {}
-            
+
+            private class PowersFieldKey
+            {
+            }
+
             private const long IndexOf0 = -DoubleExpMin - 1;
 
             [BurstDiscard]
             public void Init()
             {
-                Powers.Data = new NativeArray<double>((int) (DoubleExpMax - DoubleExpMin), Allocator.Persistent);
+                Powers.Data = new NativeArray<double>((int)(DoubleExpMax - DoubleExpMin), Allocator.Persistent);
                 var index = 0;
                 for (var i = 0; i < Powers.Data.Length; i++)
                 {
@@ -769,7 +792,7 @@ namespace NZCore
 
             public static double Lookup(long power)
             {
-                return Powers.Data[(int) (IndexOf0 + power)];
+                return Powers.Data[(int)(IndexOf0 + power)];
             }
 
             public void Dispose()

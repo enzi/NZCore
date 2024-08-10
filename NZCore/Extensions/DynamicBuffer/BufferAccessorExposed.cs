@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="BufferAccessorExposed.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;

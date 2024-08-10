@@ -1,4 +1,8 @@
-﻿using Unity.Entities;
+﻿// <copyright project="NZCore" file="HybridEntity.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
 using Hash128 = Unity.Entities.Hash128;
@@ -8,11 +12,11 @@ namespace NZCore.Hybrid
     public class HybridEntity : MonoBehaviour
     {
         public Entity Entity = Entity.Null;
-        
+
         public static void LinkEntityToGameObject(EntityCommandBuffer ecb, Entity entity, GameObject go, bool setTransform, bool destroyWithEntity)
         {
             var transform = go.transform;
-            
+
             World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<TransformEntityMapping>().AddTransform(transform, entity, destroyWithEntity);
 
             if (setTransform)
@@ -29,11 +33,11 @@ namespace NZCore.Hybrid
                 hybridEntityComp.Entity = entity;
             }
         }
-        
+
         public static void LinkEntityToGameObject(EntityManager entityManager, Entity entity, GameObject go, bool setTransform, bool destroyWithEntity)
         {
             var transform = go.transform;
-            
+
             World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<TransformEntityMapping>().AddTransform(transform, entity, destroyWithEntity);
 
             if (setTransform)
@@ -51,7 +55,7 @@ namespace NZCore.Hybrid
             }
         }
     }
-    
+
     public class HybridSpawnPrefab : IComponentData
     {
         public Entity HybridEntity;
@@ -67,7 +71,7 @@ namespace NZCore.Hybrid
         public byte SetTransform;
         public byte DestroyWithEntity;
     }
-    
+
     public struct HybridSpawnAddressable : IComponentData
     {
         public Entity HybridEntity;

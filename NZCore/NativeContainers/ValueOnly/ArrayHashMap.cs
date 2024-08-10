@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="ArrayHashMap.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -19,7 +23,7 @@ namespace NZCore
         where TValue : unmanaged
     {
         [NativeDisableUnsafePtrRestriction] private UnsafeArrayHashMap<TKey, TValue>* _unsafeArrayHashMap;
-        
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_Safety;
         private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<ArrayHashMap<TKey, TValue>>();
@@ -46,11 +50,10 @@ namespace NZCore
             CollectionHelper.SetStaticSafetyId<ArrayHashMap<TKey, TValue>>(ref m_Safety, ref s_staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
-            
+
             _unsafeArrayHashMap = UnsafeArrayHashMap<TKey, TValue>.Create(keyOffset, ref allocator);
-            
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(TKey key)
         {
@@ -61,7 +64,7 @@ namespace NZCore
         {
             _unsafeArrayHashMap->SetCapacity(capacity);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetArrays([NoAlias] ref NativeList<TValue> list)
         {
@@ -79,19 +82,19 @@ namespace NZCore
         {
             _unsafeArrayHashMap->SetArrays(ref valueArray);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalculateBuckets(int oldLength, int newLength)
         {
             _unsafeArrayHashMap->CalculateBuckets(oldLength, newLength);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalculateBuckets()
         {
             _unsafeArrayHashMap->CalculateBuckets();
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalculateBucketsSingle(TValue* valueArray, int length)
         {
@@ -123,23 +126,23 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             CollectionHelper.DisposeSafetyHandle(ref m_Safety);
 #endif
-            
-            UnsafeArrayHashMap<TKey,TValue>.Destroy(_unsafeArrayHashMap);
+
+            UnsafeArrayHashMap<TKey, TValue>.Destroy(_unsafeArrayHashMap);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ArrayHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key)
         {
             return new ArrayHashMapEnumerator<TKey, TValue>
             {
-                Map = _unsafeArrayHashMap, 
-                Key = key, 
+                Map = _unsafeArrayHashMap,
+                Key = key,
                 IsFirst = true
             };
         }
-        
+
         // helper jobs
-        
+
         public JobHandle ScheduleCalculateBuckets(ref NativeList<TValue> values, JobHandle dependency)
         {
             return new CalculateBucketsJob()
@@ -148,14 +151,13 @@ namespace NZCore
                 Values = values
             }.Schedule(dependency);
         }
-        
+
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob
         {
-            [ReadOnly] [NoAlias]public NativeList<TValue> Values;
+            [ReadOnly] [NoAlias] public NativeList<TValue> Values;
 
-            [NoAlias]
-            public ArrayHashMap<TKey, TValue> Hashmap;
+            [NoAlias] public ArrayHashMap<TKey, TValue> Hashmap;
 
             public void Execute()
             {
@@ -163,12 +165,11 @@ namespace NZCore
                 Hashmap.CalculateBuckets();
             }
         }
-        
+
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct SetArraysJob : IJob
         {
-            [ReadOnly] 
-            public NativeArray<TValue> Values;
+            [ReadOnly] public NativeArray<TValue> Values;
             public ArrayHashMap<TKey, TValue> Hashmap;
 
             public void Execute()
@@ -177,7 +178,7 @@ namespace NZCore
             }
         }
     }
-    
+
     internal sealed class ArrayHashMapDebuggerTypeProxy<TKey, TValue>
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged

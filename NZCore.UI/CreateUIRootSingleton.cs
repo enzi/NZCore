@@ -1,4 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿// <copyright project="NZCore" file="CreateUIRootSingleton.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Threading.Tasks;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -20,7 +24,7 @@ namespace NZCore.UIToolkit
     public class CreateUIRootSingleton : MonoBehaviour
     {
         //private const string KEY_MAINBUTTONSCONTAINER = "MainButtonsContainer";
-        
+
         private UIDocument _uiDocument;
         private VisualElement _rootVE;
         private VisualElement _dragContainer;
@@ -62,7 +66,7 @@ namespace NZCore.UIToolkit
             //Debug.Log("Creating interface");
 
             var creators = GetComponentsInChildren<IUICreator>();
-            
+
             foreach (var uiCreator in creators)
             {
                 await uiCreator.CreateInterface(_rootVE, _mainButtonsContainer);

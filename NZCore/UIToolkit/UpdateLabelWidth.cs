@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿// <copyright project="NZCore" file="UpdateLabelWidth.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
@@ -25,15 +29,15 @@ namespace NZCore.UIToolkit
 
         private readonly VisualElement root;
         private readonly VisualElement label;
-        
+
         private VisualElement cachedContextWidthElement;
         private VisualElement cachedInspectorElement;
-        
+
         private float labelWidthRatio;
         private float labelExtraPadding;
         private float labelBaseMinWidth;
         private float labelExtraContextWidth;
-        
+
         public LabelWidthUpdater(VisualElement root, VisualElement label, bool addBaseClasses = true)
         {
             this.root = root;
@@ -43,14 +47,14 @@ namespace NZCore.UIToolkit
             {
                 root.AddToClassList(USSClassName);
                 root.AddToClassList(AlignedFieldUssClassName);
-                
+
                 label.AddToClassList($"{USSClassName}__label");
                 label.AddToClassList("unity-property-field__label");
             }
 
             root.RegisterCallback(new EventCallback<AttachToPanelEvent>(OnAttachToPanel));
         }
-        
+
         private void OnAttachToPanel(AttachToPanelEvent e)
         {
             if (e.destinationPanel == null)

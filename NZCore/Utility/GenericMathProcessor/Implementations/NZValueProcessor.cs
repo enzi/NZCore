@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="NZValueProcessor.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 namespace NZCore
 {
     public static partial class GenericMathProcessor

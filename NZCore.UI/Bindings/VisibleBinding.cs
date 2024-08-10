@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="VisibleBinding.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 #if UNITY_6000
 using Unity.Properties;
 using UnityEngine.UIElements;

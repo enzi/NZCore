@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="ScriptableObjectWithDefaultAutoID.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using NZCore.AssetManagement.Interfaces;
 using UnityEngine;
 

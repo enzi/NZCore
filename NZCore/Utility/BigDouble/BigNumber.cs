@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="BigNumber.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Globalization;
 
 namespace NZCore
@@ -24,12 +28,13 @@ namespace NZCore
                 case 'F':
                     return FormatFixed(value, formatDigits);
             }
+
             throw new FormatException($"Unknown string format '{formatSpecifier}'");
         }
 
         private static char ParseFormatSpecifier(string format, out int digits)
         {
-            const char customFormat = (char) 0;
+            const char customFormat = (char)0;
             digits = -1;
             if (string.IsNullOrEmpty(format))
             {
@@ -105,6 +110,7 @@ namespace NZCore
             {
                 mantissa = mantissa.TrimEnd('0', '.');
             }
+
             return mantissa + "E" + (value.Exponent >= 0 ? "+" : "")
                    + value.Exponent;
         }
@@ -115,6 +121,7 @@ namespace NZCore
             {
                 places = BigDouble.MaxSignificantDigits;
             }
+
             if (value.Exponent <= -BigDouble.ExpLimit || BigDouble.IsZero(value.Mantissa))
             {
                 return "0" + (places > 0 ? ".".PadRight(places + 1, '0') : "");
@@ -128,11 +135,12 @@ namespace NZCore
             {
                 // TODO: StringBuilder-optimizable
                 return value.Mantissa
-                    .ToString(CultureInfo.InvariantCulture)
-                    .Replace(".", "")
-                    .PadRight((int)value.Exponent + 1, '0')
-                    + (places > 0 ? ".".PadRight(places + 1, '0') : "");
+                           .ToString(CultureInfo.InvariantCulture)
+                           .Replace(".", "")
+                           .PadRight((int)value.Exponent + 1, '0')
+                       + (places > 0 ? ".".PadRight(places + 1, '0') : "");
             }
+
             return ToFixed(value.ToDouble(), places);
         }
     }

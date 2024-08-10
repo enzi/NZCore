@@ -1,4 +1,8 @@
-﻿using Unity.Collections.LowLevel.Unsafe;
+﻿// <copyright project="NZCore" file="Vector128.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace NZCore.Helper.Intrinsics
 {

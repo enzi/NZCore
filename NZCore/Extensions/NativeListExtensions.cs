@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="NativeListExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System.Diagnostics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -16,32 +20,32 @@ namespace NZCore
             AtomicSafetyHandle.CheckWriteAndThrow(list.m_Safety);
 #endif
         }
-        
-        public static void AddArrayToBlob<T>(this NativeList<T> nativeList, ref BlobBuilder builder, ref BlobArray<T> blobArray) 
+
+        public static void AddArrayToBlob<T>(this NativeList<T> nativeList, ref BlobBuilder builder, ref BlobArray<T> blobArray)
             where T : unmanaged
         {
             nativeList.AsArray().AddArrayToBlob(ref builder, ref blobArray);
         }
-        
+
         public static unsafe void AddToByteList<TData>(this NativeList<byte> list, TData data)
             where TData : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             CheckWriteAccess(list);
 #endif
-            
+
             int byteSize = UnsafeUtility.SizeOf<TData>();
-            var ptrToData = (byte*) UnsafeUtility.AddressOf(ref data);
+            var ptrToData = (byte*)UnsafeUtility.AddressOf(ref data);
 
             AddToByteList(list, ptrToData, byteSize);
         }
-		
+
         public static unsafe void AddToByteList(this NativeList<byte> list, byte* ptrToData, int byteSize)
         {
             int oldLength = list.Length;
             list.ResizeUninitialized(oldLength + byteSize);
-            
-            var basePtr = (byte*) list.GetUnsafePtr();
+
+            var basePtr = (byte*)list.GetUnsafePtr();
             UnsafeUtility.MemCpy(basePtr + oldLength, ptrToData, byteSize);
         }
 
@@ -62,19 +66,19 @@ namespace NZCore
 
             ReinterpretLengthAndCapacity(list, size);
         }
-        
+
         public static void ReinterpretLengthAndCapacity(this NativeList<byte> list, int size)
         {
             list.m_ListData->m_length /= size;
             list.m_ListData->m_capacity /= size;
         }
-        
+
         public static void SetLengthNoResizeMemClear(this NativeList<byte> list, int size)
         {
             list.m_ListData->m_length = size;
             list.MemClear();
         }
-        
+
         public static void ResizeExact<T>(this NativeList<T> list, int newCapacity)
             where T : unmanaged
         {
@@ -106,19 +110,19 @@ namespace NZCore
             listPtr->m_capacity = newCapacity;
             listPtr->m_length = math.min(listPtr->m_length, newCapacity);
         }
-        
+
         public static void Remove<T>(this NativeList<T> list, T element)
             where T : unmanaged
         {
-            for (int i = list.Length - 1; i >= 0; i --)
+            for (int i = list.Length - 1; i >= 0; i--)
             {
-                if (list[i].GetHashCode() != element.GetHashCode()) 
+                if (list[i].GetHashCode() != element.GetHashCode())
                     continue;
-                
+
                 list.RemoveAt(i);
             }
         }
-        
+
         public static ref readonly T ElementAtRO<T>(this NativeList<T> list, int index)
             where T : unmanaged
         {

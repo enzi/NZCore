@@ -1,4 +1,8 @@
-﻿using UnityEditor;
+﻿// <copyright project="NZCore" file="NZPropertyDrawer.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -43,7 +47,7 @@ namespace NZCore.Editor
                         borderTopLeftRadius = new StyleLength(5.0f)
                     }
                 };
-                
+
 
                 root.Add(groupBox);
 
@@ -60,16 +64,15 @@ namespace NZCore.Editor
                                 fontSize = new StyleLength(17)
                             }
                         };
-                        
+
                         groupBox.Add(lbl);
                     }
                     else
                     {
                         var element = CreatePropertyField(child, property.serializedObject);
-                        groupBox.Add(element);    
+                        groupBox.Add(element);
                     }
                 }
-
             }
             else
             {

@@ -1,4 +1,8 @@
-﻿using System.Threading;
+﻿// <copyright project="NZCore" file="InterlockedExtensions.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Threading;
 
 namespace NZCore
 {
@@ -16,7 +20,7 @@ namespace NZCore
                     return newValue;
             }
         }
-        
+
         public static float Add(ref float location1, float value)
         {
             float newCurrentValue = location1; // non-volatile read, so may be stale
@@ -34,7 +38,7 @@ namespace NZCore
         {
             return Interlocked.Add(ref location1, value);
         }
-        
+
         public static long Add(ref long location1, long value)
         {
             return Interlocked.Add(ref location1, value);

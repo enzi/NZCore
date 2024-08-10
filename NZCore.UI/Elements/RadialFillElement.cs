@@ -1,4 +1,6 @@
-﻿// Original code and credits go to: https://gist.github.com/Okay-Roman/8ba84316968cd3aac72f3984ad5a6251
+﻿// <copyright project="NZCore" file="RadialFillElement.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
 
 using System.Collections.Generic;
 using Unity.Properties;

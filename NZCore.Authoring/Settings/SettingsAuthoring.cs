@@ -1,4 +1,8 @@
-﻿using System.Linq;
+﻿// <copyright project="NZCore" file="SettingsAuthoring.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System.Linq;
 using Unity.Entities;
 using UnityEngine;
 

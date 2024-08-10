@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="UnsafeKeyDynamicValueArrayHashMap.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -11,7 +15,7 @@ namespace NZCore
     {
         int GetSize(TKey key);
     }
-    
+
     [StructLayout(LayoutKind.Sequential)]
     [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]
     public unsafe struct UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter> : IDisposable
@@ -21,9 +25,9 @@ namespace NZCore
         private int keyCapacity;
         private int bucketCapacityMask;
         private int allocatedIndexLength;
-        
+
         private TKeyInterpreter keyInterpreter;
-        
+
         [NativeDisableUnsafePtrRestriction] private TKey* Keys;
         [NativeDisableUnsafePtrRestriction] private byte* Values;
 
@@ -34,18 +38,18 @@ namespace NZCore
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
         internal static UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>* Create<TAllocator>(
-            int initialCapacity, 
-            ref TAllocator allocator, 
+            int initialCapacity,
+            ref TAllocator allocator,
             NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
             UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>* unsafeArrayHashMap = allocator.Allocate(default(UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>), 1);
 
             unsafeArrayHashMap->m_Allocator = allocator.Handle;
-            
+
             unsafeArrayHashMap->Keys = null;
             unsafeArrayHashMap->Values = null;
-            
+
             unsafeArrayHashMap->next = UnsafeList<DynamicValueIndexer>.Create(initialCapacity, allocator.Handle, options);
             unsafeArrayHashMap->buckets = UnsafeList<DynamicValueIndexer>.Create(initialCapacity * 2, allocator.Handle, options);
 
@@ -53,7 +57,7 @@ namespace NZCore
             unsafeArrayHashMap->bucketCapacityMask = 0;
             unsafeArrayHashMap->allocatedIndexLength = 0;
             unsafeArrayHashMap->keyInterpreter = default;
-            
+
             return unsafeArrayHashMap;
         }
 
@@ -62,16 +66,16 @@ namespace NZCore
             if (!keyArray.IsCreated || !valueArray.IsCreated)
                 throw new Exception("Key or values are not created!");
             if (keyArray.Length != valueArray.Length)
-               throw new Exception("Key and value length is not the same!");
-            
+                throw new Exception("Key and value length is not the same!");
+
             if (valueArray.Length == 0)
             {
                 allocatedIndexLength = 0;
                 return;
             }
-            
-            Keys = (TKey*) keyArray.GetUnsafeReadOnlyPtr();
-            Values = (byte*) valueArray.GetUnsafeReadOnlyPtr();
+
+            Keys = (TKey*)keyArray.GetUnsafeReadOnlyPtr();
+            Values = (byte*)valueArray.GetUnsafeReadOnlyPtr();
 
             int length = keyArray.Length;
             int bucketLength = length * 2;
@@ -83,12 +87,12 @@ namespace NZCore
             //Debug.Log($"Set next/buckets cap to {length}/{bucketLength}");
             next->Resize(length, NativeArrayOptions.UninitializedMemory);
             buckets->Resize(bucketLength, NativeArrayOptions.UninitializedMemory);
-            
+
             UnsafeUtility.MemSet(next->Ptr, 0xFF, length * 8); // sets everything to max, Unity uses the same method in their NativeHashMap clear
             UnsafeUtility.MemSet(buckets->Ptr, 0xFF, bucketLength * 8);
-            
+
             allocatedIndexLength = length;
-            
+
             //Debug.Log($"SetArrays with allocatedIndexLength {allocatedIndexLength}");
         }
 
@@ -97,10 +101,10 @@ namespace NZCore
             // set all to -1
             UnsafeUtility.MemSet(next->Ptr, 0xff, (keyCapacity) * 8);
             UnsafeUtility.MemSet(buckets->Ptr, 0xff, (bucketCapacityMask + 1) * 8);
-            
+
             next->m_length = 0;
             buckets->m_length = 0;
-            
+
             allocatedIndexLength = 0;
         }
 
@@ -126,10 +130,10 @@ namespace NZCore
             }
         }
 
-        public bool TryGetFirstRefValue(TKey key, out byte* item, out KeyDynamicValueArrayHashMapIterator<TKey> it)            
+        public bool TryGetFirstRefValue(TKey key, out byte* item, out KeyDynamicValueArrayHashMapIterator<TKey> it)
         {
             it.Key = key;
-            
+
             if (allocatedIndexLength <= 0)
             {
                 it.EntryIndex = it.NextEntryIndex = DynamicValueIndexer.Null;
@@ -143,7 +147,7 @@ namespace NZCore
             return TryGetNextRefValue(out item, ref it);
         }
 
-        public bool TryGetNextRefValue(out byte* item, ref KeyDynamicValueArrayHashMapIterator<TKey> it)           
+        public bool TryGetNextRefValue(out byte* item, ref KeyDynamicValueArrayHashMapIterator<TKey> it)
         {
             var entryIdx = it.NextEntryIndex;
             it.NextEntryIndex = DynamicValueIndexer.Null;
@@ -154,7 +158,7 @@ namespace NZCore
             {
                 return false;
             }
-            
+
             while (!Keys[entryIdx.Index].Equals(it.Key))
             {
                 entryIdx = (*next)[entryIdx.Index];
@@ -172,8 +176,8 @@ namespace NZCore
 
             return true;
         }
-        
-        public bool TryPeekFirstRefValue(TKey key)            
+
+        public bool TryPeekFirstRefValue(TKey key)
         {
             if (allocatedIndexLength <= 0)
                 return false;
@@ -183,7 +187,7 @@ namespace NZCore
             return TryPeekNextRefValue(key, (*buckets)[bucket]);
         }
 
-        public bool TryPeekNextRefValue(TKey key, DynamicValueIndexer entryIdx)           
+        public bool TryPeekNextRefValue(TKey key, DynamicValueIndexer entryIdx)
         {
             if (entryIdx.Index < 0 || entryIdx.Index >= keyCapacity)
                 return false;
@@ -191,14 +195,14 @@ namespace NZCore
             while (!Keys[entryIdx.Index].Equals(key))
             {
                 entryIdx = (*next)[entryIdx.Index];
-                
+
                 if (entryIdx.Index < 0 || entryIdx.Index >= keyCapacity)
                     return false;
             }
 
             return true;
         }
-        
+
         public static void Destroy(UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>* hashMap)
         {
             var allocator = hashMap->m_Allocator;
@@ -212,15 +216,15 @@ namespace NZCore
             UnsafeList<DynamicValueIndexer>.Destroy(buckets, ref m_Allocator);
         }
     }
-    
-    public unsafe struct KeyDynamicValueArrayHashMapEnumerator<TKey, TKeyInterpreter> 
+
+    public unsafe struct KeyDynamicValueArrayHashMapEnumerator<TKey, TKeyInterpreter>
         where TKey : unmanaged, IEquatable<TKey>
         where TKeyInterpreter : unmanaged, IKeyInterpreter<TKey>
     {
         public UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>* Map;
         public TKey Key;
         public bool IsFirst;
-        
+
         private KeyDynamicValueArrayHashMapIterator<TKey> iterator;
         private byte* value;
 
@@ -230,29 +234,28 @@ namespace NZCore
         public bool MoveNext()
         {
             //Avoids going beyond the end of the collection.
-            if (!IsFirst) 
+            if (!IsFirst)
                 return Map->TryGetNextRefValue(out value, ref iterator);
-            
+
             IsFirst = false;
             return Map->TryGetFirstRefValue(Key, out value, out iterator);
-
         }
     }
-        
+
     public struct KeyDynamicValueArrayHashMapIterator<TKey>
         where TKey : unmanaged
     {
         internal TKey Key;
         internal DynamicValueIndexer NextEntryIndex;
         internal DynamicValueIndexer EntryIndex;
-    
+
         /// <summary>
         /// Returns the entry index.
         /// </summary>
         /// <returns>The entry index.</returns>
         public DynamicValueIndexer GetEntryIndex() => EntryIndex;
     }
-    
+
     public struct DynamicValueIndexer
     {
         public int Index;

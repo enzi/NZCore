@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="LogicalComparisonHelper.cs" version="0.1">
+// Copyright © 2024 EnziSoft. All rights reserved.
+// </copyright>
+
 using System.Runtime.CompilerServices;
 
 namespace NZCore.Helper
@@ -24,7 +28,7 @@ namespace NZCore.Helper
                 case ConditionLogicValueComparison.LesserEqual:
                     return leftValue <= rightValue;
                 case ConditionLogicValueComparison.HasFlag:
-                    return ((int) leftValue & (int) rightValue) == (int) rightValue;
+                    return ((int)leftValue & (int)rightValue) == (int)rightValue;
             }
 
             return false;
