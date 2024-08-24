@@ -24,6 +24,14 @@ namespace NZCore
             data = new NativeList<byte>(capacity, allocator);
         }
 
+        public void AddCapacity(int capacity)
+        {
+            if (data.Length + capacity > data.Capacity)
+            {
+                data.Capacity = data.Length + capacity;
+            }
+        }
+
         public int Allocate(int byteAmount)
         {
             var tmpIndex = data.Length;
@@ -64,10 +72,40 @@ namespace NZCore
             data.AddRange(value.GetUnsafeReadOnlyPtr(), value.Length * UnsafeUtility.SizeOf<T>());
         }
 
-        public void AddRange<T>(T* value, int elementCount)
+        public void AddRange<T>(T* valuePtr, int elementCount)
             where T : unmanaged
         {
-            data.AddRange(value, elementCount * UnsafeUtility.SizeOf<T>());
+            data.AddRange(valuePtr, elementCount * UnsafeUtility.SizeOf<T>());
+        }
+
+        // no resize methods
+        public void AddNoResize<T>(T value)
+            where T : unmanaged
+        {
+            data.AddRangeNoResize(&value, UnsafeUtility.SizeOf<T>());
+        }
+        
+        public void AddNoResize(byte* ptrToData, int byteSize)
+        {
+            AddRangeNoResize(ptrToData, byteSize);
+        }
+        
+        public void AddRangeNoResize<T>(T* valuePtr, int length)
+            where T : unmanaged
+        {
+            data.AddRangeNoResize(valuePtr, length * UnsafeUtility.SizeOf<T>());
+        }
+
+        public void AddRangeNoResize<T>(NativeArray<T> value)
+            where T : unmanaged
+        {
+            data.AddRangeNoResize(value.GetUnsafeReadOnlyPtr(), value.Length * UnsafeUtility.SizeOf<T>());
+        }
+        
+        public void AddRangeNoResize<T>(NativeArray<T> value, int length)
+            where T : unmanaged
+        {
+            data.AddRangeNoResize(value.GetUnsafeReadOnlyPtr(), length * UnsafeUtility.SizeOf<T>());
         }
 
         public ref T GetRef<T>(int index)
