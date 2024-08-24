@@ -114,5 +114,12 @@ namespace NZCore.Editor
 
             AssetDatabase.SaveAssets();
         }
+
+        public static void MarkAndSave(Object asset)
+        {
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssetIfDirty(asset);
+            AssetDatabase.Refresh();
+        }
     }
 }

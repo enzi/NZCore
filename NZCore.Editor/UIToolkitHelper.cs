@@ -2,7 +2,10 @@
 // Copyright © 2024 EnziSoft. All rights reserved.
 // </copyright>
 
+using System;
 using Unity.Entities.UI;
+using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -63,6 +66,30 @@ namespace NZCore.Editor
             };
 
             root.Add(lbl);
+        }
+        
+        public static void RecreateUI(this SerializedProperty property, VisualElement root, Action<VisualElement, SerializedProperty> createMethod)
+        {
+            root.ClearUI();
+
+            createMethod(root, property);
+
+            root.Bind(property.serializedObject);
+        }
+        
+        public static void RecreateUI(this SerializedProperty property, VisualElement root, Action createMethod)
+        {
+            root.ClearUI();
+
+            createMethod();
+
+            root.Bind(property.serializedObject);
+        }
+
+        public static void ClearUI(this VisualElement root)
+        {
+            root.Clear();
+            root.ClearBindings();
         }
     }
 }

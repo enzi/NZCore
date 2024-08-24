@@ -63,7 +63,7 @@ namespace NZCore
 
         public static bool CheckForJsonChanges(object assets, string structName, string packagePath)
         {
-            var json = JsonConvert.SerializeObject(assets);
+            var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
             var csVersion = $"/*{json}*/";
             var path = $"Packages/{packagePath}";
             var jsonPath = $"{path}/{structName}.settings.cs";
@@ -72,12 +72,12 @@ namespace NZCore
             return FileUtility.CheckForChanges(resolvedJsonPath, csVersion);
         }
 
-        public static void WriteJson(object assets, string structName, string packagePath, params string[] cscPaths)
+        public static void WriteJson(object assets, string fileName, string packagePath, params string[] cscPaths)
         {
-            var json = JsonConvert.SerializeObject(assets);
+            var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
             var csVersion = $"/*{json}*/";
             var path = $"Packages/{packagePath}";
-            var jsonPath = $"{path}/{structName}.settings.cs";
+            var jsonPath = $"{path}/{fileName}.settings.cs";
             var resolvedJsonPath = Path.GetFullPath(jsonPath);
 
             FileUtility.WriteChanges(resolvedJsonPath, csVersion);

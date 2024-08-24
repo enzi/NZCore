@@ -24,7 +24,12 @@
             "name": "com.unity.physics",
             "expression": "0",
             "define": "DOTS_PHYSICS"
-        }        
+        },
+        {
+            "name": "com.nzspellcasting",
+            "expression": "0",
+            "define": "NZSPELLCASTING"
+        }
     ],
     "noEngineReferences": false
 }

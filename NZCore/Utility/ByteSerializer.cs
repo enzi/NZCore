@@ -83,5 +83,12 @@ namespace NZCore
             ref var tmp = ref GetRef<T>(index);
             tmp = payload;
         }
+        
+        public T* GetPtr<T>(int index)
+            where T : unmanaged
+        {
+            var ptr = data.GetUnsafePtr();
+            return (T*) (ptr + index);
+        }
     }
 }

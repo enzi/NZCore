@@ -10,6 +10,7 @@ using Unity;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace NZCore.Editor
 {
@@ -22,6 +23,22 @@ namespace NZCore.Editor
             var root = new VisualElement();
             serializedObject.FillDefaultInspector(root, true);
 
+            var element = new ChangeProcessorEditorElement(target);
+            return element.CreateInspectorGUI(root);
+        }
+    }
+
+    public class ChangeProcessorEditorElement
+    {
+        public Object target;
+
+        public ChangeProcessorEditorElement(Object target)
+        {
+            this.target = target;
+        }
+        
+        public VisualElement CreateInspectorGUI(VisualElement root)
+        {
             var hasChanges = ((ChangeProcessorAsset)target).HasChanges(new List<ChangeProcessorAsset>()
             {
                 (ChangeProcessorAsset)target
@@ -42,7 +59,7 @@ namespace NZCore.Editor
 
             return root;
         }
-
+        
         private void Click_CodeGen()
         {
             RunDidChangeOnAssetType((ChangeProcessorAsset)target);

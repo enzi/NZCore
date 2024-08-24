@@ -2,7 +2,9 @@
 // Copyright © 2024 EnziSoft. All rights reserved.
 // </copyright>
 
+#if NZSPELLCASTING
 using NZSpellCasting;
+#endif
 using Unity.Collections;
 using Unity.Entities;
 
@@ -14,9 +16,13 @@ namespace NZCore
         public int DeferredEntityIndex;
         public int DeferredEntityVersion;
     }
-
+    
+#if NZSPELLCASTING
     [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
     [UpdateAfter(typeof(BeginEffectsSystemGroupCommandBufferSystem))]
+#else
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+#endif
     public partial struct EntityRemapSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -26,8 +32,11 @@ namespace NZCore
             state.EntityManager.AddBuffer<EntityRemapBuffer>(entity);
         }
     }
-
+#if NZSPELLCASTING
     [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
+#else
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+#endif
     public partial struct EntityRemapClearSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
