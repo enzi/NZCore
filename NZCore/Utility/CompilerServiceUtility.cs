@@ -2,25 +2,51 @@
 // Copyright © 2024 EnziSoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using NZCore.AssetManagement;
 using NZCore.Utility;
+using UnityEditor;
+using UnityEngine;
 
 namespace NZCore
 {
     public static class CompilerServiceUtility
     {
-        public static bool AddAdditionalFiles(string cscPath, params string[] additionalFiles)
+        public static void AddAdditionalFiles(string cscPath, params string[] additionalFiles)
         {
             List<string> lines = new List<string>();
-
+            var randomSignature = $"#{Guid.NewGuid()}";
+            
             if (File.Exists(cscPath))
             {
                 var cscContent = File.ReadAllLines(cscPath);
                 lines.AddRange(cscContent);
-                bool addedLines = false;
+
+                // find #generation date (for triggering sourcegen in unity)
+                int genLineIndex = -1;
+                for (var i = 0; i < lines.Count; i++)
+                {
+                    var line = lines[i];
+                    if (!line.StartsWith("#"))
+                    {
+                        continue;
+                    }
+
+                    genLineIndex = i;
+                    break;
+                }
+                
+                if (genLineIndex == -1)
+                {
+                    lines.Insert(0, randomSignature);
+                }
+                else
+                {
+                    lines[genLineIndex] = randomSignature;
+                }
 
                 foreach (var additionalFile in additionalFiles)
                 {
@@ -30,7 +56,7 @@ namespace NZCore
                     {
                         //if (line.Contains($"{data.StructName}.default.json"))
 
-                        if (line.Contains($"/{filename}")) // add / so Contains isn't confused with something like DynamicStat.cs and Stat.cs
+                        if (line.Contains($"/{filename}.")) // add / so Contains isn't confused with something like DynamicStat.cs and Stat.cs
                         {
                             found = true;
                         }
@@ -38,27 +64,20 @@ namespace NZCore
 
                     if (!found)
                     {
-                        addedLines = true;
                         lines.Add($"/additionalfile:{additionalFile}");
                     }
                 }
-
-                if (addedLines)
-                {
-                    File.WriteAllLines(cscPath, lines);
-                    return true;
-                }
-
-                return false;
             }
-
-            foreach (var additionalFile in additionalFiles)
+            else
             {
-                lines.Add($"/additionalfile:{additionalFile}");
+                lines.Add(randomSignature);
+                foreach (var additionalFile in additionalFiles)
+                {
+                    lines.Add($"/additionalfile:{additionalFile}");
+                }    
             }
 
             File.WriteAllLines(cscPath, lines);
-            return true;
         }
 
         public static bool CheckForJsonChanges(object assets, string structName, string packagePath)
@@ -74,10 +93,12 @@ namespace NZCore
 
         public static void WriteJson(object assets, string fileName, string packagePath, params string[] cscPaths)
         {
+            Debug.Log($"WriteJson {fileName}");
             var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
             var csVersion = $"/*{json}*/";
             var path = $"Packages/{packagePath}";
             var jsonPath = $"{path}/{fileName}.settings.cs";
+            
             var resolvedJsonPath = Path.GetFullPath(jsonPath);
 
             FileUtility.WriteChanges(resolvedJsonPath, csVersion);
@@ -86,10 +107,7 @@ namespace NZCore
             {
                 var fullCscPath = Path.GetFullPath($"Packages/{cscPath}/csc.rsp");
 
-                if (AddAdditionalFiles(fullCscPath, resolvedJsonPath))
-                {
-                    // trigger a compile ?
-                }
+                AddAdditionalFiles(fullCscPath, resolvedJsonPath);
             }
         }
     }
