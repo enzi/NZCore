@@ -3,6 +3,8 @@
 // </copyright>
 
 #if UNITY_6000
+using System;
+using System.Collections.Generic;
 using NZCore.Hybrid;
 using Unity.Entities;
 using UnityEngine;
@@ -19,6 +21,8 @@ namespace NZCore.UIToolkit
         private AddressablesAndHandles<VisualTreeAsset> visualTreeAssets;
         private AddressablesAndHandles<GameObject> worldInterfaceAssets;
         private AddressablesAndHandles<SpriteAtlas> spriteAtlas;
+        
+        public List<CustomUIAsset> CustomAssets = new();
 
         public async void Start()
         {
@@ -40,10 +44,15 @@ namespace NZCore.UIToolkit
                 SpriteAtlasAssets = spriteAtlas.Assets,
                 WorldInterfaceAssets = worldInterfaceAssets.Assets
             };
+            
+            foreach (var customAsset in CustomAssets)
+            {
+                uiAssets.VisualTreeAssets.Add(customAsset.Key, customAsset.Asset);
+            }
 
             var manager = GetComponent<UIToolkitManager>();
             manager.Assets = uiAssets;
-
+            
             var em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
             var entity = em.CreateEntity();
@@ -59,6 +68,13 @@ namespace NZCore.UIToolkit
             spriteAtlas.UnloadAll();
             worldInterfaceAssets.UnloadAll();
         }
+    }
+    
+    [Serializable]
+    public class CustomUIAsset
+    {
+        public string Key;
+        public VisualTreeAsset Asset;
     }
 }
 #endif

@@ -11,20 +11,25 @@ namespace NZCore
 {
     public struct SubSceneUtility
     {
-        [ReadOnly] private ComponentLookup<SceneReference> sceneReferences;
-
-        [ReadOnly] private BufferLookup<ResolvedSectionEntity> resolvedSectionEntitys;
-
-        [ReadOnly] private ComponentLookup<SceneSectionStreamingSystem.StreamingState> streamingStates;
-
-        [ReadOnly] private ComponentLookup<RequestSceneLoaded> requestSceneLoadeds;
+        [ReadOnly] private ComponentLookup<SceneReference> sceneReference_ReadHandle;
+        [ReadOnly] private BufferLookup<ResolvedSectionEntity> resolvedSectionEntity_ReadHandle;
+        [ReadOnly] private ComponentLookup<SceneSectionStreamingSystem.StreamingState> streamingState_ReadHandle;
+        [ReadOnly] private ComponentLookup<RequestSceneLoaded> requestSceneLoaded_ReadHandle;
 
         public SubSceneUtility(ref SystemState state)
         {
-            this.sceneReferences = state.GetComponentLookup<SceneReference>(true);
-            this.resolvedSectionEntitys = state.GetBufferLookup<ResolvedSectionEntity>(true);
-            this.streamingStates = state.GetComponentLookup<SceneSectionStreamingSystem.StreamingState>(true);
-            this.requestSceneLoadeds = state.GetComponentLookup<RequestSceneLoaded>(true);
+            sceneReference_ReadHandle = state.GetComponentLookup<SceneReference>(true);
+            resolvedSectionEntity_ReadHandle = state.GetBufferLookup<ResolvedSectionEntity>(true);
+            streamingState_ReadHandle = state.GetComponentLookup<SceneSectionStreamingSystem.StreamingState>(true);
+            requestSceneLoaded_ReadHandle = state.GetComponentLookup<RequestSceneLoaded>(true);
+        }
+        
+        public void Update(ref SystemState state)
+        {
+            sceneReference_ReadHandle.Update(ref state);
+            resolvedSectionEntity_ReadHandle.Update(ref state);
+            streamingState_ReadHandle.Update(ref state);
+            requestSceneLoaded_ReadHandle.Update(ref state);
         }
 
         public static void OpenScene(ref SystemState state, Entity entity)
@@ -65,9 +70,6 @@ namespace NZCore
             }
         }
 
-        /// <summary> Check if a subscene is loaded. </summary>
-        /// <param name="entity"> The entity with the loading component data.  This is the entity returned by LoadSceneAsync. </param>
-        /// <returns> True if the scene is loaded. </returns>
         public static bool IsSceneLoaded(ref SystemState state, Entity entity)
         {
             if (!state.EntityManager.HasComponent<SceneReference>(entity))
@@ -96,10 +98,9 @@ namespace NZCore
 
             return true;
         }
-
-        public static bool IsSectionLoaded(ref SystemState state, Entity sectionEntity)
+        
+        private static bool IsSectionLoaded(ref SystemState state, Entity sectionEntity)
         {
-            // return true;
             if (!state.EntityManager.HasComponent<SceneSectionStreamingSystem.StreamingState>(sectionEntity))
             {
                 return false;
@@ -109,30 +110,19 @@ namespace NZCore
             return streamingState.Status == SceneSectionStreamingSystem.StreamingStatus.Loaded;
         }
 
-        public void Update(ref SystemState state)
-        {
-            this.sceneReferences.Update(ref state);
-            this.resolvedSectionEntitys.Update(ref state);
-            this.streamingStates.Update(ref state);
-            this.requestSceneLoadeds.Update(ref state);
-        }
-
-        /// <summary> Check if a subscene is loaded. </summary>
-        /// <param name="entity"> The entity with the loading component data.  This is the entity returned by LoadSceneAsync. </param>
-        /// <returns> True if the scene is loaded. </returns>
         public bool IsSceneLoaded(Entity entity)
         {
-            if (!this.sceneReferences.HasComponent(entity))
+            if (!sceneReference_ReadHandle.HasComponent(entity))
             {
                 return false;
             }
 
-            if (!this.resolvedSectionEntitys.HasBuffer(entity))
+            if (!resolvedSectionEntity_ReadHandle.HasBuffer(entity))
             {
                 return false;
             }
 
-            var resolvedSectionEntities = this.resolvedSectionEntitys[entity];
+            var resolvedSectionEntities = resolvedSectionEntity_ReadHandle[entity];
 
             if (resolvedSectionEntities.Length == 0)
             {
@@ -141,7 +131,7 @@ namespace NZCore
 
             foreach (var s in resolvedSectionEntities)
             {
-                if (!this.IsSectionLoaded(s.SectionEntity))
+                if (!IsSectionLoaded(s.SectionEntity))
                 {
                     return false;
                 }
@@ -150,49 +140,19 @@ namespace NZCore
             return true;
         }
 
-        /// <summary>
-        /// Check if a section of a subscene is loaded.
-        /// </summary>
-        /// <param name="sectionEntity">
-        /// The section entity representing the scene section. The section entities can be found in the ResolvedSectionEntity Buffer on the
-        /// scene entity.
-        /// </param>
-        /// <returns> True if the scene section is loaded. </returns>
-        public bool IsSectionLoaded(Entity sectionEntity)
+        private bool IsSectionLoaded(Entity sectionEntity)
         {
-            // return true;
-            if (!this.streamingStates.HasComponent(sectionEntity))
+            if (!streamingState_ReadHandle.HasComponent(sectionEntity))
             {
                 return false;
             }
 
-            return this.streamingStates[sectionEntity].Status == SceneSectionStreamingSystem.StreamingStatus.Loaded;
+            return streamingState_ReadHandle[sectionEntity].Status == SceneSectionStreamingSystem.StreamingStatus.Loaded;
         }
-
-        public void CloseScene(EntityCommandBuffer ecb, Entity entity)
-        {
-            if (!this.requestSceneLoadeds.HasComponent(entity))
-            {
-                Debug.LogWarning("Trying to close SubScene that isn't open.");
-                return;
-            }
-
-            ecb.RemoveComponent<RequestSceneLoaded>(entity);
-
-            var resolvedSectionEntities = this.resolvedSectionEntitys[entity];
-
-            foreach (var section in resolvedSectionEntities)
-            {
-                if (this.requestSceneLoadeds.HasComponent(section.SectionEntity))
-                {
-                    ecb.RemoveComponent<RequestSceneLoaded>(section.SectionEntity);
-                }
-            }
-        }
-
+        
         public void OpenScene(EntityCommandBuffer ecb, Entity entity)
         {
-            if (this.requestSceneLoadeds.HasComponent(entity))
+            if (requestSceneLoaded_ReadHandle.HasComponent(entity))
             {
                 Debug.LogWarning("Trying to open SubScene that is already open.");
                 return;
@@ -200,10 +160,31 @@ namespace NZCore
 
             ecb.AddComponent<RequestSceneLoaded>(entity);
 
-            var resolvedSectionEntities = this.resolvedSectionEntitys[entity];
+            var resolvedSectionEntities = resolvedSectionEntity_ReadHandle[entity];
             foreach (var section in resolvedSectionEntities)
             {
                 ecb.AddComponent<RequestSceneLoaded>(section.SectionEntity);
+            }
+        }
+
+        public void CloseScene(EntityCommandBuffer ecb, Entity entity)
+        {
+            if (!requestSceneLoaded_ReadHandle.HasComponent(entity))
+            {
+                Debug.LogWarning("Trying to close SubScene that isn't open.");
+                return;
+            }
+
+            ecb.RemoveComponent<RequestSceneLoaded>(entity);
+
+            var resolvedSectionEntities = resolvedSectionEntity_ReadHandle[entity];
+
+            foreach (var section in resolvedSectionEntities)
+            {
+                if (requestSceneLoaded_ReadHandle.HasComponent(section.SectionEntity))
+                {
+                    ecb.RemoveComponent<RequestSceneLoaded>(section.SectionEntity);
+                }
             }
         }
     }

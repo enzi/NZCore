@@ -15,7 +15,7 @@ namespace NZCore.UIToolkit
     {
         public static UIToolkitManager Instance;
 
-        public UIAssetsSingleton Assets;
+        public UIAssetsSingleton Assets = new();
         public UIDocument UIDocument { get; private set; }
         public VisualElement Root { get; private set; }
         public VisualElement DragContainer { get; private set; }
@@ -37,8 +37,12 @@ namespace NZCore.UIToolkit
             UIDocument = GetComponent<UIDocument>();
             Root = UIDocument.rootVisualElement.Q<VisualElement>("root");
             DragContainer = UIDocument.rootVisualElement.Q<VisualElement>("dragContainer");
-            DragImage = DragContainer.Q<VisualElement>("dragImage");
             MainButtonsContainer = Root.Q<VisualElement>("mainButtonsContainer");
+            
+            if (DragContainer != null)
+            {
+                DragImage = DragContainer.Q<VisualElement>("dragImage");
+            }
         }
 
         public VisualElement GetRoot(string containerName = null)
