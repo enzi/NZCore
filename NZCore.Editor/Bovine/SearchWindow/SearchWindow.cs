@@ -2,8 +2,6 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
-#nullable disable
-
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -25,14 +23,14 @@ namespace BovineLabs.Core.Editor.SearchWindow
 
         public List<SearchView.Item> Items
         {
-            get => this.searchView.Items;
-            set => this.searchView.Items = value;
+            get => searchView.Items;
+            set => searchView.Items = value;
         }
 
         public string Title
         {
-            get => this.searchView.Title;
-            set => this.searchView.Title = value;
+            get => searchView.Title;
+            set => searchView.Title = value;
         }
 
         public static SearchWindow Create()
@@ -43,40 +41,40 @@ namespace BovineLabs.Core.Editor.SearchWindow
 
         private void OnEnable()
         {
-            this.searchView = new SearchView();
-            this.rootVisualElement.Add(this.searchView);
-            this.rootVisualElement.style.color = Color.white;
-            this.searchView.OnSelection += e =>
+            searchView = new SearchView();
+            rootVisualElement.Add(searchView);
+            rootVisualElement.style.color = Color.white;
+            searchView.OnSelection += e =>
             {
-                this.OnSelection?.Invoke(e);
-                this.Close(false);
+                OnSelection?.Invoke(e);
+                Close(false);
             };
         }
 
         private void OnFocus()
         {
-            if (this.searchView == null)
+            if (searchView == null)
             {
                 return;
             }
 
-            var searchField = this.searchView.Q<SearchView>();
+            var searchField = searchView.Q<SearchView>();
             var input = searchField.Q("unity-text-input");
             input.Focus();
         }
 
         private void OnLostFocus()
         {
-            this.Close(true);
+            Close(true);
         }
 
         private void Close(bool fireEvent)
         {
-            this.Close();
+            Close();
 
             if (fireEvent)
             {
-                this.OnClose?.Invoke();
+                OnClose?.Invoke();
             }
         }
     }

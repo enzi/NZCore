@@ -31,6 +31,7 @@ namespace NZCore.UI.Elements
         
         private readonly Toggle m_Toggle = new Toggle();
         private bool m_Value;
+        private bool useMargin;
         
         [CreateProperty]
         public string text
@@ -83,15 +84,22 @@ namespace NZCore.UI.Elements
         {
             Init();
         }
-
-        public NZFoldout(VisualElement container, bool useMargin)
+        
+        public NZFoldout(bool useMargin, bool createContainer)
         {
-            Init(container, useMargin);
+            Init(null, useMargin, createContainer);
         }
 
-        private void Init(VisualElement container = null, bool useMargin = true)
+        public NZFoldout(VisualElement container, bool useMargin, bool createContainer)
         {
-            if (container == null)
+            Init(container, useMargin, createContainer);
+        }
+
+        private void Init(VisualElement container = null, bool useMargin = true, bool createContainer = false)
+        {
+            this.useMargin = useMargin;
+            
+            if (container == null && createContainer)
             {
                 contentContainer = new VisualElement();
             }
@@ -114,14 +122,36 @@ namespace NZCore.UI.Elements
             //this.m_Toggle.visualInput.Q((string) null, Toggle.checkmarkUssClassName).AddToClassList(checkmarkUssClassName);
             //this.m_Toggle.AddManipulator((IManipulator) (this.m_NavigationManipulator = new KeyboardNavigationManipulator(new Action<KeyboardNavigationOperation, EventBase>(this.Apply))));
             hierarchy.Add(m_Toggle);
+
+            if (contentContainer != null)
+            {
+                if (useMargin)
+                {
+                    contentContainer.AddToClassList(contentUssClassName);
+                }
+
+                hierarchy.Add(contentContainer);
+                SetValueWithoutNotify(false);
+            }
+
+            RegisterCallback(new EventCallback<AttachToPanelEvent>(OnAttachToPanel));
+        }
+
+        public void SetContainer(VisualElement newContainer)
+        {
+            if (contentContainer != null)
+            {
+                hierarchy.Remove(contentContainer);
+            }
+
+            contentContainer = newContainer;
+
             if (useMargin)
             {
                 contentContainer.AddToClassList(contentUssClassName);
             }
-
-            hierarchy.Add(contentContainer);
-            RegisterCallback(new EventCallback<AttachToPanelEvent>(OnAttachToPanel));
-            SetValueWithoutNotify(true);
+            
+            SetValueWithoutNotify(m_Value);
         }
         
         private void OnAttachToPanel(AttachToPanelEvent evt)
@@ -159,11 +189,8 @@ namespace NZCore.UI.Elements
         {
             m_Value = newValue;
             m_Toggle.SetValueWithoutNotify(m_Value);
+           
             contentContainer.style.display = newValue ? DisplayStyle.Flex : DisplayStyle.None;
-            // if (this.m_Value)
-            //     this.pseudoStates |= PseudoStates.Checked;
-            // else
-            //     this.pseudoStates &= ~PseudoStates.Checked;
         }
     }
 }

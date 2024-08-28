@@ -2,27 +2,20 @@
 // Copyright © 2024 EnziSoft. All rights reserved.
 // </copyright>
 
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace NZCore.UI.Elements
 {
-    public class NZColumnSettings
-    {
-        public string HeaderName;
-        public float Percent;
-        public bool DepthDependent;
-        public float DepthPadding;
-    }
-    
     public class NZTable : VisualElement
     {
-        private readonly List<NZRow> rows = new();
-
         public bool OddState;
 
-        private NZColumnSettings[] headerSettings;
+        private NZCellSettings[] headerSettings;
+
+        public Color HeaderColor = new Color(0.29f, 0.29f, 0.29f);
+        public Color RowColor2 = new Color(0.18f, 0.18f, 0.18f);
+        public Color RowColor1 = new Color(0.12f, 0.12f, 0.12f);
 
         public NZTable(bool oddState = false)
         {
@@ -30,15 +23,14 @@ namespace NZCore.UI.Elements
             OddState = oddState;
         }
         
-        public void SetColumnSettings(params NZColumnSettings[] settings)
+        public void SetColumnSettings(params NZCellSettings[] settings)
         {
             headerSettings = settings;
         }
 
-        public void AddHeaderFromSettings()
+        public VisualElement AddHeader()
         {
-            NZRow row = new NZRow(OddState);
-            OddState = !OddState;
+            NZRow row = AddRow(HeaderColor);
             
             for (var i = 0; i < headerSettings.Length; i++)
             {
@@ -47,15 +39,13 @@ namespace NZCore.UI.Elements
                 cell.Add(new Label() { text = settings.HeaderName});
                 row.Add(cell);
             }
-            
-            rows.Add(row);
-            Add(row);
+
+            return row;
         }
 
-        public void AddRow(string[] values, int depth = 0)
+        public VisualElement AddRow(string[] values, int depth = 0)
         {
-            NZRow row = new NZRow(OddState);
-            OddState = !OddState;
+            NZRow row = AddRow(GetOddStateColor());
             
             for (int i = 0; i < values.Length; i++)
             {
@@ -63,15 +53,13 @@ namespace NZCore.UI.Elements
                 cell.Add(new Label() { text = values[i]});
                 row.Add(cell);
             }
-            
-            rows.Add(row);
-            Add(row);
+
+            return row;
         }
 
-        public void AddRow(VisualElement[] values, int depth = 0)
+        public VisualElement AddRow(VisualElement[] values, int depth = 0)
         {
-            NZRow row = new NZRow(OddState);
-            OddState = !OddState;
+            NZRow row = AddRow(GetOddStateColor());
             
             for (int i = 0; i < values.Length; i++)
             {
@@ -79,34 +67,20 @@ namespace NZCore.UI.Elements
                 if (element == null)
                 {
                     Debug.LogError($"AddRow - Element at position {i} is null!");
-                    return;
+                    continue;
                 }
 
                 var cell = new NZRowCell(headerSettings[i], depth);
                 cell.Add(element);
                 row.Add(cell);
             }
-            
-            rows.Add(row);
-            Add(row);
+
+            return row;
         }
         
-        public void AddSpanRow(params VisualElement[] values)
+        public VisualElement AddSpanRow(params VisualElement[] values)
         {
-            NZRow row = new NZRow(OddState);
-            OddState = !OddState;
-            
-            // row.style.borderBottomColor = new StyleColor(Color.black);
-            // row.style.borderTopColor = new StyleColor(Color.black);
-            // row.style.borderLeftColor = new StyleColor(Color.black);
-            // row.style.borderRightColor = new StyleColor(Color.black);
-            //
-            // row.style.borderBottomWidth = new StyleFloat(3);
-            // row.style.borderTopWidth = new StyleFloat(3);
-            // row.style.borderLeftWidth = new StyleFloat(3);
-            // row.style.borderRightWidth = new StyleFloat(3);
-            
-            
+            NZRow row = AddRow(GetOddStateColor());
             
             for (int i = 0; i < values.Length; i++)
             {
@@ -114,40 +88,47 @@ namespace NZCore.UI.Elements
                 if (element == null)
                 {
                     Debug.LogError($"AddRow - Element at position {i} is null!");
-                    return;
+                    continue;
                 }
 
-                var cell = new NZRowCell(new NZColumnSettings() { Percent = 100 }, 0);
+                var cell = new NZRowCell(new NZCellSettings() { Percent = 100 }, 0);
                 cell.Add(element);
                 row.Add(cell);
             }
+
+            return row;
+        }
+
+        public NZRow AddRow(Color backgroundColor)
+        {
+            NZRow row = new NZRow(backgroundColor);
+            OddState = !OddState;
             
-            rows.Add(row);
             Add(row);
+            return row;
+        }
+
+        private Color GetOddStateColor()
+        {
+            return OddState ? RowColor2 : RowColor1;
         }
     }
     
-    internal class NZRow : VisualElement
+    public class NZRow : VisualElement
     {
-        public List<NZRowCell> RowCells;
-
-        public NZRow(bool odd)
+        public NZRow(Color backgroundColor)
         {
             style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
             style.justifyContent = new StyleEnum<Justify>(Justify.FlexStart);
+            style.backgroundColor = backgroundColor;
 
             style.minHeight = 25;
-
-            var c1 = new Color(0.18f, 0.18f, 0.18f);
-            var c2 = new Color(0.12f, 0.12f, 0.12f);
-            
-            style.backgroundColor = odd ? c2 : c1;
         }
     }
 
-    internal class NZRowCell : VisualElement
+    public class NZRowCell : VisualElement
     {
-        public NZRowCell(NZColumnSettings settings, int depth)
+        public NZRowCell(NZCellSettings settings, int depth)
         {
             style.width = settings.Percent < 0 ? new StyleLength(StyleKeyword.Auto) : Length.Percent(settings.Percent);
             style.justifyContent = new StyleEnum<Justify>(Justify.Center);
@@ -156,6 +137,20 @@ namespace NZCore.UI.Elements
             {
                 style.paddingLeft = depth * settings.DepthPadding;
             }
+
+            if (settings.AlignItems != Align.Auto)
+            {
+                style.alignItems = settings.AlignItems;
+            }
         }
+    }
+    
+    public class NZCellSettings
+    {
+        public string HeaderName;
+        public float Percent;
+        public float DepthPadding;
+        public bool DepthDependent;
+        public Align AlignItems;
     }
 }
