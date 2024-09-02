@@ -39,19 +39,16 @@ namespace NZCore.Editor
         
         public VisualElement CreateInspectorGUI(VisualElement root)
         {
-            var hasChanges = ((ChangeProcessorAsset)target).HasChanges(new List<ChangeProcessorAsset>()
-            {
-                (ChangeProcessorAsset)target
-            });
+            var hasChanges = ((ChangeProcessorAsset)target).HasChanges(GetChangeProcessorAssets(target.GetType()));
 
             Button btn = new Button(Click_CodeGen)
             {
-                text = $"Update {target.GetType().Name} settings JSON {(hasChanges ? "!!" : "")}"
+                text = $"Update {target.GetType().Name} settings JSON {(hasChanges ? "(*)" : "")}"
             };
 
             Button btn2 = new Button(Click_CodeGenAll)
             {
-                text = $"Update all JSONs {(hasChanges ? "!!" : "")}"
+                text = $"Update every JSON setting {(hasChanges ? "(*)" : "")}"
             };
 
             root.Add(btn);
@@ -63,6 +60,37 @@ namespace NZCore.Editor
         private void Click_CodeGen()
         {
             RunDidChangeOnAssetType((ChangeProcessorAsset)target);
+        }
+
+        public List<string> GetAssetPaths<T>()
+        {
+            return GetAssetPaths(typeof(T).Name);
+        }
+
+        public List<string> GetAssetPaths(string targetTypeName)
+        {
+            return AssetDatabase.FindAssets($"t:{targetTypeName}")
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .ToList();
+        }
+
+        public List<ChangeProcessorAsset> GetChangeProcessorAssets(Type targetType)
+        {
+            var assetPaths = GetAssetPaths(targetType.Name);
+            
+            List<ChangeProcessorAsset> changeProcessorAssets = new List<ChangeProcessorAsset>();
+
+            foreach (string assetPath in assetPaths)
+            {
+                var asset = AssetDatabase.LoadAssetAtPath(assetPath, targetType);
+
+                if (asset == null || asset is not ChangeProcessorAsset)
+                    continue;
+
+                changeProcessorAssets.Add((ChangeProcessorAsset)asset);
+            }
+
+            return changeProcessorAssets;
         }
 
         public static void RunDidChangeOnAssetType(ChangeProcessorAsset target)

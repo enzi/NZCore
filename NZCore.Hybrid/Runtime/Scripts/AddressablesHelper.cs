@@ -2,6 +2,7 @@
 // Copyright © 2024 EnziSoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -64,36 +65,48 @@ namespace NZCore.Hybrid
 
         public static async Task<AddressablesAndHandles<T>> LoadAssetsFromLabel<T>(string labelName) where T : class
         {
+            var val = new AddressablesAndHandles<T>();
+            
             IList<string> keys = new[]
             {
                 labelName
             };
 
-            AsyncOperationHandle<IList<IResourceLocation>> locationsHandle = Addressables.LoadResourceLocationsAsync(keys, Addressables.MergeMode.Union, typeof(T));
-
-            await locationsHandle.Task;
-
-            var locations = locationsHandle.Result;
-
-            var loadOps = new List<AsyncOperationHandle>(locations.Count);
-
-            var val = new AddressablesAndHandles<T>();
-
-            foreach (IResourceLocation location in locations)
+            try
             {
-                var loadHandle = Addressables.LoadAssetAsync<T>(location);
-                loadHandle.Completed += (assetHandle) =>
+                AsyncOperationHandle<IList<IResourceLocation>> locationsHandle = Addressables.LoadResourceLocationsAsync(keys, Addressables.MergeMode.Union, typeof(T));
+                await locationsHandle.Task;
+
+                if (locationsHandle.OperationException != null)
                 {
-                    val.Assets.Add(location.PrimaryKey, assetHandle.Result);
-                    val.Handles.Add(location.PrimaryKey, assetHandle);
-                };
+                    return val;
+                }
 
-                loadOps.Add(loadHandle);
+                var locations = locationsHandle.Result;
+                
+                var loadOps = new List<AsyncOperationHandle>(locations.Count);
+
+                foreach (IResourceLocation location in locations)
+                {
+                    var loadHandle = Addressables.LoadAssetAsync<T>(location);
+                    loadHandle.Completed += (assetHandle) =>
+                    {
+                        val.Assets.Add(location.PrimaryKey, assetHandle.Result);
+                        val.Handles.Add(location.PrimaryKey, assetHandle);
+                    };
+
+                    loadOps.Add(loadHandle);
+                }
+
+                await Addressables.ResourceManager.CreateGenericGroupOperation(loadOps, true).Task;
+
+                return val;
             }
-
-            await Addressables.ResourceManager.CreateGenericGroupOperation(loadOps, true).Task;
-
-            return val;
+            catch
+            {
+                // no addressables are used so quietly return
+                return val;
+            }
         }
     }
 }

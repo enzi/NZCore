@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace NZCore.Editor
 {
-    public static class AttributeHelper
+    public static class AttributeUtility
     {
         public static T GetCustomAttributeRecursive<T>(this Type type, out Type baseType) where T : Attribute
         {

@@ -30,7 +30,7 @@ namespace NZCore.Editor
 
             ScriptableObjectDropdownAttribute attr = (ScriptableObjectDropdownAttribute)attribute;
 
-            List<ScriptableObject> data = AssetDatabaseHelper.GetSubAssets(baseType);
+            List<ScriptableObject> data = AssetDatabaseUtility.GetSubAssets(baseType);
 
             List<DropdownWrapper> choices = new List<DropdownWrapper>
             {

@@ -2,6 +2,7 @@
 // Copyright © 2024 EnziSoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -16,6 +17,8 @@ namespace NZCore.UI.Elements
         public Color HeaderColor = new Color(0.29f, 0.29f, 0.29f);
         public Color RowColor2 = new Color(0.18f, 0.18f, 0.18f);
         public Color RowColor1 = new Color(0.12f, 0.12f, 0.12f);
+
+        private List<NZRow> rows = new();
 
         public NZTable(bool oddState = false)
         {
@@ -46,6 +49,7 @@ namespace NZCore.UI.Elements
         public VisualElement AddRow(string[] values, int depth = 0)
         {
             NZRow row = AddRow(GetOddStateColor());
+            rows.Add(row);
             
             for (int i = 0; i < values.Length; i++)
             {
@@ -60,6 +64,7 @@ namespace NZCore.UI.Elements
         public VisualElement AddRow(VisualElement[] values, int depth = 0)
         {
             NZRow row = AddRow(GetOddStateColor());
+            rows.Add(row);
             
             for (int i = 0; i < values.Length; i++)
             {
@@ -81,6 +86,7 @@ namespace NZCore.UI.Elements
         public VisualElement AddSpanRow(params VisualElement[] values)
         {
             NZRow row = AddRow(GetOddStateColor());
+            rows.Add(row);
             
             for (int i = 0; i < values.Length; i++)
             {
@@ -111,6 +117,16 @@ namespace NZCore.UI.Elements
         private Color GetOddStateColor()
         {
             return OddState ? RowColor2 : RowColor1;
+        }
+
+        public void Clear()
+        {
+            foreach (var row in rows)
+            {
+                hierarchy.Remove(row);
+            }
+            
+            rows.Clear();
         }
     }
     

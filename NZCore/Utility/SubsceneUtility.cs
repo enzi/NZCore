@@ -9,14 +9,14 @@ using Unity.Scenes;
 
 namespace NZCore
 {
-    public struct SubSceneUtility
+    public struct SubsceneUtility
     {
         [ReadOnly] private ComponentLookup<SceneReference> sceneReference_ReadHandle;
         [ReadOnly] private BufferLookup<ResolvedSectionEntity> resolvedSectionEntity_ReadHandle;
         [ReadOnly] private ComponentLookup<SceneSectionStreamingSystem.StreamingState> streamingState_ReadHandle;
         [ReadOnly] private ComponentLookup<RequestSceneLoaded> requestSceneLoaded_ReadHandle;
 
-        public SubSceneUtility(ref SystemState state)
+        public SubsceneUtility(ref SystemState state)
         {
             sceneReference_ReadHandle = state.GetComponentLookup<SceneReference>(true);
             resolvedSectionEntity_ReadHandle = state.GetBufferLookup<ResolvedSectionEntity>(true);
@@ -105,9 +105,9 @@ namespace NZCore
             {
                 return false;
             }
-
-            var streamingState = state.EntityManager.GetComponentData<SceneSectionStreamingSystem.StreamingState>(sectionEntity);
-            return streamingState.Status == SceneSectionStreamingSystem.StreamingStatus.Loaded;
+            
+            return (SceneSectionStreamingSystem.StreamingStatus.Loaded ==
+                   state.EntityManager.GetComponentData<SceneSectionStreamingSystem.StreamingState>(sectionEntity).Status);
         }
 
         public bool IsSceneLoaded(Entity entity)

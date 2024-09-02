@@ -12,7 +12,7 @@ using UnityEngine.UIElements;
 
 namespace NZCore.Editor
 {
-    public static class SerializedPropertyHelper
+    public static class SerializedPropertyUtility
     {
         public static IEnumerable<SerializedProperty> IterateAllChildren(this SerializedObject root, bool siblingProperties = false)
         {

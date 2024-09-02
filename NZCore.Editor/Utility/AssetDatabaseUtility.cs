@@ -11,7 +11,7 @@ using Object = UnityEngine.Object;
 
 namespace NZCore.Editor
 {
-    public static class AssetDatabaseHelper
+    public static class AssetDatabaseUtility
     {
         public static List<ScriptableObject> GetSubAssets(string baseType)
         {

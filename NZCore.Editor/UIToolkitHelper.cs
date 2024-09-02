@@ -54,6 +54,17 @@ namespace NZCore.Editor
             ptr += sizeof(T);
             return ref data;
         }
+        
+        public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, ref byte* ptr, string propertyName)
+            where T : unmanaged
+        {
+            ref T data = ref *(T*)ptr;
+            root.AddBoldLabel(propertyName);
+            root.AddStructInspector(data);
+            root.Add(new Label()); // just used as a break
+            ptr += sizeof(T);
+            return ref data;
+        }
 
         public static void AddBoldLabel(this VisualElement root, string text)
         {
@@ -90,6 +101,23 @@ namespace NZCore.Editor
         {
             root.Clear();
             root.ClearBindings();
+        }
+
+        public static void AddSpacer(this VisualElement root, int height)
+        {
+            root.Add(GetSpacer(height));
+        }
+
+        public static VisualElement GetSpacer(int height)
+        {
+            return new VisualElement
+            {
+                name = "Spacer",
+                style =
+                {
+                    height = height
+                }
+            };
         }
     }
 }

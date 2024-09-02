@@ -16,6 +16,7 @@ namespace NZCore.UIToolkit
     [RequireComponent(typeof(UIToolkitManager))]
     public class LoadAddressableInterface : MonoBehaviour
     {
+        public bool LoadAddressables = true;
         public bool printLoadedAssets;
 
         private AddressablesAndHandles<VisualTreeAsset> visualTreeAssets;
@@ -26,9 +27,18 @@ namespace NZCore.UIToolkit
 
         public async void Start()
         {
-            visualTreeAssets = await AddressablesHelper.LoadAssetsFromLabel<VisualTreeAsset>("interface");
-            worldInterfaceAssets = await AddressablesHelper.LoadAssetsFromLabel<GameObject>("worldInterface");
-            spriteAtlas = await AddressablesHelper.LoadAssetsFromLabel<SpriteAtlas>("spriteAtlas");
+            if (LoadAddressables)
+            {
+                visualTreeAssets = await AddressablesHelper.LoadAssetsFromLabel<VisualTreeAsset>("interface");
+                worldInterfaceAssets = await AddressablesHelper.LoadAssetsFromLabel<GameObject>("worldInterface");
+                spriteAtlas = await AddressablesHelper.LoadAssetsFromLabel<SpriteAtlas>("spriteAtlas");
+            }
+            else
+            {
+                visualTreeAssets = new AddressablesAndHandles<VisualTreeAsset>();
+                worldInterfaceAssets = new AddressablesAndHandles<GameObject>();
+                spriteAtlas = new AddressablesAndHandles<SpriteAtlas>();
+            }
 
             if (printLoadedAssets)
             {

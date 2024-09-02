@@ -27,7 +27,7 @@ namespace NZCore
             nativeList.AsArray().AddArrayToBlob(ref builder, ref blobArray);
         }
 
-        public static unsafe void AddToByteList<TData>(this NativeList<byte> list, TData data)
+        public static void AddToByteList<TData>(this NativeList<byte> list, TData data)
             where TData : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -47,6 +47,19 @@ namespace NZCore
 
             var basePtr = (byte*)list.GetUnsafePtr();
             UnsafeUtility.MemCpy(basePtr + oldLength, ptrToData, byteSize);
+        }
+        
+        public static void AddRangeToByteList<TData>(this NativeList<byte> list, NativeArray<TData> array)
+            where TData : unmanaged
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            CheckWriteAccess(list);
+#endif
+
+            int byteSize = UnsafeUtility.SizeOf<TData>() * array.Length;
+            var ptrToData = (byte*) array.GetUnsafeReadOnlyPtr();
+
+            AddToByteList(list, ptrToData, byteSize);
         }
 
         public static void MemCpy(this NativeList<byte> list, byte* ptr, int size)

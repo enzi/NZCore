@@ -35,5 +35,28 @@ namespace NZCore
 
             SceneSystem.UnloadScene(entityManager.World.Unmanaged, sceneEntity, unloadParams);
         }
+        
+        public static bool TryGetSceneEntity(ref SystemState state, Hash128 sceneGUID, out Entity sceneEntity)
+        {
+            var query = new EntityQueryBuilder(Allocator.Temp)
+                .WithAll<SceneReference>()
+                .Build(ref state);
+            
+            var entities = query.ToEntityArray(Allocator.Temp);
+            
+            foreach (var entity in entities)
+            {
+                if (state.EntityManager.GetComponentData<SceneReference>(entity).SceneGUID != sceneGUID)
+                {
+                    continue;
+                }
+
+                sceneEntity = entity;
+                return true;
+            }
+         
+            sceneEntity = Entity.Null;
+            return false;
+        }
     }
 }
