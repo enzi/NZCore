@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="UnsafeComponentLookup.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -265,7 +265,6 @@ namespace NZCore
         /// <exception cref="ArgumentException">The <see cref="Entity"/> does not exist.</exception>
         /// <param name="entity">The entity whose component should be checked.</param>
         /// <returns>True if the specified component is enabled, or false if it is disabled.</returns>
-        /// <seealso cref="SetComponentEnabled"/>
         public bool IsComponentEnabled(Entity entity)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -283,7 +282,6 @@ namespace NZCore
         /// <exception cref="ArgumentException">The <see cref="Entity"/> does not exist.</exception>
         /// <param name="entity">The entity whose component should be enabled or disabled.</param>
         /// <param name="value">True if the specified component should be enabled, or false if it should be disabled.</param>
-        /// <seealso cref="IsComponentEnabled"/>
         public void SetComponentEnabled(Entity entity, bool value)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS

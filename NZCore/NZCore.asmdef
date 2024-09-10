@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "Unity.Mathematics",
+        "Unity.Mathematics.Extensions",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",

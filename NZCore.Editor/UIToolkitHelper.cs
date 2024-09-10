@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="UIToolkitHelper.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -55,14 +55,13 @@ namespace NZCore.Editor
             return ref data;
         }
         
-        public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, ref byte* ptr, string propertyName)
+        public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, byte* ptr, string propertyName)
             where T : unmanaged
         {
             ref T data = ref *(T*)ptr;
             root.AddBoldLabel(propertyName);
             root.AddStructInspector(data);
             root.Add(new Label()); // just used as a break
-            ptr += sizeof(T);
             return ref data;
         }
 
@@ -100,7 +99,10 @@ namespace NZCore.Editor
         public static void ClearUI(this VisualElement root)
         {
             root.Clear();
+            
+#if ENABLE_RUNTIME_DATA_BINDINGS
             root.ClearBindings();
+#endif
         }
 
         public static void AddSpacer(this VisualElement root, int height)

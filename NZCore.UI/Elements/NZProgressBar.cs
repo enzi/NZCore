@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="NZProgressBar.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -9,6 +9,7 @@ using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+#if UNITY_6000
 namespace NZSpellCasting.UI
 {
     [Serializable]
@@ -214,3 +215,4 @@ namespace NZSpellCasting.UI
         }
     }
 }
+#endif

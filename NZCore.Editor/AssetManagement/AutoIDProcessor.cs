@@ -1,11 +1,10 @@
 ﻿// <copyright project="NZCore" file="AutoIDProcessor.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using JetBrains.Annotations;
 using NZCore.Editor;
 using UnityEditor;
@@ -77,7 +76,7 @@ namespace NZCore.AssetManagement
             managerObject = null;
             containerListProperty = null;
 
-            var attribute = type.GetCustomAttributeRecursive<AutoIDManagerAttribute>(out var baseType);
+            var attribute = type.GetCustomAttributeRecursive<AutoIDManagerAttribute>(out _);
             if (attribute == null)
             {
                 return false;

@@ -1,5 +1,5 @@
 // <copyright project="NZCore" file="ScriptableObjectConverter.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -7,35 +7,38 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-[ExecuteInEditMode]
-public abstract class ScriptableObjectConverterBase<SOType> : MonoBehaviour
-    where SOType : ScriptableObject
+namespace NZCore
 {
-    public bool ForceUpdate;
-
-    public List<string> ScriptableObjects;
-
-    public void GatherScriptableObjects()
+    [ExecuteInEditMode]
+    public abstract class ScriptableObjectConverterBase<SOType> : MonoBehaviour
+        where SOType : ScriptableObject
     {
-        ScriptableObjects = new List<string>();
+        public bool ForceUpdate;
 
-        //Debug.Log($"Find t: {typeof(SOType)}");
-        var guids = AssetDatabase.FindAssets("t: " + typeof(SOType));
+        public List<string> ScriptableObjects;
 
-        Array.Sort(guids);
-
-        foreach (var guid in guids)
+        public void GatherScriptableObjects()
         {
-            ScriptableObjects.Add(guid);
+            ScriptableObjects = new List<string>();
+
+            //Debug.Log($"Find t: {typeof(SOType)}");
+            var guids = AssetDatabase.FindAssets("t: " + typeof(SOType));
+
+            Array.Sort(guids);
+
+            foreach (var guid in guids)
+            {
+                ScriptableObjects.Add(guid);
+            }
         }
-    }
 
-    public void Update()
-    {
-        if (!ForceUpdate)
-            return;
+        public void Update()
+        {
+            if (!ForceUpdate)
+                return;
 
-        ForceUpdate = false;
-        GatherScriptableObjects();
+            ForceUpdate = false;
+            GatherScriptableObjects();
+        }
     }
 }

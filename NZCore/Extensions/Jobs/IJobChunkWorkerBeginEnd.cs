@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="IJobChunkWorkerBeginEnd.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -84,7 +84,7 @@ namespace NZCore.Jobs
         /// <typeparam name="T">The specific <see cref="IJobChunkWorkerBeginEnd"/> implementation type.</typeparam>
         /// <returns>A handle that combines the current Job with previous dependencies identified by the <paramref name="dependsOn"/>
         /// parameter.</returns>
-        public static unsafe JobHandle Schedule<T>(
+        public static JobHandle Schedule<T>(
             this T jobData,
             EntityQuery query,
             JobHandle dependsOn)
@@ -108,7 +108,7 @@ namespace NZCore.Jobs
         /// <typeparam name="T">The specific <see cref="IJobChunkWorkerBeginEnd"/> implementation type.</typeparam>
         /// <returns>A handle that combines the current Job with previous dependencies identified by the <paramref name="dependsOn"/>
         /// parameter.</returns>
-        public static unsafe JobHandle ScheduleByRef<T>(
+        public static JobHandle ScheduleByRef<T>(
             this ref T jobData,
             EntityQuery query,
             JobHandle dependsOn)
@@ -131,7 +131,7 @@ namespace NZCore.Jobs
         /// <typeparam name="T">The specific <see cref="IJobChunkWorkerBeginEnd"/> implementation type.</typeparam>
         /// <returns>A handle that combines the current Job with previous dependencies identified by the <paramref name="dependsOn"/>
         /// parameter.</returns>
-        public static unsafe JobHandle ScheduleParallel<T>(
+        public static JobHandle ScheduleParallel<T>(
             this T jobData,
             EntityQuery query,
             JobHandle dependsOn)
@@ -155,7 +155,7 @@ namespace NZCore.Jobs
         /// <typeparam name="T">The specific <see cref="IJobChunkWorkerBeginEnd"/> implementation type.</typeparam>
         /// <returns>A handle that combines the current Job with previous dependencies identified by the <paramref name="dependsOn"/>
         /// parameter.</returns>
-        public static unsafe JobHandle ScheduleParallelByRef<T>(
+        public static JobHandle ScheduleParallelByRef<T>(
             this ref T jobData,
             EntityQuery query,
             JobHandle dependsOn)
@@ -170,7 +170,7 @@ namespace NZCore.Jobs
         /// <param name="jobData">An <see cref="IJobChunkWorkerBeginEnd"/> instance.</param>
         /// <param name="query">The query selecting chunks with the necessary components.</param>
         /// <typeparam name="T">The specific <see cref="IJobChunkWorkerBeginEnd"/> implementation type.</typeparam>
-        public static unsafe void Run<T>(this T jobData, EntityQuery query)
+        public static void Run<T>(this T jobData, EntityQuery query)
             where T : struct, IJobChunkWorkerBeginEnd
         {
             ScheduleInternal(ref jobData, query, default(JobHandle), ScheduleMode.Run, default(NativeArray<int>));
@@ -183,7 +183,7 @@ namespace NZCore.Jobs
         /// reference, which may be necessary for unusually large job structs.</param>
         /// <param name="query">The query selecting chunks with the necessary components.</param>
         /// <typeparam name="T">The specific <see cref="IJobChunkWorkerBeginEnd"/> implementation type.</typeparam>
-        public static unsafe void RunByRef<T>(this ref T jobData, EntityQuery query)
+        public static void RunByRef<T>(this ref T jobData, EntityQuery query)
             where T : struct, IJobChunkWorkerBeginEnd
         {
             ScheduleInternal(ref jobData, query, default(JobHandle), ScheduleMode.Run, default(NativeArray<int>));
@@ -280,7 +280,7 @@ namespace NZCore.Jobs
                 dependsOn,
                 mode);
 
-            var result = default(JobHandle);
+            JobHandle result;
             if (!isParallel)
             {
                 result = JobsUtility.Schedule(ref scheduleParams);

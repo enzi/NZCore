@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="UIToolkitExtensions.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;

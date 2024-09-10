@@ -1,13 +1,12 @@
 ﻿// <copyright project="NZCore" file="Vector64.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using Unity.Burst.Intrinsics;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace NZCore.Helper.Intrinsics
 {
-    public readonly unsafe struct Vector64<T>
+    public readonly struct Vector64<T>
         where T : unmanaged
     {
         public const int Size = 8;

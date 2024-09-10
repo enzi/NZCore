@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="UnsafeDenseMap.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace NZCore.NativeContainers.DenseMap
 {
-    public unsafe struct UnsafeDenseMap
+    public struct UnsafeDenseMap
     {
         public const sbyte EmptyBucket = -127;
         public static readonly v128 EmptyBucketVector = new(EmptyBucket);

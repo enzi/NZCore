@@ -1,5 +1,5 @@
-// <copyright project="NZCore" file="SubSceneUtility.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// <copyright project="NZCore" file="SubsceneUtility.cs" version="0.1">
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using Unity;
@@ -9,14 +9,14 @@ using Unity.Scenes;
 
 namespace NZCore
 {
-    public struct SubsceneUtility
+    public struct SubSceneUtility
     {
         [ReadOnly] private ComponentLookup<SceneReference> sceneReference_ReadHandle;
         [ReadOnly] private BufferLookup<ResolvedSectionEntity> resolvedSectionEntity_ReadHandle;
         [ReadOnly] private ComponentLookup<SceneSectionStreamingSystem.StreamingState> streamingState_ReadHandle;
         [ReadOnly] private ComponentLookup<RequestSceneLoaded> requestSceneLoaded_ReadHandle;
 
-        public SubsceneUtility(ref SystemState state)
+        public SubSceneUtility(ref SystemState state)
         {
             sceneReference_ReadHandle = state.GetComponentLookup<SceneReference>(true);
             resolvedSectionEntity_ReadHandle = state.GetBufferLookup<ResolvedSectionEntity>(true);
@@ -34,18 +34,18 @@ namespace NZCore
 
         public static void OpenScene(ref SystemState state, Entity entity)
         {
-            if (state.EntityManager.HasComponent<RequestSceneLoaded>(entity))
+            if (!state.EntityManager.HasComponent<RequestSceneLoaded>(entity))
             {
-                Debug.LogWarning("Trying to open SubScene that is already open.");
-                return;
+                state.EntityManager.AddComponent<RequestSceneLoaded>(entity);
             }
-
-            state.EntityManager.AddComponent<RequestSceneLoaded>(entity);
 
             var resolvedSectionEntities = state.EntityManager.GetBuffer<ResolvedSectionEntity>(entity);
             foreach (var section in resolvedSectionEntities.ToNativeArray(Allocator.Temp))
             {
-                state.EntityManager.AddComponent<RequestSceneLoaded>(section.SectionEntity);
+                if (!state.EntityManager.HasComponent<RequestSceneLoaded>(section.SectionEntity))
+                {
+                    state.EntityManager.AddComponent<RequestSceneLoaded>(section.SectionEntity);
+                }
             }
         }
 

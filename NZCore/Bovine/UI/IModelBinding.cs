@@ -4,6 +4,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
+#if UNITY_6000
 namespace BovineLabs.Core.UI
 {
     public interface IModelBinding
@@ -36,3 +37,4 @@ namespace BovineLabs.Core.UI
         }
     }
 }
+#endif

@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="ReserializeEditor.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System.Linq;
@@ -12,7 +12,7 @@ namespace NZCore.Editor
     {
         private string path = "Assets/";
 
-        [MenuItem("NZCore/Reserialize assets")]
+        [MenuItem("Tools/Reserialize assets")]
         private static void Init()
         {
             ReserializeEditor window = (ReserializeEditor)GetWindow(typeof(ReserializeEditor));

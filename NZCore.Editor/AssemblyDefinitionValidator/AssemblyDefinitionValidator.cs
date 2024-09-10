@@ -1,5 +1,5 @@
 // <copyright project="NZCore" file="AssemblyDefinitionValidator.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -32,7 +32,7 @@ namespace NZCore.Editor
 
         private static readonly HashSet<string> AsmdefFilter = new() { ".Authoring" };
 
-        [MenuItem("NZCore/Validate Assembly Definitions")]
+        [MenuItem("Tools/Validate Assembly Definitions")]
         public static void ValidateAssemblyDefinitions()
         {
             var assets = AssetDatabase.FindAssets("t:AssemblyDefinitionAsset");

@@ -6,7 +6,8 @@
     "Unity.Collections",
     "Unity.Entities",
     "Unity.Entities.Hybrid",
-    "Unity.Mathematics"
+    "Unity.Mathematics",
+    "NZCore"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -1,14 +1,12 @@
 // <copyright project="NZCore" file="CompilerServiceUtility.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
-using NZCore.AssetManagement;
 using NZCore.Utility;
-using UnityEditor;
 using UnityEngine;
 
 namespace NZCore
@@ -26,26 +24,45 @@ namespace NZCore
                 lines.AddRange(cscContent);
 
                 // find #generation date (for triggering sourcegen in unity)
-                int genLineIndex = -1;
-                for (var i = 0; i < lines.Count; i++)
                 {
-                    var line = lines[i];
-                    if (!line.StartsWith("#"))
+                    int genLineIndex = -1;
+                    for (var i = 0; i < lines.Count; i++)
                     {
-                        continue;
+                        var line = lines[i];
+                        if (!line.StartsWith("#"))
+                        {
+                            continue;
+                        }
+
+                        genLineIndex = i;
+                        break;
                     }
 
-                    genLineIndex = i;
-                    break;
+                    if (genLineIndex == -1)
+                    {
+                        lines.Insert(0, randomSignature);
+                    }
+                    else
+                    {
+                        lines[genLineIndex] = randomSignature;
+                    }
                 }
-                
-                if (genLineIndex == -1)
+
+                // test for deleted references
                 {
-                    lines.Insert(0, randomSignature);
-                }
-                else
-                {
-                    lines[genLineIndex] = randomSignature;
+                    for (int i = lines.Count - 1; i >= 0; i--)
+                    {
+                        var line = lines[i];
+                        if (line.StartsWith("/additionalfile:"))
+                        {
+                            var path = line.Replace("/additionalfile:", "");
+
+                            if (!File.Exists(path))
+                            {
+                                lines.RemoveAt(i);
+                            }
+                        }
+                    }
                 }
 
                 foreach (var additionalFile in additionalFiles)

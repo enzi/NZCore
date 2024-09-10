@@ -1,5 +1,5 @@
 // <copyright project="NZCore" file="UIToolkitManager.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 #if UNITY_6000
@@ -193,22 +193,6 @@ namespace NZCore.UIToolkit
             return container;
         }
 
-        public bool UnloadOrderedPanel()
-        {
-            if (sortedPanels.Count == 0)
-            {
-                return false;
-            }
-
-            var topPanel = sortedPanels[^1];
-            // todo, destroy or hide?
-            //topPanel.VisualElement.RemoveFromHierarchy();
-            //topPanel.VisualElement.
-            sortedPanels.RemoveAt(sortedPanels.Count - 1);
-
-            return true;
-        }
-
         public IViewModelBinding RemovePanel(string uniqueKey)
         {
             return TryUnload(uniqueKey, out var panel) ? panel.Binding : null;
@@ -330,9 +314,44 @@ namespace NZCore.UIToolkit
             {
                 container.Element.RemoveFromHierarchy();
                 loadedPanels.Remove(uniqueKey);
+                if (TryFind(container.Element, out var orderedElement))
+                {
+                    sortedPanels.Remove(orderedElement);
+                }
                 return true;
             }
 
+            return false;
+        }
+        
+        public bool UnloadOrderedPanel()
+        {
+            if (sortedPanels.Count == 0)
+            {
+                return false;
+            }
+
+            var topPanel = sortedPanels[^1];
+            // todo, destroy or hide?
+            //topPanel.VisualElement.RemoveFromHierarchy();
+            //topPanel.VisualElement.
+            sortedPanels.RemoveAt(sortedPanels.Count - 1);
+
+            return true;
+        }
+
+        private bool TryFind(VisualElement element, out OrderedElement foundElement)
+        {
+            foreach (var orderedElement in sortedPanels)
+            {
+                if (orderedElement.VisualElement == element)
+                {
+                    foundElement = orderedElement;
+                    return true;
+                }
+            }
+
+            foundElement = default;
             return false;
         }
 

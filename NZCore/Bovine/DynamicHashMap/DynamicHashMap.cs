@@ -12,8 +12,6 @@ using Unity.Entities;
 
 namespace NZCore.Core.Iterators
 {
-    using CollectionHelper = Unity.Collections.CollectionHelper;
-
     //[DebuggerDisplay("Count = {Count()}, Capacity = {Capacity}, IsCreated = {IsCreated}, IsEmpty = {IsEmpty}")]
     //[DebuggerTypeProxy(typeof(DynamicHashMapDebuggerTypeProxy<,>))]
     public unsafe struct DynamicHashMap<TKey, TValue>
@@ -75,7 +73,7 @@ namespace NZCore.Core.Iterators
 
             set
             {
-                if (DynamicHashMapBase<TKey, TValue>.TryGetFirstValueAtomic(this.BufferReadOnly, key, out var item, out var iterator))
+                if (DynamicHashMapBase<TKey, TValue>.TryGetFirstValueAtomic(this.BufferReadOnly, key, out _, out var iterator))
                 {
                     DynamicHashMapBase<TKey, TValue>.SetValue(this.data, ref iterator, ref value);
                 }

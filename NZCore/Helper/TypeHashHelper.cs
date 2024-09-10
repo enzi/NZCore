@@ -1,5 +1,5 @@
 // <copyright project="NZCore" file="TypeHashHelper.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -31,7 +31,7 @@ namespace NZCore.Helper
                 throw new ArgumentException($"'{type}' contains open generic parameters. Generic types must have all generic parameters specified to closed types when calculating stable type hashes");
 
             // Only non-pod and non-unityengine types could possibly have a version attribute
-            hash = TypeHash.CombineFNV1A64(hash, HashVersionAttribute(type, verbose));
+            hash = TypeHash.CombineFNV1A64(hash, HashVersionAttribute(type));
             if (verbose)
                 Debug.Log($"HashVersionAttribute: {hash}");
 
@@ -150,7 +150,7 @@ namespace NZCore.Helper
             return hash;
         }
 
-        private static ulong HashVersionAttribute(Type type, bool verbose = false)
+        private static ulong HashVersionAttribute(Type type)
         {
             int version = 0;
 

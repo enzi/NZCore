@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="CreateUIRootSingleton.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System.Threading.Tasks;
@@ -54,12 +54,12 @@ namespace NZCore.UIToolkit
             CreateInterface();
         }
 
-        private void OnDisable()
-        {
-            // todo: NullException
-            //_uiDocument.rootVisualElement.Remove(_rootVE);
-            //_uiDocument.rootVisualElement.Remove(_dragContainer);
-        }
+        // private void OnDisable()
+        // {
+        //     // todo: NullException
+        //     //_uiDocument.rootVisualElement.Remove(_rootVE);
+        //     //_uiDocument.rootVisualElement.Remove(_dragContainer);
+        // }
 
         private async void CreateInterface()
         {

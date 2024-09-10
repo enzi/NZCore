@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="UnsafeQueue.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -531,7 +531,7 @@ namespace NZCore
         /// </remarks>
         [NativeContainer]
         [NativeContainerIsAtomicWriteOnly]
-        public unsafe struct ParallelWriter
+        public struct ParallelWriter
         {
             [NativeDisableUnsafePtrRestriction] internal UnsafeQueueData* m_Buffer;
 

@@ -1,5 +1,5 @@
 ﻿// <copyright project="NZCore" file="ActionBinding.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
+#if UNITY_6000
 namespace NZCore.UIToolkit
 {
     [UxmlObject]
@@ -17,7 +18,8 @@ namespace NZCore.UIToolkit
 
         public object dataSource => null;
 
-        [CreateProperty] public PropertyPath dataSourcePath { get; private set; }
+        [CreateProperty] 
+        public PropertyPath dataSourcePath { get; private set; }
 
         [UxmlAttribute("data-source-path")]
         public string DataSourcePathString
@@ -66,3 +68,4 @@ namespace NZCore.UIToolkit
         }
     }
 }
+#endif

@@ -1,5 +1,5 @@
 // <copyright project="NZCore" file="NativeListExtensions.cs" version="0.1">
-// Copyright © 2024 EnziSoft. All rights reserved.
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System.Diagnostics;
@@ -40,7 +40,7 @@ namespace NZCore
             AddToByteList(list, ptrToData, byteSize);
         }
 
-        public static unsafe void AddToByteList(this NativeList<byte> list, byte* ptrToData, int byteSize)
+        public static void AddToByteList(this NativeList<byte> list, byte* ptrToData, int byteSize)
         {
             int oldLength = list.Length;
             list.ResizeUninitialized(oldLength + byteSize);
