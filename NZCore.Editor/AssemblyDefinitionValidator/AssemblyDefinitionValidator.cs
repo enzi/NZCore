@@ -32,7 +32,7 @@ namespace NZCore.Editor
 
         private static readonly HashSet<string> AsmdefFilter = new() { ".Authoring" };
 
-        [MenuItem("Tools/Validate Assembly Definitions")]
+        [MenuItem("Tools/NZCore/Validate Assembly Definitions")]
         public static void ValidateAssemblyDefinitions()
         {
             var assets = AssetDatabase.FindAssets("t:AssemblyDefinitionAsset");

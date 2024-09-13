@@ -12,7 +12,7 @@ namespace NZCore.Editor
     {
         private string path = "Assets/";
 
-        [MenuItem("Tools/Reserialize assets")]
+        [MenuItem("Tools/NZCore/Reserialize Assets")]
         private static void Init()
         {
             ReserializeEditor window = (ReserializeEditor)GetWindow(typeof(ReserializeEditor));

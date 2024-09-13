@@ -110,7 +110,6 @@ namespace NZCore
 
         public static void WriteJson(object assets, string fileName, string packagePath, params string[] cscPaths)
         {
-            Debug.Log($"WriteJson {fileName}");
             var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
             var csVersion = $"/*{json}*/";
             var path = $"Packages/{packagePath}";
