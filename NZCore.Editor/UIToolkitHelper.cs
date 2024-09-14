@@ -105,9 +105,11 @@ namespace NZCore.Editor
 #endif
         }
 
-        public static void AddSpacer(this VisualElement root, int height)
+        public static VisualElement AddSpacer(this VisualElement root, int height)
         {
-            root.Add(GetSpacer(height));
+            var spacer = GetSpacer(height);
+            root.Add(spacer);
+            return spacer;
         }
 
         public static VisualElement GetSpacer(int height)
