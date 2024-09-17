@@ -1,4 +1,4 @@
-// <copyright project="NZCore.Saving" file="DateTimeSingleton.cs" version="1.0">
+// <copyright project="NZCore" file="DateTimeSingleton.cs" version="0.1">
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
@@ -12,7 +12,7 @@ namespace NZCore.Components
         public long UtcNowBinary;
 
         public void Init()
-        {            
+        {
         }
 
         public void Dispose()

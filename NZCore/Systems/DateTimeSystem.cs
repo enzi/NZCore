@@ -1,4 +1,4 @@
-// <copyright project="NZCore.Saving" file="DateTimeSystem.cs" version="1.0">
+// <copyright project="NZCore" file="DateTimeSystem.cs" version="0.1">
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
@@ -12,13 +12,13 @@ namespace NZCore
     public partial class DateTimeSystem : SystemBase
     {
         private const int UPDATE_INTERVAL = 1; // in seconds
-        
+
         private double lastElapsed;
 
         protected override void OnCreate()
         {
             CheckedStateRef.CreateSingleton<DateTimeSingleton>();
-            
+
             SystemAPI.SetSingleton(new DateTimeSingleton()
             {
                 UtcNowBinary = DateTime.UtcNow.ToBinary()

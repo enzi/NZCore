@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="CompressionUtility.cs" version="0.1">
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// </copyright>
+
 using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -28,7 +32,7 @@ namespace NZCore.Compression
             switch (codec)
             {
                 case Codec.None: return size;
-                case Codec.LZ4:  return CompressBoundLZ4(size);
+                case Codec.LZ4: return CompressBoundLZ4(size);
                 default: throw new ArgumentException($"Invalid codec '{codec}' specified");
             }
         }
@@ -44,7 +48,7 @@ namespace NZCore.Compression
         /// <returns></returns>
         public static unsafe int Compress(Codec codec, in byte* src, int srcSize, out byte* dst, Allocator allocator = Allocator.Temp)
         {
-            return Compress(codec, src, srcSize, out dst, (AllocatorManager.AllocatorHandle) allocator);
+            return Compress(codec, src, srcSize, out dst, (AllocatorManager.AllocatorHandle)allocator);
         }
 
         /// <summary>
@@ -64,7 +68,9 @@ namespace NZCore.Compression
             int compressedSize = 0;
             switch (codec)
             {
-                case Codec.LZ4: compressedSize = CompressLZ4(src, dst, srcSize, boundedSize); break;
+                case Codec.LZ4:
+                    compressedSize = CompressLZ4(src, dst, srcSize, boundedSize);
+                    break;
 
                 case Codec.None: // Surely this is an error/unintentional
                 default: throw new ArgumentException($"Invalid codec '{codec}' specified");
@@ -102,10 +108,13 @@ namespace NZCore.Compression
         }
 
         const string DllName = "liblz4";
+
         [DllImport(DllName, EntryPoint = "LZ4_compressBound")]
         static extern unsafe int CompressBoundLZ4(int srcSize);
+
         [DllImport(DllName, EntryPoint = "LZ4_compress_default")]
         static extern unsafe int CompressLZ4(byte* src, byte* dst, int srcSize, int dstCapacity);
+
         [DllImport(DllName, EntryPoint = "LZ4_decompress_safe")]
         static extern unsafe int DecompressLZ4(byte* src, byte* dst, int compressedSize, int dstCapacity);
     }

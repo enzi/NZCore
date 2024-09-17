@@ -12,13 +12,7 @@ namespace NZCore
 
         public static void Pause(ref SystemState state, bool pausePresentation = false)
         {
-            var isPaused = state.EntityManager.HasComponent<PauseGame>(state.SystemHandle);
-
             state.EntityManager.AddComponentData(state.SystemHandle, new PauseGame { PausePresentation = pausePresentation.ToByte() });
-
-            if (isPaused)
-            {
-            }
         }
 
         public static void Unpause(ref SystemState state)

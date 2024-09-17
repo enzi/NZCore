@@ -6,13 +6,44 @@ namespace NZCore
 {
     public interface IGenericValueCalculator<T>
     {
-        T Add(T a, T b);
-        T Subtract(T a, T b);
-        T Multiply(T a, T b);
-        T Divide(T a, T b);
-        T PowerAtoB(T a, T b);
-        T PowerBtoA(T a, T b);
-        T Min(T a, T b);
-        T Max(T a, T b);
+        T Add(T a, T b)
+        {
+            return default;
+        }
+
+        T Subtract(T a, T b)
+        {
+            return default;
+        }
+
+        T Multiply(T a, T b)
+        {
+            return default;
+        }
+
+        T Divide(T a, T b)
+        {
+            return default;
+        }
+
+        T PowerAtoB(T a, T b)
+        {
+            return default;
+        }
+
+        T PowerBtoA(T a, T b)
+        {
+            return default;
+        }
+
+        T Min(T a, T b)
+        {
+            return default;
+        }
+
+        T Max(T a, T b)
+        {
+            return default;
+        }
     }
 }

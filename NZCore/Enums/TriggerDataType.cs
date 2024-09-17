@@ -22,12 +22,14 @@ namespace NZCore
 
         // 64 bits
         Double,
+        Long,
+        ULong,
 
         // 8 bits
         Byte,
 
         // 1 bit
-        Bool, // todo bool counts as byte
+        Bool, // bool counts as byte
     }
 
     [Serializable]
