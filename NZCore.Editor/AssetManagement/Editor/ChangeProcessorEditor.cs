@@ -121,7 +121,7 @@ namespace NZCore.Editor
 
         public static void Click_CodeGenAll()
         {
-            var assetPaths = AssetDatabase.FindAssets($"t:ScriptableObjectWithAutoID")
+            var assetPaths = AssetDatabase.FindAssets($"t:ChangeProcessorAsset")
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .ToList();
 
