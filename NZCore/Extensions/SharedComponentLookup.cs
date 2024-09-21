@@ -69,7 +69,12 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
             var ecs = m_Access->EntityComponentStore;
+            
+#if ENTITIES_1_3_2
+            return ecs->HasComponent(entity, m_TypeIndex, out _);
+#else
             return ecs->HasComponent(entity, m_TypeIndex, ref m_Cache);
+#endif
         }
 
         public bool TryGetComponent(Entity entity, out T sharedComp)

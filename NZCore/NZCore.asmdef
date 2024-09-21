@@ -30,6 +30,11 @@
             "name": "com.nzspellcasting",
             "expression": "0",
             "define": "NZSPELLCASTING"
+        },
+        {
+            "name": "com.unity.entities",
+            "expression": "1.3.2",
+            "define": "ENTITIES_1_3_2"
         }
     ],
     "noEngineReferences": false

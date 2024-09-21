@@ -99,7 +99,12 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
             var ecs = m_Access->EntityComponentStore;
+            
+#if ENTITIES_1_3_2
+            return ecs->HasComponent(entity, m_TypeIndex, out _);
+#else
             return ecs->HasComponent(entity, m_TypeIndex, ref m_Cache);
+#endif
         }
 
         /// <summary>
@@ -118,7 +123,12 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
             var ecs = m_Access->EntityComponentStore;
+            
+#if ENTITIES_1_3_2
+            return ecs->HasComponent(system.m_Entity, m_TypeIndex, out _);
+#else
             return ecs->HasComponent(system.m_Entity, m_TypeIndex, ref m_Cache);
+#endif
         }
 
         /// <summary>
@@ -141,7 +151,12 @@ namespace NZCore
             if (m_IsZeroSized != 0)
             {
                 componentData = default;
+                
+#if ENTITIES_1_3_2
+                return ecs->HasComponent(entity, m_TypeIndex, out _);
+#else
                 return ecs->HasComponent(entity, m_TypeIndex, ref m_Cache);
+#endif
             }
 
             if (Hint.Unlikely(!ecs->Exists(entity)))
