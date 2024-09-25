@@ -26,11 +26,12 @@ namespace NZCore.Editor
 
                 if (tmpAssets.Length > 1)
                 {
-                    for (var i = 0; i < tmpAssets.Length; i++)
+                    foreach (var tmpAsset in tmpAssets)
                     {
-                        var tmpAsset = tmpAssets[i];
-                        if (tmpAsset.GetType().Name == baseType)
+                        if (tmpAsset != null && tmpAsset.GetType().Name == baseType)
+                        {
                             assets.Add((ScriptableObject)tmpAsset);
+                        }
                     }
                 }
                 else

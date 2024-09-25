@@ -7,9 +7,16 @@ using UnityEngine;
 
 namespace NZCore.AssetManagement
 {
-    public abstract class ChangeProcessorAsset : ScriptableObject //, IChangeProcessor
+    public abstract class ChangeProcessorAsset : ScriptableObject
     {
-        public abstract bool HasChanges(List<ChangeProcessorAsset> allAssets);
+        public abstract HasChangeResult HasChanges(List<ChangeProcessorAsset> allAssets);
         public abstract void ProcessChanges(List<ChangeProcessorAsset> allAssets);
+    }
+
+    public enum HasChangeResult
+    {
+        None, // won't even show the ChangeProcessorAsset buttons
+        NoChanges,
+        HasChanges
     }
 }

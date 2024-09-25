@@ -39,16 +39,19 @@ namespace NZCore.Editor
         
         public VisualElement CreateInspectorGUI(VisualElement root)
         {
-            var hasChanges = ((ChangeProcessorAsset)target).HasChanges(GetChangeProcessorAssets(target.GetType()));
+            var hasChangesResult = ((ChangeProcessorAsset)target).HasChanges(GetChangeProcessorAssets(target.GetType()));
+
+            if (hasChangesResult == HasChangeResult.None)
+                return root;
 
             Button btn = new Button(Click_CodeGen)
             {
-                text = $"Update {target.GetType().Name} settings JSON {(hasChanges ? "(*)" : "")}"
+                text = $"Update {target.GetType().Name} settings JSON {(hasChangesResult == HasChangeResult.HasChanges ? "(*)" : "")}"
             };
 
             Button btn2 = new Button(Click_CodeGenAll)
             {
-                text = $"Update every JSON setting {(hasChanges ? "(*)" : "")}"
+                text = $"Update every JSON setting {(hasChangesResult == HasChangeResult.HasChanges ? "(*)" : "")}"
             };
 
             root.Add(btn);
@@ -98,20 +101,20 @@ namespace NZCore.Editor
             var targetType = target.GetType();
             Debug.Log($"Updating {targetType.Name} ...");
 
-            var assetPaths = AssetDatabase.FindAssets($"t:{targetType.Name}")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .ToList();
+            var assets = AssetDatabaseUtility.GetSubAssets(targetType.Name);
+
+            // var assetPaths = AssetDatabase.FindAssets($"t:{targetType.Name}")
+            //     .Select(AssetDatabase.GUIDToAssetPath)
+            //     .ToList();
 
             List<ChangeProcessorAsset> allAssets = new List<ChangeProcessorAsset>();
 
-            foreach (string assetPath in assetPaths)
+            foreach (var asset in assets)
             {
-                var asset = AssetDatabase.LoadAssetAtPath(assetPath, targetType);
-
-                if (asset == null)
+                if (asset == null || asset is not ChangeProcessorAsset changeProcessorAsset)
                     continue;
 
-                allAssets.Add((ChangeProcessorAsset)asset);
+                allAssets.Add(changeProcessorAsset);
             }
 
             target.ProcessChanges(allAssets);
@@ -121,17 +124,19 @@ namespace NZCore.Editor
 
         public static void Click_CodeGenAll()
         {
-            var assetPaths = AssetDatabase.FindAssets($"t:ChangeProcessorAsset")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .ToList();
+            // var assetPaths = AssetDatabase.FindAssets($"t:ChangeProcessorAsset")
+            //     .Select(AssetDatabase.GUIDToAssetPath)
+            //     .ToList();
+            
+            var assets = AssetDatabaseUtility.GetSubAssets("ChangeProcessorAsset");
 
             Dictionary<Type, List<ChangeProcessorAsset>> collector = new Dictionary<Type, List<ChangeProcessorAsset>>();
 
-            foreach (string assetPath in assetPaths)
+            foreach (var asset in assets)
             {
-                var asset = (ChangeProcessorAsset)AssetDatabase.LoadAssetAtPath(assetPath, typeof(ChangeProcessorAsset));
+                //var asset = (ChangeProcessorAsset)AssetDatabase.LoadAssetAtPath(assetPath, typeof(ChangeProcessorAsset));
 
-                if (asset == null)
+                if (asset == null || asset is not ChangeProcessorAsset changeProcessorAsset)
                     continue;
 
                 var type = asset.GetType();
@@ -142,7 +147,7 @@ namespace NZCore.Editor
                     collector[type] = list;
                 }
 
-                list.Add(asset);
+                list.Add(changeProcessorAsset);
             }
 
             foreach (KeyValuePair<Type, List<ChangeProcessorAsset>> entry in collector)

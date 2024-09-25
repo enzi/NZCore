@@ -9,6 +9,120 @@ namespace NZCore
 {
     public static partial class GenericMathProcessor
     {
+        public static bool ProcessValuesReturnChange<T, TProcessor>(ref T leftValue, T rightValue, MathOperator mathOperator)
+            where T : unmanaged, IEquatable<T>
+            where TProcessor : struct, IGenericValueCalculator<T>
+        {
+            var processor = default(TProcessor);
+
+            switch (mathOperator)
+            {
+                case MathOperator.Set:
+                {
+                    var newValue = rightValue;
+                    if (!newValue.Equals(leftValue))
+                    {
+                        Debug.Log($"SET {leftValue} = {newValue}");
+                        return true;
+                    }
+
+                    break;
+                }
+                case MathOperator.Add:
+                {
+                    var newValue = processor.Add(leftValue, rightValue);
+                    if (!newValue.Equals(leftValue))
+                    {
+                        leftValue = newValue;
+                        return true;
+                    }
+
+                    break;
+                }
+                case MathOperator.Subtract:
+                {
+                    var newValue = processor.Subtract(leftValue, rightValue);
+                    if (!newValue.Equals(leftValue))
+                    {
+                        leftValue = newValue;
+                        return true;
+                    }
+
+                    break;
+                }
+                case MathOperator.Multiply:
+                {
+                    var newValue = processor.Multiply(leftValue, rightValue);
+                    if (!newValue.Equals(leftValue))
+                    {
+                        leftValue = newValue;
+                        return true;
+                    }
+
+                    break;
+                }
+                case MathOperator.Divide:
+                {
+                    var newValue = processor.Divide(leftValue, rightValue);
+                    if (!newValue.Equals(leftValue))
+                    {
+                        leftValue = newValue;
+                        return true;
+                    }
+
+                    break;
+                }
+                case MathOperator.PowerAtoB:
+                {
+                    var newValue = processor.PowerAtoB(leftValue, rightValue);
+                    if (!newValue.Equals(leftValue))
+                    {
+                        leftValue = newValue;
+                        return true;
+                    }
+
+                    break;
+                }
+                case MathOperator.PowerBtoA:
+                {
+                    var newValue = processor.PowerBtoA(leftValue, rightValue);
+                    if (!newValue.Equals(leftValue))
+                    {
+                        leftValue = newValue;
+                        return true;
+                    }
+
+                    break;
+                }
+                case MathOperator.Min:
+                {
+                    var newValue = processor.Min(leftValue, rightValue);
+                    if (!newValue.Equals(leftValue))
+                    {
+                        leftValue = newValue;
+                        return true;
+                    }
+
+                    break;
+                }
+                case MathOperator.Max:
+                {
+                    var newValue = processor.Max(leftValue, rightValue);
+                    if (!newValue.Equals(leftValue))
+                    {
+                        leftValue = newValue;
+                        return true;
+                    }
+
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            return false;
+        }
+        
         public static unsafe bool ProcessValues<T, TProcessor>(byte* valuePtr, MathOperator mathOperator, T rightValue)
             where T : unmanaged, IEquatable<T>
             where TProcessor : struct, IGenericValueCalculator<T>

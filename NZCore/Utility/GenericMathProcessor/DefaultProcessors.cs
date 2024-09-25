@@ -42,4 +42,8 @@ namespace NZCore
     public partial struct ULongProcessor : IGenericValueCalculator<ulong>
     {
     }
+    
+    // public partial struct BoolProcessor : IGenericValueCalculator<bool>
+    // {
+    // }
 }
