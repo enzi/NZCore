@@ -397,6 +397,35 @@ namespace NZCore
             };
         }
 
+        public static GenericUnionValue ProcessValues(TriggerDataType dataType, GenericUnionValue leftValue, GenericUnionValue rightValue, MathOperator mathOperator)
+        {
+            switch (dataType)
+            {
+                case TriggerDataType.Short:
+                    return new GenericUnionValue() { ShortValue = GenericMath.ProcessValues(leftValue.ShortValue, rightValue.ShortValue, mathOperator) };
+                case TriggerDataType.Half:
+                    return new GenericUnionValue() { HalfValue = GenericMath.ProcessValues(leftValue.HalfValue, rightValue.HalfValue, mathOperator) };
+                case TriggerDataType.Float:
+                    return new GenericUnionValue() { FloatValue = GenericMath.ProcessValues(leftValue.FloatValue, rightValue.FloatValue, mathOperator) };
+                case TriggerDataType.Int:
+                    return new GenericUnionValue() { IntValue = GenericMath.ProcessValues(leftValue.IntValue, rightValue.IntValue, mathOperator) };
+                case TriggerDataType.UInt:
+                    return new GenericUnionValue() { UIntValue = GenericMath.ProcessValues(leftValue.UIntValue, rightValue.UIntValue, mathOperator) };
+                case TriggerDataType.Double:
+                    return new GenericUnionValue() { DoubleValue = GenericMath.ProcessValues(leftValue.DoubleValue, rightValue.DoubleValue, mathOperator) };
+                case TriggerDataType.ULong:
+                    return new GenericUnionValue() { ULongValue = GenericMath.ProcessValues(leftValue.ULongValue, rightValue.ULongValue, mathOperator) };
+                case TriggerDataType.Long:
+                    return new GenericUnionValue() { LongValue = GenericMath.ProcessValues(leftValue.LongValue, rightValue.LongValue, mathOperator) };
+                case TriggerDataType.Byte:
+                    return new GenericUnionValue() { ByteValue = GenericMath.ProcessValues(leftValue.ByteValue, rightValue.ByteValue, mathOperator) };
+                case TriggerDataType.Bool:
+                case TriggerDataType.None:
+                default:
+                    throw new ArgumentOutOfRangeException($"For Key {dataType}");
+            }
+        }
+
         // TODO wait until .NET6 arrives in Unity :)
         // public interface IEqualityOperators<TSelf, TOther, TResult> where TSelf : IEqualityOperators<TSelf, TOther, TResult>?
         // {

@@ -13,8 +13,8 @@ namespace NZCore
     {
         // 64 bit
         [FieldOffset(0)] public double DoubleValue;
-        [FieldOffset(0)] public double LongValue;
-        [FieldOffset(0)] public double ULongValue;
+        [FieldOffset(0)] public long LongValue;
+        [FieldOffset(0)] public ulong ULongValue;
 
         // 32 bit
         [FieldOffset(0)] public float FloatValue;
