@@ -14,6 +14,17 @@ namespace NZCore
         T PowerBtoA(T a, T b) { return default; }
         T Min(T a, T b) { return default; }
         T Max(T a, T b) { return default; }
+        
+        // Math functions
+
+        T Abs(T a) { return default; }
+        T Ceil(T a) { return default; }
+        T Floor(T a) { return default; }
+        T Round(T a) { return default; }
+        T Log10(T a) { return default; }
+        T NaturalLog(T a) { return default; }
+
+        // Logic
         bool Any(T a, T b) { return default; }
         bool Equal(T a, T b) { return default; }
         bool NotEqual(T a, T b) { return default; }

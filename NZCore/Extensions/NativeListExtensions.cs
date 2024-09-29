@@ -123,6 +123,37 @@ namespace NZCore
             listPtr->m_capacity = newCapacity;
             listPtr->m_length = math.min(listPtr->m_length, newCapacity);
         }
+        
+        public static void ResizeExact<T>(this NativeList<T> list, int newCapacity, int alignOf)
+            where T : unmanaged
+        {
+            newCapacity = math.max(0, newCapacity);
+            var listPtr = list.m_ListData;
+            var allocator = listPtr->Allocator;
+
+            CollectionHelper.CheckAllocator(allocator);
+            T* newPointer = null;
+           
+            var sizeOf = sizeof(T);
+
+            if (newCapacity > 0)
+            {
+                newPointer = (T*)allocator.Allocate(sizeOf, alignOf, newCapacity);
+
+                if (listPtr->Ptr != null && listPtr->m_capacity > 0)
+                {
+                    var itemsToCopy = math.min(newCapacity, listPtr->Capacity);
+                    var bytesToCopy = itemsToCopy * sizeOf;
+                    UnsafeUtility.MemCpy(newPointer, listPtr->Ptr, bytesToCopy);
+                }
+            }
+
+            allocator.Free(listPtr->Ptr, listPtr->Capacity);
+
+            listPtr->Ptr = newPointer;
+            listPtr->m_capacity = newCapacity;
+            listPtr->m_length = math.min(listPtr->m_length, newCapacity);
+        }
 
         public static void Remove<T>(this NativeList<T> list, T element)
             where T : unmanaged

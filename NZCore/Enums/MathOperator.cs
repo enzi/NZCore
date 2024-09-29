@@ -16,4 +16,14 @@ namespace NZCore
         Min,
         Max
     }
+
+    public enum MathFunction : byte
+    {
+        Abs,
+        Ceil,
+        Floor,
+        Round,
+        Log10,
+        NaturalLog,
+    }
 }

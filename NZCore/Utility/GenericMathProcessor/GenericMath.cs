@@ -3,11 +3,12 @@
 // </copyright>
 
 using System;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace NZCore
 {
-    public static partial class GenericMathProcessor
+    public static partial class GenericMath
     {
         public static bool ProcessValuesReturnChange<T, TProcessor>(ref T leftValue, T rightValue, MathOperator mathOperator)
             where T : unmanaged, IEquatable<T>
@@ -396,7 +397,7 @@ namespace NZCore
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
-
+        
         public static GenericUnionValue ProcessValues(TriggerDataType dataType, GenericUnionValue leftValue, GenericUnionValue rightValue, MathOperator mathOperator)
         {
             switch (dataType)
@@ -422,7 +423,36 @@ namespace NZCore
                 case TriggerDataType.Bool:
                 case TriggerDataType.None:
                 default:
-                    throw new ArgumentOutOfRangeException($"For Key {dataType}");
+                    throw new ArgumentOutOfRangeException($"For dataType {dataType}");
+            }
+        }
+
+        public static GenericUnionValue ProcessMathFunction(GenericDataType dataType, MathFunction mathFunction, GenericUnionValue value)
+        {
+            switch (dataType)
+            {
+                case GenericDataType.Short:
+                    return new GenericUnionValue() { ShortValue = mathFunction.ProcessMathFunction(value.ShortValue) };
+                case GenericDataType.Half:
+                    return new GenericUnionValue() { HalfValue = mathFunction.ProcessMathFunction(value.HalfValue) };
+                case GenericDataType.Float:
+                    return new GenericUnionValue() { FloatValue = mathFunction.ProcessMathFunction(value.FloatValue) };
+                case GenericDataType.Int:
+                    return new GenericUnionValue() { IntValue = mathFunction.ProcessMathFunction(value.IntValue) };
+                case GenericDataType.UInt:
+                    return new GenericUnionValue() { UIntValue = mathFunction.ProcessMathFunction(value.UIntValue) };
+                case GenericDataType.Double:
+                    return new GenericUnionValue() { DoubleValue = mathFunction.ProcessMathFunction(value.DoubleValue) };
+                case GenericDataType.ULong:
+                    return new GenericUnionValue() { ULongValue = mathFunction.ProcessMathFunction(value.ULongValue) };
+                case GenericDataType.Long:
+                    return new GenericUnionValue() { LongValue = mathFunction.ProcessMathFunction(value.LongValue) };
+                case GenericDataType.Byte:
+                    return new GenericUnionValue() { ByteValue = mathFunction.ProcessMathFunction(value.ByteValue) };
+                case GenericDataType.Bool:
+                case GenericDataType.None:
+                default:
+                    throw new ArgumentOutOfRangeException($"For dataType {dataType}");
             }
         }
 
