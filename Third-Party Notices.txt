@@ -1,5 +1,2 @@
-The asset "Saving System for DOTS" uses the following components:
-- NZCore under MIT License (same author as "Saving System for DOTS")
-- Newtonsoft.Json under MIT License
-- Microsoft.CodeAnalysis under the MICROSOFT SOFTWARE LICENSE TERMS
+This library uses the following components:
 - BovineLabs extensions under the MIT License
