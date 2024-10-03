@@ -5,7 +5,7 @@
 using Unity.Entities;
 using Unity.Scenes;
 
-namespace NZSpellCasting
+namespace NZCore
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     [UpdateAfter(typeof(SceneSystemGroup))]

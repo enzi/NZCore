@@ -8,5 +8,6 @@
     "com.unity.addressables": "1.21.20",
     "com.unity.nuget.newtonsoft-json": "3.2.1"
   },
-  "type": "library"
+  "type": "library",
+  "description": "NZCore provides several ways to make Unity and DOTS development easier."
 }

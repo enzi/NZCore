@@ -19,13 +19,12 @@ namespace NZCore
         // 32 bit
         [FieldOffset(0)] public float FloatValue;
         [FieldOffset(0)] public int IntValue;
-
         [FieldOffset(0)] public uint UIntValue;
 
         // 16 bit
-        [FieldOffset(0)] public short ShortValue;
-
         [FieldOffset(0)] public half HalfValue;
+        [FieldOffset(0)] public short ShortValue;
+        [FieldOffset(0)] public ushort UShortValue;
 
         // 8 bit
         [FieldOffset(0)] public byte ByteValue;

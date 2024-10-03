@@ -48,6 +48,15 @@ namespace NZCore
             var basePtr = (byte*)list.GetUnsafePtr();
             UnsafeUtility.MemCpy(basePtr + oldLength, ptrToData, byteSize);
         }
+
+        public static void AddZeroToByteList(this NativeList<byte> list, int byteSize)
+        {
+            int oldLength = list.Length;
+            list.ResizeUninitialized(oldLength + byteSize);
+            
+            var basePtr = (byte*)list.GetUnsafePtr();
+            UnsafeUtility.MemClear(basePtr + oldLength, byteSize);
+        }
         
         public static void AddRangeToByteList<TData>(this NativeList<byte> list, NativeArray<TData> array)
             where TData : unmanaged

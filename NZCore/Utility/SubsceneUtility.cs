@@ -106,8 +106,8 @@ namespace NZCore
                 return false;
             }
             
-            return (SceneSectionStreamingSystem.StreamingStatus.Loaded ==
-                   state.EntityManager.GetComponentData<SceneSectionStreamingSystem.StreamingState>(sectionEntity).Status);
+            return state.EntityManager.GetComponentData<SceneSectionStreamingSystem.StreamingState>(sectionEntity).Status == 
+                   SceneSectionStreamingSystem.StreamingStatus.Loaded;
         }
 
         public bool IsSceneLoaded(Entity entity)
