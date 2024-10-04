@@ -58,6 +58,17 @@ namespace NZCore
         {
             currentIndex += UnsafeUtility.SizeOf<T>();
         }
+        
+        public void AddOffsetRange<T>(int length)
+            where T : unmanaged
+        {
+            currentIndex += UnsafeUtility.SizeOf<T>() * length;
+        }
+
+        public void SetOffset(int offset)
+        {
+            currentIndex = offset;
+        }
 
         public void Reset()
         {
