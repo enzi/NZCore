@@ -192,6 +192,15 @@ namespace NZCore.UI.Elements
             m_Toggle.SetValueWithoutNotify(m_Value);
            
             content.style.display = newValue ? DisplayStyle.Flex : DisplayStyle.None;
+
+            toggleAction?.Invoke();
+        }
+
+        private Action toggleAction;
+
+        public void SetAction(Action action)
+        {
+            toggleAction = action;
         }
     }
 }
