@@ -1,4 +1,4 @@
-// <copyright project="NZCore" file="TransformEntityMapping.cs" version="0.1">
+// <copyright project="NZCore.Hybrid" file="TransformEntityMapping.cs" version="1.0.0">
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 

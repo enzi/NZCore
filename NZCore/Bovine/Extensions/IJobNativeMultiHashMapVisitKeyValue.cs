@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="IJobNativeMultiHashMapVisitKeyValue.cs" version="1.0.0">
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// </copyright>
+
+using System;
 using System.Diagnostics.CodeAnalysis;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;

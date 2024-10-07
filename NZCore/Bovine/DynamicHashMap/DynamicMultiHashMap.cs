@@ -1,5 +1,5 @@
-﻿// <copyright file="DynamicMultiHashMap.cs" company="BovineLabs">
-//     Copyright (c) BovineLabs. All rights reserved.
+﻿// <copyright project="NZCore" file="DynamicMultiHashMap.cs" version="1.0.0">
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;

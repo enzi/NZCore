@@ -1,5 +1,5 @@
-// <copyright file="IBindingObjectNotify.cs" company="BovineLabs">
-//     Copyright (c) BovineLabs. All rights reserved.
+// <copyright project="NZCore" file="IViewModelBindingNotify.cs" version="1.0.0">
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 #if UNITY_6000

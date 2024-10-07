@@ -1,4 +1,4 @@
-// <copyright project="NZCore" file="ListViewCountTracker.cs" version="0.1">
+// <copyright project="NZCore.UI" file="ListViewCountTracker.cs" version="1.0.0">
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 

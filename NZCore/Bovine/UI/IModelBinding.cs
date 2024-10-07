@@ -1,4 +1,8 @@
-﻿using System;
+﻿// <copyright project="NZCore" file="IModelBinding.cs" version="1.0.0">
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// </copyright>
+
+using System;
 using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections;

@@ -1,4 +1,4 @@
-﻿// <copyright project="NZCore" file="SettingsBase.cs" version="0.1">
+﻿// <copyright project="NZCore.Authoring" file="SettingsBase.cs" version="1.0.0">
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 

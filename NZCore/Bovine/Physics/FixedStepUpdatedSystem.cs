@@ -1,3 +1,7 @@
+// <copyright project="NZCore" file="FixedStepUpdatedSystem.cs" version="1.0.0">
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// </copyright>
+
 #if DOTS_PHYSICS
 using Unity.Burst;
 using Unity.Entities;

@@ -1,4 +1,4 @@
-﻿// <copyright project="NZCore" file="UIToolkitExtensions.cs" version="0.1">
+﻿// <copyright project="UnityEngine.UI" file="UIToolkitExtensions.cs" version="1.0.0">
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
