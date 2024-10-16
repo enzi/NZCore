@@ -142,10 +142,7 @@ namespace NZCore.UI.Elements
 
         public void SetContainer(VisualElement newContainer)
         {
-            if (content != null)
-            {
-                hierarchy.Remove(content);
-            }
+            RemoveContainer();
 
             content = newContainer;
 
@@ -155,6 +152,19 @@ namespace NZCore.UI.Elements
             }
             
             SetValueWithoutNotify(m_Value);
+        }
+
+        public void ClearContainerContent()
+        {
+            content?.Clear();
+        }
+        
+        public void RemoveContainer()
+        {
+            if (content != null)
+            {
+                hierarchy.Remove(content);
+            }
         }
         
         private void OnAttachToPanel(AttachToPanelEvent evt)
@@ -190,10 +200,10 @@ namespace NZCore.UI.Elements
         {
             m_Value = newValue;
             m_Toggle.SetValueWithoutNotify(m_Value);
+            
+            toggleAction?.Invoke();
            
             content.style.display = newValue ? DisplayStyle.Flex : DisplayStyle.None;
-
-            toggleAction?.Invoke();
         }
 
         private Action toggleAction;

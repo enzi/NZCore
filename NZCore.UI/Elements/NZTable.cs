@@ -33,7 +33,7 @@ namespace NZCore.UI.Elements
 
         public VisualElement AddHeader()
         {
-            NZRow row = AddRow(HeaderColor);
+            NZRow row = CreateRow(HeaderColor);
             
             for (var i = 0; i < headerSettings.Length; i++)
             {
@@ -48,7 +48,7 @@ namespace NZCore.UI.Elements
 
         public VisualElement AddRow(string[] values, int depth = 0)
         {
-            NZRow row = AddRow(GetOddStateColor());
+            NZRow row = CreateRow(GetOddStateColor());
             rows.Add(row);
             
             for (int i = 0; i < values.Length; i++)
@@ -63,7 +63,7 @@ namespace NZCore.UI.Elements
 
         public VisualElement AddRow(VisualElement[] values, int depth = 0)
         {
-            NZRow row = AddRow(GetOddStateColor());
+            NZRow row = CreateRow(GetOddStateColor());
             rows.Add(row);
             
             for (int i = 0; i < values.Length; i++)
@@ -83,29 +83,19 @@ namespace NZCore.UI.Elements
             return row;
         }
         
-        public VisualElement AddSpanRow(params VisualElement[] values)
+        public NZRow AddSpanRow(VisualElement element)
         {
-            NZRow row = AddRow(GetOddStateColor());
+            NZRow row = CreateRow(GetOddStateColor());
             rows.Add(row);
             
-            for (int i = 0; i < values.Length; i++)
-            {
-                var element = values[i];
-                if (element == null)
-                {
-                    Debug.LogError($"AddRow - Element at position {i} is null!");
-                    continue;
-                }
-
-                var cell = new NZRowCell(new NZCellSettings() { Percent = 100 }, 0);
-                cell.Add(element);
-                row.Add(cell);
-            }
+            var cell = new NZRowCell(new NZCellSettings() { Percent = 100 }, 0);
+            cell.Add(element);
+            row.Add(cell);
 
             return row;
         }
 
-        public NZRow AddRow(Color backgroundColor)
+        public NZRow CreateRow(Color backgroundColor)
         {
             NZRow row = new NZRow(backgroundColor);
             OddState = !OddState;

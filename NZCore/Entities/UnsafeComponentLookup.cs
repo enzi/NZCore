@@ -12,13 +12,13 @@ namespace NZCore
     [NativeContainer]
     public unsafe struct UnsafeComponentLookup<T> where T : unmanaged, IComponentData
     {
-        [NativeDisableUnsafePtrRestriction] readonly EntityDataAccess* m_Access;
-        LookupCache m_Cache;
+        [NativeDisableUnsafePtrRestriction] internal readonly EntityDataAccess* m_Access;
+        internal LookupCache m_Cache;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal AtomicSafetyHandle m_Safety;
 #endif
-        readonly TypeIndex m_TypeIndex;
-        uint m_GlobalSystemVersion;
+        internal readonly TypeIndex m_TypeIndex;
+        internal uint m_GlobalSystemVersion;
         readonly byte m_IsZeroSized; // cache of whether T is zero-sized
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
