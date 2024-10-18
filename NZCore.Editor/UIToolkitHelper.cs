@@ -15,12 +15,27 @@ namespace NZCore.Editor
     {
         public static VisualElement GetHeaderField(string label)
         {
-            var header = new Label(label);
-            header.style.unityFontStyleAndWeight = new StyleEnum<FontStyle>(FontStyle.Bold);
-            header.style.paddingTop = new StyleLength(10);
-            header.style.paddingBottom = new StyleLength(10);
+            var header = new Label(label)
+            {
+                style =
+                {
+                    unityFontStyleAndWeight = new StyleEnum<FontStyle>(FontStyle.Bold),
+                    paddingTop = new StyleLength(10),
+                    paddingBottom = new StyleLength(10)
+                }
+            };
 
             return header;
+        }
+        
+        public static void SetPickingModeRecursive(this VisualElement element, PickingMode pickingMode)
+        {
+            element.pickingMode = pickingMode;
+            
+            foreach (var child in element.hierarchy.Children()) 
+            {
+                SetPickingModeRecursive(child, pickingMode);
+            }
         }
 
         /// <summary>
@@ -50,7 +65,7 @@ namespace NZCore.Editor
             ref T data = ref *(T*)ptr;
             root.AddBoldLabel($"{typeof(T).Name}");
             root.AddStructInspector(data);
-            root.Add(new Label()); // just used as a break
+            root.Add(new VisualElement() { pickingMode = PickingMode.Ignore}); // just used as a break
             ptr += sizeof(T);
             return ref data;
         }
@@ -61,7 +76,7 @@ namespace NZCore.Editor
             ref T data = ref *(T*)ptr;
             root.AddBoldLabel(propertyName);
             root.AddStructInspector(data);
-            root.Add(new Label()); // just used as a break
+            root.Add(new VisualElement() { pickingMode = PickingMode.Ignore}); // just used as a break
             return ref data;
         }
 
@@ -72,7 +87,8 @@ namespace NZCore.Editor
                 style =
                 {
                     unityFontStyleAndWeight = new StyleEnum<FontStyle>(FontStyle.Bold)
-                }
+                },
+                pickingMode = PickingMode.Ignore
             };
 
             root.Add(lbl);
