@@ -15,13 +15,17 @@ namespace NZCore
         public static void MemClear<T>(this DynamicBuffer<T> buffer)
             where T : unmanaged, IBufferElementData
         {
+            CheckWriteAccess(buffer);
+            
             var ptr = buffer.GetUnsafePtr();
-            UnsafeUtility.MemClear(ptr, buffer.Length);
+            UnsafeUtility.MemClear(ptr, UnsafeUtility.SizeOf<T>() * buffer.Length);
         }
 
         public static void UnsafeClear<T>(this DynamicBuffer<T> buffer)
             where T : unmanaged, IBufferElementData
         {
+            CheckWriteAccess(buffer);
+            
             buffer.GetBufferHeader()->Length = 0;
         }
 
@@ -41,6 +45,8 @@ namespace NZCore
         public static void Remove<T>(this DynamicBuffer<T> buffer, T element)
             where T : unmanaged
         {
+            CheckWriteAccess(buffer);
+            
             for (int i = buffer.Length - 1; i >= 0; i--)
             {
                 if (buffer[i].GetHashCode() != element.GetHashCode())
@@ -53,6 +59,8 @@ namespace NZCore
         public static int RemoveAtSwapBackReportIndex<T>(this DynamicBuffer<T> buffer, int index)
             where T : unmanaged
         {
+            CheckWriteAccess(buffer);
+            
             buffer.Length -= 1;
             // ref var l = ref buffer.Length;
             // l -= 1;

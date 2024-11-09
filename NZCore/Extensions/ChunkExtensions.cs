@@ -249,5 +249,51 @@ namespace NZCore
             return new BufferAccessor<T>(ptr, length, stride, internalCapacity);
 #endif
         }
+        
+        public static void CopyEnableMaskFrom<TD, TS>(this ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<TD> destination, ref ComponentTypeHandle<TS> source)
+            where TD : unmanaged, IComponentData, IEnableableComponent
+            where TS : unmanaged, IComponentData, IEnableableComponent
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(destination.m_Safety);
+            AtomicSafetyHandle.CheckReadAndThrow(source.m_Safety);
+#endif
+            var archetype = archetypeChunk.m_EntityComponentStore->GetArchetype(archetypeChunk.m_Chunk);
+
+            if (Hint.Unlikely(destination.m_LookupCache.Archetype != archetype))
+            {
+                destination.m_LookupCache.Update(archetype, destination.m_TypeIndex);
+            }
+
+            if (Hint.Unlikely(source.m_LookupCache.Archetype != archetype))
+            {
+                source.m_LookupCache.Update(archetype, source.m_TypeIndex);
+            }
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (Hint.Unlikely(destination.m_LookupCache.IndexInArchetype == -1))
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (Hint.Unlikely(source.m_LookupCache.IndexInArchetype == -1))
+            {
+                throw new InvalidOperationException();
+            }
+#endif
+            var dst = ChunkDataUtility.GetEnabledRefRW(
+                archetypeChunk.m_Chunk, archetypeChunk.Archetype.Archetype, destination.m_LookupCache.IndexInArchetype, destination.GlobalSystemVersion,
+                out var dstPtrChunkDisabledCount).Ptr;
+
+            var src = ChunkDataUtility.GetEnabledRefRO(archetypeChunk.m_Chunk, archetypeChunk.Archetype.Archetype, source.m_LookupCache.IndexInArchetype).Ptr;
+
+            var chunks = archetype->Chunks;
+            int memoryOrderIndexInArchetype = archetype->TypeIndexInArchetypeToMemoryOrderIndex[source.m_LookupCache.IndexInArchetype];
+            var srcPtrChunkDisabledCount = chunks.GetPointerToChunkDisabledCountForType(memoryOrderIndexInArchetype, archetypeChunk.m_Chunk.ListIndex);
+
+            dst[0] = src[0];
+            dst[1] = src[1];
+            *dstPtrChunkDisabledCount = *srcPtrChunkDisabledCount;
+        }
     }
 }

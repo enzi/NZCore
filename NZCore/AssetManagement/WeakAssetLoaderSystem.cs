@@ -132,6 +132,31 @@ namespace NZCore.AssetManagement
                 }
             }
         }
+        
+        /// <summary>
+        /// Call this first to load a specific asset
+        /// </summary>
+        /// <returns>Returns false on invalid reference</returns>
+        public bool Load(UntypedWeakReferenceId untypedWeakReference)
+        {
+            if (!untypedWeakReference.IsValid)
+                return false;
+
+            var hash = untypedWeakReference.GlobalId.AssetGUID;
+
+            if (requestedAssets.Contains(hash))
+            {
+                return true;
+            }
+
+            //Debug.Log($"Loading {hash}");
+            RuntimeContentManager.LoadObjectAsync(untypedWeakReference);
+            
+            requestedAssets.Add(hash);
+            loadRequests.Add(untypedWeakReference);
+
+            return true;
+        }
 
         /// <summary>
         /// Call this first to load a specific asset
@@ -156,6 +181,22 @@ namespace NZCore.AssetManagement
             loadRequests.Add(weakRef.Id);
 
             return true;
+        }
+        
+        public bool TryGetResult<T>(UntypedWeakReferenceId untypedWeakReference, out T result)
+            where T : Object
+        {
+            var hash = untypedWeakReference.GlobalId.AssetGUID;
+
+            if (assetDependencyMap.ContainsKey(hash))
+            {
+                //Debug.Log($"TryGetResult returning {hash} prefab. {weakRef.LoadingStatus}/{weakRef.IsReferenceValid}/{weakRef.Result}");
+                result = RuntimeContentManager.GetObjectValue<T>(untypedWeakReference);;
+                return true;
+            }
+
+            result = null;
+            return false;
         }
 
         /// <summary>
@@ -323,6 +364,7 @@ namespace NZCore.AssetManagement
         }
     }
 
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial struct WeakAssetLoaderSystem : ISystem
     {
         private WeakAssetLoaderSingleton singleton;

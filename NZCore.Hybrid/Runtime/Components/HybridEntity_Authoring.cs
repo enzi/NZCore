@@ -2,8 +2,12 @@
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
 using NZCore.Components;
+using NZCore.Editor;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Hash128 = Unity.Entities.Hash128;
@@ -19,6 +23,24 @@ namespace NZCore.Hybrid
         Addressable
     }
 
+    public enum GizmoType
+    {
+        Sphere,
+        Capsule,
+        Box
+    }
+    
+    public class DeferredGizmo
+    {
+        public Color Color;
+        public GizmoType Type;
+        public float3 Position;
+        public Quaternion Rotation;
+        public float3 Scale;
+        public float Radius;
+        public float Height;
+        public float Length;
+    }
 
     [ExecuteInEditMode]
     public class HybridEntity_Authoring : MonoBehaviour
@@ -82,16 +104,7 @@ namespace NZCore.Hybrid
             Graphics.DrawMesh(mesh, matrix, mat, gameObject.layer, drawCamera);
         }
 
-        private void OnDrawGizmos()
-        {
-            Gizmos.DrawCube(transform.position, Vector3.one);
-
-            var tmpTransform = transform;
-            var tmpPosition = tmpTransform.position;
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(tmpPosition, tmpPosition + (tmpTransform.forward * 6.0f));
-            Gizmos.color = Color.white;
-        }
+        
 #endif
 
         public class HybridEntity_Authoring_Baker : Baker<HybridEntity_Authoring>

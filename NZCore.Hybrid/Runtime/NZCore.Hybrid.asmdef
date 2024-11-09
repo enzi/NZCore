@@ -12,7 +12,8 @@
         "Unity.Transforms",
         "Unity.ResourceManager",
         "Unity.Physics.Hybrid",
-        "Unity.Addressables"
+        "Unity.Addressables",
+        "NZCore.Editor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
