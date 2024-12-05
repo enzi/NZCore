@@ -71,7 +71,7 @@ namespace NZCore.Hybrid
 
         public static HybridAnimator CreatePlayableGraph(Animator animator)
         {
-            var playableGraph = PlayableGraph.Create();
+            var playableGraph = PlayableGraph.Create("HybridGraph");
             var output = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
             var mixer = AnimationMixerPlayable.Create(playableGraph, 2);
             output.SetSourcePlayable(mixer);

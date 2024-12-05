@@ -1,0 +1,29 @@
+{
+  "name": "NZCore.UI.Editor",
+  "rootNamespace": "",
+  "references": [
+    "Unity.Collections",
+    "Unity.Entities",
+    "Unity.Entities.Editor",
+    "Unity.Entities.Hybrid",
+    "Unity.Entities.UI.Editor",
+    "Unity.Mathematics",
+    "NZCore",
+    "NZCore.Authoring",
+    "NZCore.UI",
+    "NZCore.Hybrid",
+    "NZCore.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

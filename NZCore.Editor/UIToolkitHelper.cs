@@ -139,5 +139,21 @@ namespace NZCore.Editor
                 }
             };
         }
+
+        public static void SetBorder(this VisualElement target, float width)
+        {
+            target.style.borderLeftWidth = width;
+            target.style.borderRightWidth = width;
+            target.style.borderTopWidth = width;
+            target.style.borderBottomWidth = width;
+        }
+        
+        public static void SetBorderColor(this VisualElement target, Color color)
+        {
+            target.style.borderTopColor = color;
+            target.style.borderBottomColor = color;
+            target.style.borderLeftColor = color;
+            target.style.borderRightColor = color;
+        }
     }
 }

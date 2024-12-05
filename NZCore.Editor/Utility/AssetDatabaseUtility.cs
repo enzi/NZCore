@@ -13,6 +13,47 @@ namespace NZCore.Editor
 {
     public static class AssetDatabaseUtility
     {
+        public static List<ScriptableObject> GetSubAssets(this Object asset)
+        {
+            List<ScriptableObject> assets = new List<ScriptableObject>();
+            var assetPathWithName = AssetDatabase.GetAssetPath(asset);
+            var childAssets = AssetDatabase.LoadAllAssetsAtPath(assetPathWithName);
+
+            if (childAssets.Length <= 1)
+                return assets;
+            
+            foreach (var childAsset in childAssets)
+            {
+                if (childAsset is ScriptableObject so)
+                {
+                    assets.Add(so);
+                }
+            }
+
+            return assets;
+        }
+        
+        public static bool TryGetSubAsset<T>(this Object asset, out T result)
+            where T : ScriptableObject
+        {
+            var assetPathWithName = AssetDatabase.GetAssetPath(asset);
+            var childAssets = AssetDatabase.LoadAllAssetsAtPath(assetPathWithName);
+            
+            foreach (var childAsset in childAssets)
+            {
+                if (childAsset is not T found)
+                {
+                    continue;
+                }
+
+                result = found;
+                return true;
+            }
+
+            result = null;
+            return false;
+        }
+        
         public static List<ScriptableObject> GetSubAssets(string baseType)
         {
             List<ScriptableObject> assets = new List<ScriptableObject>();
@@ -46,16 +87,16 @@ namespace NZCore.Editor
         public static void CreateOrUpdateSubAssets<TAsset, TSubAsset>(
             TAsset asset,
             Action<TAsset, SerializedObject> setData,
-            params string[] subAssetPostfix)
+            params string[] nameFilter)
             where TAsset : ScriptableObject
             where TSubAsset : ScriptableObject
         {
             var assetPathWithName = AssetDatabase.GetAssetPath(asset);
             var childAssets = AssetDatabase.LoadAllAssetsAtPath(assetPathWithName);
 
-            foreach (var type in subAssetPostfix)
+            foreach (var filter in nameFilter)
             {
-                if (childAssets.TryGetSubAssetExists(type, out var existingAsset))
+                if (childAssets.TryGetSubAssetExists(filter, out var existingAsset))
                 {
                     var so = new SerializedObject(existingAsset);
                     setData(asset, so);
@@ -64,7 +105,7 @@ namespace NZCore.Editor
                 else
                 {
                     var subAsset = ScriptableObject.CreateInstance<TSubAsset>();
-                    subAsset.name = $"{asset.name}{type}";
+                    subAsset.name = $"{asset.name}{filter}";
 
                     var so = new SerializedObject(subAsset);
                     setData(asset, so);

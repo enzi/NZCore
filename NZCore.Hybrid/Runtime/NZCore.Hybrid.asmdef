@@ -13,7 +13,7 @@
         "Unity.ResourceManager",
         "Unity.Physics.Hybrid",
         "Unity.Addressables",
-        "NZCore.Editor"
+        "NZCore.Editor"        
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

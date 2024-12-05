@@ -1,0 +1,11 @@
+
+.imgui-preview-container
+{
+    height: 100%;
+    flex-grow: 1;
+    min-height: 300px;
+    background-color: rgb(40, 40, 40);
+    border-width: 1px;
+    border-color: rgb(89, 89, 89);
+    margin: 5px 0;
+}
