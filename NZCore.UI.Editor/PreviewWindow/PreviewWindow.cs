@@ -8,6 +8,8 @@ using System.Reflection;
 using NZCore.Editor;
 using NZCore.Hybrid;
 using NZCore.UI.Elements;
+using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -22,32 +24,53 @@ namespace NZCore.UI.Editor
     [UxmlElement]
     public partial class PreviewWindow : VisualElement
     {
+        private class PersistentData
+        {
+            public Vector2 m_PreviewDir = new Vector2(120, -20);
+            public float m_AvatarScale = 1.0f;
+            public float m_ZoomFactor = 1.0f;
+            public Vector3 m_PivotPositionOffset = Vector3.zero;
+        }
+
+        private PersistentData ViewData;
+        
+        private const string ViewDataKey = "nz-preview-window";
+        
         public static PreviewWindow Instance;
         public static readonly List<DeferredGizmo> DeferredGizmos = new();
         
-        private static readonly Type avatarPreviewType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.AvatarPreview");
+        //private static readonly Type avatarPreviewType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.AvatarPreview");
         private static readonly Type previewRenderUtilityType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.PreviewRenderUtility");
         
-        private static readonly MethodInfo k_Cleanup = avatarPreviewType.GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.Public);
-        private static readonly MethodInfo k_DoAvatarPreview = avatarPreviewType.GetMethod("DoAvatarPreview", BindingFlags.Instance | BindingFlags.Public);
-        private static readonly PropertyInfo k_Animator = avatarPreviewType.GetProperty("Animator", BindingFlags.Instance | BindingFlags.Public);
-        private static readonly FieldInfo k_PreviewUtility = avatarPreviewType.GetField("m_PreviewUtility", BindingFlags.Instance | BindingFlags.NonPublic);
+        // private static readonly MethodInfo k_Cleanup = avatarPreviewType.GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.Public);
+        // private static readonly MethodInfo k_DoAvatarPreview = avatarPreviewType.GetMethod("DoAvatarPreview", BindingFlags.Instance | BindingFlags.Public);
+        // private static readonly PropertyInfo k_Animator = avatarPreviewType.GetProperty("Animator", BindingFlags.Instance | BindingFlags.Public);
+        // private static readonly FieldInfo k_PreviewUtility = avatarPreviewType.GetField("m_PreviewUtility", BindingFlags.Instance | BindingFlags.NonPublic);
+        //
         private static readonly FieldInfo k_RenderTexture = previewRenderUtilityType.GetField("m_RenderTexture", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        public Animator Animator;
+        private HybridAnimator hybridAnimator;
+        public ref HybridAnimator HybridAnimator => ref hybridAnimator;
         
-        private object avatarPreview;
+        public Action OnSetupFinished;
+        
+        private NZAvatarPreview avatarPreview;
         private PreviewRenderUtility previewRenderUtility;
-
         private GameObject previewObject;
-
-        public HybridAnimator HybridAnimator;
-
         private AnimationClip previewAnimationClip;
 
-        public Action OnSetupFinished;
+        private Material wireframeMaterial;
+        private IMGUIContainer previewContainer;
+        private RenderTexture gizmoRenderTexture;
 
         public PreviewWindow()
         {
             Instance = this;
+
+            viewDataKey = ViewDataKey;
+            
+            wireframeMaterial = new Material(Shader.Find("Hidden/Internal-Colored"));
             
             var styles = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.enzisoft.nzcore/NZCore.UI.Editor/PreviewWindow/PreviewWindow.uss");
             styleSheets.Add(styles);
@@ -57,11 +80,10 @@ namespace NZCore.UI.Editor
             var objectField = new ObjectField
             {
                 label = "Preview Object",
-                objectType = typeof(GameObject)
+                objectType = typeof(GameObject),
+                viewDataKey = "preview-window-object"
             };
 
-            objectField.viewDataKey = "preview-window-object";
-            
             objectField.RegisterValueChangedCallback(evt => {
                 previewObject = evt.newValue as GameObject;
                 
@@ -70,17 +92,20 @@ namespace NZCore.UI.Editor
             
             Add(objectField);
             
-            var previewContainer = new IMGUIContainer();
+            previewContainer = new IMGUIContainer();
             previewContainer.onGUIHandler = () => 
             {
                 if (avatarPreview != null)
                 {
-                    k_DoAvatarPreview.Invoke(avatarPreview, new object[] { previewContainer.contentRect, GUIStyle.none });
+                    //k_DoAvatarPreview.Invoke(avatarPreview, new object[] { previewContainer.contentRect, GUIStyle.none });
+                    avatarPreview.DoAvatarPreview(previewContainer.contentRect, GUIStyle.none);
                 }
                 
                 if (Event.current.type == EventType.Repaint)
                 {
                     DrawGizmos(previewContainer.contentRect);
+
+                    SaveViewDataState();
                 }
             };
             
@@ -88,37 +113,43 @@ namespace NZCore.UI.Editor
             
             Add(previewContainer);
             RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanelEvent);
+            RegisterCallback<GeometryChangedEvent>(OnGeometryChangedEvent);
         }
 
-        private void SetupAvatarPreview()
+        private void SaveViewDataState()
         {
-            // Cleanup existing preview
-            if (avatarPreview != null)
+            if (avatarPreview == null)
             {
-                //avatarPreview.Cleanup();
-                k_Cleanup.Invoke(avatarPreview, new object[] { });
-                avatarPreview = null;
-            }
-
-            if (previewObject == null) return;
-
-            // Get the Animator and Avatar
-            var animator = previewObject.GetComponent<Animator>();
-            if (animator == null || animator.avatar == null) 
                 return;
-
-            // Create Avatar Preview
-            avatarPreview = Activator.CreateInstance(avatarPreviewType, BindingFlags.Instance | BindingFlags.Public, null, new object[] { animator, null }, null);
-
-            var previewAnimator = k_Animator.GetValue(avatarPreview) as Animator;
-            previewAnimator.enabled = true;
-            HybridAnimator = HybridEntity.CreatePlayableGraph(previewAnimator);
-
-            previewRenderUtility = (PreviewRenderUtility) k_PreviewUtility.GetValue(avatarPreview);
+            }
             
-            OnSetupFinished();
+            ViewData.m_PivotPositionOffset = avatarPreview.m_PivotPositionOffset;
+            ViewData.m_AvatarScale = avatarPreview.m_AvatarScale;
+            ViewData.m_ZoomFactor = avatarPreview.m_ZoomFactor;
+            ViewData.m_PreviewDir = avatarPreview.m_PreviewDir;
+            
+            ExposedViewData.ExposedViewData.SaveViewData(this);
         }
 
+        private void OnGeometryChangedEvent(GeometryChangedEvent evt)
+        {
+            float pixelsPerPoint = EditorGUIUtility.pixelsPerPoint;
+
+            Rect r = previewContainer.contentRect;
+            
+            int width = (int) (r.width * (double) pixelsPerPoint);
+            int height = (int) (r.height * (double) pixelsPerPoint);
+            
+            gizmoRenderTexture = new RenderTexture(width, height, GraphicsFormat.R16G16B16A16_SFloat, SystemInfo.GetGraphicsFormat(DefaultFormat.DepthStencil));
+            
+            // clear the RT once
+            RenderTexture.active = gizmoRenderTexture;
+            wireframeMaterial.SetPass(0);
+            GL.Clear(true, true, Color.clear);
+            GL.Flush();
+            RenderTexture.active = null;
+        }
+        
         private void OnDetachFromPanelEvent(DetachFromPanelEvent evt)
         {
             Debug.Log("OnDetachFromPanelEvent");
@@ -128,53 +159,92 @@ namespace NZCore.UI.Editor
                 var disposeMethod = avatarPreview.GetType().GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 disposeMethod?.Invoke(avatarPreview, null);
             }
+            
+            gizmoRenderTexture.Release();
+            Object.DestroyImmediate(gizmoRenderTexture);
+        }
+
+        private void SetupAvatarPreview()
+        {
+            // Cleanup existing preview
+            if (avatarPreview != null)
+            {
+                //avatarPreview.Cleanup();
+                //k_Cleanup.Invoke(avatarPreview, new object[] { });
+                avatarPreview.OnDisable();
+                avatarPreview = null;
+                previewRenderUtility = null;
+            }
+
+            if (previewObject == null)
+            {
+                return;
+            }
+
+            // Get the Animator and Avatar
+            var previewObjectAnimator = previewObject.GetComponent<Animator>();
+            if (previewObjectAnimator == null || previewObjectAnimator.avatar == null)
+            {
+                return;
+            }
+
+            // Create Avatar Preview
+            avatarPreview = new NZAvatarPreview(previewObjectAnimator, null);// Activator.CreateInstance(avatarPreviewType, BindingFlags.Instance | BindingFlags.Public, null, new object[] { animator, null }, null);
+
+            //var previewAnimator = k_Animator.GetValue(avatarPreview) as Animator;
+            Animator = avatarPreview.Animator;
+            Animator.enabled = true;
+            hybridAnimator = HybridEntity.CreatePlayableGraph(Animator);
+
+            //previewRenderUtility = (PreviewRenderUtility) k_PreviewUtility.GetValue(avatarPreview);
+            previewRenderUtility = avatarPreview.m_PreviewUtility;
+
+            ViewData = new PersistentData();
+            ViewData = ExposedViewData.ExposedViewData.GetOrCreateViewData<PersistentData>(this, ViewDataKey, ViewData);
+                
+            avatarPreview.m_PivotPositionOffset = ViewData.m_PivotPositionOffset;
+            avatarPreview.m_AvatarScale = ViewData.m_AvatarScale;
+            avatarPreview.m_ZoomFactor = ViewData.m_ZoomFactor;
+            avatarPreview.m_PreviewDir = ViewData.m_PreviewDir;
+            
+            OnSetupFinished();
         }
 
         private void DrawGizmos(Rect r)
         {
-            if (previewRenderUtility == null)
+            if (previewContainer == null || previewRenderUtility == null)
+            {
                 return;
+            }
             
-            float pixelsPerPoint = EditorGUIUtility.pixelsPerPoint;
-            int width = (int) (r.width * (double) pixelsPerPoint);
-            int height = (int) (r.height * (double) pixelsPerPoint);
-            var renderTexture = new RenderTexture(width, height, GraphicsFormat.R16G16B16A16_SFloat, SystemInfo.GetGraphicsFormat(DefaultFormat.DepthStencil));
-          
-            RenderTexture.active = renderTexture;
-            GL.Clear(false, false, Color.clear);
-            var mat = new Material(Shader.Find("Hidden/Internal-Colored"));
-            mat.SetPass(0);
+            Handles.SetCamera(previewContainer.contentRect, previewRenderUtility.camera);
+            Handles.color = Color.green;
             
-            GL.PushMatrix();
-             
-            GL.modelview = previewRenderUtility.camera.worldToCameraMatrix;
-            GL.LoadProjectionMatrix(previewRenderUtility.camera.projectionMatrix);
-               
             foreach (var deferredGizmo in DeferredGizmos)
             {
                 switch (deferredGizmo.Type)
                 {
                     case GizmoType.Sphere:
+                        Handles.DrawWireArc(deferredGizmo.Position, Vector3.up, Vector3.forward, 360f, deferredGizmo.Size.x);
+                        Handles.DrawWireArc(deferredGizmo.Position, Vector3.right, Vector3.up, 360f, deferredGizmo.Size.x);
+                        Handles.DrawWireArc(deferredGizmo.Position, Vector3.forward, Vector3.up, 360f, deferredGizmo.Size.x);
                         break;
                     case GizmoType.Capsule:
-                        WireframeUtility.DrawWireframeCapsule(deferredGizmo.Position, deferredGizmo.Rotation, deferredGizmo.Radius, deferredGizmo.Length);
+                        var point2 = math.mul(deferredGizmo.Rotation, new Vector3(0, 0, deferredGizmo.Size.z * deferredGizmo.Scale.z));
+                        GizmosUtility.DrawWireCapsule(deferredGizmo.Position, deferredGizmo.Position + point2, deferredGizmo.Size.x * deferredGizmo.Scale.x);
                         break;
                     case GizmoType.Box:
-                        //WireframeUtility.DrawBox(deferredGizmo.Position, new Vector3(1, 1, 1));
+                        Handles.DrawWireCube(deferredGizmo.Position, deferredGizmo.Size);
                         break;
+                    case GizmoType.Circle:
+                    {
+                        Handles.DrawWireDisc(deferredGizmo.Position, Vector3.up, deferredGizmo.Size.x, 1.0f);
+                        break;
+                    }
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
             }
-            
-            GL.PopMatrix();
-            GL.Flush();
-            
-            RenderTexture.active = null;
-            
-            GUI.DrawTexture(r, renderTexture);
-            
-            Object.DestroyImmediate(renderTexture);
             
             DeferredGizmos.Clear();
         }
@@ -196,7 +266,7 @@ namespace NZCore.UI.Editor
         
         public void SetTimeRecursively(double time)
         {
-            HybridAnimator?.SetTimeRecursively(time);
+            hybridAnimator.SetTimeRecursively(time);
         }
     }
 }

@@ -2,6 +2,7 @@
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System.IO;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -55,6 +56,26 @@ namespace NZCore
 
             UnsafeUtility.MemCpy(copyPtr, blobReference.m_data.m_Ptr, length);
             return (T*)copyPtr;
+        }
+
+        public static void WriteBlobToDisk<T>(this ref BlobAssetReference<T> blobReference, string filePath)
+            where T : unmanaged
+        {
+            var header = blobReference.m_data.Header;
+            var length = header->Length;
+            
+            //var copyPtr = UnsafeUtility.Malloc(length, 16, Allocator.Persistent);
+            //UnsafeUtility.MemCpy(copyPtr, blobReference.m_data.m_Ptr, length);
+            var startPtr = blobReference.m_data.m_Ptr;
+
+            byte[] bytes = new byte[length];
+
+            for (int i =0; i < length;i++)
+            {
+                bytes[i] = startPtr[i];
+            }
+            
+            File.WriteAllBytes(filePath, bytes);
         }
     }
 }

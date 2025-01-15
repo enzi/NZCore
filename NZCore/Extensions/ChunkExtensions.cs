@@ -295,5 +295,17 @@ namespace NZCore
             dst[1] = src[1];
             *dstPtrChunkDisabledCount = *srcPtrChunkDisabledCount;
         }
+        
+        public static ref T GetChunkComponentDataRW<T>(this ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<T> typeHandle)
+            where T : unmanaged, IComponentData
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(typeHandle.m_Safety);
+#endif
+            var metaChunkEntity = archetypeChunk.m_Chunk.MetaChunkEntity;
+            archetypeChunk.m_EntityComponentStore->AssertEntityHasComponent(metaChunkEntity, typeHandle.m_TypeIndex);
+            var ptr = archetypeChunk.m_EntityComponentStore->GetComponentDataWithTypeRW(metaChunkEntity, typeHandle.m_TypeIndex, typeHandle.GlobalSystemVersion);
+            return ref UnsafeUtility.AsRef<T>(ptr);
+        }
     }
 }

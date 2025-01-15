@@ -9,9 +9,9 @@ using UnityEngine.Playables;
 
 namespace NZCore.Hybrid
 {
-    public class HybridAnimator : IComponentData
+    public struct HybridAnimator : IComponentData
     {
-        public Animator Animator;
+        //public Animator Animator;
         public PlayableGraph Graph;
         public AnimationMixerPlayable Mixer;
         public Playable RootPlayable;

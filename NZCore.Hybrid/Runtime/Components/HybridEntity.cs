@@ -33,6 +33,7 @@ namespace NZCore.Hybrid
             var animator = go.GetComponentInChildren<Animator>();
             if (animator != null)
             {
+                ecb.AddComponent(entity, animator);
                 ecb.AddComponent(entity, CreatePlayableGraph(animator));
                 ecb.AddComponent(entity, new AnimatorOverride());
                 ecb.AddComponent(entity, new AnimatorOverrideState());
@@ -58,9 +59,10 @@ namespace NZCore.Hybrid
             var animator = go.GetComponentInChildren<Animator>();
             if (animator != null)
             {
-                entityManager.AddComponentObject(entity, CreatePlayableGraph(animator));
+                entityManager.AddComponentObject(entity, animator);
                 entityManager.AddComponentData(entity, new AnimatorOverride());
                 entityManager.AddComponentData(entity, new AnimatorOverrideState());
+                entityManager.AddComponentData(entity, CreatePlayableGraph(animator));
             }
 
             if (go.TryGetComponent<HybridEntity>(out var hybridEntityComp))
@@ -85,7 +87,6 @@ namespace NZCore.Hybrid
 
             return new HybridAnimator()
             {
-                Animator = animator,
                 Graph = playableGraph,
                 Mixer = mixer
             };
@@ -110,13 +111,13 @@ namespace NZCore.Hybrid
                 switch (deferredGizmo.Type)
                 {
                     case GizmoType.Sphere:
-                        Gizmos.DrawWireSphere(deferredGizmo.Position, deferredGizmo.Radius * deferredGizmo.Scale.x);
+                        Gizmos.DrawWireSphere(deferredGizmo.Position, deferredGizmo.Size.x * deferredGizmo.Scale.x);
                         break;
                     case GizmoType.Capsule:
                     {
-                        var point2 = math.mul(deferredGizmo.Rotation, new Vector3(0, 0, deferredGizmo.Length * deferredGizmo.Scale.z));
+                        var point2 = math.mul(deferredGizmo.Rotation, new Vector3(0, 0, deferredGizmo.Size.z * deferredGizmo.Scale.z));
                         
-                        GizmosUtility.DrawWireCapsule(deferredGizmo.Position, deferredGizmo.Position + point2, deferredGizmo.Radius * deferredGizmo.Scale.x);
+                        GizmosUtility.DrawWireCapsule(deferredGizmo.Position, deferredGizmo.Position + point2, deferredGizmo.Size.x * deferredGizmo.Scale.x);
                         break;
                     }
                     case GizmoType.Box:

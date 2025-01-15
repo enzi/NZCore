@@ -27,7 +27,8 @@ namespace NZCore.Hybrid
     {
         Sphere,
         Capsule,
-        Box
+        Box,
+        Circle
     }
     
     public class DeferredGizmo
@@ -37,9 +38,11 @@ namespace NZCore.Hybrid
         public float3 Position;
         public Quaternion Rotation;
         public float3 Scale;
-        public float Radius;
-        public float Height;
-        public float Length;
+        public float3 Size;
+        
+        // public float Radius;
+        // public float Height;
+        // public float Length;
     }
 
     [ExecuteInEditMode]

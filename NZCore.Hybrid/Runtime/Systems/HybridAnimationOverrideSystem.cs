@@ -21,10 +21,11 @@ namespace NZCore.Hybrid
                 animatorOverrideStateRW.ValueRW.Playing = 0;
             }
             
-            foreach (var (animatorComp, animatorOverrideRO, animatorOverrideStateRW)
-                     in SystemAPI.Query<HybridAnimator, RefRO<AnimatorOverride>, RefRW<AnimatorOverrideState>>())
+            foreach (var (hybridAnimatorRW, animatorOverrideRO, animatorOverrideStateRW)
+                     in SystemAPI.Query<RefRW<HybridAnimator>, RefRO<AnimatorOverride>, RefRW<AnimatorOverrideState>>())
             {
                 ref var state = ref animatorOverrideStateRW.ValueRW;
+                ref var animatorComp = ref hybridAnimatorRW.ValueRW;
 
                 if (animatorComp.TransitionTo != 0)
                 {
