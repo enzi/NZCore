@@ -2,12 +2,13 @@
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace NZCore
 {
-    public unsafe struct ByteDeserializer
+    public unsafe struct ByteDeserializer : IDisposable
     {
         [ReadOnly] private NativeArray<byte> data;
         private int currentIndex;
@@ -15,7 +16,7 @@ namespace NZCore
         public int CurrentIndex => currentIndex;
         public byte* CurrentPtr => (byte*)data.GetUnsafeReadOnlyPtr() + currentIndex;
         public bool ReachedLastIndex => currentIndex >= data.Length; // >= is safeguard for corrupt savegames to prevent endless loop
-
+        
         public ByteDeserializer(NativeArray<byte> byteArray, int offset = 0)
         {
             data = byteArray;
@@ -73,6 +74,11 @@ namespace NZCore
         public void Reset()
         {
             currentIndex = 0;
+        }
+
+        public void Dispose()
+        {
+            data.Dispose();
         }
     }
 }
