@@ -68,7 +68,7 @@ namespace NZCore.Hybrid
         {
             //Debug.Log(entitiesList.Length + " transforms in sync system");
             var deltaTime = SystemAPI.Time.DeltaTime;
-            var weakAssetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
+            var assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
 
             foreach (var index in entitiesToRemove)
             {
@@ -93,12 +93,12 @@ namespace NZCore.Hybrid
                     {
                         //Debug.Log($"TransformEntityMapping - Destroying {tmpTransform.gameObject.name}");
 
-                        weakAssetLoader.UnregisterEntity(trackedEntity.Entity);
+                        assetLoader.UnregisterEntity(trackedEntity.Entity);
                         Object.Destroy(tmpTransform.gameObject);
                     }
                 }
 
-                RemoveEntity(index, ref trackedEntity);
+                RemoveEntity(index, trackedEntity.Entity);
             }
 
             for (var i = delayedDestroyRequests.Length - 1; i >= 0; i--)
@@ -109,7 +109,7 @@ namespace NZCore.Hybrid
 
                 if (delayedDestroyRequest.Time <= 0)
                 {
-                    weakAssetLoader.UnregisterEntity(delayedDestroyRequest.Entity);
+                    assetLoader.UnregisterEntity(delayedDestroyRequest.Entity);
                     Object.Destroy(delayedDestroyRequest.Object);
 
                     delayedDestroyRequests.RemoveAt(i);
@@ -142,12 +142,20 @@ namespace NZCore.Hybrid
             entitiesToRemove.Capacity = entitiesList.Capacity;
         }
 
-        private void RemoveEntity(int index, ref TrackedHybridEntity trackedEntity)
+        public void RemoveEntity(Entity entity)
+        {
+            if (indexLookup.TryGetValue(entity, out var index))
+            {
+                RemoveEntity(index, entity);
+            }
+        }
+
+        private void RemoveEntity(int index, Entity entity)
         {
             transformArray.RemoveAtSwapBack(index);
             entitiesList.RemoveAtSwapBack(index);
             hybridComponents.RemoveAtSwapBack(index);
-            indexLookup.Remove(trackedEntity.Entity);
+            indexLookup.Remove(entity);
 
             if (index < entitiesList.Length)
             {
@@ -156,7 +164,7 @@ namespace NZCore.Hybrid
                 indexLookup[entityToFix] = index;
             }
         }
-
+        
         public bool TryGetId(Entity entity, out int index)
         {
             return indexLookup.TryGetValue(entity, out index);

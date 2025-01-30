@@ -13,7 +13,7 @@ namespace NZCore.Hybrid
     {
         protected override void OnUpdate()
         {
-            var loader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
+            var assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
 
             foreach (var animatorOverrideStateRW
                      in SystemAPI.Query<RefRW<AnimatorOverrideState>>().WithChangeFilter<AnimatorOverride>())
@@ -29,23 +29,11 @@ namespace NZCore.Hybrid
 
                 if (animatorComp.TransitionTo != 0)
                 {
-                    if (animatorComp.TransitionTo > 0)
+                    animatorComp.Weight = animatorComp.TransitionTo > 0 ? Mathf.Min(animatorComp.Weight + 0.1f, 1.0f) : Mathf.Max(animatorComp.Weight - 0.1f, 0.0f);
+                    
+                    if (Mathf.Approximately(animatorComp.Weight, 1.0f))
                     {
-                        animatorComp.Weight = Mathf.Min(animatorComp.Weight + 0.1f, 1.0f);
-
-                        if (Mathf.Approximately(animatorComp.Weight, 1.0f))
-                        {
-                            animatorComp.TransitionTo = 0;
-                        }
-                    }
-                    else
-                    {
-                        animatorComp.Weight = Mathf.Max(animatorComp.Weight - 0.1f, 0.0f);
-
-                        if (animatorComp.Weight == 0.0f)
-                        {
-                            animatorComp.TransitionTo = 0;
-                        }
+                        animatorComp.TransitionTo = 0;
                     }
                     
                     animatorComp.Mixer.SetInputWeight(0, 1.0f - animatorComp.Weight);
@@ -62,14 +50,17 @@ namespace NZCore.Hybrid
                     continue;
                 }
 
-                loader.Load(clip);
-                                    
-                if (loader.TryGetResult(clip, out var animationClip))
+                if (!assetLoader.Load(clip))
                 {
-                    animatorComp.ChangeClip(animationClip, animatorOverrideRO.ValueRO.Scale);
-                    animatorComp.Graph.Play();
-                    state.Playing = 1;
+                    continue;
                 }
+                
+                if (!assetLoader.TryGetResult(clip, out var animationClip))
+                    continue;
+                
+                animatorComp.ChangeClip(animationClip, animatorOverrideRO.ValueRO.Scale);
+                animatorComp.Graph.Play();
+                state.Playing = 1;
             }
         }
     }
