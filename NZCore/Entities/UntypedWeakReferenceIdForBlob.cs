@@ -30,5 +30,10 @@ namespace NZCore
         {
             return new WeakObjectReference<AnimationClip>(this);
         }
+        
+        public WeakObjectReference<AudioClip> AsAudioClip()
+        {
+            return new WeakObjectReference<AudioClip>(this);
+        }
     }
 }

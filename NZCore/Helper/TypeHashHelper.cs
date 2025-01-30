@@ -10,11 +10,18 @@ using Unity.Entities;
 
 namespace NZCore.Helper
 {
+    /*
+     * This class initial purpose was to ignore hashing safety fields for NativeContainers
+     * but as the StableTypeHash provided from Unity isn't stable across different Entities versions
+     * this was also repurposed to give a safe method of hashing types without breaking changes.
+     * CoreCLR could shake things up a bit with assembly names being different (primitives change from mscorlib to netstandard)
+     * but there's still an opportunity to handle it here.
+     * */
     public static class TypeHashIgnoreSafety
     {
         const ulong kFNV1A64OffsetBasis = 14695981039346656037;
 
-        public static ulong HashType(Type type, bool verbose = false)
+        public static ulong GetFixedHash(Type type, bool verbose = false)
         {
             if (verbose)
                 Debug.Log($"Hashing {type.Name}");
@@ -28,7 +35,10 @@ namespace NZCore.Helper
             }
 
             if (type.ContainsGenericParameters)
-                throw new ArgumentException($"'{type}' contains open generic parameters. Generic types must have all generic parameters specified to closed types when calculating stable type hashes");
+            {
+                // throw new ArgumentException($"'{type}' contains open generic parameters. Generic types must have all generic parameters specified to closed types when calculating stable type hashes");
+                return 0;
+            }
 
             // Only non-pod and non-unityengine types could possibly have a version attribute
             hash = TypeHash.CombineFNV1A64(hash, HashVersionAttribute(type));
@@ -63,7 +73,7 @@ namespace NZCore.Helper
                 }
                 else
                 {
-                    fieldTypeHash = HashType(fieldType, verbose);
+                    fieldTypeHash = GetFixedHash(fieldType, verbose);
                     if (verbose)
                         Debug.Log($"Step fieldType {fieldTypeHash}");
                 }

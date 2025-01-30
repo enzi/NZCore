@@ -89,6 +89,12 @@ namespace NZCore
         {
             return ref _unsafeParallelList->GetUnsafeList(threadIndex);
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeList<T>* GetUnsafeListPtr(int threadIndex)
+        {
+            return _unsafeParallelList->GetUnsafeListPtr(threadIndex);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetBlockCount(int threadIndex)
@@ -166,6 +172,11 @@ namespace NZCore
         public ThreadWriter AsThreadWriter()
         {
             return new ThreadWriter(ref this);
+        }
+
+        public ParallelListEnumerator GetEnumerator()
+        {
+            return new ParallelListEnumerator(this);
         }
 
         public void Report()
@@ -828,6 +839,39 @@ namespace NZCore
 
                 //ArrayHashMap1.CalculateBucketsParallel(threadList.Ptr, threadListLength);
                 ArrayHashMap2.CalculateBucketsParallel(threadList.Ptr, threadListLength);
+            }
+        }
+
+        [BurstCompile]
+        public struct ParallelListEnumerator
+        {
+            private ParallelList<T> parallelList;
+            private int currentIndex;
+
+            private UnsafeList<T>* listPtr;
+            public ref UnsafeList<T> Current => ref *listPtr;
+
+            public ParallelListEnumerator(ParallelList<T> list)
+            {
+                parallelList = list;
+                currentIndex = 0;
+                listPtr = null;
+            }
+
+            public bool MoveNext()
+            {
+                while(currentIndex < JobsUtility.ThreadIndexCount)
+                {
+                    listPtr = parallelList.GetUnsafeListPtr(currentIndex);
+                    currentIndex++;
+                    
+                    if (listPtr->Length > 0)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
             }
         }
     }

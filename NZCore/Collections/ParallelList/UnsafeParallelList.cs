@@ -146,6 +146,12 @@ namespace NZCore
         {
             return ref GetPerThreadList(threadId).List;
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeList<T>* GetUnsafeListPtr(int listIndex)
+        {
+            return (UnsafeList<T>*) (perThreadLists + listIndex * PER_THREAD_LIST_SIZE);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte* GetUnsafePtr(int threadId)
