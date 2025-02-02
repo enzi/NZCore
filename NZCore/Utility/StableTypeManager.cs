@@ -165,7 +165,8 @@ namespace NZCore
         
         public static ulong GetStableTypeHashFromTypeIndex(TypeIndex typeIndex)
         {
-            return stableHashMap.TryGetValue(typeIndex, out var hash) ? hash : 0;
+            var map = *(UnsafeHashMap<StableTypeIndex, ulong>*) StableHashMap.Ref.Data;
+            return map.TryGetValue(typeIndex, out var hash) ? hash : 0;
         }
         
         private struct StableTypeManagerKey { }
