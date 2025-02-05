@@ -162,7 +162,32 @@ namespace NZCore
                 ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex)
                 : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex, ecs->GlobalSystemVersion);
         }
+        
+        public static byte* GetSharedComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex, Entity entity)
+        {
+            var ecs = chunk.m_EntityComponentStore;
+            var sharedComponentIndex = ecs->GetSharedComponentDataIndex(entity, typeIndex);
+            return (byte*) ecs->GetSharedComponentDataAddr_Unmanaged(sharedComponentIndex, typeIndex);
+        }
 
+        public static byte* GetSharedComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex)
+        {
+            var ecs = chunk.m_EntityComponentStore;
+            var sharedComponentIndex = GetSharedComponentDataIndex(chunk, typeIndex);
+            return (byte*) ecs->GetSharedComponentDataAddr_Unmanaged(sharedComponentIndex, typeIndex);
+        }
+
+        public static int GetSharedComponentDataIndex(this in ArchetypeChunk chunk, TypeIndex typeIndex)
+        {
+            var ecs = chunk.m_EntityComponentStore;
+            var archetype = ecs->GetArchetype(chunk.m_Chunk);
+            var indexInTypeArray = ChunkDataUtility.GetIndexInTypeArray(archetype, typeIndex);
+            
+            var sharedComponentValueArray = archetype->Chunks.GetSharedComponentValues(chunk.m_Chunk.ListIndex);
+            var sharedComponentOffset = indexInTypeArray - archetype->FirstSharedComponent;
+            return sharedComponentValueArray[sharedComponentOffset];
+        }
+        
         public static ulong* GetRequiredEnabledBitsPtrRW<T>(this in ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<T> typeHandle, out int* ptrChunkDisabledCount)
             where T : unmanaged, IComponentData, IEnableableComponent
         {

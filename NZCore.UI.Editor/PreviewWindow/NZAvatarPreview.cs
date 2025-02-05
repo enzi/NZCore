@@ -13,8 +13,9 @@ using Object = UnityEngine.Object;
 
 namespace NZCore.UI.Editor
 {
-    internal class NZAvatarPreview
+    public class NZAvatarPreview
     {
+        #region Reflection Access
         private static readonly Type t_GameObjectInspectorType =  typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.GameObjectInspector");
         private static readonly MethodInfo m_GameObjectInspector_GetRenderableCenterRecurse = t_GameObjectInspectorType.GetMethod("GetRenderableCenterRecurse", BindingFlags.Public | BindingFlags.Static);
         private static readonly MethodInfo m_GameObjectInspector_HasRenderableParts = t_GameObjectInspectorType.GetMethod("HasRenderableParts", BindingFlags.Public | BindingFlags.Static);
@@ -38,134 +39,21 @@ namespace NZCore.UI.Editor
         private static readonly MethodInfo m_IAnimationPreviewable_OnPreviewUpdate = t_IAnimationPreviewable.GetMethod("OnPreviewUpdate", BindingFlags.Public | BindingFlags.Instance);
         
         private static readonly MethodInfo getComponentsMethod = typeof(GameObject).GetMethod("GetComponentsInChildren", new[] { typeof(Type) });
-        
-        const string kDefaultAvatarPreviewOption = "DefaultAvatarPreviewOption";
-        const string kIkPref = "AvatarpreviewShowIK";
-        const string k2DPref = "Avatarpreview2D";
-        const string kReferencePref = "AvatarpreviewShowReference";
-        const string kSpeedPref = "AvatarpreviewSpeed";
-        const float kTimeControlRectHeight = 20;
+        #endregion
 
-        public delegate void OnAvatarChange();
-        OnAvatarChange m_OnAvatarChangeFunc = null;
+        #region Constants
 
-        // private class ObjectSelectorOperation : ObjectSelectorReceiver
-        // {
-        //     public static void Start(AvatarPreview owner)
-        //     {
-        //         var operation = ScriptableObject.CreateInstance<ObjectSelectorOperation>();
-        //         operation.m_Owner = owner;
-        //         operation.m_Selector = ObjectSelector.get;
-        //         operation.Execute();
-        //     }
-        //
-        //     AvatarPreview m_Owner;
-        //     ObjectSelector m_Selector;
-        //
-        //     bool IsValid()
-        //     {
-        //         return m_Owner != null;
-        //     }
-        //
-        //     private void Execute()
-        //     {
-        //         if (m_Selector)
-        //         {
-        //             m_Selector.Show(null, typeof(GameObject), null, false);
-        //             m_Selector.objectSelectorReceiver = this;
-        //         }
-        //     }
-        //
-        //     public override void OnSelectionChanged(Object selection)
-        //     {
-        //         if (IsValid())
-        //         {
-        //             m_Owner.SetPreview(ObjectSelector.GetCurrentObject() as GameObject);
-        //             InspectorWindow.RepaintAllInspectors();
-        //         }
-        //     }
-        //
-        //     public override void OnSelectionClosed(Object selection)
-        //     {
-        //         if (IsValid())
-        //         {
-        //             m_Owner.SetPreview(ObjectSelector.GetCurrentObject() as GameObject);
-        //         }
-        //
-        //         m_Selector.objectSelectorReceiver = null;
-        //     }
-        // }
+        private const string kDefaultAvatarPreviewOption = "DefaultAvatarPreviewOption";
+        private const string kIkPref = "AvatarpreviewShowIK";
+        private const string k2DPref = "Avatarpreview2D";
+        private const string kReferencePref = "AvatarpreviewShowReference";
+        private const string kSpeedPref = "AvatarpreviewSpeed";
+        private const float kTimeControlRectHeight = 20;
 
-        public OnAvatarChange OnAvatarChangeFunc
-        {
-            set { m_OnAvatarChangeFunc = value; }
-        }
+        #endregion
 
-        public bool IKOnFeet
-        {
-            get { return m_IKOnFeet; }
-        }
+        #region Fields
 
-        public bool ShowIKOnFeetButton
-        {
-            get { return m_ShowIKOnFeetButton; }
-            set { m_ShowIKOnFeetButton = value; }
-        }
-
-        public bool is2D
-        {
-            get { return m_2D; }
-            set
-            {
-                m_2D = value;
-                if (m_2D)
-                {
-                    m_PreviewDir = new Vector2();
-                }
-            }
-        }
-
-        public Animator Animator
-        {
-            get { return m_PreviewInstance != null ? m_PreviewInstance.GetComponent(typeof(Animator)) as Animator : null; }
-        }
-
-        public GameObject PreviewObject
-        {
-            get { return m_PreviewInstance; }
-        }
-
-        public ModelImporterAnimationType animationClipType
-        {
-            get { return GetAnimationType(m_SourcePreviewMotion); }
-        }
-
-        public Vector3 bodyPosition
-        {
-            get
-            {
-                if (Animator && Animator.isHuman)
-                    return Animator.bodyPosition;
-
-                if (m_PreviewInstance != null)
-                {
-                    return (Vector3)m_GameObjectInspector_GetRenderableCenterRecurse.Invoke(null, new object[] { m_PreviewInstance, 1, 8 });
-                    //return GameObjectInspector.GetRenderableCenterRecurse(m_PreviewInstance, 1, 8);
-                }
-
-                return Vector3.zero;
-            }
-        }
-
-        public Vector3 rootPosition
-        {
-            get { return m_PreviewInstance ? m_PreviewInstance.transform.position : Vector3.zero; }
-        }
-
-
-        //public TimeControl timeControl;
-
-        // 60 is the default framerate for animations created inside Unity so as good a default as any.
         public int fps = 60;
 
         private Material     m_FloorMaterial;
@@ -174,34 +62,31 @@ namespace NZCore.UI.Editor
         private Material     m_ShadowPlaneMaterial;
 
         public PreviewRenderUtility        m_PreviewUtility;
-        GameObject                  m_PreviewInstance;
-        GameObject                  m_ReferenceInstance;
-        GameObject                  m_DirectionInstance;
-        GameObject                  m_PivotInstance;
-        GameObject                  m_RootInstance;
-        //IAnimationPreviewable[]     m_Previewables;
-        object[]                    m_Previewables;
-        float                       m_BoundingVolumeScale;
-        Motion                      m_SourcePreviewMotion;
-        Animator                    m_SourceScenePreviewAnimator;
+        private GameObject                  m_PreviewInstance;
+        private GameObject                  m_ReferenceInstance;
+        private GameObject                  m_DirectionInstance;
+        private GameObject                  m_PivotInstance;
+        private GameObject                  m_RootInstance;
+        //private IAnimationPreviewable[]     m_Previewables;
+        private object[]                    m_Previewables;
+        private float                       m_BoundingVolumeScale;
+        private Motion                      m_SourcePreviewMotion;
+        private Animator                    m_SourceScenePreviewAnimator;
 
-        const string                s_PreviewStr = "Preview";
-        int                         m_PreviewHint = s_PreviewStr.GetHashCode();
+        private const string                s_PreviewStr = "Preview";
+        private int                         m_PreviewHint = s_PreviewStr.GetHashCode();
 
-        const string                s_PreviewSceneStr = "PreviewSene";
-        int                         m_PreviewSceneHint = s_PreviewSceneStr.GetHashCode();
+        private const string                s_PreviewSceneStr = "PreviewSene";
+        private int                         m_PreviewSceneHint = s_PreviewSceneStr.GetHashCode();
 
-        Texture2D                   m_FloorTexture;
-        Mesh                        m_FloorPlane;
+        private Texture2D                   m_FloorTexture;
+        private Mesh                        m_FloorPlane;
 
-        bool                        m_ShowReference = false;
-
-        bool                        m_IKOnFeet = false;
-        bool                        m_ShowIKOnFeetButton = true;
-
-        bool                        m_2D;
-
-        bool                        m_IsValid;
+        private bool                        m_ShowReference = false;
+        private bool                        m_IKOnFeet = false;
+        private bool                        m_ShowIKOnFeetButton = true;
+        private bool                        m_2D;
+        private bool                        m_IsValid;
 
         private const float kFloorFadeDuration = 0.2f;
         private const float kFloorScale = 5;
@@ -220,21 +105,307 @@ namespace NZCore.UI.Editor
         public float m_AvatarScale = 1.0f;
         public float m_ZoomFactor = 1.0f;
         public Vector3 m_PivotPositionOffset = Vector3.zero;
+        
+        private float m_LastNormalizedTime = -1000;
+        private float m_LastStartTime = -1000;
+        private float m_LastStopTime = -1000;
+        private bool m_NextTargetIsForward = true;
 
+        private static NZAvatarPreview instance;
+
+        #endregion
+        
+        #region Properties
+
+        public static NZAvatarPreview Instance
+        {
+            get => instance;
+        }
+        
+        public OnAvatarChange OnAvatarChangeFunc
+        {
+            set => m_OnAvatarChangeFunc = value;
+        }
+
+        public bool IKOnFeet => m_IKOnFeet;
+
+        public bool ShowIKOnFeetButton
+        {
+            get => m_ShowIKOnFeetButton;
+            set => m_ShowIKOnFeetButton = value;
+        }
+
+        public bool is2D
+        {
+            get => m_2D;
+            set
+            {
+                m_2D = value;
+                if (m_2D)
+                {
+                    m_PreviewDir = new Vector2();
+                }
+            }
+        }
+
+        public Animator Animator => m_PreviewInstance != null ? m_PreviewInstance.GetComponent(typeof(Animator)) as Animator : null;
+
+        public GameObject PreviewObject => m_PreviewInstance;
+
+        public ModelImporterAnimationType animationClipType => GetAnimationType(m_SourcePreviewMotion);
+
+        public Vector3 bodyPosition
+        {
+            get
+            {
+                if (Animator && Animator.isHuman)
+                    return Animator.bodyPosition;
+
+                if (m_PreviewInstance != null)
+                {
+                    return (Vector3)m_GameObjectInspector_GetRenderableCenterRecurse.Invoke(null, new object[] { m_PreviewInstance, 1, 8 });
+                    //return GameObjectInspector.GetRenderableCenterRecurse(m_PreviewInstance, 1, 8);
+                }
+
+                return Vector3.zero;
+            }
+        }
+        
+        public PreviewRenderUtility PreviewUtility
+        {
+            get
+            {
+                if (m_PreviewUtility != null)
+                {
+                    return m_PreviewUtility;
+                }
+
+                m_PreviewUtility = new PreviewRenderUtility
+                {
+                    camera =
+                    {
+                        fieldOfView = 30.0f,
+                        allowHDR = false,
+                        allowMSAA = false
+                    },
+                    ambientColor = new Color(.1f, .1f, .1f, 0)
+                };
+                    
+                m_PreviewUtility.lights[0].intensity = kDefaultIntensity;
+                m_PreviewUtility.lights[0].transform.rotation = Quaternion.Euler(40f, 40f, 0);
+                m_PreviewUtility.lights[1].intensity = kDefaultIntensity;
+                
+                return m_PreviewUtility;
+            }
+        }
+
+        public Vector3 rootPosition => m_PreviewInstance ? m_PreviewInstance.transform.position : Vector3.zero;
+        #endregion
+        
+        #region GUIStyles
         private class Styles
         {
-            public GUIContent pivot = EditorGUIUtility.TrIconContent("AvatarPivot", "Displays avatar's pivot and mass center");
-            public GUIContent ik = EditorGUIUtility.TrTextContent("IK", "Toggles feet IK preview");
-            public GUIContent is2D = EditorGUIUtility.TrIconContent("SceneView2D", "Toggles 2D preview mode");
-            public GUIContent avatarIcon = EditorGUIUtility.TrIconContent("AvatarSelector", "Changes the model to use for previewing.");
+            public readonly GUIContent pivot = EditorGUIUtility.TrIconContent("AvatarPivot", "Displays avatar's pivot and mass center");
+            public readonly GUIContent ik = EditorGUIUtility.TrTextContent("IK", "Toggles feet IK preview");
+            public readonly GUIContent is2D = EditorGUIUtility.TrIconContent("SceneView2D", "Toggles 2D preview mode");
+            public readonly GUIContent avatarIcon = EditorGUIUtility.TrIconContent("AvatarSelector", "Changes the model to use for previewing.");
 
-            public GUIStyle preButton = "toolbarbutton";
-            public GUIStyle preSlider = "preSlider";
-            public GUIStyle preSliderThumb = "preSliderThumb";
+            public readonly GUIStyle preButton = "toolbarbutton";
+            public readonly GUIStyle preSlider = "preSlider";
+            public readonly GUIStyle preSliderThumb = "preSliderThumb";
         }
         private static Styles s_Styles;
+        #endregion
+        
+        public delegate void OnAvatarChange();
 
-        void SetPreviewCharacterEnabled(bool enabled, bool showReference)
+        private OnAvatarChange m_OnAvatarChangeFunc;
+        
+        public NZAvatarPreview(Animator previewObjectInScene, Motion objectOnSameAsset)
+        {
+            instance = this;
+            
+            InitInstance(previewObjectInScene, objectOnSameAsset);
+        }
+        
+        private void Init()
+        {
+            if (s_Styles == null)
+                s_Styles = new Styles();
+
+            if (m_FloorPlane == null)
+            {
+                m_FloorPlane = Resources.GetBuiltinResource(typeof(Mesh), "New-Plane.fbx") as Mesh;
+            }
+
+            if (m_FloorTexture == null)
+            {
+                m_FloorTexture = (Texture2D)EditorGUIUtility.Load("Avatar/Textures/AvatarFloor.png");
+            }
+
+            if (m_FloorMaterial == null)
+            {
+                Shader shader = EditorGUIUtility.LoadRequired("Previews/PreviewPlaneWithShadow.shader") as Shader;
+                m_FloorMaterial = new Material(shader)
+                {
+                    mainTexture = m_FloorTexture,
+                    mainTextureScale = Vector2.one * kFloorScale * kFloorTextureScale
+                };
+                m_FloorMaterial.SetVector("_Alphas", new Vector4(kFloorAlpha, kFloorShadowAlpha, 0, 0));
+                m_FloorMaterial.hideFlags = HideFlags.HideAndDontSave;
+
+                m_FloorMaterialSmall = new Material(m_FloorMaterial)
+                {
+                    mainTextureScale = Vector2.one * kFloorScaleSmall * kFloorTextureScale,
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            }
+
+            if (m_ShadowMaskMaterial == null)
+            {
+                Shader shader = EditorGUIUtility.LoadRequired("Previews/PreviewShadowMask.shader") as Shader;
+                m_ShadowMaskMaterial = new Material(shader)
+                {
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            }
+
+            if (m_ShadowPlaneMaterial == null)
+            {
+                Shader shader = EditorGUIUtility.LoadRequired("Previews/PreviewShadowPlaneClip.shader") as Shader;
+                m_ShadowPlaneMaterial = new Material(shader)
+                {
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            }
+        }
+        
+        private void InitInstance(Animator scenePreviewObject, Motion motion)
+        {
+            m_SourcePreviewMotion = motion;
+            m_SourceScenePreviewAnimator = scenePreviewObject;
+
+            if (m_PreviewInstance == null)
+            {
+                GameObject go = CalculatePreviewGameObject(scenePreviewObject, motion, animationClipType);
+                SetupBounds(go);
+            }
+
+            if (m_ReferenceInstance == null)
+            {
+                GameObject referenceGO = (GameObject)EditorGUIUtility.Load("Avatar/dial_flat.prefab");
+                m_ReferenceInstance = (GameObject)Object.Instantiate(referenceGO, Vector3.zero, Quaternion.identity);
+                m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_ReferenceInstance });
+                PreviewUtility.AddSingleGO(m_ReferenceInstance);
+            }
+
+            if (m_DirectionInstance == null)
+            {
+                GameObject directionGO = (GameObject)EditorGUIUtility.Load("Avatar/arrow.fbx");
+                m_DirectionInstance = (GameObject)Object.Instantiate(directionGO, Vector3.zero, Quaternion.identity);
+                m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_DirectionInstance });
+                PreviewUtility.AddSingleGO(m_DirectionInstance);
+            }
+
+            if (m_PivotInstance == null)
+            {
+                GameObject pivotGO = (GameObject)EditorGUIUtility.Load("Avatar/root.fbx");
+                m_PivotInstance = (GameObject)Object.Instantiate(pivotGO, Vector3.zero, Quaternion.identity);
+                m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_PivotInstance });
+                PreviewUtility.AddSingleGO(m_PivotInstance);
+            }
+
+            if (m_RootInstance == null)
+            {
+                GameObject rootGO = (GameObject)EditorGUIUtility.Load("Avatar/root.fbx");
+                m_RootInstance = (GameObject)Object.Instantiate(rootGO, Vector3.zero, Quaternion.identity);
+                m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_RootInstance });
+                PreviewUtility.AddSingleGO(m_RootInstance);
+            }
+
+            // Load preview settings from prefs
+            m_IKOnFeet = EditorPrefs.GetBool(kIkPref, false);
+            m_ShowReference = EditorPrefs.GetBool(kReferencePref, true);
+            is2D = EditorPrefs.GetBool(k2DPref, EditorSettings.defaultBehaviorMode == EditorBehaviorMode.Mode2D);
+
+            SetPreviewCharacterEnabled(false, false);
+
+            var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(motion)) as ModelImporter;
+            if (importer && importer.bakeAxisConversion)
+            {
+                m_PreviewDir += new Vector2(180,0);
+            }
+
+            m_PivotPositionOffset = Vector3.zero;
+        }
+        
+        private void SetupBounds(GameObject go)
+        {
+            m_IsValid = go != null && go != GetGenericAnimationFallback();
+
+            if (go != null)
+            {
+                m_PreviewInstance = InstantiatePreviewPrefab(go);
+                PreviewUtility.AddSingleGO(m_PreviewInstance);
+
+                m_Previewables = (object[]) getComponentsMethod.Invoke(m_PreviewInstance, new object[] { t_IAnimationPreviewable });
+                var bounds = (Bounds) m_GameObjectInspector_GetRenderableBounds.Invoke(null, new object[] { m_PreviewInstance });
+
+                m_BoundingVolumeScale = Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z));
+
+
+                if (Animator && Animator.isHuman)
+                    m_AvatarScale = m_ZoomFactor = Animator.humanScale;
+                else
+                    m_AvatarScale = m_ZoomFactor = m_BoundingVolumeScale / 2;
+            }
+        }
+        
+        private GameObject InstantiatePreviewPrefab(GameObject original)
+        {
+            if (original == null)
+                throw new ArgumentException("The Prefab you want to instantiate is null.");
+            
+            //GameObject go = EditorUtility.InstantiateRemoveAllNonAnimationComponents(original, Vector3.zero, Quaternion.identity) as GameObject;
+            GameObject go = Object.Instantiate(original);
+            go.name += "AnimatorPreview";
+            go.tag = "Untagged";
+            //EditorUtility.InitInstantiatedPreviewRecursive(go);
+            m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { go });
+            
+            Animator[] componentsInChildren = go.GetComponentsInChildren<Animator>();
+            foreach (var animator in componentsInChildren)
+            {
+                animator.enabled = false;
+                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                animator.logWarnings = false;
+                animator.fireEvents = false;
+            }
+            
+            if (componentsInChildren.Length == 0)
+            {
+                Animator animator = go.AddComponent<Animator>();
+                animator.enabled = false;
+                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                animator.logWarnings = false;
+                animator.fireEvents = false;
+            }
+            
+            return go;
+        }
+        
+        public void OnDisable()
+        {
+            if (m_PreviewUtility == null)
+            {
+                return;
+            }
+
+            m_PreviewUtility.Cleanup();
+            m_PreviewUtility = null;
+        }
+
+        private void SetPreviewCharacterEnabled(bool enabled, bool showReference)
         {
             if (m_PreviewInstance != null)
                 SetEnabledRecursive(m_PreviewInstance, enabled);
@@ -245,13 +416,13 @@ namespace NZCore.UI.Editor
             SetEnabledRecursive(m_RootInstance, showReference && enabled);
         }
 
-        private void SetEnabledRecursive(GameObject go, bool enabled)
+        private static void SetEnabledRecursive(GameObject go, bool enabled)
         {
             foreach (Renderer componentsInChild in go.GetComponentsInChildren<Renderer>())
                 componentsInChild.enabled = enabled;
         }
 
-        static AnimationClip GetFirstAnimationClipFromMotion(Motion motion)
+        private static AnimationClip GetFirstAnimationClipFromMotion(Motion motion)
         {
             AnimationClip clip = motion as AnimationClip;
             if (clip)
@@ -269,7 +440,7 @@ namespace NZCore.UI.Editor
             return null;
         }
 
-        static public ModelImporterAnimationType GetAnimationType(GameObject go)
+        private static ModelImporterAnimationType GetAnimationType(GameObject go)
         {
             Animator animator = go.GetComponent<Animator>();
             if (animator)
@@ -277,34 +448,35 @@ namespace NZCore.UI.Editor
                 Avatar avatar = animator.avatar;
                 if (avatar && avatar.isHuman)
                     return ModelImporterAnimationType.Human;
-                else
-                    return ModelImporterAnimationType.Generic;
+                return ModelImporterAnimationType.Generic;
             }
-            else if (go.GetComponent<Animation>() != null)
+
+            if (go.GetComponent<Animation>() != null)
             {
                 return ModelImporterAnimationType.Legacy;
             }
-            else
-                return ModelImporterAnimationType.None;
+
+            return ModelImporterAnimationType.None;
         }
 
-        static public ModelImporterAnimationType GetAnimationType(Motion motion)
+        private static ModelImporterAnimationType GetAnimationType(Motion motion)
         {
             AnimationClip clip = GetFirstAnimationClipFromMotion(motion);
             if (clip)
             {
                 if (clip.legacy)
                     return ModelImporterAnimationType.Legacy;
-                else if (clip.humanMotion)
+                
+                if (clip.humanMotion)
                     return ModelImporterAnimationType.Human;
-                else
-                    return ModelImporterAnimationType.Generic;
+                
+                return ModelImporterAnimationType.Generic;
             }
-            else
-                return ModelImporterAnimationType.None;
+
+            return ModelImporterAnimationType.None;
         }
 
-        static public bool IsValidPreviewGameObject(GameObject target, ModelImporterAnimationType requiredClipType)
+        private static bool IsValidPreviewGameObject(GameObject target, ModelImporterAnimationType requiredClipType)
         {
             if (target != null && !target.activeSelf)
                 Debug.LogWarning("Can't preview inactive object, using fallback object");
@@ -317,7 +489,7 @@ namespace NZCore.UI.Editor
                   GetAnimationType(target) != requiredClipType);
         }
 
-        static public GameObject FindBestFittingRenderableGameObjectFromModelAsset(Object asset, ModelImporterAnimationType animationType)
+        private static GameObject FindBestFittingRenderableGameObjectFromModelAsset(Object asset, ModelImporterAnimationType animationType)
         {
             if (asset == null)
                 return null;
@@ -337,7 +509,7 @@ namespace NZCore.UI.Editor
                 return null;
         }
 
-        static GameObject CalculatePreviewGameObject(Animator selectedAnimator, Motion motion, ModelImporterAnimationType animationType)
+        private static GameObject CalculatePreviewGameObject(Animator selectedAnimator, Motion motion, ModelImporterAnimationType animationType)
         {
             AnimationClip sourceClip = GetFirstAnimationClipFromMotion(motion);
 
@@ -355,20 +527,20 @@ namespace NZCore.UI.Editor
             if (selected != null)
                 return selected;
 
-            if (animationType == ModelImporterAnimationType.Human)
-                return GetHumanoidFallback();
-            else if (animationType == ModelImporterAnimationType.Generic)
-                return GetGenericAnimationFallback();
-
-            return null;
+            return animationType switch
+            {
+                ModelImporterAnimationType.Human => GetHumanoidFallback(),
+                ModelImporterAnimationType.Generic => GetGenericAnimationFallback(),
+                _ => null
+            };
         }
 
-        static GameObject GetGenericAnimationFallback()
+        private static GameObject GetGenericAnimationFallback()
         {
             return (GameObject)EditorGUIUtility.Load("Avatar/DefaultGeneric.fbx");
         }
 
-        static GameObject GetHumanoidFallback()
+        private static GameObject GetHumanoidFallback()
         {
             return (GameObject)EditorGUIUtility.Load("Avatar/DefaultAvatar.fbx");
         }
@@ -380,218 +552,9 @@ namespace NZCore.UI.Editor
             SetupBounds(go);
         }
 
-        void SetupBounds(GameObject go)
-        {
-            m_IsValid = go != null && go != GetGenericAnimationFallback();
-
-            if (go != null)
-            {
-                //m_PreviewInstance = EditorUtility.InstantiateForAnimatorPreview(go);
-                //m_PreviewInstance = (GameObject) m_EditorUtility_InstantiateForAnimatorPreview.Invoke(null, new object[] { go });
-                m_PreviewInstance = InstantiatePreviewPrefab(go);
-                previewUtility.AddSingleGO(m_PreviewInstance);
-
-                //m_Previewables = m_PreviewInstance.GetComponentsInChildren<IAnimationPreviewable>();
-                m_Previewables = (object[]) getComponentsMethod.Invoke(m_PreviewInstance, new object[] { t_IAnimationPreviewable });
-                //var bounds = GameObjectInspector.GetRenderableBounds(m_PreviewInstance);
-                var bounds = (Bounds) m_GameObjectInspector_GetRenderableBounds.Invoke(null, new object[] { m_PreviewInstance });
-
-                m_BoundingVolumeScale = Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z));
-
-
-                if (Animator && Animator.isHuman)
-                    m_AvatarScale = m_ZoomFactor = Animator.humanScale;
-                else
-                    m_AvatarScale = m_ZoomFactor = m_BoundingVolumeScale / 2;
-            }
-        }
-
-        GameObject InstantiatePreviewPrefab(GameObject original)
-        {
-            if (original == (UnityEngine.Object) null)
-                throw new ArgumentException("The Prefab you want to instantiate is null.");
-            
-            //GameObject go = EditorUtility.InstantiateRemoveAllNonAnimationComponents(original, Vector3.zero, Quaternion.identity) as GameObject;
-            GameObject go = Object.Instantiate(original);
-            go.name += "AnimatorPreview";
-            go.tag = "Untagged";
-            //EditorUtility.InitInstantiatedPreviewRecursive(go);
-            m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { go });
-            
-            Animator[] componentsInChildren = go.GetComponentsInChildren<Animator>();
-            for (int index = 0; index < componentsInChildren.Length; ++index)
-            {
-                Animator animator = componentsInChildren[index];
-                animator.enabled = false;
-                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-                animator.logWarnings = false;
-                animator.fireEvents = false;
-            }
-            if (componentsInChildren.Length == 0)
-            {
-                Animator animator = go.AddComponent<Animator>();
-                animator.enabled = false;
-                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-                animator.logWarnings = false;
-                animator.fireEvents = false;
-            }
-            
-            return go;
-        }
-
-        void InitInstance(Animator scenePreviewObject, Motion motion)
-        {
-            m_SourcePreviewMotion = motion;
-            m_SourceScenePreviewAnimator = scenePreviewObject;
-
-            if (m_PreviewInstance == null)
-            {
-                GameObject go = CalculatePreviewGameObject(scenePreviewObject, motion, animationClipType);
-                SetupBounds(go);
-            }
-
-            // if (timeControl == null)
-            // {
-            //     timeControl = new TimeControl();
-            // }
-
-            if (m_ReferenceInstance == null)
-            {
-                GameObject referenceGO = (GameObject)EditorGUIUtility.Load("Avatar/dial_flat.prefab");
-                m_ReferenceInstance = (GameObject)Object.Instantiate(referenceGO, Vector3.zero, Quaternion.identity);
-                //EditorUtility.InitInstantiatedPreviewRecursive(m_ReferenceInstance);
-                m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_ReferenceInstance });
-                previewUtility.AddSingleGO(m_ReferenceInstance);
-            }
-
-            if (m_DirectionInstance == null)
-            {
-                GameObject directionGO = (GameObject)EditorGUIUtility.Load("Avatar/arrow.fbx");
-                m_DirectionInstance = (GameObject)Object.Instantiate(directionGO, Vector3.zero, Quaternion.identity);
-                //EditorUtility.InitInstantiatedPreviewRecursive(m_DirectionInstance);
-                m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_DirectionInstance });
-                previewUtility.AddSingleGO(m_DirectionInstance);
-            }
-
-            if (m_PivotInstance == null)
-            {
-                GameObject pivotGO = (GameObject)EditorGUIUtility.Load("Avatar/root.fbx");
-                m_PivotInstance = (GameObject)Object.Instantiate(pivotGO, Vector3.zero, Quaternion.identity);
-                //EditorUtility.InitInstantiatedPreviewRecursive(m_PivotInstance);
-                m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_PivotInstance });
-                previewUtility.AddSingleGO(m_PivotInstance);
-            }
-
-            if (m_RootInstance == null)
-            {
-                GameObject rootGO = (GameObject)EditorGUIUtility.Load("Avatar/root.fbx");
-                m_RootInstance = (GameObject)Object.Instantiate(rootGO, Vector3.zero, Quaternion.identity);
-                //EditorUtility.InitInstantiatedPreviewRecursive(m_RootInstance);
-                m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_RootInstance });
-                previewUtility.AddSingleGO(m_RootInstance);
-            }
-
-            // Load preview settings from prefs
-            m_IKOnFeet = EditorPrefs.GetBool(kIkPref, false);
-            m_ShowReference = EditorPrefs.GetBool(kReferencePref, true);
-            is2D = EditorPrefs.GetBool(k2DPref, EditorSettings.defaultBehaviorMode == EditorBehaviorMode.Mode2D);
-            //timeControl.playbackSpeed = EditorPrefs.GetFloat(kSpeedPref, 1f);
-
-            SetPreviewCharacterEnabled(false, false);
-
-            //Fix for FogBugz case : 1364821 Inspector Model Preview orientation is reversed when Bake Axis Conversion is enabled
-            var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(motion)) as ModelImporter;
-            if (importer && importer.bakeAxisConversion)
-            {
-                m_PreviewDir += new Vector2(180,0);
-            }
-
-            m_PivotPositionOffset = Vector3.zero;
-        }
-
-        private PreviewRenderUtility previewUtility
-        {
-            get
-            {
-                if (m_PreviewUtility == null)
-                {
-                    m_PreviewUtility = new PreviewRenderUtility();
-                    m_PreviewUtility.camera.fieldOfView = 30.0f;
-                    m_PreviewUtility.camera.allowHDR = false;
-                    m_PreviewUtility.camera.allowMSAA = false;
-                    m_PreviewUtility.ambientColor = new Color(.1f, .1f, .1f, 0);
-                    m_PreviewUtility.lights[0].intensity = kDefaultIntensity;
-                    m_PreviewUtility.lights[0].transform.rotation = Quaternion.Euler(40f, 40f, 0);
-                    m_PreviewUtility.lights[1].intensity = kDefaultIntensity;
-                }
-                return m_PreviewUtility;
-            }
-        }
-
-        private void Init()
-        {
-            if (s_Styles == null)
-                s_Styles = new Styles();
-
-            if (m_FloorPlane == null)
-            {
-                m_FloorPlane = Resources.GetBuiltinResource(typeof(Mesh), "New-Plane.fbx") as Mesh;
-            }
-
-            if (m_FloorTexture == null)
-            {
-                m_FloorTexture = (Texture2D)EditorGUIUtility.Load("Avatar/Textures/AvatarFloor.png");
-            }
-
-            if (m_FloorMaterial == null)
-            {
-                Shader shader = EditorGUIUtility.LoadRequired("Previews/PreviewPlaneWithShadow.shader") as Shader;
-                m_FloorMaterial = new Material(shader);
-                m_FloorMaterial.mainTexture = m_FloorTexture;
-                m_FloorMaterial.mainTextureScale = Vector2.one * kFloorScale * kFloorTextureScale;
-                m_FloorMaterial.SetVector("_Alphas", new Vector4(kFloorAlpha, kFloorShadowAlpha, 0, 0));
-                m_FloorMaterial.hideFlags = HideFlags.HideAndDontSave;
-
-                m_FloorMaterialSmall = new Material(m_FloorMaterial);
-                m_FloorMaterialSmall.mainTextureScale = Vector2.one * kFloorScaleSmall * kFloorTextureScale;
-                m_FloorMaterialSmall.hideFlags = HideFlags.HideAndDontSave;
-            }
-
-            if (m_ShadowMaskMaterial == null)
-            {
-                Shader shader = EditorGUIUtility.LoadRequired("Previews/PreviewShadowMask.shader") as Shader;
-                m_ShadowMaskMaterial = new Material(shader);
-                m_ShadowMaskMaterial.hideFlags = HideFlags.HideAndDontSave;
-            }
-
-            if (m_ShadowPlaneMaterial == null)
-            {
-                Shader shader = EditorGUIUtility.LoadRequired("Previews/PreviewShadowPlaneClip.shader") as Shader;
-                m_ShadowPlaneMaterial = new Material(shader);
-                m_ShadowPlaneMaterial.hideFlags = HideFlags.HideAndDontSave;
-            }
-        }
-
-        public void OnDisable()
-        {
-            if (m_PreviewUtility != null)
-            {
-                m_PreviewUtility.Cleanup();
-                m_PreviewUtility = null;
-            }
-
-            //if (timeControl != null)
-            //    timeControl.OnDisable();
-        }
-
         public void DoSelectionChange()
         {
             m_OnAvatarChangeFunc();
-        }
-
-        public NZAvatarPreview(Animator previewObjectInScene, Motion objectOnSameAsset)
-        {
-            InitInstance(previewObjectInScene, objectOnSameAsset);
         }
 
         float PreviewSlider(Rect rect, float val, float snapThreshold)
@@ -650,12 +613,163 @@ namespace NZCore.UI.Editor
             // }
         }
 
+        private void DoRenderPreview(Rect previewRect, GUIStyle background)
+        {
+            var probe = RenderSettings.ambientProbe;
+            PreviewUtility.BeginPreview(previewRect, background);
+
+            Quaternion bodyRot;
+            Quaternion rootRot;
+            Vector3 rootPos;
+            Vector3 bodyPos = rootPosition;
+            Vector3 pivotPos;
+
+            if (Animator && Animator.isHuman)
+            {
+                rootRot = Animator.rootRotation;
+                rootPos = Animator.rootPosition;
+
+                bodyRot = Animator.bodyRotation;
+
+                pivotPos = Animator.pivotPosition;
+            }
+            else if (Animator && Animator.hasRootMotion)
+            {
+                rootRot = Animator.rootRotation;
+                rootPos = Animator.rootPosition;
+
+                bodyRot = Quaternion.identity;
+
+                pivotPos = Vector3.zero;
+            }
+            else
+            {
+                rootRot = Quaternion.identity;
+                rootPos = Vector3.zero;
+
+                bodyRot = Quaternion.identity;
+
+                pivotPos = Vector3.zero;
+            }
+
+            SetupPreviewLightingAndFx(probe);
+
+            Vector3 direction = bodyRot * Vector3.forward;
+            direction[1] = 0;
+            Quaternion directionRot = Quaternion.LookRotation(direction);
+            Vector3 directionPos = rootPos;
+
+            Quaternion pivotRot = rootRot;
+
+            // Scale all Preview Objects to fit avatar size.
+            PositionPreviewObjects(pivotRot, pivotPos, bodyRot, bodyPosition, directionRot, rootRot, rootPos, directionPos, m_AvatarScale);
+
+            bool dynamicFloorHeight = !is2D && Mathf.Abs(m_NextFloorHeight - m_PrevFloorHeight) > m_ZoomFactor * 0.01f;
+
+            // Calculate floor height and alpha
+            float mainFloorHeight, mainFloorAlpha;
+            if (dynamicFloorHeight)
+            {
+                float fadeMoment = m_NextFloorHeight < m_PrevFloorHeight ? kFloorFadeDuration : (1 - kFloorFadeDuration);
+                //mainFloorHeight = timeControl.normalizedTime < fadeMoment ? m_PrevFloorHeight : m_NextFloorHeight;
+                //mainFloorAlpha = Mathf.Clamp01(Mathf.Abs(timeControl.normalizedTime - fadeMoment) / kFloorFadeDuration);
+                mainFloorHeight = m_PrevFloorHeight;
+                mainFloorAlpha = 1;
+            }
+            else
+            {
+                mainFloorHeight = m_PrevFloorHeight;
+                mainFloorAlpha = is2D ? 0.5f : 1;
+            }
+
+            Quaternion floorRot = is2D ? Quaternion.Euler(-90, 0, 0) : Quaternion.identity;
+            Vector3 floorPos = m_ReferenceInstance.transform.position;
+            floorPos.y = mainFloorHeight;
+
+            // Render shadow map
+            Matrix4x4 shadowMatrix;
+            RenderTexture shadowMap = RenderPreviewShadowmap(PreviewUtility.lights[0], m_BoundingVolumeScale / 2, bodyPosition, floorPos, out shadowMatrix);
+
+            // SRP might initialize the light settings during the first frame of rendering
+            // (e.g HDRP is overriding the intensity value during 'InitDefaultHDAdditionalLightData').
+            // So this call is necessary to avoid a flickering when selecting an animation clip.
+            if (PreviewUtility.lights[0].intensity != kDefaultIntensity || PreviewUtility.lights[0].intensity != kDefaultIntensity)
+            {
+                SetupPreviewLightingAndFx(probe);
+            }
+
+            float tempZoomFactor = (is2D ? 1.0f : m_ZoomFactor);
+            // Position camera
+            PreviewUtility.camera.orthographic = is2D;
+            if (is2D)
+                PreviewUtility.camera.orthographicSize = 2.0f * m_ZoomFactor;
+            PreviewUtility.camera.nearClipPlane = 0.5f * tempZoomFactor;
+            PreviewUtility.camera.farClipPlane = 100.0f * m_AvatarScale;
+            Quaternion camRot = Quaternion.Euler(-m_PreviewDir.y, -m_PreviewDir.x, 0);
+
+            // Add panning offset
+            Vector3 camPos = camRot * (Vector3.forward * -5.5f * tempZoomFactor) + bodyPos + m_PivotPositionOffset;
+            PreviewUtility.camera.transform.position = camPos;
+            PreviewUtility.camera.transform.rotation = camRot;
+            
+            SetPreviewCharacterEnabled(true, m_ShowReference);
+            foreach (var previewable in m_Previewables)
+            {
+                //previewable.OnPreviewUpdate();
+                m_IAnimationPreviewable_OnPreviewUpdate.Invoke(previewable, null);
+            }
+
+            PreviewUtility.Render(option != PreviewPopupOptions.DefaultModel);
+            SetPreviewCharacterEnabled(false, false);
+
+            // Texture offset - negative in order to compensate the floor movement.
+            Vector2 textureOffset = -new Vector2(floorPos.x, is2D ? floorPos.y : floorPos.z);
+
+            // Render main floor
+            {
+                Material mat = m_FloorMaterial;
+                Matrix4x4 matrix = Matrix4x4.TRS(floorPos, floorRot, Vector3.one * kFloorScale * m_AvatarScale);
+
+                mat.mainTextureOffset = textureOffset * kFloorScale * 0.08f * (1.0f / m_AvatarScale);
+                mat.SetTexture("_ShadowTexture", shadowMap);
+                mat.SetMatrix("_ShadowTextureMatrix", shadowMatrix);
+                mat.SetVector("_Alphas", new Vector4(kFloorAlpha * mainFloorAlpha, kFloorShadowAlpha * mainFloorAlpha, 0, 0));
+                mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
+
+                Graphics.DrawMesh(m_FloorPlane, matrix, mat, kDefaultLayer, PreviewUtility.camera, 0);
+            }
+
+            // Render small floor
+            if (dynamicFloorHeight)
+            {
+                bool topIsNext = m_NextFloorHeight > m_PrevFloorHeight;
+                float floorHeight = topIsNext ? m_NextFloorHeight : m_PrevFloorHeight;
+                float otherFloorHeight = topIsNext ? m_PrevFloorHeight : m_NextFloorHeight;
+                float floorAlpha = (floorHeight == mainFloorHeight ? 1 - mainFloorAlpha : 1) * Mathf.InverseLerp(otherFloorHeight, floorHeight, rootPos.y);
+                floorPos.y = floorHeight;
+
+                Material mat = m_FloorMaterialSmall;
+                mat.mainTextureOffset = textureOffset * kFloorScaleSmall * 0.08f;
+                mat.SetTexture("_ShadowTexture", shadowMap);
+                mat.SetMatrix("_ShadowTextureMatrix", shadowMatrix);
+                mat.SetVector("_Alphas", new Vector4(kFloorAlpha * floorAlpha, 0, 0, 0));
+                Matrix4x4 matrix = Matrix4x4.TRS(floorPos, floorRot, Vector3.one * kFloorScaleSmall * m_AvatarScale);
+                Graphics.DrawMesh(m_FloorPlane, matrix, mat, kDefaultLayer, PreviewUtility.camera, 0);
+            }
+
+            var clearMode = PreviewUtility.camera.clearFlags;
+            PreviewUtility.camera.clearFlags = CameraClearFlags.Nothing;
+            PreviewUtility.Render(false);
+            PreviewUtility.camera.clearFlags = clearMode;
+            RenderTexture.ReleaseTemporary(shadowMap);
+        }
+        
         private RenderTexture RenderPreviewShadowmap(Light light, float scale, Vector3 center, Vector3 floorPos, out Matrix4x4 outShadowMatrix)
         {
             Assert.IsTrue(Event.current.type == EventType.Repaint);
 
             // Set ortho camera and position it
-            var cam = previewUtility.camera;
+            var cam = PreviewUtility.camera;
             cam.orthographic = true;
             cam.orthographicSize = scale * 2.0f;
             cam.nearClipPlane = 1 * scale;
@@ -725,171 +839,16 @@ namespace NZCore.UI.Editor
             return rt;
         }
 
-        public void DoRenderPreview(Rect previewRect, GUIStyle background)
-        {
-            var probe = RenderSettings.ambientProbe;
-            previewUtility.BeginPreview(previewRect, background);
-
-            Quaternion bodyRot;
-            Quaternion rootRot;
-            Vector3 rootPos;
-            Vector3 bodyPos = rootPosition;
-            Vector3 pivotPos;
-
-            if (Animator && Animator.isHuman)
-            {
-                rootRot = Animator.rootRotation;
-                rootPos = Animator.rootPosition;
-
-                bodyRot = Animator.bodyRotation;
-
-                pivotPos = Animator.pivotPosition;
-            }
-            else if (Animator && Animator.hasRootMotion)
-            {
-                rootRot = Animator.rootRotation;
-                rootPos = Animator.rootPosition;
-
-                bodyRot = Quaternion.identity;
-
-                pivotPos = Vector3.zero;
-            }
-            else
-            {
-                rootRot = Quaternion.identity;
-                rootPos = Vector3.zero;
-
-                bodyRot = Quaternion.identity;
-
-                pivotPos = Vector3.zero;
-            }
-
-            SetupPreviewLightingAndFx(probe);
-
-            Vector3 direction = bodyRot * Vector3.forward;
-            direction[1] = 0;
-            Quaternion directionRot = Quaternion.LookRotation(direction);
-            Vector3 directionPos = rootPos;
-
-            Quaternion pivotRot = rootRot;
-
-            // Scale all Preview Objects to fit avatar size.
-            PositionPreviewObjects(pivotRot, pivotPos, bodyRot, bodyPosition, directionRot, rootRot, rootPos, directionPos, m_AvatarScale);
-
-            bool dynamicFloorHeight = is2D ? false : Mathf.Abs(m_NextFloorHeight - m_PrevFloorHeight) > m_ZoomFactor * 0.01f;
-
-            // Calculate floor height and alpha
-            float mainFloorHeight, mainFloorAlpha;
-            if (dynamicFloorHeight)
-            {
-                float fadeMoment = m_NextFloorHeight < m_PrevFloorHeight ? kFloorFadeDuration : (1 - kFloorFadeDuration);
-                //mainFloorHeight = timeControl.normalizedTime < fadeMoment ? m_PrevFloorHeight : m_NextFloorHeight;
-                //mainFloorAlpha = Mathf.Clamp01(Mathf.Abs(timeControl.normalizedTime - fadeMoment) / kFloorFadeDuration);
-                mainFloorHeight = m_PrevFloorHeight;
-                mainFloorAlpha = 1;
-            }
-            else
-            {
-                mainFloorHeight = m_PrevFloorHeight;
-                mainFloorAlpha = is2D ? 0.5f : 1;
-            }
-
-            Quaternion floorRot = is2D ? Quaternion.Euler(-90, 0, 0) : Quaternion.identity;
-            Vector3 floorPos = m_ReferenceInstance.transform.position;
-            floorPos.y = mainFloorHeight;
-
-            // Render shadow map
-            Matrix4x4 shadowMatrix;
-            RenderTexture shadowMap = RenderPreviewShadowmap(previewUtility.lights[0], m_BoundingVolumeScale / 2, bodyPosition, floorPos, out shadowMatrix);
-
-            // SRP might initialize the light settings during the first frame of rendering
-            // (e.g HDRP is overriding the intensity value during 'InitDefaultHDAdditionalLightData').
-            // So this call is necessary to avoid a flickering when selecting an animation clip.
-            if (previewUtility.lights[0].intensity != kDefaultIntensity || previewUtility.lights[0].intensity != kDefaultIntensity)
-            {
-                SetupPreviewLightingAndFx(probe);
-            }
-
-            float tempZoomFactor = (is2D ? 1.0f : m_ZoomFactor);
-            // Position camera
-            previewUtility.camera.orthographic = is2D;
-            if (is2D)
-                previewUtility.camera.orthographicSize = 2.0f * m_ZoomFactor;
-            previewUtility.camera.nearClipPlane = 0.5f * tempZoomFactor;
-            previewUtility.camera.farClipPlane = 100.0f * m_AvatarScale;
-            Quaternion camRot = Quaternion.Euler(-m_PreviewDir.y, -m_PreviewDir.x, 0);
-
-            // Add panning offset
-            Vector3 camPos = camRot * (Vector3.forward * -5.5f * tempZoomFactor) + bodyPos + m_PivotPositionOffset;
-            previewUtility.camera.transform.position = camPos;
-            previewUtility.camera.transform.rotation = camRot;
-            
-            SetPreviewCharacterEnabled(true, m_ShowReference);
-            foreach (var previewable in m_Previewables)
-            {
-                //previewable.OnPreviewUpdate();
-                m_IAnimationPreviewable_OnPreviewUpdate.Invoke(previewable, null);
-            }
-
-            previewUtility.Render(option != PreviewPopupOptions.DefaultModel);
-            SetPreviewCharacterEnabled(false, false);
-
-            // Texture offset - negative in order to compensate the floor movement.
-            Vector2 textureOffset = -new Vector2(floorPos.x, is2D ? floorPos.y : floorPos.z);
-
-            // Render main floor
-            {
-                Material mat = m_FloorMaterial;
-                Matrix4x4 matrix = Matrix4x4.TRS(floorPos, floorRot, Vector3.one * kFloorScale * m_AvatarScale);
-
-                mat.mainTextureOffset = textureOffset * kFloorScale * 0.08f * (1.0f / m_AvatarScale);
-                mat.SetTexture("_ShadowTexture", shadowMap);
-                mat.SetMatrix("_ShadowTextureMatrix", shadowMatrix);
-                mat.SetVector("_Alphas", new Vector4(kFloorAlpha * mainFloorAlpha, kFloorShadowAlpha * mainFloorAlpha, 0, 0));
-                mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
-
-                Graphics.DrawMesh(m_FloorPlane, matrix, mat, kDefaultLayer, previewUtility.camera, 0);
-            }
-
-            // Render small floor
-            if (dynamicFloorHeight)
-            {
-                bool topIsNext = m_NextFloorHeight > m_PrevFloorHeight;
-                float floorHeight = topIsNext ? m_NextFloorHeight : m_PrevFloorHeight;
-                float otherFloorHeight = topIsNext ? m_PrevFloorHeight : m_NextFloorHeight;
-                float floorAlpha = (floorHeight == mainFloorHeight ? 1 - mainFloorAlpha : 1) * Mathf.InverseLerp(otherFloorHeight, floorHeight, rootPos.y);
-                floorPos.y = floorHeight;
-
-                Material mat = m_FloorMaterialSmall;
-                mat.mainTextureOffset = textureOffset * kFloorScaleSmall * 0.08f;
-                mat.SetTexture("_ShadowTexture", shadowMap);
-                mat.SetMatrix("_ShadowTextureMatrix", shadowMatrix);
-                mat.SetVector("_Alphas", new Vector4(kFloorAlpha * floorAlpha, 0, 0, 0));
-                Matrix4x4 matrix = Matrix4x4.TRS(floorPos, floorRot, Vector3.one * kFloorScaleSmall * m_AvatarScale);
-                Graphics.DrawMesh(m_FloorPlane, matrix, mat, kDefaultLayer, previewUtility.camera, 0);
-            }
-
-            var clearMode = previewUtility.camera.clearFlags;
-            previewUtility.camera.clearFlags = CameraClearFlags.Nothing;
-            previewUtility.Render(false);
-            previewUtility.camera.clearFlags = clearMode;
-            RenderTexture.ReleaseTemporary(shadowMap);
-        }
-
         private void SetupPreviewLightingAndFx(SphericalHarmonicsL2 probe)
         {
-            previewUtility.lights[0].intensity = kDefaultIntensity;
-            previewUtility.lights[0].transform.rotation = Quaternion.Euler(40f, 40f, 0);
-            previewUtility.lights[1].intensity = kDefaultIntensity;
+            PreviewUtility.lights[0].intensity = kDefaultIntensity;
+            PreviewUtility.lights[0].transform.rotation = Quaternion.Euler(40f, 40f, 0);
+            PreviewUtility.lights[1].intensity = kDefaultIntensity;
             RenderSettings.ambientMode = AmbientMode.Custom;
             RenderSettings.ambientLight = new Color(0.1f, 0.1f, 0.1f, 1.0f);
             RenderSettings.ambientProbe = probe;
         }
-
-        private float m_LastNormalizedTime = -1000;
-        private float m_LastStartTime = -1000;
-        private float m_LastStopTime = -1000;
-        private bool m_NextTargetIsForward = true;
+       
         private void PositionPreviewObjects(Quaternion pivotRot, Vector3 pivotPos, Quaternion bodyRot, Vector3 bodyPos,
             Quaternion directionRot, Quaternion rootRot, Vector3 rootPos, Vector3 directionPos,
             float scale)
@@ -1121,7 +1080,7 @@ namespace NZCore.UI.Editor
 
         public void DoAvatarPreviewPan(Event evt)
         {
-            Camera cam = previewUtility.camera;
+            Camera cam = PreviewUtility.camera;
             Vector3 screenPos = cam.WorldToScreenPoint(bodyPosition + m_PivotPositionOffset);
             Vector3 delta = new Vector3(-evt.delta.x, evt.delta.y, 0);
             // delta panning is scale with the zoom factor to allow fine tuning when user is zooming closely.
@@ -1154,9 +1113,9 @@ namespace NZCore.UI.Editor
 
         protected Vector3 GetCurrentMouseWorldPosition(Event evt, Rect previewRect)
         {
-            Camera cam = previewUtility.camera;
+            Camera cam = PreviewUtility.camera;
 
-            float scaleFactor = previewUtility.GetScaleFactor(previewRect.width, previewRect.height);
+            float scaleFactor = PreviewUtility.GetScaleFactor(previewRect.width, previewRect.height);
             Vector3 mouseLocal = new Vector3((evt.mousePosition.x - previewRect.x) * scaleFactor, (previewRect.height - (evt.mousePosition.y - previewRect.y)) * scaleFactor, 0);
             mouseLocal.z = Vector3.Distance(bodyPosition, cam.transform.position);
             return cam.ScreenToWorldPoint(mouseLocal);
@@ -1197,7 +1156,7 @@ namespace NZCore.UI.Editor
             if (type == EventType.Repaint && m_IsValid)
             {
                 DoRenderPreview(previewRect, background);
-                previewUtility.EndAndDrawPreview(previewRect);
+                PreviewUtility.EndAndDrawPreview(previewRect);
             }
 
             AvatarTimeControlGUI(rect);
@@ -1271,5 +1230,5 @@ namespace NZCore.UI.Editor
             // This is quicker than a branch to test for negative number.
             return ((t % length) + length) % length;
         }
-    } // class AvatarPreview
-} // namespace UnityEditor
+    }
+}

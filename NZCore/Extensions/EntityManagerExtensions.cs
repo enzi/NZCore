@@ -2,6 +2,7 @@
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -207,6 +208,25 @@ namespace NZCore
         {
             system.AddReaderWriter(isReadOnly ? ComponentType.ReadOnly<T>() : ComponentType.ReadWrite<T>());
             return system.EntityManager.GetSharedComponentLookup<T>(isReadOnly);
+        }
+
+        public static void AddSharedComponentData(this EntityManager entityManager, TypeIndex typeIndex, NativeArray<Entity> entities, void* ptrToData, void* ptrToDefaultData)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
+            if (TypeManager.IsManagedType(typeIndex))
+            {
+                throw new ArgumentException($"Can't use this API with a Managed Shared Component, {TypeManager.GetType(typeIndex)} must be a blittable, unmanaged type");
+            }
+#endif
+            var access = entityManager.GetCheckedEntityDataAccess();
+            var changes = access->BeginStructuralChanges();
+            var componentType = ComponentType.ReadWrite(typeIndex);
+            
+            access->AddSharedComponentDataDuringStructuralChange_Unmanaged(entities,
+                componentType,
+                ptrToData,
+                ptrToDefaultData);
+            access->EndStructuralChanges(ref changes);
         }
     }
 }
