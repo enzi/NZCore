@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 #if UNITY_6000
-namespace NZSpellCasting.UI
+namespace NZCore.UI
 {
     [UxmlElement]
     public partial class RadialFillElement : VisualElement, INotifyValueChanged<float>

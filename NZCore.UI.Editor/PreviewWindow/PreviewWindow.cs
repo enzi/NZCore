@@ -1,4 +1,4 @@
-// <copyright project="NZSpellCasting.SpellBuilder.Authoring" file="PreviewWindow.cs" version="1.2.2">
+// <copyright project="NZCore file="PreviewWindow.cs" version="1.2.2">
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 

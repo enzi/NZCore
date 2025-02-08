@@ -1,4 +1,4 @@
-// <copyright project="NZSpellCasting.Hybrid.Systems" file="HybridAnimationOverrideSystem.cs" version="1.2.2">
+// <copyright project="NZCore" file="HybridAnimationOverrideSystem.cs" version="1.2.2">
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 

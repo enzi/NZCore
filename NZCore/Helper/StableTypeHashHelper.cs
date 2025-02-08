@@ -17,7 +17,7 @@ namespace NZCore.Helper
      * CoreCLR could shake things up a bit with assembly names being different (primitives change from mscorlib to netstandard)
      * but there's still an opportunity to handle it here.
      * */
-    public static class TypeHashIgnoreSafety
+    public static class StableTypeHashHelper
     {
         const ulong kFNV1A64OffsetBasis = 14695981039346656037;
 
@@ -54,8 +54,6 @@ namespace NZCore.Helper
                 var field = fields[i];
                 // statics have no effect on data layout
                 if (field.IsStatic)
-                    continue;
-                if (field.Name.Contains("Safety"))
                     continue;
 
                 var fieldType = field.FieldType;

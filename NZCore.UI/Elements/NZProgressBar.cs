@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 #if UNITY_6000
-namespace NZSpellCasting.UI
+namespace NZCore.UI
 {
     [Serializable]
     public enum NZProgressBarTitleStyle

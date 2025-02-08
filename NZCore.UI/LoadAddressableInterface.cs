@@ -74,9 +74,9 @@ namespace NZCore.UIToolkit
 
         private void OnDestroy()
         {
-            visualTreeAssets.UnloadAll();
-            spriteAtlas.UnloadAll();
-            worldInterfaceAssets.UnloadAll();
+            visualTreeAssets?.UnloadAll();
+            spriteAtlas?.UnloadAll();
+            worldInterfaceAssets?.UnloadAll();
         }
     }
     

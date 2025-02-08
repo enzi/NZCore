@@ -96,7 +96,7 @@ namespace NZCore
             {
                 var typeInfo = allTypes[i];
                 
-                var hash = TypeHashIgnoreSafety.GetFixedHash(typeInfo.Type);
+                var hash = StableTypeHashHelper.GetFixedHash(typeInfo.Type);
 
                 if (hash == 0)
                 {
@@ -116,7 +116,7 @@ namespace NZCore
         public static TypeIndex GetStableTypeIndex<T>()
             where T : unmanaged
         {
-            var hash = TypeHashIgnoreSafety.GetFixedHash(typeof(T));
+            var hash = StableTypeHashHelper.GetFixedHash(typeof(T));
             return GetTypeIndexFromStableTypeHash(hash);
         }
         

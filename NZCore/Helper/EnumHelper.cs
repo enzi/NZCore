@@ -5,7 +5,7 @@
 using System.Runtime.CompilerServices;
 using Unity.Burst;
 
-namespace NZSpellCasting
+namespace NZCore
 {
     [BurstCompile]
     public static class EnumHelper

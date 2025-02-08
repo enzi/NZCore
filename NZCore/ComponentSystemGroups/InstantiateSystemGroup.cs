@@ -2,7 +2,6 @@
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using NZSpellCasting;
 using Unity.Entities;
 
 namespace NZCore

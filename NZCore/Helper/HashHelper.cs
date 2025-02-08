@@ -4,7 +4,7 @@
 
 using Unity.Entities;
 
-namespace NZSpellCasting
+namespace NZCore
 {
     public static class HashHelper
     {
