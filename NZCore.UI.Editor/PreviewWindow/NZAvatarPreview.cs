@@ -106,9 +106,9 @@ namespace NZCore.UI.Editor
         public float m_ZoomFactor = 1.0f;
         public Vector3 m_PivotPositionOffset = Vector3.zero;
         
-        private float m_LastNormalizedTime = -1000;
-        private float m_LastStartTime = -1000;
-        private float m_LastStopTime = -1000;
+        //private float m_LastNormalizedTime = -1000;
+        //private float m_LastStartTime = -1000;
+        //private float m_LastStopTime = -1000;
         private bool m_NextTargetIsForward = true;
 
         private static NZAvatarPreview instance;
@@ -905,8 +905,8 @@ namespace NZCore.UI.Editor
 
         public void AvatarTimeControlGUI(Rect rect)
         {
-            const float kSliderWidth = 150f;
-            const float kSpacing = 4f;
+            //const float kSliderWidth = 150f;
+            //const float kSpacing = 4f;
             //Rect timeControlRect = rect;
 
             // background

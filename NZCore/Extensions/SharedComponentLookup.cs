@@ -71,7 +71,7 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
             
 #if ENTITIES_1_3_2
-            return ecs->HasComponent(entity, m_TypeIndex, out _);
+            return ecs->HasComponent(entity, m_TypeIndex, ref m_Cache, out _);
 #else
             return ecs->HasComponent(entity, m_TypeIndex, ref m_Cache);
 #endif

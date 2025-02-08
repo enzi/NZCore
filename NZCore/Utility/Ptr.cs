@@ -51,9 +51,9 @@ namespace NZCore
             return Value == other.Value;
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
-            return obj is Ptr<T> other && this.Equals(other);
+            return obj is Ptr<T> other && Equals(other);
         }
         
         public override int GetHashCode()

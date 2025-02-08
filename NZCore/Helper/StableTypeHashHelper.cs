@@ -55,7 +55,10 @@ namespace NZCore.Helper
                 // statics have no effect on data layout
                 if (field.IsStatic)
                     continue;
-
+                
+                if (field.Name == "m_Safety")
+                    continue;
+                
                 var fieldType = field.FieldType;
                 ulong fieldTypeHash = 0;
 
