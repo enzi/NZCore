@@ -37,6 +37,23 @@ namespace NZCore.Editor
                 SetPickingModeRecursive(child, pickingMode);
             }
         }
+        
+        public static VisualElement GetStructInspector<T>(T data)
+            where T : struct
+        {
+            var content = new PropertyElement();
+            content.SetTarget(data);
+            return content;
+        }
+        
+        public static unsafe VisualElement GetStructInspector<T>(byte* ptr)
+            where T : unmanaged
+        {
+            ref T data = ref *(T*)ptr;
+            var content = new PropertyElement();
+            content.SetTarget(data);
+            return content;
+        }
 
         /// <summary>
         /// Adds any kind of struct to the VisualElement root
@@ -46,11 +63,9 @@ namespace NZCore.Editor
         /// <param name="data"></param>
         /// <typeparam name="T"></typeparam>
         public static void AddStructInspector<T>(this VisualElement root, T data)
-            where T : struct
+            where T : unmanaged
         {
-            var content = new PropertyElement();
-            root.Add(content);
-            content.SetTarget(data);
+            root.Add(GetStructInspector(data));
         }
 
         public static VisualElement AlignLabel(this VisualElement root)

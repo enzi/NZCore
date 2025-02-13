@@ -13,28 +13,40 @@ namespace NZCore
         public static void CreateSingleton<T>(this ref SystemState state)
             where T : unmanaged, IInitSingleton
         {
-            var singletonEntity = state.EntityManager.CreateEntity();
+            var singletonEntity = state.EntityManager.CreateEntity(stackalloc[]
+            {
+                ComponentType.ReadOnly<T>()
+            });
+            
             T singletonData = default;
             singletonData.Init();
-            state.EntityManager.AddComponentData(singletonEntity, singletonData);
+            state.EntityManager.SetComponentData(singletonEntity, singletonData);
         }
 
         public static void CreateSingleton<T>(this ref SystemState state, out T singletonData)
             where T : unmanaged, IInitSingleton
         {
-            var singletonEntity = state.EntityManager.CreateEntity();
+            var singletonEntity = state.EntityManager.CreateEntity(stackalloc[]
+            {
+                ComponentType.ReadOnly<T>()
+            });
+            
             singletonData = default;
             singletonData.Init();
-            state.EntityManager.AddComponentData(singletonEntity, singletonData);
+            state.EntityManager.SetComponentData(singletonEntity, singletonData);
         }
 
         public static void CreateSingleton<T>(this ref SystemState state, out Entity singletonEntity, out T singletonData)
             where T : unmanaged, IInitSingleton
         {
-            singletonEntity = state.EntityManager.CreateEntity();
+            singletonEntity = state.EntityManager.CreateEntity(stackalloc[]
+            {
+                ComponentType.ReadOnly<T>()
+            });
+            
             singletonData = default;
             singletonData.Init();
-            state.EntityManager.AddComponentData(singletonEntity, singletonData);
+            state.EntityManager.SetComponentData(singletonEntity, singletonData);
         }
 
         public static void DisposeSingleton<T>(this ref SystemState state)
