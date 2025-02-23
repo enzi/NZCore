@@ -2,6 +2,8 @@
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
+using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
@@ -40,6 +42,42 @@ namespace NZCore
         public static SharedComponentData GetSharedFilters(this EntityQuery query)
         {
             return UnsafeUtility.As<EntityQueryFilter.SharedComponentData, SharedComponentData>(ref query._GetImpl()->_Filter.Shared);
+        }
+        
+        public static DynamicBuffer<T> GetSingletonBufferNoSync<T>(this EntityQuery query, bool isReadOnly)
+            where T : unmanaged, IBufferElementData
+        {
+            var impl = query._GetImpl();
+
+            var typeIndex = TypeManager.GetTypeIndex<T>();
+#if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
+            if (TypeManager.IsEnableable(typeIndex))
+            {
+                var typeName = typeIndex.ToFixedString();
+                throw new InvalidOperationException($"Can't call GetSingletonBuffer<{typeName}>() with enableable component type {typeName}.");
+            }
+#endif
+
+            impl->GetSingletonChunkAndEntity(typeIndex, out var indexInArchetype, out var chunk, out var entityIndexInChunk);
+#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !DISABLE_ENTITIES_JOURNALING
+            if (Hint.Unlikely(impl->_Access->EntityComponentStore->m_RecordToJournal != 0) && !isReadOnly)
+            {
+                impl->RecordSingletonJournalRW(chunk, typeIndex, EntitiesJournaling.RecordType.GetBufferRW);
+            }
+#endif
+
+            var archetype = impl->_Access->EntityComponentStore->GetArchetype(chunk);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            var safetyHandles = &impl->_Access->DependencyManager->Safety;
+            var bufferAccessor = ChunkIterationUtility.GetChunkBufferAccessor<T>(archetype, chunk, !isReadOnly, indexInArchetype,
+                impl->_Access->EntityComponentStore->GlobalSystemVersion, safetyHandles->GetSafetyHandle(typeIndex, isReadOnly),
+                safetyHandles->GetBufferSafetyHandle(typeIndex));
+#else
+            var bufferAccessor = ChunkIterationUtility.GetChunkBufferAccessor<T>(archetype, chunk, !isReadOnly, indexInArchetype,
+                impl->_Access->EntityComponentStore->GlobalSystemVersion);
+#endif
+
+            return bufferAccessor[entityIndexInChunk];
         }
     }
 }

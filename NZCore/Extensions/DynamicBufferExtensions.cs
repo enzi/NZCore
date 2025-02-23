@@ -157,5 +157,22 @@ namespace NZCore
 
             return count == 0;
         }
+        
+        public static void CopyFrom<T>(this DynamicBuffer<T> buffer, UnsafeList<T> list)
+            where T : unmanaged
+        {
+            buffer.ResizeUninitialized(list.Length);
+            UnsafeUtility.MemCpy(buffer.GetUnsafePtr(), list.Ptr, list.Length * UnsafeUtility.SizeOf<T>());
+        }
+        
+        public static void CopyFrom<T>(this DynamicBuffer<T> buffer, UnsafeList<byte> list)
+            where T : unmanaged
+        {
+            var elementCount = list.Length / UnsafeUtility.SizeOf<T>();
+            
+            buffer.ResizeUninitialized(elementCount);
+            
+            UnsafeUtility.MemCpy(buffer.GetUnsafePtr(), list.Ptr, list.Length);
+        }
     }
 }

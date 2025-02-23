@@ -73,5 +73,16 @@ namespace NZCore
 
             return query.GetSingletonBuffer<T>();
         }
+        
+        public static DynamicBuffer<T> GetSingletonBufferNoSync<T>(ref this SystemState state, bool isReadOnly)
+            where T : unmanaged, IBufferElementData
+        {
+            var query = new EntityQueryBuilder(Allocator.Temp)
+                .WithAll<T>()
+                .WithOptions(EntityQueryOptions.IncludeSystems)
+                .Build(ref state);
+
+            return query.GetSingletonBufferNoSync<T>(isReadOnly);
+        }
     }
 }

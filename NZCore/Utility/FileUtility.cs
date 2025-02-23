@@ -4,7 +4,7 @@
 
 using System.IO;
 
-namespace NZCore.Utility
+namespace NZCore
 {
     public static class FileUtility
     {

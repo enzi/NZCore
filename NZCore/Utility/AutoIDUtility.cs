@@ -5,7 +5,7 @@
 using System.Collections.Generic;
 using NZCore.AssetManagement;
 
-namespace NZCore.Utility
+namespace NZCore
 {
     public static class AutoIDUtility
     {

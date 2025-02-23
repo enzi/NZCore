@@ -85,5 +85,31 @@ namespace NZCore
             var size = UnsafeUtility.SizeOf<T>();
             ReinterpretLengthAndCapacity(ref list, size);
         }
+
+        public static void AddRange<T>(this ref UnsafeList<T> list, NativeArray<T> array)
+            where T : unmanaged
+        {
+            list.AddRange(array.GetUnsafeReadOnlyPtr(), array.Length);
+        }
+
+        public static UnsafeList<T> Clone<T>(this ref UnsafeList<T> list, Allocator allocator)
+            where T : unmanaged
+        {
+            UnsafeList<T> result = new UnsafeList<T>(list.Length, allocator, NativeArrayOptions.UninitializedMemory);
+            UnsafeUtility.MemCpy((byte*) result.Ptr, (byte*) list.Ptr, list.Length * UnsafeUtility.SizeOf<T>());
+            return result;
+        }
+        
+        public static void Remove<T>(this ref UnsafeList<T> list, T element)
+            where T : unmanaged
+        {
+            for (int i = list.Length - 1; i >= 0; i--)
+            {
+                if (list[i].GetHashCode() != element.GetHashCode())
+                    continue;
+
+                list.RemoveAt(i);
+            }
+        }
     }
 }

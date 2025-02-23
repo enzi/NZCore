@@ -6,8 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
-using NZCore.Utility;
-using UnityEngine;
 
 namespace NZCore
 {
