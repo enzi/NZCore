@@ -84,6 +84,27 @@ namespace NZCore.Editor
             return assets;
         }
 
+        public static List<TSubAsset> GetFilteredSubAssets<TAsset, TSubAsset>(
+            TAsset asset,
+            params string[] nameFilter)
+            where TAsset : ScriptableObject
+            where TSubAsset : ScriptableObject
+        {
+            List<TSubAsset> list = new List<TSubAsset>();
+            var assetPathWithName = AssetDatabase.GetAssetPath(asset);
+            var childAssets = AssetDatabase.LoadAllAssetsAtPath(assetPathWithName);
+
+            foreach (var filter in nameFilter)
+            {
+                if (childAssets.TryGetSubAssetExists(filter, out var existingAsset))
+                {
+                   list.Add((TSubAsset) existingAsset);
+                }
+            }
+
+            return list;
+        }
+
         public static void CreateOrUpdateSubAssets<TAsset, TSubAsset>(
             TAsset asset,
             Action<TAsset, SerializedObject> setData,
