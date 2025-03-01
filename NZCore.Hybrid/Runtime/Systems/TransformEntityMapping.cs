@@ -44,7 +44,6 @@ namespace NZCore.Hybrid
 
         protected override void OnCreate()
         {
-            //freeIds = new HashSet<int>();
             hybridComponents = new NativeList<HybridComponents>(0, Allocator.Persistent);
             indexLookup = new NativeHashMap<Entity, int>(0, Allocator.Persistent);
 
@@ -126,20 +125,35 @@ namespace NZCore.Hybrid
             }.Schedule(transformArray, Dependency);
         }
 
-        public void AddTransform(Transform transform, Entity entity, bool destroyHybridWithEntity = true)
+        public bool AddTransform(Transform transform, Entity entity, bool destroyHybridWithEntity = true, float destroyDelay = 0)
         {
             //Debug.Log($"Add mapping for entity {entity} with transform {transform.name}");
 
-            transformArray.Add(transform);
-            indexLookup.Add(entity, entitiesList.Length);
-            entitiesList.Add(new TrackedHybridEntity() { Entity = entity, DestroyHybridWithEntity = destroyHybridWithEntity.ToByte() });
-
-            hybridComponents.Add(new HybridComponents()
+            if (indexLookup.TryGetValue(entity, out var index))
             {
-                Animator = transform.GetComponent<Animator>()
-            });
+                // the entity is already tracked
+                // so just parent it
 
-            entitiesToRemove.Capacity = entitiesList.Capacity;
+                transform.SetParent(transformArray[index]);
+                transform.localPosition = Vector3.zero;
+
+                return true;
+            }
+            else
+            {
+                transformArray.Add(transform);
+                indexLookup.Add(entity, entitiesList.Length);
+                entitiesList.Add(new TrackedHybridEntity() { Entity = entity, DestroyHybridWithEntity = destroyHybridWithEntity.ToByte(), DestroyDelay = destroyDelay });
+
+                hybridComponents.Add(new HybridComponents()
+                {
+                    Animator = transform.GetComponent<Animator>()
+                });
+
+                entitiesToRemove.Capacity = entitiesList.Capacity;
+
+                return false;
+            }
         }
 
         public void RemoveEntity(Entity entity)

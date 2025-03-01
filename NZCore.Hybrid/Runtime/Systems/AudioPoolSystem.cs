@@ -80,22 +80,24 @@ namespace NZCore.Hybrid
                     source.volume = request.Volume;
                     source.spatialBlend = request.is3d ? 1 : 0;
 
-                    if (!request.is3d)
+                    if (request.is3d)
                     {
                         source.transform.position = request.Position;
                     }
 
                     source.Play();
-                    
-                    activeSources.Add(new ActiveAudioSource()
+
+                    var activeSource = new ActiveAudioSource()
                     {
                         Source = source,
                         FollowedEntity = request.FollowEntity
-                    });
+                    };
+                    
+                    activeSources.Add(activeSource);
                     
                     if (request.FollowEntity != Entity.Null)
                     {
-                        transformMapping.AddTransform(source.gameObject.transform, request.FollowEntity);
+                        activeSource.Parented = transformMapping.AddTransform(source.gameObject.transform, request.FollowEntity);
                     }
                     
                     requestList.RemoveAt(i);
@@ -112,9 +114,16 @@ namespace NZCore.Hybrid
 
                 if (source.FollowedEntity != Entity.Null)
                 {
-                    transformMapping.RemoveEntity(source.FollowedEntity);
+                    if (source.Parented)
+                    {
+                        source.Source.transform.SetParent(null);
+                    }
+                    else
+                    {
+                        transformMapping.RemoveEntity(source.FollowedEntity);
+                    }
                 }
-
+                
                 pool.Release(source.Source);
                 activeSources.RemoveAt(i);
             }
@@ -124,6 +133,7 @@ namespace NZCore.Hybrid
         {
             public AudioSource Source;
             public Entity FollowedEntity;
+            public bool Parented;
         }
     }
 }
