@@ -95,33 +95,39 @@ namespace NZCore
             File.WriteAllLines(cscPath, lines);
         }
 
-        public static bool CheckForJsonChanges(object assets, string structName, string packagePath)
-        {
-            var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
-            var csVersion = $"/*{json}*/";
-            var path = $"Packages/{packagePath}";
-            var jsonPath = $"{path}/{structName}.settings.cs";
-            var resolvedJsonPath = Path.GetFullPath(jsonPath);
-
-            return FileUtility.CheckForChanges(resolvedJsonPath, csVersion);
-        }
-
-        public static void WriteJson(object assets, string fileName, string packagePath, params string[] cscPaths)
+        /// <summary>
+        /// Serialize an object into a json comment inside a cs file
+        /// Output path is Packages/packagePath/fileName 
+        /// </summary>
+        public static (string resolvedJsonPath, string csVersion) CSifyJson(object assets, string fileName, string packagePath)
         {
             var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
             var csVersion = $"/*{json}*/";
             var path = $"Packages/{packagePath}";
             var jsonPath = $"{path}/{fileName}.settings.cs";
-            
             var resolvedJsonPath = Path.GetFullPath(jsonPath);
 
-            FileUtility.WriteChanges(resolvedJsonPath, csVersion);
+            return (resolvedJsonPath, csVersion);
+        }
+
+        public static bool CheckForJsonChanges(object assets, string fileName, string packagePath)
+        {
+            var tuple = CSifyJson(assets, fileName, packagePath);
+
+            return FileUtility.CheckForChanges(tuple.resolvedJsonPath, tuple.csVersion);
+        }
+
+        public static void WriteJson(object assets, string fileName, string packagePath, params string[] cscPaths)
+        {
+            var tuple = CSifyJson(assets, fileName, packagePath);
+
+            FileUtility.WriteChanges(tuple.resolvedJsonPath, tuple.csVersion);
 
             foreach (var cscPath in cscPaths)
             {
                 var fullCscPath = Path.GetFullPath($"Packages/{cscPath}/csc.rsp");
 
-                AddAdditionalFiles(fullCscPath, resolvedJsonPath);
+                AddAdditionalFiles(fullCscPath, tuple.resolvedJsonPath);
             }
         }
     }

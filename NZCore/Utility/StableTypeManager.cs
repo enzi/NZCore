@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using NZCore.Helper;
 using Unity.Burst;
@@ -92,7 +91,7 @@ namespace NZCore
             stableTypeMap.Add(0, new StableTypeIndex() { Value = 0 });
             stableHashMap.Add(new StableTypeIndex(){ Value = 0}, 0);
 
-            for (int i = 1; i < allTypes.Count();i++)
+            for (int i = 1; i < allTypes.Length;i++)
             {
                 var typeInfo = allTypes[i];
                 
