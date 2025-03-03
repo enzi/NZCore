@@ -39,25 +39,26 @@ namespace NZCore
             return state.m_JobHandle;
         }
 
-        public static T GetSingleton<T>(ref this SystemState state)
-            where T : unmanaged, IComponentData
+        public static EntityQuery GetSingletonQuery<T>(ref this SystemState state)
+            where T : unmanaged
         {
-            var query = new EntityQueryBuilder(Allocator.Temp)
+            return new EntityQueryBuilder(Allocator.Temp)
                 .WithAll<T>()
                 .WithOptions(EntityQueryOptions.IncludeSystems)
                 .Build(ref state);
+        }
 
+        public static T GetSingleton<T>(ref this SystemState state)
+            where T : unmanaged, IComponentData
+        {
+            var query = GetSingletonQuery<T>(ref state);
             return query.GetSingleton<T>();
         }
 
         public static Entity GetSingletonEntity<T>(ref this SystemState state)
             where T : unmanaged, IComponentData
         {
-            var query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<T>()
-                .WithOptions(EntityQueryOptions.IncludeSystems)
-                .Build(ref state);
-
+            var query = GetSingletonQuery<T>(ref state);
             query.CompleteDependency();
 
             return query.GetSingletonEntity();
@@ -66,22 +67,14 @@ namespace NZCore
         public static DynamicBuffer<T> GetSingletonBuffer<T>(ref this SystemState state)
             where T : unmanaged, IBufferElementData
         {
-            var query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<T>()
-                .WithOptions(EntityQueryOptions.IncludeSystems)
-                .Build(ref state);
-
+            var query = GetSingletonQuery<T>(ref state);
             return query.GetSingletonBuffer<T>();
         }
         
         public static DynamicBuffer<T> GetSingletonBufferNoSync<T>(ref this SystemState state, bool isReadOnly)
             where T : unmanaged, IBufferElementData
         {
-            var query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<T>()
-                .WithOptions(EntityQueryOptions.IncludeSystems)
-                .Build(ref state);
-
+            var query = GetSingletonQuery<T>(ref state);
             return query.GetSingletonBufferNoSync<T>(isReadOnly);
         }
     }

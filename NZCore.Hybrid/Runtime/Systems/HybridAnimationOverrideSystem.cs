@@ -27,13 +27,15 @@ namespace NZCore.Hybrid
                 ref var state = ref animatorOverrideStateRW.ValueRW;
                 ref var animatorComp = ref hybridAnimatorRW.ValueRW;
 
-                if (animatorComp.TransitionTo != 0)
+                if (animatorComp.TransitionTo != HybridAnimatorTransitionPhase.None)
                 {
-                    animatorComp.Weight = animatorComp.TransitionTo > 0 ? Mathf.Min(animatorComp.Weight + 0.1f, 1.0f) : Mathf.Max(animatorComp.Weight - 0.1f, 0.0f);
+                    animatorComp.Weight = animatorComp.TransitionTo == HybridAnimatorTransitionPhase.ToCustom ? 
+                        Mathf.Min(animatorComp.Weight + 0.1f, 1.0f) : 
+                        Mathf.Max(animatorComp.Weight - 0.1f, 0.0f);
                     
                     if (Mathf.Approximately(animatorComp.Weight, 1.0f))
                     {
-                        animatorComp.TransitionTo = 0;
+                        animatorComp.TransitionTo = HybridAnimatorTransitionPhase.None;
                     }
                     
                     animatorComp.Mixer.SetInputWeight(0, 1.0f - animatorComp.Weight);

@@ -9,15 +9,21 @@ using UnityEngine.Playables;
 
 namespace NZCore.Hybrid
 {
+    public enum HybridAnimatorTransitionPhase : sbyte
+    {
+        ToDefault = -1,
+        None = 0,
+        ToCustom = 1
+    }
+    
     public struct HybridAnimator : IComponentData
     {
-        //public Animator Animator;
         public PlayableGraph Graph;
         public AnimationMixerPlayable Mixer;
         public Playable RootPlayable;
         
         public float Weight;
-        public sbyte TransitionTo;
+        public HybridAnimatorTransitionPhase TransitionTo;
 
         public void ChangeClip(AnimationClip clip, float speed = 1.0f)
         {
@@ -28,9 +34,7 @@ namespace NZCore.Hybrid
             
             Graph.Connect(newClip, 0, Mixer, 1);
 
-            TransitionTo = 1;
-            //Mixer.SetInputWeight(0, 0.0f);
-            //Mixer.SetInputWeight(1, 1.0f);
+            TransitionTo = HybridAnimatorTransitionPhase.ToCustom;
         }
 
         public void ChangePlayable<T>(T playable, float speed = 1.0f)
@@ -41,14 +45,12 @@ namespace NZCore.Hybrid
             playable.SetSpeed(speed);
             Graph.Connect(playable, 0, Mixer, 1);
             
-            TransitionTo = 1;
+            TransitionTo = HybridAnimatorTransitionPhase.ToCustom;
         }
 
         public void Reset()
         {
-            TransitionTo = -1;
-            //Mixer.SetInputWeight(0, 1.0f);
-            //Mixer.SetInputWeight(1, 0.0f);
+            TransitionTo = HybridAnimatorTransitionPhase.ToDefault;
         }
         
         public void SetTime(float normalizedTime)
