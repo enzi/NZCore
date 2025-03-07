@@ -170,5 +170,63 @@ namespace NZCore.Editor
             target.style.borderLeftColor = color;
             target.style.borderRightColor = color;
         }
+
+
+        public static void SetEditorIcon(this VisualElement target, string iconName)
+        {
+            var guiContent = EditorGUIUtility.TrIconContent(iconName, "Play the timeline");
+            var tmpImage = (Texture2D) guiContent.image;
+            tmpImage.filterMode = FilterMode.Bilinear;
+            target.style.backgroundImage = new StyleBackground(tmpImage);
+        }
+
+        public static void AddEditorIcon(this VisualElement target, string iconName, float percentCoverage)
+        {
+            var child = new VisualElement
+            {
+                style =
+                {
+                    position = new StyleEnum<Position>(Position.Absolute),
+                    left = 0,
+                    right = 0,
+                    top = 0,
+                    bottom = 0,
+                    
+                    // replaces unityBackgroundScaleMode as it's obsolete 
+                    backgroundPositionX = new BackgroundPosition(BackgroundPositionKeyword.Center),
+                    backgroundPositionY = new BackgroundPosition(BackgroundPositionKeyword.Center),
+                    backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat),
+                    backgroundSize = new BackgroundSize(new Length(percentCoverage, LengthUnit.Percent), new Length(percentCoverage, LengthUnit.Percent))
+                },
+            };
+
+            child.SetEditorIcon(iconName);
+            
+            target.Add(child);
+        }
+        
+        public static void DrawVerticalLineFast(this MeshGenerationContext ctx, float x, float minY, float maxY, Color color, float thickness = 1.0f)
+        {
+            var mesh = ctx.Allocate(4, 6);
+
+            float halfThickness = thickness * 0.5f;
+            
+            // TL 0 ... TR 1
+            // BL 2 ... BR 3
+            
+            mesh.SetNextVertex(new Vertex { position = new Vector3(x - halfThickness, minY, 0), tint = color });
+            mesh.SetNextVertex(new Vertex { position = new Vector3(x + halfThickness, minY, 0), tint = color });
+            mesh.SetNextVertex(new Vertex { position = new Vector3(x - halfThickness, maxY, 0), tint = color });
+            mesh.SetNextVertex(new Vertex { position = new Vector3(x + halfThickness, maxY, 0), tint = color });
+            
+            // needs clockwise :)
+            mesh.SetNextIndex(0);
+            mesh.SetNextIndex(1);
+            mesh.SetNextIndex(2);
+            
+            mesh.SetNextIndex(2);
+            mesh.SetNextIndex(1);
+            mesh.SetNextIndex(3);
+        }
     }
 }

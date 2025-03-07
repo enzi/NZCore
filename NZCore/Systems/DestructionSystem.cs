@@ -59,6 +59,7 @@ namespace NZCore
 
             if (!query.IsEmpty)
             {
+                // maybe jobify this one day and test if main thread is faster than parallel scheduling a job 
                 var entities = query.ToEntityArray(Allocator.Temp);
 
                 foreach (var entity in entities)

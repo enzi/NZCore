@@ -85,6 +85,18 @@ namespace NZCore.UI.Editor
             });
             
             Add(objectField);
+
+            var resetButton = new Button(() =>
+            {
+                ViewData = new PersistentData();
+                UpdateFromViewState();
+                SaveViewDataState();
+            })
+            {
+                text = "Reset"
+            };
+
+            Add(resetButton);
             
             previewContainer = new IMGUIContainer();
             previewContainer.onGUIHandler = () =>
@@ -112,6 +124,14 @@ namespace NZCore.UI.Editor
             ViewData.m_PreviewDir = avatarPreview.m_PreviewDir;
             
             ExposedViewData.ExposedViewData.SaveViewData(this);
+        }
+
+        private void UpdateFromViewState()
+        {
+            avatarPreview.m_PivotPositionOffset = ViewData.m_PivotPositionOffset;
+            avatarPreview.m_AvatarScale = ViewData.m_AvatarScale;
+            avatarPreview.m_ZoomFactor = ViewData.m_ZoomFactor;
+            avatarPreview.m_PreviewDir = ViewData.m_PreviewDir;
         }
 
         private void OnGeometryChangedEvent(GeometryChangedEvent evt)
@@ -142,9 +162,12 @@ namespace NZCore.UI.Editor
                 var disposeMethod = avatarPreview.GetType().GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 disposeMethod?.Invoke(avatarPreview, null);
             }
-            
-            gizmoRenderTexture.Release();
-            Object.DestroyImmediate(gizmoRenderTexture);
+
+            if (gizmoRenderTexture != null)
+            {
+                gizmoRenderTexture.Release();
+                Object.DestroyImmediate(gizmoRenderTexture);
+            }
         }
 
         private void SetupAvatarPreview()
@@ -181,10 +204,7 @@ namespace NZCore.UI.Editor
             ViewData = new PersistentData();
             ViewData = ExposedViewData.ExposedViewData.GetOrCreateViewData(this, ViewDataKey, ViewData);
 
-            avatarPreview.m_PivotPositionOffset = ViewData.m_PivotPositionOffset;
-            avatarPreview.m_AvatarScale = ViewData.m_AvatarScale;
-            avatarPreview.m_ZoomFactor = ViewData.m_ZoomFactor;
-            avatarPreview.m_PreviewDir = ViewData.m_PreviewDir;
+            UpdateFromViewState();
 
             OnSetupFinished();
         }
