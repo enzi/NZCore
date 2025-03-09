@@ -1,5 +1,5 @@
-// <copyright project="NZCore" file="ComponentLookupExtensions.cs" version="1.0.0">
-// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// <copyright project="NZCore" file="UnsafeComponentLookupExtensions.cs">
+// Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using Unity.Burst.CompilerServices;

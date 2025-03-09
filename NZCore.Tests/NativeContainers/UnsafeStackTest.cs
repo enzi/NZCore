@@ -1,4 +1,8 @@
-﻿using NUnit.Framework;
+﻿// <copyright project="NZCore.Tests" file="UnsafeStackTest.cs">
+// Copyright © 2025 Thomas Enzenebner. All rights reserved.
+// </copyright>
+
+using NUnit.Framework;
 using Unity.Collections;
 using Unity.PerformanceTesting;
 

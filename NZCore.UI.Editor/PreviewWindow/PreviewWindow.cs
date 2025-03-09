@@ -1,5 +1,5 @@
-// <copyright project="NZCore file="PreviewWindow.cs" version="1.2.2">
-// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// <copyright project="NZCore.UI.Editor" file="PreviewWindow.cs">
+// Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;

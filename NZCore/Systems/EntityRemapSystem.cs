@@ -1,5 +1,5 @@
-// <copyright project="NZCore" file="EntityRemapSystem.cs" version="1.0.0">
-// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// <copyright project="NZCore" file="EntityRemapSystem.cs">
+// Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 #if NZSPELLCASTING

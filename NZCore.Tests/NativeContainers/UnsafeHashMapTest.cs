@@ -1,5 +1,5 @@
 // <copyright project="NZCore.Tests" file="UnsafeHashMapTest.cs">
-// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using NUnit.Framework;

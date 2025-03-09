@@ -1,5 +1,5 @@
 // <copyright project="NZCore" file="NodeReader.cs">
-// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System.Runtime.CompilerServices;

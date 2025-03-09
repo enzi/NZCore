@@ -1,3 +1,7 @@
+// <copyright project="NZCore.UI.Editor" file="InspectorView.cs">
+// Copyright © 2025 Thomas Enzenebner. All rights reserved.
+// </copyright>
+
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;

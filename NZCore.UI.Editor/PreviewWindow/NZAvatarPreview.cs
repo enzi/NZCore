@@ -1,6 +1,6 @@
-// Unity C# reference source
-// Copyright (c) Unity Technologies. For terms of use, see
-// https://unity3d.com/legal/licenses/Unity_Reference_Only_License
+// <copyright project="NZCore.UI.Editor" file="NZAvatarPreview.cs">
+// Copyright © 2025 Thomas Enzenebner. All rights reserved.
+// </copyright>
 
 using System;
 using System.Reflection;
