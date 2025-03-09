@@ -118,7 +118,7 @@ namespace NZCore.Editor
             yield return t.AssemblyQualifiedName;
         }
 
-        public static void Show(Action<SearchItem, bool> selectHandler)
+        public static void Show(Action<SearchItem, bool> selectHandler, Action<SearchItem[]> multipleSelectHandler)
         {
             var provider = new TypeSearchProvider(typeof(object));
         

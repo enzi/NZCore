@@ -12,8 +12,9 @@ namespace NZCore
         None,
 
         // 16 bits
-        Short,
         Half,
+        Short,
+        UShort,
 
         // 32 bits
         Float,
@@ -27,9 +28,7 @@ namespace NZCore
 
         // 8 bits
         Byte,
-
-        // 1 bit
-        Bool, // bool counts as byte
+        Bool
     }
 
     [Serializable]
