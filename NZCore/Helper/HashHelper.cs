@@ -46,13 +46,12 @@ namespace NZCore
             return result;
         }
 
-        public static int GetHashFromInts(int v1, int v2)
+        public static int GetHashFromInts(int a, int b)
         {
-            const int prime = 31;
-
-            var result = prime + v1;
-            result = prime * result + v2;
-            return result;
+            unchecked
+            {
+                return (a.GetHashCode() * 397) ^ b.GetHashCode();
+            }
         }
     }
 }

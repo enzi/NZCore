@@ -30,4 +30,12 @@ namespace NZCore
         Byte,
         Bool
     }
+
+    public static class StatDataTypeExtensions
+    {
+        public static GenericDataType ToGenericDataType(this StatDataType statDataType)
+        {
+            return (GenericDataType)statDataType;
+        }
+    }
 }
