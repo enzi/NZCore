@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Mathematics;
 
@@ -30,7 +29,127 @@ namespace NZCore
         // 8 bit
         [FieldOffset(0)] public byte ByteValue;
         [FieldOffset(0)] public bool BoolValue;
+
+        public static GenericUnionValue Create(double val)
+        {
+            return new GenericUnionValue()
+            {
+                DoubleValue = val
+            };
+        }
         
+        public static GenericUnionValue Create(long val)
+        {
+            return new GenericUnionValue()
+            {
+                LongValue = val
+            };
+        }
+        
+        public static GenericUnionValue Create(ulong val)
+        {
+            return new GenericUnionValue()
+            {
+                ULongValue = val
+            };
+        }
+        
+        public static GenericUnionValue Create(float val)
+        {
+            return new GenericUnionValue()
+            {
+                FloatValue = val
+            };
+        }
+        
+        public static GenericUnionValue Create(int val)
+        {
+            return new GenericUnionValue()
+            {
+                IntValue = val
+            };
+        }
+        
+        public static GenericUnionValue Create(uint val)
+        {
+            return new GenericUnionValue()
+            {
+                UIntValue = val
+            };
+        }
+        
+        public static GenericUnionValue Create(half val)
+        {
+            return new GenericUnionValue()
+            {
+                HalfValue = val
+            };
+        }
+        
+        public static GenericUnionValue Create(short val)
+        {
+            return new GenericUnionValue()
+            {
+                ShortValue = val
+            };
+        }
+        
+        public static GenericUnionValue Create(ushort val)
+        {
+            return new GenericUnionValue()
+            {
+                UShortValue = val
+            };
+        }
+        
+        public static GenericUnionValue Create(byte val)
+        {
+            return new GenericUnionValue()
+            {
+                ByteValue = val
+            };
+        }
+        
+        public static GenericUnionValue Create(bool val)
+        {
+            return new GenericUnionValue()
+            {
+                BoolValue = val
+            };
+        }
+        
+        public static unsafe GenericUnionValue Create(GenericDataType dataType, byte* valuePtr)
+        {
+            switch (dataType)
+            {
+                case GenericDataType.Short:
+                    return new GenericUnionValue() { ShortValue = *(short*)valuePtr };
+                case GenericDataType.UShort:
+                    return new GenericUnionValue() { UShortValue = *(ushort*)valuePtr };
+                case GenericDataType.Half:
+                    return new GenericUnionValue() { HalfValue = *(half*)valuePtr };
+                case GenericDataType.Float:
+                    return new GenericUnionValue() { FloatValue = *(float*)valuePtr };
+                case GenericDataType.Int:
+                    return new GenericUnionValue() { IntValue = *(int*)valuePtr };
+                case GenericDataType.UInt:
+                    return new GenericUnionValue() { UIntValue = *(uint*)valuePtr };
+                case GenericDataType.Double:
+                    return new GenericUnionValue() { DoubleValue = *(double*)valuePtr };
+                case GenericDataType.Long:
+                    return new GenericUnionValue() { LongValue = *(long*)valuePtr };
+                case GenericDataType.ULong:
+                    return new GenericUnionValue() { ULongValue = *(ulong*)valuePtr };
+                case GenericDataType.Byte:
+                    return new GenericUnionValue() { ByteValue = *valuePtr };
+                case GenericDataType.Bool:
+                    return new GenericUnionValue() { BoolValue = *valuePtr > 0 };
+                case GenericDataType.None:
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
+            }
+        }
+
         public static unsafe GenericUnionValue Create(StatDataType dataType, byte* valuePtr)
         {
             switch (dataType)

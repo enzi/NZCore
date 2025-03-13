@@ -4,7 +4,7 @@
 
 namespace NZCore
 {
-    public enum ConditionTypeV2
+    public enum ConditionTypeV2 : byte
     {
         Event,
         State
