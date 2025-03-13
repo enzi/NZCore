@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -22,66 +23,40 @@ namespace NZCore
                 return true;
             }
 
-            item = default;
+            item = null;
             return false;
         }
 
-        public static unsafe bool TryGetRefValue<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> hashMap, TKey key, out void* valuePtr)
+        public static unsafe void SetLength<TKey, TValue>(
+            [NoAlias] this NativeHashMap<TKey, TValue> hashMap, int newLength)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            return TryGetFirstRefValueAtomic<TKey, TValue>(hashMap.m_HashMapData.m_Buffer, key, out valuePtr, out var _);
+            hashMap.m_Data->Count = newLength;
+            hashMap.m_Data->AllocatedIndex = newLength;
         }
-
-        internal static unsafe bool TryGetFirstRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, TKey key, out void* valuePtr, out NativeParallelMultiHashMapIterator<TKey> it)
+        
+        public static unsafe void RecalculateBuckets<TKey, TValue>(
+            [NoAlias] this NativeHashMap<TKey, TValue> hashMap)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            it.key = key;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(hashMap.m_Safety);
+#endif
+            var length = hashMap.Count;
 
-            if (data->allocatedIndexLength <= 0)
+            int* buckets = hashMap.m_Data->Buckets;
+            int* nextPtrs = hashMap.m_Data->Next;
+            TKey* keys = hashMap.m_Data->Keys;
+            var bucketCapacityMask = hashMap.m_Data->BucketCapacity - 1;
+
+            for (var idx = 0; idx < length; idx++)
             {
-                it.EntryIndex = it.NextEntryIndex = -1;
-                valuePtr = null;
-                return false;
+                var bucket = (int) ((uint)keys[idx].GetHashCode() & bucketCapacityMask);
+                nextPtrs[idx] = buckets[bucket];
+                buckets[bucket] = idx;
             }
-
-            // First find the slot based on the hash
-            int* buckets = (int*)data->buckets;
-            int bucket = key.GetHashCode() & data->bucketCapacityMask;
-            it.EntryIndex = it.NextEntryIndex = buckets[bucket];
-            return TryGetNextRefValueAtomic<TKey, TValue>(data, out valuePtr, ref it);
-        }
-
-        internal static unsafe bool TryGetNextRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, out void* valuePtr, ref NativeParallelMultiHashMapIterator<TKey> it)
-            where TKey : unmanaged, IEquatable<TKey>
-            where TValue : unmanaged
-        {
-            int entryIdx = it.NextEntryIndex;
-            it.NextEntryIndex = -1;
-            it.EntryIndex = -1;
-            valuePtr = null;
-            if (entryIdx < 0 || entryIdx >= data->keyCapacity)
-            {
-                return false;
-            }
-
-            int* nextPtrs = (int*)data->next;
-            while (!UnsafeUtility.ReadArrayElement<TKey>(data->keys, entryIdx).Equals(it.key))
-            {
-                entryIdx = nextPtrs[entryIdx];
-                if (entryIdx < 0 || entryIdx >= data->keyCapacity)
-                {
-                    return false;
-                }
-            }
-
-            it.NextEntryIndex = nextPtrs[entryIdx];
-            it.EntryIndex = entryIdx;
-
-            valuePtr = data->values + entryIdx * sizeof(TValue);
-
-            return true;
         }
     }
 }
