@@ -144,13 +144,16 @@ namespace NZCore.UI.Editor
             int height = (int) (r.height * (double) pixelsPerPoint);
             
             gizmoRenderTexture = new RenderTexture(width, height, GraphicsFormat.R16G16B16A16_SFloat, SystemInfo.GetGraphicsFormat(DefaultFormat.DepthStencil));
-            
-            // clear the RT once
-            RenderTexture.active = gizmoRenderTexture;
-            wireframeMaterial.SetPass(0);
-            GL.Clear(true, true, Color.clear);
-            GL.Flush();
-            RenderTexture.active = null;
+
+            if (wireframeMaterial != null)
+            {
+                // clear the RT once
+                RenderTexture.active = gizmoRenderTexture;
+                wireframeMaterial.SetPass(0);
+                GL.Clear(true, true, Color.clear);
+                GL.Flush();
+                RenderTexture.active = null;
+            }
         }
         
         private void OnDetachFromPanelEvent(DetachFromPanelEvent evt)
