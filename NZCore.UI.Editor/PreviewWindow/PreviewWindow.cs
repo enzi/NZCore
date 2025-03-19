@@ -159,12 +159,8 @@ namespace NZCore.UI.Editor
         private void OnDetachFromPanelEvent(DetachFromPanelEvent evt)
         {
             Debug.Log("OnDetachFromPanelEvent");
-            
-            if (avatarPreview != null)
-            {
-                var disposeMethod = avatarPreview.GetType().GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                disposeMethod?.Invoke(avatarPreview, null);
-            }
+
+            avatarPreview?.OnDisable();
 
             if (gizmoRenderTexture != null)
             {
