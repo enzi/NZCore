@@ -36,11 +36,22 @@ namespace NZCore
             ptr += UnsafeUtility.SizeOf<T>();
             return ref val;
         }
+        
+        public static unsafe byte[] GetBytes<T>(T value) 
+            where T : unmanaged
+        {
+            byte[] result = new byte[sizeof(T)];
+            fixed (byte* ptr = result)
+            {
+                *(T*)ptr = value;
+            }
+            return result;
+        }
 
-        public static byte[] GetBytesFromStruct<T>(T str)
+        public static byte[] GetBytesFromStruct<T>(T structure)
             where T : struct
         {
-            int size = Marshal.SizeOf(str);
+            int size = Marshal.SizeOf(structure);
             int size2 = UnsafeUtility.SizeOf<T>();
 
             if (size != size2)
@@ -54,7 +65,7 @@ namespace NZCore
             try
             {
                 ptr = Marshal.AllocHGlobal(size);
-                Marshal.StructureToPtr(str, ptr, true);
+                Marshal.StructureToPtr(structure, ptr, true);
                 Marshal.Copy(ptr, arr, 0, size);
             }
             finally
