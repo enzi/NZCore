@@ -107,7 +107,6 @@ namespace NZCore.UI.Editor
             previewContainer.AddToClassList("imgui-preview-container");
             
             Add(previewContainer);
-            RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanelEvent);
             RegisterCallback<GeometryChangedEvent>(OnGeometryChangedEvent);
         }
 
@@ -155,13 +154,11 @@ namespace NZCore.UI.Editor
                 RenderTexture.active = null;
             }
         }
-        
-        private void OnDetachFromPanelEvent(DetachFromPanelEvent evt)
+
+        public void Cleanup()
         {
-            Debug.Log("OnDetachFromPanelEvent");
-
             avatarPreview?.OnDisable();
-
+            
             if (gizmoRenderTexture != null)
             {
                 gizmoRenderTexture.Release();
