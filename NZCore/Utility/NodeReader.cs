@@ -26,6 +26,13 @@ namespace NZCore
             return ref node;
         }
 
+        public byte* ReadRange(int length)
+        {
+            var tmp = Ptr;
+            Ptr += length;
+            return tmp;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOffset(int offset)
         {

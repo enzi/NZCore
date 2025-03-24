@@ -1,16 +1,20 @@
-// <copyright project="NZCore" file="CompilerServiceUtility.cs">
-// Copyright © 2025 Thomas Enzenebner. All rights reserved.
+// <copyright project="NZCore" file="CompilerServiceUtility.cs" version="1.0.0">
+// Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using Newtonsoft.Json;
 
 namespace NZCore
 {
     public static class CompilerServiceUtility
     {
+        private static readonly Type monoIOType =  Type.GetType("System.IO.MonoIO, mscorlib");
+        private static readonly MethodInfo remapPathMethod = monoIOType.GetMethod("RemapPath", BindingFlags.Static | BindingFlags.Public);
+        
         public static void AddAdditionalFiles(string cscPath, params string[] additionalFiles)
         {
             List<string> lines = new List<string>();
@@ -103,11 +107,27 @@ namespace NZCore
         {
             var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
             var csVersion = $"/*{json}*/";
-            var path = $"Packages/{packagePath}";
-            var jsonPath = $"{path}/{fileName}.settings.cs";
-            var resolvedJsonPath = Path.GetFullPath(jsonPath);
+            var projectFullPath = GetProjectPath();
+            var packageFullPath = Path.GetFullPath($"Packages/{packagePath}");
 
-            return (resolvedJsonPath, csVersion);
+            if (RemapPath(packageFullPath, out var remappedPackagePath))
+            {
+                packageFullPath = remappedPackagePath;
+            }
+
+            string jsonPath;
+            if (packageFullPath.Contains(projectFullPath))
+            {
+                var relativePackagePath = packageFullPath.Replace($"{projectFullPath}/", "");
+                jsonPath = $"{relativePackagePath}/{fileName}.settings.cs";
+            }
+            else
+            {
+                // fall back to absolute paths
+                jsonPath = Path.GetFullPath($"Packages/{packagePath}/{fileName}.settings.cs");
+            }
+
+            return (jsonPath, csVersion);
         }
 
         public static bool CheckForJsonChanges(object assets, string fileName, string packagePath)
@@ -122,13 +142,43 @@ namespace NZCore
             var tuple = CSifyJson(assets, fileName, packagePath);
 
             FileUtility.WriteChanges(tuple.resolvedJsonPath, tuple.csVersion);
-
+            
             foreach (var cscPath in cscPaths)
             {
                 var fullCscPath = Path.GetFullPath($"Packages/{cscPath}/csc.rsp");
 
                 AddAdditionalFiles(fullCscPath, tuple.resolvedJsonPath);
             }
+        }
+
+        public static bool RemapPath(string path, out string newPath)
+        {
+            if (remapPathMethod == null)
+            {
+                throw new Exception("RemapPathMethod is null! Reflection failed to resolve MonoIO.RemapPath!");
+            }
+
+            var tmpPath = "";
+            object[] parameters = { path, tmpPath };
+            bool result = (bool)remapPathMethod.Invoke(null, parameters);
+            newPath = (string)parameters[1];
+            
+
+            return result;
+        }
+
+        public static string GetProjectPath()
+        {
+            var args = Environment.GetCommandLineArgs();
+
+            for (var i = 0; i < args.Length; i++)
+            {
+                var arg = args[i];
+                if (arg.Equals("-projectPath", StringComparison.InvariantCultureIgnoreCase))
+                    return args[i + 1];
+            }
+
+            return Path.GetFullPath("Assets/..");
         }
     }
 }
