@@ -26,10 +26,11 @@ namespace NZCore
             return ref node;
         }
 
-        public byte* ReadRange(int length)
+        public byte* ReadRange<T>(int length)
+            where T : unmanaged
         {
             var tmp = Ptr;
-            Ptr += length;
+            Ptr += length * UnsafeUtility.SizeOf<T>();
             return tmp;
         }
 
