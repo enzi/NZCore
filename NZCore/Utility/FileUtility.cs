@@ -8,24 +8,30 @@ namespace NZCore
 {
     public static class FileUtility
     {
-        public static bool WriteChanges(string path, string content)
+        public static bool WriteChanges(string filePath, string content)
         {
-            var hasChanges = CheckForChanges(path, content);
+            var hasChanges = CheckForChanges(filePath, content);
 
             if (hasChanges)
             {
-                File.WriteAllText(path, content);
+                string? directory = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+                
+                File.WriteAllText(filePath, content);
             }
 
             return hasChanges;
         }
 
-        public static bool CheckForChanges(string path, string content)
+        public static bool CheckForChanges(string filePath, string content)
         {
-            if (!File.Exists(path))
+            if (!File.Exists(filePath))
                 return true;
 
-            var oldData = File.ReadAllText(path);
+            var oldData = File.ReadAllText(filePath);
 
             return oldData != content;
         }

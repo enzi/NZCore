@@ -8,11 +8,13 @@ namespace NZCore.Editor.AssetManagement
 {
     public class PackagePathAttribute : Attribute
     {
-        public string Path;
+        public readonly string Path;
+        public bool AddUniqueSettingsPath;
 
-        public PackagePathAttribute(string path)
+        public PackagePathAttribute(string path, bool addUniqueSettingsPath)
         {
             Path = path;
+            AddUniqueSettingsPath = addUniqueSettingsPath;
         }
     }
 }

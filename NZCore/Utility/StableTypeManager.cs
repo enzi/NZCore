@@ -101,6 +101,15 @@ namespace NZCore
                 {
                     continue;
                 }
+                
+                if (stableTypeMap.ContainsKey(hash))
+                {
+                    // entities 1.3.10 can have duplicate types
+                    var tmp = stableTypeMap[hash];
+
+                    stableHashMap.Remove(tmp);
+                    stableTypeMap.Remove(hash);
+                }
 
                 stableTypeMap.Add(hash, new StableTypeIndex() { Value = typeInfo.TypeIndex.Value });
                 stableHashMap.Add(new StableTypeIndex() { Value = typeInfo.TypeIndex.Value }, hash);

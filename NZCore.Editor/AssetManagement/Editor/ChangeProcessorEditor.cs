@@ -101,7 +101,7 @@ namespace NZCore.Editor
             var targetType = target.GetType();
             Debug.Log($"Updating {targetType.Name} ...");
 
-            var assets = AssetDatabaseUtility.GetSubAssets(targetType.Name);
+            var assets = AssetDatabaseUtility.GetSubAssets(targetType.GetType());
 
             // var assetPaths = AssetDatabase.FindAssets($"t:{targetType.Name}")
             //     .Select(AssetDatabase.GUIDToAssetPath)
@@ -128,7 +128,7 @@ namespace NZCore.Editor
             //     .Select(AssetDatabase.GUIDToAssetPath)
             //     .ToList();
             
-            var assets = AssetDatabaseUtility.GetSubAssets("ChangeProcessorAsset");
+            var assets = AssetDatabaseUtility.GetSubAssets(typeof(ChangeProcessorAsset));
 
             Dictionary<Type, List<ChangeProcessorAsset>> collector = new Dictionary<Type, List<ChangeProcessorAsset>>();
 

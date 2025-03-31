@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Newtonsoft.Json;
+using UnityEditor;
 
 namespace NZCore
 {
@@ -118,7 +119,7 @@ namespace NZCore
             string jsonPath;
             if (packageFullPath.Contains(projectFullPath))
             {
-                var relativePackagePath = packageFullPath.Replace($"{projectFullPath}/", "");
+                var relativePackagePath = packageFullPath.Replace($"{projectFullPath}{Path.DirectorySeparatorChar}", "");
                 jsonPath = $"{relativePackagePath}/{fileName}.settings.cs";
             }
             else
@@ -179,6 +180,21 @@ namespace NZCore
             }
 
             return Path.GetFullPath("Assets/..");
+        }
+
+        public static string GetUniqueSettingsPath()
+        {
+            var companyName = PlayerSettings.companyName.ToLowerInvariant().Trim().Replace(" ", "-");
+            var projectName = PlayerSettings.productName.ToLowerInvariant().Trim().Replace(" ", "-");
+
+            if (companyName.Length > 0 && projectName.Length > 0)
+            {
+                return $"Settings/{companyName}.{projectName}";
+            }
+            else
+            {
+                return $"Settings/{projectName}";
+            }
         }
     }
 }

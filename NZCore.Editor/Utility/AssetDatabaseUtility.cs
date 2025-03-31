@@ -61,8 +61,9 @@ namespace NZCore.Editor
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .ToList();
 
-            foreach (var assetPath in assetPathList)
+            for (var i = 0; i < assetPathList.Count; i++)
             {
+                var assetPath = assetPathList[i];
                 var tmpAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
 
                 if (tmpAssets.Length > 1)
@@ -70,6 +71,37 @@ namespace NZCore.Editor
                     foreach (var tmpAsset in tmpAssets)
                     {
                         if (tmpAsset != null && tmpAsset.GetType().Name == baseType)
+                        {
+                            assets.Add((ScriptableObject)tmpAsset);
+                        }
+                    }
+                }
+                else
+                {
+                    assets.Add((ScriptableObject)tmpAssets[0]);
+                }
+            }
+
+            return assets;
+        }
+        
+        public static List<ScriptableObject> GetSubAssets(Type baseType)
+        {
+            List<ScriptableObject> assets = new List<ScriptableObject>();
+            List<string> assetPathList = AssetDatabase.FindAssets($"t:{baseType.Name}")
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .ToList();
+
+            for (var i = 0; i < assetPathList.Count; i++)
+            {
+                var assetPath = assetPathList[i];
+                var tmpAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+
+                if (tmpAssets.Length > 1)
+                {
+                    foreach (var tmpAsset in tmpAssets)
+                    {
+                        if (tmpAsset != null && baseType.IsAssignableFrom(tmpAsset.GetType()))
                         {
                             assets.Add((ScriptableObject)tmpAsset);
                         }

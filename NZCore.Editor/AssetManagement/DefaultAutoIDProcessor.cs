@@ -66,11 +66,10 @@ namespace NZCore.Editor.AssetManagement
                 {
                     newDataList.Add(new DefaultAutoIDData()
                     {
-                        DataType = defaultAutoID.DefaultType.Name,
-                        DefaultValue = defaultAutoID.AutoID,
                         StructName = defaultAutoID.DefaultType.Name,
-                        IsPrimitive = defaultAutoID.DefaultType.IsPrimitive,
-                        AssetType = assetType
+                        AssetType = assetType,
+                        
+                        DefaultValue = defaultAutoID.AutoID
                     });
                 }
             }
@@ -87,7 +86,8 @@ namespace NZCore.Editor.AssetManagement
 
             if (attribute != null)
             {
-                CompilerServiceUtility.WriteJson(newDataList[0], data.StructName, attribute.Path, cscAttribute != null ? cscAttribute.Path : new[] { attribute.Path });
+                var path = attribute.AddUniqueSettingsPath ? $"{attribute.Path}/{CompilerServiceUtility.GetUniqueSettingsPath()}" : attribute.Path;
+                CompilerServiceUtility.WriteJson(data, data.StructName, path, cscAttribute != null ? cscAttribute.Path : new[] { attribute.Path });
             }
             else
             {
@@ -99,9 +99,9 @@ namespace NZCore.Editor.AssetManagement
         {
             [NonSerialized] public Type AssetType;
             public string StructName;
-            public string DataType;
-            public int DefaultValue;
-            public bool IsPrimitive;
+            
+            // used for codegen
+            [UsedImplicitly] public int DefaultValue;
         }
     }
 }

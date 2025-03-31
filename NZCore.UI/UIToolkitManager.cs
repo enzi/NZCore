@@ -355,6 +355,9 @@ namespace NZCore.UIToolkit
             return false;
         }
 
+        /// <summary>
+        /// Register a visual element so it can be looked up via key
+        /// </summary>
         public void RegisterElement(string key, VisualElement element)
         {
             registeredElements.Add(key, element);
