@@ -84,6 +84,22 @@ namespace NZCore
         }
 
         /// <summary>
+        /// Reports whether the specified entity exists.
+        /// Does not consider whether this component exists on the given entity.
+        /// </summary>
+        /// <param name="entity">The referenced entity.</param>
+        /// <returns>True if the entity exists, regardless of whether this entity has the given component.</returns>
+        /// <seealso cref="TryGetComponent(Unity.Entities.Entity,out T,out bool)"/>
+        public bool EntityExists(Entity entity)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
+            var ecs = m_Access->EntityComponentStore;
+            return ecs->Exists(entity);
+        }
+
+        /// <summary>
         /// Reports whether the specified <see cref="Entity"/> instance still refers to a valid entity and that it has a
         /// component of type T.
         /// </summary>
