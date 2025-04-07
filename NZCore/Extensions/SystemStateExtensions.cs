@@ -56,7 +56,7 @@ namespace NZCore
         }
 
         public static Entity GetSingletonEntity<T>(ref this SystemState state)
-            where T : unmanaged, IComponentData
+            where T : unmanaged
         {
             var query = GetSingletonQuery<T>(ref state);
             query.CompleteDependency();

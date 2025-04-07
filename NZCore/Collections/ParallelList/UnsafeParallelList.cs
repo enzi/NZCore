@@ -465,6 +465,19 @@ namespace NZCore
             {
                 list->Add(in value);
             }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public T* WriteAndReturn(in T value)
+            {
+                var idx = list->m_length;
+                if (list->m_length + 1 > list->Capacity)
+                    list->Resize(idx + 1);
+                else
+                    list->m_length += 1;
+                
+                list->Ptr[idx] = value;
+                return list->Ptr + idx;
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void WriteMemCpy(ref T value)

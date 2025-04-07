@@ -342,6 +342,12 @@ namespace NZCore
             {
                 threadWriter.Write(in value);
             }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public T* WriteAndReturn(in T value)
+            {
+                return threadWriter.WriteAndReturn(in value);
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void WriteMemCpy(ref T value)

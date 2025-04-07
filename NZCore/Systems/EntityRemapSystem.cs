@@ -5,16 +5,30 @@
 #if NZSPELLCASTING
 using NZSpellCasting;
 #endif
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Entities;
 
 namespace NZCore
 {
-    public struct EntityRemapBuffer : IBufferElementData
+    [StructLayout(LayoutKind.Explicit)]
+    public unsafe struct EntityRemapBuffer : IBufferElementData
     {
+        [FieldOffset(0)]
         public Entity RemappedEntity;
+        
+        // automatic 
+        [FieldOffset(8)]
+        public Entity* RewritePtr;
+        
+        // manual
+        [FieldOffset(8)]
         public int DeferredEntityIndex;
+        [FieldOffset(12)]
         public int DeferredEntityVersion;
+        
+        [FieldOffset(16)]
+        public byte Automatic;
     }
     
 #if NZSPELLCASTING
@@ -31,9 +45,22 @@ namespace NZCore
 
             state.EntityManager.AddBuffer<EntityRemapBuffer>(entity);
         }
+
+        public unsafe void OnUpdate(ref SystemState state)
+        {
+            var buffer = SystemAPI.GetSingletonBuffer<EntityRemapBuffer>();
+
+            foreach (var element in buffer)
+            {
+                if (element.Automatic == 1)
+                {
+                    *element.RewritePtr = element.RemappedEntity;
+                }
+            }
+        }
     }
 #if NZSPELLCASTING
-    [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
+    [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup), OrderLast = true)]
 #else
     [UpdateInGroup(typeof(InitializationSystemGroup))]
 #endif
@@ -48,27 +75,43 @@ namespace NZCore
 
     public static class EntityRemapSystemExtensions
     {
-        public static void AddRemapEntity(this ref EntityCommandBuffer commandBuffer, Entity remapEntity, Entity deferredEntity)
+        public static void AddRemapEntity(this ref EntityCommandBuffer commandBuffer, Entity remapBufferEntity, Entity deferredEntity)
         {
-            commandBuffer.AppendToBuffer(remapEntity, new EntityRemapBuffer()
+            commandBuffer.AppendToBuffer(remapBufferEntity, new EntityRemapBuffer()
             {
                 RemappedEntity = deferredEntity,
                 DeferredEntityIndex = deferredEntity.Index,
                 DeferredEntityVersion = deferredEntity.Version
             });
         }
-
-        public static void AddRemapEntityParallel(this ref EntityCommandBuffer.ParallelWriter commandBuffer, int threadIndex, Entity remapEntity, Entity deferredEntity)
+        
+        /// <summary>
+        /// Automatically patch a deferred entity, just make sure the rewritePtr doesn't change for any reason like a list resize
+        /// </summary>
+        public static unsafe void AddRemapEntityParallel(this ref EntityCommandBuffer.ParallelWriter commandBuffer, int threadIndex, Entity remapBufferEntity, 
+            Entity deferredEntity, Entity* rewritePtr)
         {
-            commandBuffer.AppendToBuffer(threadIndex, remapEntity, new EntityRemapBuffer()
+            commandBuffer.AppendToBuffer(threadIndex, remapBufferEntity, new EntityRemapBuffer()
             {
-                RemappedEntity = deferredEntity,
-                DeferredEntityIndex = deferredEntity.Index,
-                DeferredEntityVersion = deferredEntity.Version
+                Automatic = 1,
+                RewritePtr = rewritePtr,
+                RemappedEntity = deferredEntity
             });
         }
 
-        public static bool GetRemappedEntity(this ref NativeArray<EntityRemapBuffer> buffer, Entity deferredEntity, out Entity remappedEntity)
+        public static void AddRemapEntityParallel(this ref EntityCommandBuffer.ParallelWriter commandBuffer, int threadIndex, Entity remapBufferEntity, 
+            Entity deferredEntity)
+        {
+            commandBuffer.AppendToBuffer(threadIndex, remapBufferEntity, new EntityRemapBuffer()
+            {
+                RemappedEntity = deferredEntity,
+                DeferredEntityIndex = deferredEntity.Index,
+                DeferredEntityVersion = deferredEntity.Version,
+                Automatic = 0
+            });
+        }
+
+        public static bool GetRemappedEntity(this NativeArray<EntityRemapBuffer> buffer, Entity deferredEntity, out Entity remappedEntity)
         {
             foreach (var remapElement in buffer)
             {
