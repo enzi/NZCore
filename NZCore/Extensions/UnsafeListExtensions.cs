@@ -111,5 +111,16 @@ namespace NZCore
                 list.RemoveAt(i);
             }
         }
+        
+        public static void AddToByteBuffer<TData>(this ref UnsafeList<byte> buffer, TData data)
+            where TData : unmanaged
+        {
+            int byteSize = UnsafeUtility.SizeOf<TData>();
+            int oldLength = buffer.Length;
+            buffer.Resize(oldLength + byteSize, NativeArrayOptions.UninitializedMemory);
+            var ptrToData = UnsafeUtility.AddressOf(ref data);
+
+            UnsafeUtility.MemCpy(buffer.Ptr + oldLength, ptrToData, byteSize);
+        }
     }
 }
