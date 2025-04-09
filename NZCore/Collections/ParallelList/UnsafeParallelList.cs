@@ -493,6 +493,12 @@ namespace NZCore
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ref UnsafeList<T> GetList()
+            {
+                return ref *list;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int GetThreadIndex()
             {
                 return threadIndex;

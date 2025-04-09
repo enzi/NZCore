@@ -355,6 +355,12 @@ namespace NZCore
                 threadWriter.WriteMemCpy(ref value);
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ref UnsafeList<T> GetList()
+            {
+                return ref threadWriter.GetList();
+            }
+
             public int GetThreadIndex()
             {
                 return threadWriter.GetThreadIndex();
@@ -494,24 +500,26 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.NoInlining)]
             public void Execute()
             {
+                var sizeOf = sizeof(T);
                 int parallelListLength = ParallelList->Length;
                 int oldListLength = List->Length;
 
                 List->Resize(oldListLength + parallelListLength, NativeArrayOptions.UninitializedMemory);
-                byte* listPtr = (byte*)List->Ptr;
+                byte* listPtr = (byte*) (List->Ptr + oldListLength);
                 //Debug.Log($"Copying {parallelListLength} elements");
-
-                var sizeOf = sizeof(T);
+                
                 UnsafeParallelList<T>.PerThreadList* perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList->GetPerThreadListPtr();
-
+                
                 for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
-                    //ref var threadList = ref ParallelList->GetUnsafeList(i);
                     var threadList = perThreadListPtr[i].List;
-                    //array.AddRangeNoResize(threadList.Ptr, threadList.m_length);
 
-                    void* dst = listPtr + oldListLength * sizeOf;
-                    UnsafeUtility.MemCpy(dst, threadList.Ptr, threadList.m_length * sizeOf);
+                    if (threadList.Length == 0)
+                    {
+                        continue;
+                    }
+                    
+                    UnsafeUtility.MemCpy(listPtr, threadList.Ptr, threadList.m_length * sizeOf);
                     oldListLength += threadList.m_length;
                 }
             }

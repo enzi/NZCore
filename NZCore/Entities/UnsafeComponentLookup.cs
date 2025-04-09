@@ -662,19 +662,20 @@ namespace NZCore
 
         public bool TryGetComponentPtrRW(Entity entity, out T* ptr)
         {
-            throw new NotImplementedException();
-        }
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
+#endif
 
-        public bool TryGetComponentRefRO<TInner>(Entity entity, out TInner* ptr)
-            where TInner : unmanaged
-        {
-            throw new NotImplementedException();
-        }
+            if (!HasComponent(entity) || m_IsZeroSized != 0)
+            {
+                ptr = null;
+                return false;
+            }
+            
 
-        public bool TryGetComponentRefRW<TInner>(Entity entity, out TInner* ptr)
-            where TInner : unmanaged
-        {
-            throw new NotImplementedException();
+            var ecs = m_Access->EntityComponentStore;
+            ptr = (T*) ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
+            return true;
         }
 
         public void SetChangeVersion(Entity entity)
@@ -710,6 +711,8 @@ namespace NZCore
             var chunkVersion = archetype->Chunks.GetChangeVersion(typeIndexInArchetype, chunk.ListIndex);
             return chunkVersion;
         }
+
+        public TypeIndex TypeIndex => m_TypeIndex;
 
         public static implicit operator UnsafeComponentLookup<T>(ComponentLookup<T> lookup)
         {

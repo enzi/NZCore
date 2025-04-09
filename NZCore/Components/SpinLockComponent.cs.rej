@@ -1,0 +1,18 @@
+--- NZCore/Components/SpinLockComponent.cs	(revision 9bf1dae6ae0c40d3a12fec8092502c0fbe47c371)
++++ NZCore/Components/SpinLockComponent.cs
+@@ -1,15 +0,0 @@
+-// <copyright project="NZSpellCasting.SpellCaster.Data" file="SpinLockComponent.cs">
+-// Copyright © 2025 Thomas Enzenebner. All rights reserved.
+-// </copyright>
+-
+-
+-using NZCore;
+-using Unity.Entities;
+-
+-namespace NZSpellCasting
+-{
+-    public struct SpinLockComponent : IComponentData
+-    {
+-        public SpinLock SpinLock;
+-    }
+-}
