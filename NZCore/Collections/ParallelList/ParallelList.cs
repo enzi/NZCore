@@ -463,28 +463,24 @@ namespace NZCore
         public struct ParallelListToArraySingleThreaded : IJob
         {
             [ReadOnly] public ParallelList<T> ParallelList;
-            public NativeList<T> Array;
+            public NativeList<T> List;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
                 int parallelListLength = ParallelList.Length;
-                int oldArrayLength = Array.Length;
+                int oldListLength = List.Length;
 
-                Array.ResizeUninitialized(oldArrayLength + parallelListLength);
-
-                //Debug.Log($"Copying {parallelListLength} elements");
-
-                var sizeOf = sizeof(T);
-                UnsafeList<T>* listData = Array.m_ListData;
+                List.ResizeUninitialized(oldListLength + parallelListLength);
+                byte* dst = (byte*) (List.GetUnsafePtr() + oldListLength);
 
                 for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
                     ref var threadList = ref ParallelList.GetUnsafeList(i);
+                    int threadByteLength = threadList.m_length * sizeof(T);
 
-                    void* dst = ((byte*)listData->Ptr) + oldArrayLength * sizeOf;
-                    UnsafeUtility.MemCpy(dst, threadList.Ptr, threadList.m_length * sizeOf);
-                    oldArrayLength += threadList.m_length;
+                    UnsafeUtility.MemCpy(dst, threadList.Ptr, threadByteLength);
+                    dst += threadByteLength;
                 }
             }
         }
@@ -500,27 +496,21 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.NoInlining)]
             public void Execute()
             {
-                var sizeOf = sizeof(T);
                 int parallelListLength = ParallelList->Length;
                 int oldListLength = List->Length;
 
                 List->Resize(oldListLength + parallelListLength, NativeArrayOptions.UninitializedMemory);
-                byte* listPtr = (byte*) (List->Ptr + oldListLength);
-                //Debug.Log($"Copying {parallelListLength} elements");
+                byte* dst = (byte*) (List->Ptr + oldListLength);
                 
                 UnsafeParallelList<T>.PerThreadList* perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList->GetPerThreadListPtr();
                 
                 for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
                     var threadList = perThreadListPtr[i].List;
-
-                    if (threadList.Length == 0)
-                    {
-                        continue;
-                    }
+                    int threadByteLength = threadList.m_length * sizeof(T);
                     
-                    UnsafeUtility.MemCpy(listPtr, threadList.Ptr, threadList.m_length * sizeOf);
-                    oldListLength += threadList.m_length;
+                    UnsafeUtility.MemCpy(dst, threadList.Ptr, threadByteLength);
+                    dst += threadByteLength;
                 }
             }
         }
