@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -493,7 +494,7 @@ namespace NZCore
 
             [NativeDisableUnsafePtrRestriction] public UnsafeList<T>* List;
 
-            [MethodImpl(MethodImplOptions.NoInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
                 int parallelListLength = ParallelList->Length;
@@ -501,10 +502,12 @@ namespace NZCore
 
                 List->Resize(oldListLength + parallelListLength, NativeArrayOptions.UninitializedMemory);
                 byte* dst = (byte*) (List->Ptr + oldListLength);
-                
+
                 UnsafeParallelList<T>.PerThreadList* perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList->GetPerThreadListPtr();
+
+                int threadCount = JobsUtility.ThreadIndexCount;
                 
-                for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
+                for (int i = 0; i < threadCount; i++)
                 {
                     var threadList = perThreadListPtr[i].List;
                     int threadByteLength = threadList.m_length * sizeof(T);
@@ -523,6 +526,7 @@ namespace NZCore
             public NativeList<T> List;
             public ArrayHashMap<TKey, T> ArrayHashMap;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
                 int parallelListLength = ParallelList.Length;
@@ -567,6 +571,7 @@ namespace NZCore
             public ArrayHashMap<TKey, T> ArrayHashMap1;
             public ArrayHashMap<TKey, T> ArrayHashMap2;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
                 int parallelListLength = ParallelList.Length;
@@ -694,7 +699,7 @@ namespace NZCore
             [NativeDisableContainerSafetyRestriction]
             public NativeList<T> List;
 
-            [MethodImpl(MethodImplOptions.NoInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute(int index)
             {
                 var threadList = ParallelList.GetUnsafeList(index);
@@ -719,7 +724,7 @@ namespace NZCore
             public NativeList<T> List;
             public ArrayHashMap<TKey, T> ArrayHashMap;
 
-            [MethodImpl(MethodImplOptions.NoInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
                 int parallelListCount = ParallelList.Length;
@@ -740,7 +745,7 @@ namespace NZCore
             public ArrayHashMap<TKey, T> ArrayHashMap;
             public ArrayHashMap<TKey, T> ArrayHashMap2;
 
-            [MethodImpl(MethodImplOptions.NoInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
                 int parallelListCount = ParallelList.Length;
@@ -766,7 +771,7 @@ namespace NZCore
             [NativeDisableContainerSafetyRestriction]
             public ArrayHashMap<TKey, T> ArrayHashMap;
 
-            //[MethodImpl(MethodImplOptions.NoInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute(int index)
             {
                 var threadList = ParallelList.GetUnsafeList(index);
@@ -804,6 +809,7 @@ namespace NZCore
             [NativeDisableContainerSafetyRestriction]
             private NativeList<T> tmpList1;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute(int index)
             {
                 var threadList = ParallelList.GetUnsafeList(index);
@@ -862,6 +868,7 @@ namespace NZCore
                 listPtr = null;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while(currentIndex < JobsUtility.ThreadIndexCount)

@@ -31,7 +31,7 @@ namespace NZCore
         public int Length => Count();
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal static UnsafeParallelList<T>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        internal static UnsafeParallelList<T>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
             UnsafeParallelList<T>* unsafeParallelList = allocator.Allocate(default(UnsafeParallelList<T>), 1);
@@ -39,12 +39,9 @@ namespace NZCore
             unsafeParallelList->allocator = allocator.Handle;
 
             //Debug.Log($"parallelList alignOf: {UnsafeUtility.AlignOf<PerThreadList>()}");
-            int align = 8;
             int maxThreadCount = JobsUtility.ThreadIndexCount;
-
-            //var perThreadListSize = JobsUtility.CacheLineSize * maxThreadCount;
             var perThreadListSize = PER_THREAD_LIST_SIZE * maxThreadCount;
-            unsafeParallelList->perThreadLists = (byte*)UnsafeUtility.Malloc(perThreadListSize, align, allocator.ToAllocator);
+            unsafeParallelList->perThreadLists = (byte*)UnsafeUtility.Malloc(perThreadListSize, 64, allocator.ToAllocator);
 
             for (int i = 0; i < maxThreadCount; i++)
             {
@@ -525,12 +522,12 @@ namespace NZCore
 
             public int Begin()
             {
-                var tmpPtr = (UnsafeList<T>*)(perThreadListsPtr + threadIndex * PER_THREAD_LIST_SIZE);
-                ptr = tmpPtr->Ptr;
+                var list = (UnsafeList<T>*)(perThreadListsPtr + threadIndex * PER_THREAD_LIST_SIZE);
+                ptr = list->Ptr;
 
                 currentIndex = 0;
 
-                return tmpPtr->Length;
+                return list->Length;
             }
 
             public int Begin(int newThreadIndex)
