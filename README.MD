@@ -42,17 +42,17 @@ can directly get a ref value and not the struct wrapper and getting the pointers
 UnsafeUtility.AddressOf on a RefRW/RO. 
 
 NZCore namespace:
-```
+```cs
 using NZCore;
 ```
 
 Inside System - change:
-```
+```cs
   var Health_WriteLookup = GetComponentDataFromEntity<Health>(false); // old version
   var Health_WriteLookup = SystemAPI.GetComponentLookup<Health>(false); // new version
 ```
 to:
-```
+```cs
   var Health_WriteLookup = EntityManager.GetUnsafeCDFE<Health>(false); // old version
   // the new version supports implicit conversion!
   // all you need to do now is change from ComponentLookup to UnsafeComponentLookup. It's that easy! :)
@@ -84,11 +84,11 @@ ParallelList:
 A NativeList has the downside of thread stalls when writing in parallel. ParallelList is designed for maximum write performance without any requirement of Interlocked or atomic operations.
 
 The usage is simple:
-```
+```cs
 var parallelList = new ParallelList<TestStruct>(initialSize, Allocator.Persistent);
 ```
 In OnUpdate
-```
+```cs
 // Very similar to NativeStreams ForEachCount, however this uses, in most cases the chunk count, or in other words, the amount of times, 
 // a parallelList is opened for writing. 
 // As shown in the job below. It doesn't have to necessarily be the chunk count. For 
@@ -96,7 +96,7 @@ In OnUpdate
 parallelList.SetChunkCount(count); 
 ```
 
-```
+```cs
 int count = 250000;
 int writeCount = 32;
 var writeJobHandle = new TestJob_ParallelListWrite()
@@ -107,7 +107,7 @@ var writeJobHandle = new TestJob_ParallelListWrite()
 ```
 
 A simple parallel write job
-```
+```cs
 [BurstCompile]
 public struct TestJob_ParallelListWrite : IJobFor
 {
@@ -149,7 +149,7 @@ NZCore namespace:
 Helpful access to internal data of Entities.
 This includes Blobs, Chunks, DynamicBuffers, EntityManager, FixedList, StorageInfo and World.
 The MVP of this namespace is 
-```
+```cs
 public static void SetChangeVersion<T>(this ArchetypeChunk chunk, ref ComponentTypeHandle<T> handle)
 ```
 As you may know, acquiring the component array from a write handle bumps the version of the ComponentType, regardless if you write
