@@ -64,7 +64,7 @@ to:
 ```
   
 Now you can query health and get a ref:
-```
+```cs
 ref var healthComp = ref Health_WriteLookup.GetRef(lookupEntity);
 healthComp.health += 100;
 ```
