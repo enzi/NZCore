@@ -26,18 +26,25 @@ namespace NZCore
             return ref node;
         }
 
-        public byte* ReadRange<T>(int length)
+        public T* ReadRange<T>(int length)
             where T : unmanaged
         {
             var tmp = Ptr;
             Ptr += length * UnsafeUtility.SizeOf<T>();
-            return tmp;
+            return (T*) tmp;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOffset(int offset)
         {
             Ptr += offset;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddOffset<T>()
+            where T : unmanaged
+        {
+            Ptr += UnsafeUtility.SizeOf<T>();
         }
     }
 

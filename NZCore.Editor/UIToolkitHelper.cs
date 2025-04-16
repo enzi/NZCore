@@ -74,22 +74,30 @@ namespace NZCore.Editor
             return root;
         }
 
-        public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, ref byte* ptr)
+        public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, ref byte* ptr, bool drawHeader = true)
             where T : unmanaged
         {
             ref T data = ref *(T*)ptr;
-            root.AddBoldLabel($"{typeof(T).Name}");
+            if (drawHeader)
+            {
+                root.AddBoldLabel($"{typeof(T).Name}");
+            }
+
             root.AddStructInspector(data);
             root.Add(new VisualElement() { pickingMode = PickingMode.Ignore}); // just used as a break
             ptr += sizeof(T);
             return ref data;
         }
         
-        public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, byte* ptr, string propertyName)
+        public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, byte* ptr, string propertyName, bool drawHeader = true)
             where T : unmanaged
         {
             ref T data = ref *(T*)ptr;
-            root.AddBoldLabel(propertyName);
+            if (drawHeader)
+            {
+                root.AddBoldLabel(propertyName);
+            }
+
             root.AddStructInspector(data);
             root.Add(new VisualElement() { pickingMode = PickingMode.Ignore}); // just used as a break
             return ref data;
@@ -227,6 +235,79 @@ namespace NZCore.Editor
             mesh.SetNextIndex(2);
             mesh.SetNextIndex(1);
             mesh.SetNextIndex(3);
+        }
+        
+        public static void DrawRect(this MeshGenerationContext mgc, Rect rect, Color color, Color? playModeTint = null)
+        {
+            if (mgc == null)
+                throw new ArgumentNullException(nameof(mgc));
+
+            Color tintColor = playModeTint ?? Color.white;
+            
+            Vertex[] vertices = new Vertex[4];
+            ushort[] indices = { 0, 1, 2, 2, 3, 0 };
+
+            vertices[0] = new Vertex
+            {
+                position = new Vector3(rect.x, rect.y, Vertex.nearZ),
+                tint = color * tintColor
+            };
+            
+            vertices[1] = new Vertex
+            {
+                position = new Vector3(rect.x, rect.y + rect.height, Vertex.nearZ),
+                tint = color * tintColor
+            };
+            
+            vertices[2] = new Vertex
+            {
+                position = new Vector3(rect.x + rect.width, rect.y + rect.height, Vertex.nearZ),
+                tint = color * tintColor
+            };
+            
+            vertices[3] = new Vertex
+            {
+                position = new Vector3(rect.x + rect.width, rect.y, Vertex.nearZ),
+                tint = color * tintColor
+            };
+            
+            MeshWriteData meshWriteData = mgc.Allocate(vertices.Length, indices.Length);
+            meshWriteData.SetAllVertices(vertices);
+            meshWriteData.SetAllIndices(indices);
+        }
+
+        public static void SetLayout(this VisualElement element, Rect value)
+        {
+            if (/*element.isLayoutManual &&*/ element.layout == value)
+                return;
+            
+            Rect layout = element.layout;
+            VersionChangeType changeType = 0;
+            if (!Mathf.Approximately(layout.x, value.x) || !Mathf.Approximately(layout.y, value.y))
+                changeType |= VersionChangeType.Transform;
+            if (!Mathf.Approximately(layout.width, value.width) || !Mathf.Approximately(layout.height, value.height))
+                changeType |= VersionChangeType.Size;
+            
+            //element.layout = value;
+            //this.isLayoutManual = true;
+            
+            IStyle style = element.style;
+            style.position = Position.Absolute;
+            style.marginLeft = 0.0f;
+            style.marginRight = 0.0f;
+            style.marginBottom = 0.0f;
+            style.marginTop = 0.0f;
+            style.left = value.x;
+            style.top = value.y;
+            style.right = float.NaN;
+            style.bottom = float.NaN;
+            style.width = value.width;
+            style.height = value.height;
+            
+            if (changeType == 0)
+                return;
+            
+            //element.IncrementVersion(changeType);
         }
     }
 }
