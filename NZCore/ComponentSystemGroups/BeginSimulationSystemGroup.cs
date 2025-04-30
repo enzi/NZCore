@@ -3,6 +3,7 @@
 // </copyright>
 
 using Unity.Entities;
+using Unity.NetCode;
 
 namespace NZCore
 {

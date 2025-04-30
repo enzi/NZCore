@@ -782,6 +782,11 @@ namespace NZCore
             [BurstDiscard]
             public void Init()
             {
+                if (Powers.Data.IsCreated)
+                {
+                    return;
+                }
+                
                 Powers.Data = new NativeArray<double>((int)(DoubleExpMax - DoubleExpMin), Allocator.Persistent);
                 var index = 0;
                 for (var i = 0; i < Powers.Data.Length; i++)
@@ -797,7 +802,10 @@ namespace NZCore
 
             public void Dispose()
             {
-                Powers.Data.Dispose();
+                if (Powers.Data.IsCreated)
+                {
+                    Powers.Data.Dispose();
+                }
             }
         }
     }

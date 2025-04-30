@@ -8,43 +8,57 @@ using Unity.Entities;
 
 namespace NZCore
 {
-    public unsafe struct NodeReader
+    public unsafe ref struct NodeReader
     {
-        public byte* Ptr;
+        private readonly byte* ptr;
+        private readonly int bufferLength;
+        private int offset;
+
+        public byte* CurrentPtr => ptr + offset;
+        public int Offset => offset;
+        public bool CanRead => offset < bufferLength;
         
-        public NodeReader(byte* ptr)
+        public NodeReader(byte* ptr, int bufferLength)
         {
-            Ptr = ptr;
+            this.ptr = ptr;
+            this.bufferLength = bufferLength;
+            offset = 0;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T ReadFromNode<T>()
             where T : unmanaged
         {
-            ref var node = ref UnsafeUtility.AsRef<T>(Ptr);
-            Ptr += UnsafeUtility.SizeOf<T>();
+            ref var node = ref UnsafeUtility.AsRef<T>(ptr + offset);
+            offset += UnsafeUtility.SizeOf<T>();
             return ref node;
         }
 
         public T* ReadRange<T>(int length)
             where T : unmanaged
         {
-            var tmp = Ptr;
-            Ptr += length * UnsafeUtility.SizeOf<T>();
+            var tmp = ptr + offset;
+            offset += length * UnsafeUtility.SizeOf<T>();
             return (T*) tmp;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddOffset(int offset)
+        public void AddOffset(int newOffset)
         {
-            Ptr += offset;
+            offset += newOffset;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOffset<T>()
             where T : unmanaged
         {
-            Ptr += UnsafeUtility.SizeOf<T>();
+            offset += UnsafeUtility.SizeOf<T>();
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetOffset(int newOffset)
+        {
+            offset = newOffset;
         }
     }
 
@@ -53,7 +67,7 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe NodeReader AsNodeReader(this ref BlobArray<byte> blobArray)
         {
-            return new NodeReader((byte*) blobArray.GetUnsafePtr());
+            return new NodeReader((byte*) blobArray.GetUnsafePtr(), blobArray.Length);
         }
     }
 }

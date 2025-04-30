@@ -8,6 +8,7 @@ using Unity.Entities;
 
 namespace NZCore
 {
+#if !UNITY_NETCODE
     public partial class PauseSystem : SystemBase
     {
         protected override void OnCreate()
@@ -102,4 +103,5 @@ namespace NZCore
             return true;
         }
     }
+#endif
 }
