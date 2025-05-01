@@ -3,7 +3,9 @@
 // </copyright>
 
 using Unity.Entities;
+#if UNITY_NETCODE
 using Unity.NetCode;
+#endif
 
 namespace NZCore
 {
