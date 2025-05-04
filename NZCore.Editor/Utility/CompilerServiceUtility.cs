@@ -67,12 +67,31 @@ namespace NZCore
                         }
                     }
                 }
+                
+                // test for same files that could been left from other projects
+                {
+                    for (int i = lines.Count - 1; i >= 0; i--)
+                    {
+                        var line = lines[i].Replace("/additionalfile:", "");
+                        var filenameInFile = Path.GetFileNameWithoutExtension(line);
+
+                        foreach (var additionalFile in additionalFiles)
+                        {
+                            var filename = Path.GetFileNameWithoutExtension(additionalFile);
+
+                            if (filename == filenameInFile)
+                            {
+                                lines.RemoveAt(i);
+                            }
+                        }
+                    }
+                }
 
                 foreach (var additionalFile in additionalFiles)
                 {
                     var filename = Path.GetFileNameWithoutExtension(additionalFile);
                     bool found = false;
-                    foreach (var line in cscContent)
+                    foreach (var line in lines)
                     {
                         //if (line.Contains($"{data.StructName}.default.json"))
 
