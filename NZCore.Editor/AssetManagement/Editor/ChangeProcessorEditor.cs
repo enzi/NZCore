@@ -101,11 +101,7 @@ namespace NZCore.Editor
             var targetType = target.GetType();
             Debug.Log($"Updating {targetType.Name} ...");
 
-            var assets = AssetDatabaseUtility.GetSubAssets(targetType.GetType());
-
-            // var assetPaths = AssetDatabase.FindAssets($"t:{targetType.Name}")
-            //     .Select(AssetDatabase.GUIDToAssetPath)
-            //     .ToList();
+            var assets = AssetDatabaseUtility.GetSubAssets(targetType);
 
             List<ChangeProcessorAsset> allAssets = new List<ChangeProcessorAsset>();
 
@@ -124,18 +120,12 @@ namespace NZCore.Editor
 
         public static void Click_CodeGenAll()
         {
-            // var assetPaths = AssetDatabase.FindAssets($"t:ChangeProcessorAsset")
-            //     .Select(AssetDatabase.GUIDToAssetPath)
-            //     .ToList();
-            
             var assets = AssetDatabaseUtility.GetSubAssets(typeof(ChangeProcessorAsset));
 
             Dictionary<Type, List<ChangeProcessorAsset>> collector = new Dictionary<Type, List<ChangeProcessorAsset>>();
 
             foreach (var asset in assets)
             {
-                //var asset = (ChangeProcessorAsset)AssetDatabase.LoadAssetAtPath(assetPath, typeof(ChangeProcessorAsset));
-
                 if (asset == null || asset is not ChangeProcessorAsset changeProcessorAsset)
                     continue;
 

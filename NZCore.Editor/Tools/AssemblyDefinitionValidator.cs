@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace NZCore.Editor
 {
-    public class AssemblyDefinitionValidator
+    public static class AssemblyDefinitionValidator
     {
         [Serializable]
         private class AssemblyDefinitionScheme

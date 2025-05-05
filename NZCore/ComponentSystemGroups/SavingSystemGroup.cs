@@ -8,11 +8,11 @@ using Unity.Scenes;
 namespace NZCore
 {
 #if UNITY_NETCODE
-    [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation | WorldSystemFilterFlags.Editor)]
+    [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation | WorldSystemFilterFlags.Editor, WorldSystemFilterFlags.ServerSimulation | WorldSystemFilterFlags.Editor)]
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     [UpdateAfter(typeof(SceneSystemGroup))]
 #else
-    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
+    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor, WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     [UpdateAfter(typeof(SceneSystemGroup))]
 #endif
