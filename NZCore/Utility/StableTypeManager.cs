@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using NZCore.Helper;
 using Unity.Burst;
@@ -23,6 +24,8 @@ namespace NZCore
         private static UnsafeHashMap<StableTypeIndex, ulong> stableHashMap;
 
 #if UNITY_EDITOR
+        public static Dictionary<string, ulong> typeNameMap; 
+            
         [InitializeOnLoadMethod]
 #endif
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
@@ -39,6 +42,10 @@ namespace NZCore
             
             stableTypeMap = new UnsafeHashMap<ulong, StableTypeIndex>(1024, Allocator.Persistent);
             stableHashMap = new UnsafeHashMap<StableTypeIndex, ulong>(1024, Allocator.Persistent);
+            
+#if UNITY_EDITOR
+            typeNameMap = new Dictionary<string, ulong>();
+#endif
             
             BuildMap();
             
@@ -110,7 +117,9 @@ namespace NZCore
                     stableHashMap.Remove(tmp);
                     stableTypeMap.Remove(hash);
                 }
-
+#if UNITY_EDITOR
+                typeNameMap[typeInfo.Type.Name] = hash;
+#endif
                 stableTypeMap.Add(hash, new StableTypeIndex() { Value = typeInfo.TypeIndex.Value });
                 stableHashMap.Add(new StableTypeIndex() { Value = typeInfo.TypeIndex.Value }, hash);
             }
