@@ -144,6 +144,7 @@ namespace NZCore.Editor
             {
                 if (entry.Value.Count > 0)
                 {
+                    Debug.Log($"Updating {entry.Value[0].GetType()} ...");
                     entry.Value[0].ProcessChanges(entry.Value);
                 }
             }
