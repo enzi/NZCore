@@ -44,12 +44,7 @@ namespace NZCore.AssetManagement
 
             foreach (var processor in processors)
             {
-                ClearManagers(processor.Value.Type);
-            }
-
-            foreach (var processor in processors)
-            {
-                UpdateManager(processor.Value.Type);
+                ScriptableObjectDatabase.Update(processor.Value.Type);
             }
         }
 
@@ -67,89 +62,6 @@ namespace NZCore.AssetManagement
             }
 
             processor.Process(asset);
-        }
-
-
-        private static bool TryGetManager(Type type, out ScriptableObject manager, out SerializedObject managerObject, out SerializedProperty containerListProperty)
-        {
-            manager = null;
-            managerObject = null;
-            containerListProperty = null;
-
-            var attribute = type.GetCustomAttributeRecursive<AutoIDManagerAttribute>(out _);
-            if (attribute == null)
-            {
-                return false;
-            }
-
-            var managerGuid = AssetDatabase.FindAssets($"t:{attribute.ManagerType}");
-
-            if (managerGuid.Length == 0)
-            {
-                Debug.LogError($"No manager found for {attribute.ManagerType}");
-                return false;
-            }
-
-            if (managerGuid.Length > 1)
-            {
-                Debug.LogError($"More than one manager found for {attribute.ManagerType}");
-                return false;
-            }
-
-            manager = AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(managerGuid[0]));
-            if (manager == null)
-            {
-                Debug.LogError("Manager wasn't a ScriptableObject");
-                return false;
-            }
-
-            managerObject = new SerializedObject(manager);
-            containerListProperty = managerObject.FindProperty(attribute.ContainerListProperty);
-            if (containerListProperty == null)
-            {
-                Debug.LogError($"Property {attribute.ContainerListProperty} not found for {attribute.ManagerType}");
-                return false;
-            }
-
-            if (!containerListProperty.isArray)
-            {
-                Debug.LogError($"Property {attribute.ContainerListProperty} was not type of array for {attribute.ManagerType}");
-                return false;
-            }
-
-            return true;
-        }
-
-        private static void ClearManagers(Type type)
-        {
-            if (!TryGetManager(type, out var manager, out var managerObject, out var list))
-                return;
-
-            list.ClearArray();
-            managerObject.ApplyModifiedPropertiesWithoutUndo();
-            AssetDatabase.SaveAssetIfDirty(manager);
-        }
-
-        private static void UpdateManager(Type type)
-        {
-            if (!TryGetManager(type, out var manager, out var managerObject, out var list))
-                return;
-
-            var objects = AssetDatabase.FindAssets($"t:{type.Name}")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Distinct()
-                .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
-                .Where(s => s.GetType() == type)
-                .ToList();
-
-            foreach (var obj in objects)
-            {
-                list.InsertArrayElementAtIndex(list.arraySize);
-                list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = obj;
-            }
-
-            managerObject.ApplyModifiedPropertiesWithoutUndo();
-            AssetDatabase.SaveAssetIfDirty(manager);
         }
 
         private class Processor

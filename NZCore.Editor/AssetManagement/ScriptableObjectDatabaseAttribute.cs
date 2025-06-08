@@ -7,12 +7,12 @@ using System;
 namespace NZCore.AssetManagement
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class AutoIDManagerAttribute : Attribute
+    public class ScriptableObjectDatabaseAttribute : Attribute
     {
         public readonly string ManagerType;
         public readonly string ContainerListProperty;
 
-        public AutoIDManagerAttribute(string managerType, string containerListProperty)
+        public ScriptableObjectDatabaseAttribute(string managerType, string containerListProperty)
         {
             ManagerType = managerType;
             ContainerListProperty = containerListProperty;
