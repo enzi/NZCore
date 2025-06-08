@@ -22,7 +22,7 @@ namespace NZCore
 
         protected override void OnStartRunning()
         {
-            CheckedStateRef.CreateSingleton<TIndexList>(out var singleton);
+            CheckedStateRef.CreateSingleton(out TIndexList singleton);
 
             var query = new EntityQueryBuilder(Allocator.Temp)
                 .WithAll<TBlobReference>()

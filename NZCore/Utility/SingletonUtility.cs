@@ -22,7 +22,20 @@ namespace NZCore
             singletonData.Init();
             state.EntityManager.SetComponentData(singletonEntity, singletonData);
         }
-
+        
+        public static void CreateSingleton<T>(this ref SystemState state, out Entity singletonEntity)
+            where T : unmanaged, IInitSingleton
+        {
+            singletonEntity = state.EntityManager.CreateEntity(stackalloc[]
+            {
+                ComponentType.ReadOnly<T>()
+            });
+            
+            T singletonData = default;
+            singletonData.Init();
+            state.EntityManager.SetComponentData(singletonEntity, singletonData);
+        }
+        
         public static void CreateSingleton<T>(this ref SystemState state, out T singletonData)
             where T : unmanaged, IInitSingleton
         {
