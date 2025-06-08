@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
 {
-    [UxmlElement]
+    [UxmlElement, ObservableObject]
     public partial class ArrayContainer : VisualElement
     {
         [UxmlAttribute("item-template")] [CreateProperty]
