@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
@@ -173,6 +174,43 @@ namespace NZCore
             buffer.ResizeUninitialized(elementCount);
             
             UnsafeUtility.MemCpy(buffer.GetUnsafePtr(), list.Ptr, list.Length);
+        }
+        
+        public static DynamicBuffer<T> ConvertFromNativeArray<T>(T* ptr, int length)
+            where T: unmanaged
+        {
+            var safetyHandle1 = AtomicSafetyHandle.Create();
+            var safetyHandle2 = AtomicSafetyHandle.Create();
+            
+            BufferHeader* tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
+            tmpHeader->Capacity = length;
+            tmpHeader->Length = length;
+            tmpHeader->Pointer = (byte*) ptr;
+            var buffer = new DynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, length);
+
+            return buffer;
+        }
+
+        public static DynamicBuffer<T> ConvertFromNativeArray<T>(NativeArray<T> array)
+            where T: unmanaged
+        {
+            var safetyHandle1 = AtomicSafetyHandle.Create();
+            var safetyHandle2 = AtomicSafetyHandle.Create();
+            
+            BufferHeader* tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
+            tmpHeader->Capacity = array.Length;
+            tmpHeader->Length = array.Length;
+            tmpHeader->Pointer = (byte*) array.GetUnsafeReadOnlyPtr();
+            var buffer = new DynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, array.Length);
+
+            return buffer;
+        }
+
+        public static void ReleaseSafety<T>(this DynamicBuffer<T> buffer)
+            where T : unmanaged
+        {
+            AtomicSafetyHandle.Release(buffer.m_Safety0);
+            AtomicSafetyHandle.Release(buffer.m_Safety1);
         }
     }
 }
