@@ -57,10 +57,10 @@ namespace NZCore.Hybrid
                     continue;
                 }
                 
-                if (!assetLoader.TryGetResult(clip, out var animationClip))
+                if (!assetLoader.HasLoaded(clip))
                     continue;
                 
-                animatorComp.ChangeClip(animationClip, animatorOverrideRO.ValueRO.Scale);
+                animatorComp.ChangeClip(clip.Result, animatorOverrideRO.ValueRO.Scale);
                 animatorComp.Graph.Play();
                 state.Playing = 1;
             }

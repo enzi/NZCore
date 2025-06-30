@@ -14,7 +14,6 @@ namespace NZCore.Hybrid
     {
         private ObjectPool<AudioSource> pool;
         private List<ActiveAudioSource> activeSources;
-        private TransformEntityMapping transformMapping;
         
         protected override void OnCreate()
         {
@@ -39,7 +38,7 @@ namespace NZCore.Hybrid
                 }
             });
             
-            transformMapping = World.GetOrCreateSystemManaged<TransformEntityMapping>();
+            RequireForUpdate<TransformEntityMappingSingleton>();
         }
 
         protected override void OnDestroy()
@@ -55,6 +54,7 @@ namespace NZCore.Hybrid
             var assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
             var singleton = SystemAPI.GetSingleton<HybridAudioSingleton>();
             var enumerator = singleton.Requests.GetEnumerator();
+            var mapping = SystemAPI.GetSingleton<TransformEntityMappingSingleton>();
             
             while (enumerator.MoveNext())
             {
@@ -69,14 +69,14 @@ namespace NZCore.Hybrid
                         continue;
                     }
 
-                    if (!assetLoader.TryGetResult(request.Clip, out var audioClip))
+                    if (!assetLoader.HasLoaded(request.Clip))
                     {
                         continue;
                     }
                     
                     var source = pool.Get();
 
-                    source.clip = audioClip;
+                    source.clip = request.Clip.Result;
                     source.volume = request.Volume;
                     source.spatialBlend = request.is3d ? 1 : 0;
 
@@ -97,7 +97,10 @@ namespace NZCore.Hybrid
                     
                     if (request.FollowEntity != Entity.Null)
                     {
-                        activeSource.Parented = transformMapping.AddTransform(source.gameObject.transform, request.FollowEntity);
+                        activeSource.Parented = mapping.AddTransform(
+                            source.gameObject.GetInstanceID(),
+                            request.FollowEntity,
+                            source.gameObject);
                     }
                     
                     requestList.RemoveAt(i);
@@ -120,7 +123,7 @@ namespace NZCore.Hybrid
                     }
                     else
                     {
-                        transformMapping.RemoveEntity(source.FollowedEntity);
+                        mapping.RemoveEntity(source.FollowedEntity);
                     }
                 }
                 

@@ -11,36 +11,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace NZCore.Hybrid
 {
-    public class AddressableAndHandle<T> where T : class
-    {
-        public T Asset;
-        public AsyncOperationHandle<T> Handle;
-
-        public void Unload()
-        {
-            Addressables.Release(Handle);
-        }
-    }
-
-    public class AddressablesAndHandles<T> where T : class
-    {
-        public readonly Dictionary<string, T> Assets = new();
-        public readonly Dictionary<string, AsyncOperationHandle<T>> Handles = new();
-
-        public void UnloadAll()
-        {
-            foreach (var pair in Handles)
-            {
-                // release the handle
-                Addressables.Release(pair.Value);
-            }
-
-            Assets.Clear();
-            Handles.Clear();
-        }
-    }
-
-    public static class AddressablesHelper
+    public static class AddressableHelper
     {
         public static async Task<Dictionary<string, T>> LoadAssets<T>(IList<string> keys) where T : class
         {

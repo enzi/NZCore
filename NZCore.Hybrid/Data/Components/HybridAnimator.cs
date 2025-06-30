@@ -16,6 +16,7 @@ namespace NZCore.Hybrid
         ToCustom = 1
     }
     
+    [ChunkSerializable]
     public struct HybridAnimator : IComponentData
     {
         public PlayableGraph Graph;

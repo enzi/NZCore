@@ -1,30 +1,25 @@
 {
-  "name": "NZCore.UI.Editor",
+  "name": "NZCore.Hybrid.Authoring",
   "rootNamespace": "",
   "references": [
+    "Unity.Burst",
     "Unity.Collections",
     "Unity.Entities",
-    "Unity.Entities.Editor",
     "Unity.Entities.Hybrid",
-    "Unity.Entities.UI.Editor",
     "Unity.Mathematics",
     "NZCore",
-    "NZCore.Authoring",
-    "NZCore.UI",
-    "NZCore.Hybrid.Authoring",
     "NZCore.Hybrid.Data",
-    "NZCore.Editor"
+    "Unity.Addressables"
   ],
-  "includePlatforms": [
-    "Editor"
-  ],
+  "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": true,
   "overrideReferences": false,
-  "precompiledReferences": [
-  ],
+  "precompiledReferences": [],
   "autoReferenced": true,
-  "defineConstraints": [],
+  "defineConstraints": [
+    "UNITY_EDITOR"
+  ],
   "versionDefines": [],
   "noEngineReferences": false
 }

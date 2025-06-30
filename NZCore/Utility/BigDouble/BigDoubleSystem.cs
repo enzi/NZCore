@@ -6,7 +6,7 @@ using Unity.Entities;
 
 namespace NZCore
 {
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
     public partial struct BigDoubleSystem : ISystem
     {
         private BigDouble.PowersOf10 lookup;

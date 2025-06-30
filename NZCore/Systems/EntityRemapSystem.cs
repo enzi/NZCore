@@ -35,7 +35,7 @@ namespace NZCore
     [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
     [UpdateAfter(typeof(BeginEffectsSystemGroupCommandBufferSystem))]
 #else
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
 #endif
     public partial struct EntityRemapSystem : ISystem
     {

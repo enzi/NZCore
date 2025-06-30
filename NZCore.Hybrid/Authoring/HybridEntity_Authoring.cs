@@ -2,11 +2,9 @@
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using NZCore.Components;
-using NZCore.Editor;
 using Unity.Entities;
+using Unity.Entities.Content;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -127,25 +125,29 @@ namespace NZCore.Hybrid
                 {
                     Parent = entity
                 });
+                
+                AddComponent(entity, new HybridAnimator());
+                AddComponent(entity, new AnimatorOverride());
+                AddComponent(entity, new AnimatorOverrideState());
 
                 if (authoring.resourceType == HybridEntityResourceType.GameObject && authoring.prefab != null)
                 {
                     if (authoring.usePooling)
                     {
-                        AddComponentObject(presentationEntity, new HybridSpawnPrefabFromPool()
+                        AddComponent(presentationEntity, new HybridSpawnPrefabFromPool()
                         {
                             HybridEntity = entity,
-                            Prefab = authoring.prefab,
+                            Prefab = authoring.prefab != null ? new WeakObjectReference<GameObject>(authoring.prefab) : default,
                             SetTransform = authoring.setTransform.ToByte(),
                             DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });
                     }
                     else
                     {
-                        AddComponentObject(presentationEntity, new HybridSpawnPrefab()
+                        AddComponent(presentationEntity, new HybridSpawnPrefab()
                         {
                             HybridEntity = entity,
-                            Prefab = authoring.prefab,
+                            Prefab = authoring.prefab != null ? new WeakObjectReference<GameObject>(authoring.prefab) : default,
                             SetTransform = authoring.setTransform.ToByte(),
                             DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });

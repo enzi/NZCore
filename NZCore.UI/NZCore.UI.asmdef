@@ -10,7 +10,7 @@
     "Unity.Entities.UI.Editor",    
     "Unity.Physics",
     "NZCore",
-    "NZCore.Hybrid"
+    "NZCore.Hybrid.Data"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

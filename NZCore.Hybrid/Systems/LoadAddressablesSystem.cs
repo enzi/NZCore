@@ -16,7 +16,7 @@ namespace NZCore.Hybrid
         public FixedString512Bytes label;
     }
 
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
     public partial class LoadAddressablesSystem : SystemBase
     {
         public Dictionary<Hash128, AddressableAndHandle<GameObject>> addressables;
