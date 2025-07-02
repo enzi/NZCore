@@ -179,14 +179,20 @@ namespace NZCore
         public static DynamicBuffer<T> ConvertFromNativeArray<T>(T* ptr, int length)
             where T: unmanaged
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             var safetyHandle1 = AtomicSafetyHandle.Create();
             var safetyHandle2 = AtomicSafetyHandle.Create();
+#endif
             
             BufferHeader* tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
             tmpHeader->Capacity = length;
             tmpHeader->Length = length;
             tmpHeader->Pointer = (byte*) ptr;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             var buffer = new DynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, length);
+#else
+            var buffer = new DynamicBuffer<T>(tmpHeader, length);
+#endif
 
             return buffer;
         }
@@ -194,14 +200,20 @@ namespace NZCore
         public static DynamicBuffer<T> ConvertFromNativeArray<T>(NativeArray<T> array)
             where T: unmanaged
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             var safetyHandle1 = AtomicSafetyHandle.Create();
             var safetyHandle2 = AtomicSafetyHandle.Create();
+#endif
             
             BufferHeader* tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
             tmpHeader->Capacity = array.Length;
             tmpHeader->Length = array.Length;
             tmpHeader->Pointer = (byte*) array.GetUnsafeReadOnlyPtr();
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             var buffer = new DynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, array.Length);
+#else
+            var buffer = new DynamicBuffer<T>(tmpHeader, array.Length);
+#endif
 
             return buffer;
         }
@@ -209,8 +221,10 @@ namespace NZCore
         public static void ReleaseSafety<T>(this DynamicBuffer<T> buffer)
             where T : unmanaged
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.Release(buffer.m_Safety0);
             AtomicSafetyHandle.Release(buffer.m_Safety1);
+#endif
         }
     }
 }
