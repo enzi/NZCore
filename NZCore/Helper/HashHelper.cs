@@ -2,6 +2,8 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
+using Hash128 = UnityEngine.Hash128; 
 using Unity.Entities;
 
 namespace NZCore
@@ -46,6 +48,11 @@ namespace NZCore
             {
                 return (a.GetHashCode() * PrimeNumber) ^ b.GetHashCode();
             }
+        }
+
+        public static Hash128 GenerateHash128()
+        {
+            return Hash128.Compute(Guid.NewGuid().ToByteArray());
         }
     }
 }
