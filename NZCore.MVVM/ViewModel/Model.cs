@@ -6,8 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using IServiceProvider = NZCore.Inject.IServiceProvider;
 
-namespace NZCore.Graph
+namespace NZCore.MVVM
 {
     [Serializable]
     public abstract class Model
@@ -31,7 +32,10 @@ namespace NZCore.Graph
         }
 
         public ModelVersion Version => _version;
+
+        public IServiceProvider Container;
         public virtual IEnumerable<Model> Dependencies => Enumerable.Empty<Model>();
+        public virtual void ClearCache() { }
 
         protected Model()
         {

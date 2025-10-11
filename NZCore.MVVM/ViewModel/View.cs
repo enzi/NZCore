@@ -4,7 +4,7 @@
 
 using UnityEngine.UIElements;
 
-namespace NZCore.Graph
+namespace NZCore.MVVM
 {
     public abstract class View : VisualElement
     {

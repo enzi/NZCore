@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\NZCore.MVVM.SourceGenerator\NZCore.MVVM.SourceGenerator.csproj" OutputItemType="Analyzer" />
+    </ItemGroup>
+
+</Project>

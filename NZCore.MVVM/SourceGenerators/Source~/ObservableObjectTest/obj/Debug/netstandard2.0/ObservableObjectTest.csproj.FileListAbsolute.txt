@@ -1,0 +1,14 @@
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/bin/Debug/netstandard2.0/ObservableObjectTest.deps.json
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/bin/Debug/netstandard2.0/ObservableObjectTest.dll
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/bin/Debug/netstandard2.0/ObservableObjectTest.pdb
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/bin/Debug/netstandard2.0/NZCore.MVVM.SourceGenerator.dll
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/bin/Debug/netstandard2.0/NZCore.MVVM.SourceGenerator.pdb
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/obj/Debug/netstandard2.0/ObservableObjectTest.csproj.AssemblyReference.cache
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/obj/Debug/netstandard2.0/ObservableObjectTest.GeneratedMSBuildEditorConfig.editorconfig
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/obj/Debug/netstandard2.0/ObservableObjectTest.AssemblyInfoInputs.cache
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/obj/Debug/netstandard2.0/ObservableObjectTest.AssemblyInfo.cs
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/obj/Debug/netstandard2.0/ObservableObjectTest.csproj.CoreCompileInputs.cache
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/obj/Debug/netstandard2.0/ObservableObjectTest.sourcelink.json
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/obj/Debug/netstandard2.0/Observab.F8705E9D.Up2Date
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/obj/Debug/netstandard2.0/ObservableObjectTest.dll
+/media/ext-data/Packages/com.enzisoft.nzcore/NZCore.MVVM/SourceGenerators/Source~/ObservableObjectTest/obj/Debug/netstandard2.0/ObservableObjectTest.pdb

@@ -6,7 +6,8 @@
     "Unity.Burst",
     "Unity.Collections",
     "Unity.Entities",
-    "NZCore"
+    "NZCore",
+    "NZCore.Inject"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
