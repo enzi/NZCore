@@ -8,7 +8,7 @@ using Unity.Entities;
 
 namespace NZCore
 {
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
     public partial class DateTimeSystem : SystemBase
     {
         private const int UPDATE_INTERVAL = 1; // in seconds

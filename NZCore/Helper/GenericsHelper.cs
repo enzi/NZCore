@@ -12,5 +12,10 @@ namespace NZCore.Helper
         {
             return typeof(T).IsAssignableFrom(type);
         }
+        
+        public static bool HasBaseType(this Type type, Type requiredType)
+        {
+            return type.BaseType == requiredType || (type.BaseType != null && type.BaseType.IsSubclassOf(requiredType));
+        }
     }
 }

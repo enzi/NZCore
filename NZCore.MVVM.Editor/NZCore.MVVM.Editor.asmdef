@@ -1,0 +1,19 @@
+{
+  "name": "NZCore.MVVM.Editor",
+  "rootNamespace": "",
+  "references": [
+    "NZCore.MVVM"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -29,9 +29,9 @@ namespace NZCore.UIToolkit
         {
             if (LoadAddressables)
             {
-                visualTreeAssets = await AddressablesHelper.LoadAssetsFromLabel<VisualTreeAsset>("interface");
-                worldInterfaceAssets = await AddressablesHelper.LoadAssetsFromLabel<GameObject>("worldInterface");
-                spriteAtlas = await AddressablesHelper.LoadAssetsFromLabel<SpriteAtlas>("spriteAtlas");
+                visualTreeAssets = await AddressableHelper.LoadAssetsFromLabel<VisualTreeAsset>("interface");
+                worldInterfaceAssets = await AddressableHelper.LoadAssetsFromLabel<GameObject>("worldInterface");
+                spriteAtlas = await AddressableHelper.LoadAssetsFromLabel<SpriteAtlas>("spriteAtlas");
             }
             else
             {
