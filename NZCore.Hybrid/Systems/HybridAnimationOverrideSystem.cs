@@ -27,6 +27,11 @@ namespace NZCore.Hybrid
                 ref var state = ref animatorOverrideStateRW.ValueRW;
                 ref var animatorComp = ref hybridAnimatorRW.ValueRW;
 
+                if (!animatorComp.Graph.IsValid())
+                {
+                    continue;
+                }
+
                 if (animatorComp.TransitionTo != HybridAnimatorTransitionPhase.None)
                 {
                     animatorComp.Weight = animatorComp.TransitionTo == HybridAnimatorTransitionPhase.ToCustom ? 
