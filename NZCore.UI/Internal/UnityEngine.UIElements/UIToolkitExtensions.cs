@@ -1,10 +1,8 @@
-﻿// <copyright project="UnityEngine.UI" file="UIToolkitExtensions.cs">
+﻿// <copyright project="NZCore.UI" file="UIToolkitExtensions.cs">
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -92,8 +90,12 @@ namespace NZCore.UIToolkit
 
             var ve = tmp.ElementAt(0);
             ve.AddToClassList(visible ? visibleClass : hiddenClass);
-
+            
+#if UNITY_6000_3_OR_NEWER
+            var vea = vta.visualTreeNoAlloc;
+#else
             var vea = vta.visualElementAssets[0];
+#endif
             vea.AssignClassListFromAssetToElement(ve);
             vea.AssignStyleSheetFromAssetToElement(ve);
             return ve;
@@ -107,13 +109,13 @@ namespace NZCore.UIToolkit
             {
                 return;
             }
-
+        
             foreach (var className in asset.classes)
             {
                 element.AddToClassList(className);
             }
         }
-
+        
         private static void AssignStyleSheetFromAssetToElement(
             this VisualElementAsset asset,
             VisualElement element)
@@ -125,12 +127,12 @@ namespace NZCore.UIToolkit
                     element.AddStyleSheetPath(sheetPath);
                 }
             }
-
+        
             if (!asset.hasStylesheets)
             {
                 return;
             }
-
+        
             foreach (var styleSheet in asset.stylesheets)
             {
                 if (styleSheet != null)

@@ -41,34 +41,34 @@ namespace NZCore.Hybrid
     
     public struct TransformEntityMappingSingleton : IInitSingleton, IDisposable
     {
-        public TransformAccessArray transformArray;
-        public NativeHashMap<Entity, int> indexLookup;
-        public NativeList<TrackedHybridEntity> entitiesList;
-        public NativeList<HybridComponents> hybridComponents;
+        public TransformAccessArray TransformArray;
+        public NativeHashMap<Entity, int> IndexLookup;
+        public NativeList<TrackedHybridEntity> EntitiesList;
+        public NativeList<HybridComponents> HybridComponents;
         
-        public NativeList<UnityObjectRef<GameObject>> destroyRequests;
-        public NativeList<TrackedGameObject> trackedGameObjects;
+        public NativeList<UnityObjectRef<GameObject>> DestroyRequests;
+        public NativeList<TrackedGameObject> TrackedGameObjects;
 
         public void Init()
         {
-            hybridComponents = new NativeList<HybridComponents>(0, Allocator.Persistent);
-            indexLookup = new NativeHashMap<Entity, int>(0, Allocator.Persistent);
+            HybridComponents = new NativeList<HybridComponents>(0, Allocator.Persistent);
+            IndexLookup = new NativeHashMap<Entity, int>(0, Allocator.Persistent);
 
-            transformArray = new TransformAccessArray(0);
-            entitiesList = new NativeList<TrackedHybridEntity>(0, Allocator.Persistent);
-            trackedGameObjects = new NativeList<TrackedGameObject>(0, Allocator.Persistent);
-            destroyRequests = new NativeList<UnityObjectRef<GameObject>>(0, Allocator.Persistent);
+            TransformArray = new TransformAccessArray(0);
+            EntitiesList = new NativeList<TrackedHybridEntity>(0, Allocator.Persistent);
+            TrackedGameObjects = new NativeList<TrackedGameObject>(0, Allocator.Persistent);
+            DestroyRequests = new NativeList<UnityObjectRef<GameObject>>(0, Allocator.Persistent);
         }
 
         public void Dispose()
         {
-            transformArray.Dispose();
-            entitiesList.Dispose();
-            indexLookup.Dispose();
-            hybridComponents.Dispose();
+            TransformArray.Dispose();
+            EntitiesList.Dispose();
+            IndexLookup.Dispose();
+            HybridComponents.Dispose();
             
-            trackedGameObjects.Dispose();
-            destroyRequests.Dispose();
+            TrackedGameObjects.Dispose();
+            DestroyRequests.Dispose();
         }
         
         /// <summary>
@@ -85,7 +85,7 @@ namespace NZCore.Hybrid
         {
             //Debug.Log($"Add mapping for entity {entity} with transform {instanceId}");
             
-            if (indexLookup.TryGetValue(entity, out var index))
+            if (IndexLookup.TryGetValue(entity, out var index))
             {
                 // the entity is already tracked
                 // so just parent it
@@ -97,9 +97,9 @@ namespace NZCore.Hybrid
                 return true;
             }
 
-            transformArray.Add(instanceId);
-            indexLookup.Add(entity, entitiesList.Length);
-            entitiesList.Add(new TrackedHybridEntity()
+            TransformArray.Add(instanceId);
+            IndexLookup.Add(entity, EntitiesList.Length);
+            EntitiesList.Add(new TrackedHybridEntity()
             {
                 Instance = instance,
                 Entity = entity, 
@@ -107,7 +107,7 @@ namespace NZCore.Hybrid
                 DestroyDelay = destroyDelay
             });
 
-            hybridComponents.Add(new HybridComponents()
+            HybridComponents.Add(new HybridComponents()
             {
                 Animator = animator
             });
@@ -117,7 +117,7 @@ namespace NZCore.Hybrid
         
         public void RemoveEntity(Entity entity)
         {
-            if (indexLookup.TryGetValue(entity, out var index))
+            if (IndexLookup.TryGetValue(entity, out var index))
             {
                 RemoveEntity(index, entity);
             }
@@ -125,29 +125,29 @@ namespace NZCore.Hybrid
 
         public void RemoveEntity(int index, Entity entity)
         {
-            transformArray.RemoveAtSwapBack(index);
-            entitiesList.RemoveAtSwapBack(index);
-            hybridComponents.RemoveAtSwapBack(index);
-            indexLookup.Remove(entity);
+            TransformArray.RemoveAtSwapBack(index);
+            EntitiesList.RemoveAtSwapBack(index);
+            HybridComponents.RemoveAtSwapBack(index);
+            IndexLookup.Remove(entity);
 
-            if (index < entitiesList.Length)
+            if (index < EntitiesList.Length)
             {
-                var entityToFix = entitiesList[index].Entity;
+                var entityToFix = EntitiesList[index].Entity;
                 //Debug.Log($"fixing entity {entityToFix} with index {index}");
-                indexLookup[entityToFix] = index;
+                IndexLookup[entityToFix] = index;
             }
         }
         
         public bool TryGetId(Entity entity, out int index)
         {
-            return indexLookup.TryGetValue(entity, out index);
+            return IndexLookup.TryGetValue(entity, out index);
         }
 
         public bool TryGetTransform(Entity entity, out Transform transform)
         {
-            if (indexLookup.TryGetValue(entity, out var index))
+            if (IndexLookup.TryGetValue(entity, out var index))
             {
-                transform = transformArray[index];
+                transform = TransformArray[index];
                 return true;
             }
 
@@ -157,9 +157,9 @@ namespace NZCore.Hybrid
 
         public bool TryGetAnimator(Entity entity, out Animator animator)
         {
-            if (indexLookup.TryGetValue(entity, out var index))
+            if (IndexLookup.TryGetValue(entity, out var index))
             {
-                animator = hybridComponents[index].Animator;
+                animator = HybridComponents[index].Animator;
                 return true;
             }
 
@@ -169,16 +169,16 @@ namespace NZCore.Hybrid
 
         public void Clear()
         {
-            for (int i = transformArray.length - 1; i >= 0; i--)
+            for (int i = TransformArray.length - 1; i >= 0; i--)
             {
-                transformArray.RemoveAtSwapBack(i);
+                TransformArray.RemoveAtSwapBack(i);
             }
 
-            indexLookup.Clear();
-            entitiesList.Clear();
-            hybridComponents.Clear();
-            hybridComponents.Clear();
-            trackedGameObjects.Clear();
+            IndexLookup.Clear();
+            EntitiesList.Clear();
+            HybridComponents.Clear();
+            HybridComponents.Clear();
+            TrackedGameObjects.Clear();
         }
     }
 }

@@ -52,27 +52,27 @@ namespace NZCore.Hybrid
             var deltaTime = SystemAPI.Time.DeltaTime;
             var assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
             
-            for (int i = mapping.trackedGameObjects.Length - 1; i >= 0; i--)
+            for (int i = mapping.TrackedGameObjects.Length - 1; i >= 0; i--)
             {
-                ref var tracked = ref mapping.trackedGameObjects.ElementAt(i);
+                ref var tracked = ref mapping.TrackedGameObjects.ElementAt(i);
         
                 tracked.DestroyTime -= deltaTime;
         
                 if (tracked.DestroyTime <= 0)
                 {
-                    mapping.destroyRequests.Add(tracked.Object);
+                    mapping.DestroyRequests.Add(tracked.Object);
                     assetLoader.UnregisterGeneric(tracked.Prefab);
         
-                    mapping.trackedGameObjects.RemoveAt(i);
+                    mapping.TrackedGameObjects.RemoveAt(i);
                 }
             }
             
             foreach (var index in entitiesToRemove)
             {
-                if (index >= mapping.entitiesList.Length)
+                if (index >= mapping.EntitiesList.Length)
                     continue;
 
-                var trackedEntity = mapping.entitiesList[index];
+                var trackedEntity = mapping.EntitiesList[index];
 
                 if (trackedEntity.DestroyHybridWithEntity == 1)
                 {
@@ -90,7 +90,7 @@ namespace NZCore.Hybrid
                         //Debug.Log($"TransformEntityMapping - Destroying {tmpTransform.gameObject.name}");
 
                         assetLoader.UnregisterEntity(trackedEntity.Entity);
-                        mapping.destroyRequests.Add(trackedEntity.Instance);
+                        mapping.DestroyRequests.Add(trackedEntity.Instance);
                     }
                 }
 
@@ -106,31 +106,31 @@ namespace NZCore.Hybrid
                 if (delayedDestroyRequest.Time <= 0)
                 {
                     assetLoader.UnregisterEntity(delayedDestroyRequest.Entity);
-                    mapping.destroyRequests.Add(delayedDestroyRequest.Object);
+                    mapping.DestroyRequests.Add(delayedDestroyRequest.Object);
                     delayedDestroyRequests.RemoveAt(i);
                 }
             }
             
-            if (mapping.destroyRequests.Length > 0)
+            if (mapping.DestroyRequests.Length > 0)
             {
-                destroyGameObjectsFunction.Ptr.Invoke(mapping.destroyRequests.AsArray());
+                destroyGameObjectsFunction.Ptr.Invoke(mapping.DestroyRequests.AsArray());
                 
-                mapping.destroyRequests.Clear();
+                mapping.DestroyRequests.Clear();
             }
 
             entitiesToRemove.Clear();
 
-            if (mapping.entitiesList.Capacity > entitiesToRemove.Capacity)
+            if (mapping.EntitiesList.Capacity > entitiesToRemove.Capacity)
             {
-                entitiesToRemove.Capacity = mapping.entitiesList.Capacity;
+                entitiesToRemove.Capacity = mapping.EntitiesList.Capacity;
             }
 
             state.Dependency = new SyncPositionToEntityJob
             {
-                Entities = mapping.entitiesList.AsArray(),
+                Entities = mapping.EntitiesList.AsArray(),
                 EntitiesToRemove = entitiesToRemove, // use normal NativeList because the job is scheduled only
                 LocalToWorld_Lookup = SystemAPI.GetComponentLookup<LocalToWorld>(true)
-            }.Schedule(mapping.transformArray, state.Dependency);
+            }.Schedule(mapping.TransformArray, state.Dependency);
         }
 
         public void Unload()

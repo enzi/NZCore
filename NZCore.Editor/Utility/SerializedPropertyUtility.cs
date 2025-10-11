@@ -20,16 +20,18 @@ namespace NZCore.Editor
 
             for (var enterChildren = true; iterator.NextVisible(enterChildren); enterChildren = false)
             {
-                if (iterator.propertyPath != "m_Script")
+                if (iterator.propertyPath == "m_Script")
                 {
-                    yield return iterator.Copy();
+                    continue;
+                }
 
-                    if (siblingProperties)
+                yield return iterator.Copy();
+
+                if (siblingProperties)
+                {
+                    foreach (var child in GetChildren(iterator))
                     {
-                        foreach (var child in GetChildren(iterator))
-                        {
-                            yield return child;
-                        }
+                        yield return child;
                     }
                 }
             }
@@ -70,20 +72,36 @@ namespace NZCore.Editor
             return propertyFields;
         }
 
-        public static Dictionary<string, PropertyField> GetPropertyFieldDictionary(this SerializedProperty root, VisualElement visualElement, bool autoBind = true)
+        public static Dictionary<string, PropertyField> FillDefaultInspector(
+            this SerializedProperty root, VisualElement visualElement, bool autoBind = true, params string[] ignored)
         {
             Dictionary<string, PropertyField> propertyFields = new Dictionary<string, PropertyField>();
 
-            var list = GetChildren(root).ToList();
+            var list = GetChildren(root)
+                       .Where(serializedProperty => !ignored.Contains(serializedProperty.name))
+                       .ToList();
 
-            foreach (var serializedProperty in list)
+            for (var i = 0; i < list.Count; i++)
             {
+                var serializedProperty = list[i];
+
                 var tmp = new PropertyField(serializedProperty);
                 visualElement.Add(tmp);
                 propertyFields.Add(serializedProperty.name, tmp);
 
                 if (autoBind)
+                {
                     tmp.BindProperty(serializedProperty);
+                }
+                
+                if (i == 0)
+                {
+                    tmp.AddToClassList("first-child");
+                }
+                if (i == list.Count - 1)
+                {
+                    tmp.AddToClassList("last-child");
+                }
 
                 //Debug.Log($"added {serializedProperty.name}");
             }
@@ -91,15 +109,20 @@ namespace NZCore.Editor
             return propertyFields;
         }
 
-        public static Dictionary<string, PropertyField> FillDefaultInspector(this SerializedObject serializedObject, VisualElement container, bool autoBind, params string[] ignored)
+        public static Dictionary<string, PropertyField> FillDefaultInspector(
+            this SerializedObject serializedObject, VisualElement container, bool autoBind, params string[] ignored)
         {
             if (serializedObject == null)
+            {
                 return null;
+            }
 
             var iterator = serializedObject.GetIterator();
 
             if (!iterator.NextVisible(true))
+            {
                 return null;
+            }
 
             Dictionary<string, PropertyField> propertyFields = new Dictionary<string, PropertyField>();
 
@@ -114,7 +137,9 @@ namespace NZCore.Editor
                 }
 
                 if (ignoreField)
+                {
                     continue;
+                }
 
                 var propertyField = new PropertyField(iterator)
                 {
@@ -122,15 +147,14 @@ namespace NZCore.Editor
                     pickingMode = PickingMode.Ignore
                 };
 
-                //propertyField.Q<VisualElement>("unity-input-Value").pickingMode = PickingMode.Ignore;
-
                 container.Add(propertyField);
                 propertyFields.Add(propertyField.name, propertyField);
 
                 if (autoBind)
+                {
                     propertyField.BindProperty(iterator);
+                }
 
-                //Debug.Log($"Added {propertyField.name}");
             } while (iterator.NextVisible(false));
 
             return propertyFields;

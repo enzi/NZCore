@@ -9,7 +9,7 @@ namespace NZCore.Inject
     /// <summary>
     /// Interface for a dependency injection container.
     /// </summary>
-    public interface IDIContainer : IDisposable
+    public interface IServiceProvider : IDisposable
     {
         /// <summary>
         /// Registers a service with the container.
@@ -24,7 +24,7 @@ namespace NZCore.Inject
         /// <summary>
         /// Registers a service type with a factory and lifetime.
         /// </summary>
-        void Register<TService>(ServiceLifetime lifetime, Func<IDIContainer, object> factory) where TService : class;
+        void Register<TService>(ServiceLifetime lifetime, Func<IServiceProvider, object> factory) where TService : class;
         
         /// <summary>
         /// Registers a singleton instance.
@@ -40,10 +40,14 @@ namespace NZCore.Inject
         /// Resolves a service from the container.
         /// </summary>
         object Resolve(Type serviceType);
+
+        T CreateInstance<T>();
+        object CreateInstance(IServiceDescriptor descriptor);
+        object CreateInstance(Type implementationType);
         
         /// <summary>
         /// Creates a new scope.
         /// </summary>
-        IDIContainer CreateScope();
+        IServiceProvider CreateScope();
     }
 }

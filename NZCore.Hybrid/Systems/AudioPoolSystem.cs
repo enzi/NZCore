@@ -78,9 +78,9 @@ namespace NZCore.Hybrid
 
                     source.clip = request.Clip.Result;
                     source.volume = request.Volume;
-                    source.spatialBlend = request.is3d ? 1 : 0;
+                    source.spatialBlend = request.Is3d ? 1 : 0;
 
-                    if (request.is3d)
+                    if (request.Is3d)
                     {
                         source.transform.position = request.Position;
                     }

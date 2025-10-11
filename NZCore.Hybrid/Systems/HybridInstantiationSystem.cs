@@ -95,7 +95,7 @@ namespace NZSpellCasting
                 {
                     if (finishedRequest.Request.DestroyTime > 0)
                     {
-                        entityMapping.trackedGameObjects.Add(new TrackedGameObject()
+                        entityMapping.TrackedGameObjects.Add(new TrackedGameObject()
                         {
                             Prefab = finishedRequest.Request.PrefabToLoad,
                             Object = finishedRequest.Result.Instance,
@@ -122,7 +122,7 @@ namespace NZSpellCasting
                             // destroy all previous elements
                             foreach (var element in hybridBuffer)
                             {
-                                entityMapping.destroyRequests.Add(element.GameObject);
+                                entityMapping.DestroyRequests.Add(element.GameObject);
                             }
 
                             hybridBuffer.Add(new HybridObjectBuffer()

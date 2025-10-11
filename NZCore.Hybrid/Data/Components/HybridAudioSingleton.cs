@@ -33,6 +33,6 @@ namespace NZCore.Hybrid
         public float3 Position;
         public Entity FollowEntity;
         public float Volume;
-        public bool is3d;
+        public bool Is3d;
     }
 }

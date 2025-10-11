@@ -14,9 +14,9 @@ namespace NZCore.Inject
         public Type ServiceType { get; }
         public Type ImplementationType { get; }
         public ServiceLifetime Lifetime { get; }
-        public Func<IDIContainer, object> Factory { get; }
+        public Func<IServiceProvider, object> Factory { get; }
 
-        public ServiceDescriptor(Type serviceType, Type implementationType, ServiceLifetime lifetime, Func<IDIContainer, object> factory = null)
+        public ServiceDescriptor(Type serviceType, Type implementationType, ServiceLifetime lifetime, Func<IServiceProvider, object> factory = null)
         {
             ServiceType = serviceType;
             ImplementationType = implementationType;

@@ -7,8 +7,7 @@
     "Unity.Collections",
     "Unity.Entities",
     "Unity.Entities.Hybrid",
-    "Unity.Entities.UI.Editor",    
-    "Unity.Physics",
+    "Unity.Entities.UI.Editor",
     "NZCore",
     "NZCore.Hybrid.Data"
   ],
