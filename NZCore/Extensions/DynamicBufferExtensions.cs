@@ -17,7 +17,7 @@ namespace NZCore
             where T : unmanaged, IBufferElementData
         {
             CheckWriteAccess(buffer);
-            
+
             var ptr = buffer.GetUnsafePtr();
             UnsafeUtility.MemClear(ptr, UnsafeUtility.SizeOf<T>() * buffer.Length);
         }
@@ -26,7 +26,7 @@ namespace NZCore
             where T : unmanaged, IBufferElementData
         {
             CheckWriteAccess(buffer);
-            
+
             buffer.GetBufferHeader()->Length = 0;
         }
 
@@ -47,7 +47,7 @@ namespace NZCore
             where T : unmanaged
         {
             CheckWriteAccess(buffer);
-            
+
             for (int i = buffer.Length - 1; i >= 0; i--)
             {
                 if (buffer[i].GetHashCode() != element.GetHashCode())
@@ -61,7 +61,7 @@ namespace NZCore
             where T : unmanaged
         {
             CheckWriteAccess(buffer);
-            
+
             buffer.Length -= 1;
             // ref var l = ref buffer.Length;
             // l -= 1;
@@ -158,36 +158,36 @@ namespace NZCore
 
             return count == 0;
         }
-        
+
         public static void CopyFrom<T>(this DynamicBuffer<T> buffer, UnsafeList<T> list)
             where T : unmanaged
         {
             buffer.ResizeUninitialized(list.Length);
             UnsafeUtility.MemCpy(buffer.GetUnsafePtr(), list.Ptr, list.Length * UnsafeUtility.SizeOf<T>());
         }
-        
+
         public static void CopyFrom<T>(this DynamicBuffer<T> buffer, UnsafeList<byte> list)
             where T : unmanaged
         {
             var elementCount = list.Length / UnsafeUtility.SizeOf<T>();
-            
+
             buffer.ResizeUninitialized(elementCount);
-            
+
             UnsafeUtility.MemCpy(buffer.GetUnsafePtr(), list.Ptr, list.Length);
         }
-        
+
         public static DynamicBuffer<T> ConvertFromNativeArray<T>(T* ptr, int length)
-            where T: unmanaged
+            where T : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             var safetyHandle1 = AtomicSafetyHandle.Create();
             var safetyHandle2 = AtomicSafetyHandle.Create();
 #endif
-            
+
             BufferHeader* tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
             tmpHeader->Capacity = length;
             tmpHeader->Length = length;
-            tmpHeader->Pointer = (byte*) ptr;
+            tmpHeader->Pointer = (byte*)ptr;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             var buffer = new DynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, length);
 #else
@@ -198,17 +198,17 @@ namespace NZCore
         }
 
         public static DynamicBuffer<T> ConvertFromNativeArray<T>(NativeArray<T> array)
-            where T: unmanaged
+            where T : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             var safetyHandle1 = AtomicSafetyHandle.Create();
             var safetyHandle2 = AtomicSafetyHandle.Create();
 #endif
-            
+
             BufferHeader* tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
             tmpHeader->Capacity = array.Length;
             tmpHeader->Length = array.Length;
-            tmpHeader->Pointer = (byte*) array.GetUnsafeReadOnlyPtr();
+            tmpHeader->Pointer = (byte*)array.GetUnsafeReadOnlyPtr();
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             var buffer = new DynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, array.Length);
 #else
