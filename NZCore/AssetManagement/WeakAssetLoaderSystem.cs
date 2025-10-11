@@ -165,7 +165,7 @@ namespace NZCore.AssetManagement
         public bool Load<T>(WeakObjectReference<T> weakRef)
             where T : Object
         {
-            if (!weakRef.IsReferenceValid)
+            if (!weakRef.IsValidBurst())
                 return false;
 
             var hash = weakRef.Id.GlobalId.AssetGUID;
@@ -183,40 +183,21 @@ namespace NZCore.AssetManagement
             return true;
         }
         
-        public bool TryGetResult<T>(UntypedWeakReferenceId untypedWeakReference, out T result)
-            where T : Object
+        public bool HasLoaded(UntypedWeakReferenceId untypedWeakReference)
         {
-            var hash = untypedWeakReference.GlobalId.AssetGUID;
-
-            if (assetDependencyMap.ContainsKey(hash))
-            {
-                //Debug.Log($"TryGetResult returning {hash} prefab. {weakRef.LoadingStatus}/{weakRef.IsReferenceValid}/{weakRef.Result}");
-                result = RuntimeContentManager.GetObjectValue<T>(untypedWeakReference);;
-                return true;
-            }
-
-            result = null;
-            return false;
+            //Debug.Log($"TryGetResult returning {hash} prefab. {weakRef.LoadingStatus}/{weakRef.IsReferenceValid}/{weakRef.Result}");
+            return assetDependencyMap.ContainsKey(untypedWeakReference.GlobalId.AssetGUID);
         }
 
         /// <summary>
         /// After a Load has been called, call this method to get the actual asset object
         /// </summary>
         /// <returns>Returns true when loading has been completed</returns>
-        public bool TryGetResult<T>(WeakObjectReference<T> weakRef, out T result)
+        public bool HasLoaded<T>(WeakObjectReference<T> weakRef)
             where T : Object
         {
-            var hash = weakRef.Id.GlobalId.AssetGUID;
-
-            if (assetDependencyMap.ContainsKey(hash))
-            {
-                //Debug.Log($"TryGetResult returning {hash} prefab. {weakRef.LoadingStatus}/{weakRef.IsReferenceValid}/{weakRef.Result}");
-                result = weakRef.Result;
-                return true;
-            }
-
-            result = null;
-            return false;
+            //Debug.Log($"TryGetResult returning {hash} prefab. {weakRef.LoadingStatus}/{weakRef.IsReferenceValid}/{weakRef.Result}");
+            return assetDependencyMap.ContainsKey(weakRef.Id.GlobalId.AssetGUID);
         }
 
         /// <summary>
@@ -364,7 +345,7 @@ namespace NZCore.AssetManagement
         }
     }
 
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
     public partial struct WeakAssetLoaderSystem : ISystem
     {
         private WeakAssetLoaderSingleton singleton;

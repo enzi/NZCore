@@ -1,0 +1,27 @@
+{
+  "name": "NZCore.Inject",
+  "rootNamespace": "",
+  "references": [
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "Unity",
+      "expression": "2023.2",
+      "define": "ENABLE_RUNTIME_DATA_BINDINGS"
+    },
+    {
+      "name": "Unity",
+      "expression": "2023.3.0a1",
+      "define": "ENABLE_UXML_SERIALIZED_DATA"
+    }
+  ],
+  "noEngineReferences": false
+}
