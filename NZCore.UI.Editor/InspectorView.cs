@@ -17,7 +17,11 @@ namespace NZCore.UI.Editor
         {
             Clear();
 
-            Object.DestroyImmediate(editor);
+            if (editor != null)
+            {
+                Object.DestroyImmediate(editor);
+            }
+
             editor = UnityEditor.Editor.CreateEditor(obj);
 
             var inspector = editor.CreateInspectorGUI();
