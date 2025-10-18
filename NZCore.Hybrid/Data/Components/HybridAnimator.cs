@@ -3,6 +3,7 @@
 // </copyright>
 
 using Unity.Entities;
+using Unity.Entities.Content;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -26,12 +27,21 @@ namespace NZCore.Hybrid
         public float Weight;
         public HybridAnimatorTransitionPhase TransitionTo;
 
-        public void ChangeClip(AnimationClip clip, float speed = 1.0f)
+        public void ChangeClip(WeakObjectReference<AnimationClip> clip, float speed = 1.0f)
         {
+            //Debug.Log("Change clip");
+
+            if (clip.Result == null)
+            {
+                Debug.LogError("Clip is null");
+                return;
+            }
+            //Debug.Log($"Change clip to {clip.Result.name}");
             Graph.Disconnect(Mixer, 1);
 
-            var newClip = AnimationClipPlayable.Create(Graph, clip);
+            var newClip = AnimationClipPlayable.Create(Graph, clip.Result);
             newClip.SetSpeed(speed);
+            newClip.SetDuration(clip.Result.length);
             
             Graph.Connect(newClip, 0, Mixer, 1);
 

@@ -128,7 +128,6 @@ namespace NZCore.Hybrid
                 
                 AddComponent(entity, new HybridAnimator());
                 AddComponent(entity, new AnimatorOverride());
-                AddComponent(entity, new AnimatorOverrideState());
 
                 if (authoring.resourceType == HybridEntityResourceType.GameObject && authoring.prefab != null)
                 {

@@ -10,12 +10,32 @@ namespace NZCore.Hybrid
 {
     public struct AnimatorOverride : IComponentData
     {
-        public WeakObjectReference<AnimationClip> AnimationClip;
-        public float Scale;
+        private WeakObjectReference<AnimationClip> _animationClip;
+        private float _speed;
+        public AnimatorOverrideEnum State;
+
+        public WeakObjectReference<AnimationClip> AnimationClip => _animationClip;
+        public float Speed => _speed;
+
+        public void SetClip(WeakObjectReference<AnimationClip> clip, float speed)
+        {
+            State = AnimatorOverrideEnum.Requested;
+            
+            _animationClip = clip;
+            _speed = speed;
+        }
+
+        public void Clear()
+        {
+            _animationClip = default;
+            State = AnimatorOverrideEnum.Default;
+        }
     }
 
-    public struct AnimatorOverrideState : IComponentData
+    public enum AnimatorOverrideEnum : byte
     {
-        public byte Playing;
+        Default,
+        Requested,
+        Playing
     }
 }
