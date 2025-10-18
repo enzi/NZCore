@@ -168,5 +168,18 @@ namespace NZCore.UIToolkit
             scrollContainer.style.flexWrap = new StyleEnum<Wrap>(wrapMode);
             scrollContainer.style.flexDirection = new StyleEnum<FlexDirection>(direction);
         }
+        
+        public static Matrix4x4 GetTransformMatrix(this VisualElement element)
+        {
+            var resolvedStyle = element.resolvedStyle;
+            var s = resolvedStyle.scale.value;
+            var elementPanel = element.elementPanel;
+            if (elementPanel != null && elementPanel.isFlat)
+            {
+                s.z = 1f;
+            }
+
+            return Matrix4x4.TRS(resolvedStyle.translate, resolvedStyle.rotate.ToQuaternion(), s);
+        }
     }
 }
