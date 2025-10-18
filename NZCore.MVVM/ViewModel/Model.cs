@@ -13,7 +13,7 @@ namespace NZCore.MVVM
     [Serializable]
     public abstract class Model
     {
-        [SerializeField, HideInInspector] 
+        [SerializeField] 
         private Hash128 _guid;
         [SerializeField, HideInInspector] 
         private ModelVersion _version;
@@ -35,6 +35,7 @@ namespace NZCore.MVVM
 
         public IServiceProvider Container;
         public virtual IEnumerable<Model> Dependencies => Enumerable.Empty<Model>();
+        public virtual void Cleanup() { }
         public virtual void ClearCache() { }
 
         protected Model()

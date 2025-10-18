@@ -100,7 +100,8 @@ namespace NZCore.MVVM
         {
             if (_model == model)
                 return;
-            
+
+            model.Cleanup();
             model.ClearCache();
 
             // Unsubscribe from old model if it's observable
