@@ -49,6 +49,19 @@ namespace NZCore
                 return (a.GetHashCode() * PrimeNumber) ^ b.GetHashCode();
             }
         }
+        
+        public static ulong HashULongs(ulong a, ulong b)
+        {
+            // Use a variation of the FNV-1a hash algorithm
+            ulong hash = 14695981039346656037UL; // FNV offset basis
+    
+            hash ^= a;
+            hash *= 1099511628211UL; // FNV prime
+            hash ^= b;
+            hash *= 1099511628211UL;
+    
+            return hash;
+        }
 
         public static Hash128 GenerateHash128()
         {
