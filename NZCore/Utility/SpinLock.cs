@@ -8,7 +8,7 @@ namespace NZCore
     [GenerateTestsForBurstCompatibility]
     public struct SpinLock
     {
-        int m_Lock;
+        private int _lock;
 
         /// <summary>
         /// Continually spin until the lock can be acquired.
@@ -19,11 +19,11 @@ namespace NZCore
             for (;;)
             {
                 // Optimistically assume the lock is free on the first try.
-                if (Interlocked.CompareExchange(ref m_Lock, 1, 0) == 0)
+                if (Interlocked.CompareExchange(ref _lock, 1, 0) == 0)
                     return;
 
                 // Wait for lock to be released without generating cache misses.
-                while (Volatile.Read(ref m_Lock) == 1)
+                while (Volatile.Read(ref _lock) == 1)
                     continue;
 
                 // Future improvement: the 'continue' instruction above could be swapped for a 'pause' intrinsic
@@ -42,8 +42,8 @@ namespace NZCore
         public bool TryAcquire()
         {
             // First do a memory load (read) to check if lock is free in order to prevent unnecessary cache misses.
-            return Volatile.Read(ref m_Lock) == 0 &&
-                Interlocked.CompareExchange(ref m_Lock, 1, 0) == 0;
+            return Volatile.Read(ref _lock) == 0 &&
+                Interlocked.CompareExchange(ref _lock, 1, 0) == 0;
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Release()
         {
-            Volatile.Write(ref m_Lock, 0);
+            Volatile.Write(ref _lock, 0);
         }
     }
 }

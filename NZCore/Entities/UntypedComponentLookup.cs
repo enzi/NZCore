@@ -10,10 +10,9 @@ using Unity.Entities;
 namespace NZCore
 {
     [NativeContainer]
-    public unsafe struct UnsafeComponentLookup<T> where T : unmanaged, IComponentData
+    public unsafe struct UntypedComponentLookup
     {
-        [NativeDisableUnsafePtrRestriction] 
-        internal readonly EntityDataAccess* m_Access;
+        [NativeDisableUnsafePtrRestriction] internal readonly EntityDataAccess* m_Access;
         internal LookupCache m_Cache;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal AtomicSafetyHandle m_Safety;
@@ -30,7 +29,7 @@ namespace NZCore
         internal uint GlobalSystemVersion => m_GlobalSystemVersion;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        internal UnsafeComponentLookup(TypeIndex typeIndex, EntityDataAccess* access, bool isReadOnly)
+        internal UntypedComponentLookup(TypeIndex typeIndex, EntityDataAccess* access, bool isReadOnly)
         {
             var safetyHandles = &access->DependencyManager->Safety;
             m_Safety = safetyHandles->GetSafetyHandleForComponentLookup(typeIndex, isReadOnly);
@@ -43,7 +42,7 @@ namespace NZCore
         }
 
 #else
-        internal UnsafeComponentLookup(int typeIndex, EntityDataAccess* access)
+        internal UntypedComponentLookup(int typeIndex, EntityDataAccess* access)
         {
             m_TypeIndex = typeIndex;
             m_Access = access;
@@ -149,51 +148,6 @@ namespace NZCore
         }
 
         /// <summary>
-        /// Retrieves the component associated with the specified <see cref="Entity"/>, if it exists. Then reports if the instance still refers to a valid entity and that it has a
-        /// component of type T.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// /// <param name="componentData">The component of type T for the given entity, if it exists.</param>
-        /// <returns>True if the entity has a component of type T, and false if it does not.</returns>
-        /// <remarks>To report if the provided entity has a component of type T, this function confirms
-        /// whether the <see cref="EntityArchetype"/> of the provided entity includes components of type T.
-        /// </remarks>
-        public bool TryGetComponent(Entity entity, out T componentData)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
-#endif
-            var ecs = m_Access->EntityComponentStore;
-
-            if (m_IsZeroSized != 0)
-            {
-                componentData = default;
-                
-#if ENTITIES_1_3_2
-                return ecs->HasComponent(entity, m_TypeIndex, out _);
-#else
-                return ecs->HasComponent(entity, m_TypeIndex, ref m_Cache);
-#endif
-            }
-
-            if (Hint.Unlikely(!ecs->Exists(entity)))
-            {
-                componentData = default;
-                return false;
-            }
-
-            void* ptr = ecs->GetOptionalComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
-            if (ptr == null)
-            {
-                componentData = default;
-                return false;
-            }
-
-            UnsafeUtility.CopyPtrToStructure(ptr, out componentData);
-            return true;
-        }
-
-        /// <summary>
         /// Reports whether any of IComponentData components of the type T, in the chunk containing the
         /// specified <see cref="Entity"/>, could have changed.
         /// </summary>
@@ -219,74 +173,6 @@ namespace NZCore
             var chunkVersion = archetype->Chunks.GetChangeVersion(typeIndexInArchetype, chunk.ListIndex);
 
             return ChangeVersionUtility.DidChange(chunkVersion, version);
-        }
-
-        /// <summary>
-        /// Gets the <see cref="IComponentData"/> instance of type T for the specified entity.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <returns>An <see cref="IComponentData"/> type.</returns>
-        /// <remarks>
-        /// Normally, you cannot write to components accessed using a UnsafeComponentLookup instance
-        /// in a parallel Job. This restriction is in place because multiple threads could write to the same component,
-        /// leading to a race condition and nondeterministic results. However, when you are certain that your algorithm
-        /// cannot write to the same component from different threads, you can manually disable this safety check
-        /// by putting the [NativeDisableParallelForRestrictions] attribute on the UnsafeComponentLookup field in the Job.
-        ///
-        /// [NativeDisableParallelForRestrictionAttribute]: https://docs.unity3d.com/ScriptReference/Unity.Collections.NativeDisableParallelForRestrictionAttribute.html
-        /// </remarks>
-        public T this[Entity entity]
-        {
-            get
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
-#endif
-                var ecs = m_Access->EntityComponentStore;
-                ecs->AssertEntityHasComponent(entity, m_TypeIndex);
-
-                if (m_IsZeroSized != 0)
-                    return default;
-
-                void* ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
-                UnsafeUtility.CopyPtrToStructure(ptr, out T data);
-
-                return data;
-            }
-            set
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
-#endif
-                var ecs = m_Access->EntityComponentStore;
-                ecs->AssertEntityHasComponent(entity, m_TypeIndex);
-
-                if (m_IsZeroSized != 0)
-                    return;
-
-                void* ptr = ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
-                UnsafeUtility.CopyStructureToPtr(ref value, ptr);
-            }
-        }
-
-        /// <summary>
-        /// Gets the <see cref="IComponentData"/> instance of type T for the specified system's associated entity.
-        /// </summary>
-        /// <param name="system">The system handle.</param>
-        /// <returns>An <see cref="IComponentData"/> type.</returns>
-        /// <remarks>
-        /// Normally, you cannot write to components accessed using a ComponentDataFromEntity instance
-        /// in a parallel Job. This restriction is in place because multiple threads could write to the same component,
-        /// leading to a race condition and nondeterministic results. However, when you are certain that your algorithm
-        /// cannot write to the same component from different threads, you can manually disable this safety check
-        /// by putting the [NativeDisableParallelForRestrictions] attribute on the ComponentDataFromEntity field in the Job.
-        ///
-        /// [NativeDisableParallelForRestrictionAttribute]: https://docs.unity3d.com/ScriptReference/Unity.Collections.NativeDisableParallelForRestrictionAttribute.html
-        /// </remarks>
-        public T this[SystemHandle system]
-        {
-            get => this[system.m_Entity];
-            set => this[system.m_Entity] = value;
         }
 
         /// <summary>
@@ -355,151 +241,6 @@ namespace NZCore
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
             m_Access->SetComponentEnabled(systemHandle.m_Entity, m_TypeIndex, value, ref m_Cache);
-        }
-
-        /// <summary>
-        /// Gets a safe reference to the component data.
-        /// </summary>
-        /// <param name="system">The system handle with the referenced entity</param>
-        /// <returns>Returns a safe reference to the component data. Throws an 
-        /// exception if the component doesn't exist.</returns>
-        public RefRW<T> GetRefRW(SystemHandle system)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
-#endif
-            var ecs = m_Access->EntityComponentStore;
-            ecs->AssertEntityHasComponent(system.m_Entity, m_TypeIndex);
-
-            if (m_IsZeroSized != 0)
-                return default;
-
-            void* ptr = ecs->GetComponentDataWithTypeRW(system.m_Entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRW<T>(ptr, m_Safety);
-#else
-            return new RefRW<T> (ptr);
-#endif
-        }
-
-        /// <summary>
-        /// Gets a safe reference to the component data.
-        /// </summary>
-        /// <param name="entity">The referenced entity</param>
-        /// <param name="isReadOnly">True if you only want to read from the returned component; false if you also want to write to it</param>
-        /// <returns>Returns a safe reference to the component data. Throws an 
-        /// exception if the component doesn't exist.</returns>
-        public RefRW<T> GetRefRW(Entity entity, bool isReadOnly)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
-#endif
-            var ecs = m_Access->EntityComponentStore;
-            ecs->AssertEntityHasComponent(entity, m_TypeIndex);
-
-            if (m_IsZeroSized != 0)
-                return default;
-
-            void* ptr =
-                isReadOnly
-                    ? ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache)
-                    : ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRW<T>(ptr, m_Safety);
-#else
-            return new RefRW<T> (ptr);
-#endif
-        }
-
-        /// <summary>
-        /// Gets a safe reference to the component data.
-        /// </summary>
-        /// <param name="entity">The referenced entity</param>
-        /// <returns>Returns a safe reference to the component data. Throws an 
-        /// exception if the component doesn't exist.</returns>
-        public RefRO<T> GetRefRO(Entity entity)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
-#endif
-            var ecs = m_Access->EntityComponentStore;
-            ecs->AssertEntityHasComponent(entity, m_TypeIndex);
-
-            if (m_IsZeroSized != 0)
-                return default;
-
-            void* ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRO<T>(ptr, m_Safety);
-#else
-            return new RefRO<T> (ptr);
-#endif
-        }
-
-        /// <summary>
-        /// Gets a safe reference to the component data and a default RefRW (RefRW.IsValid == false).
-        /// /// </summary>
-        /// <param name="entity">The referenced entity</param>
-        /// <param name="isReadOnly">True if you only want to read from the returned component; false if you also want to write to it</param>
-        /// <returns>Returns a safe reference to the component data and a default RefRW.</returns>
-        public RefRW<T> GetRefRWOptional(Entity entity, bool isReadOnly)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
-#endif
-            if (!HasComponent(entity))
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                return new RefRW<T>(null, default);
-#else
-                return new RefRW<T>(null);
-#endif
-
-            if (m_IsZeroSized != 0)
-                return default;
-
-            var ecs = m_Access->EntityComponentStore;
-            void* ptr =
-                isReadOnly
-                    ? ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache)
-                    : ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRW<T>(ptr, m_Safety);
-#else
-            return new RefRW<T> (ptr);
-#endif
-        }
-
-        /// <summary>
-        /// Gets a safe reference to the component data and 
-        /// a default RefRO (RefRO.IsValid == false).
-        /// </summary>
-        /// <param name="entity">The referenced entity</param>
-        /// <returns>Returns a safe reference to the component data and a default RefRW.</returns>
-        public RefRO<T> GetRefROOptional(Entity entity)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
-#endif
-            if (!HasComponent(entity))
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                return new RefRO<T>(null, default);
-#else
-                return new RefRO<T>(null);
-#endif
-
-            if (m_IsZeroSized != 0)
-                return default;
-
-            var ecs = m_Access->EntityComponentStore;
-            void* ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRO<T>(ptr, m_Safety);
-#else
-            return new RefRO<T> (ptr);
-#endif
         }
 
         SafeBitRef MakeSafeBitRef(ulong* ptr, int offsetInBits)
@@ -613,7 +354,7 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex);
 
-            return m_IsZeroSized != 0 ? default(void*) : ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
+            return m_IsZeroSized != 0 ? null : ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
         }
 
         public void* GetPtrRW(Entity entity)
@@ -627,23 +368,7 @@ namespace NZCore
             return m_IsZeroSized != 0 ? null : ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
         }
 
-        public ref T GetRef(Entity entity, bool bumpVersion)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
-#endif
-            var ecs = m_Access->EntityComponentStore;
-            ecs->AssertEntityHasComponent(entity, m_TypeIndex);
-
-            if (m_IsZeroSized != 0)
-                throw new ArgumentException($"UnsafeComponentLookup<{typeof(T)}> indexer can not index the component because it is zero sized, you can use Exists instead.");
-
-            void* ptr = bumpVersion ? ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache) : ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
-
-            return ref UnsafeUtility.AsRef<T>(ptr);
-        }
-
-        public bool TryGetComponentPtrRO(Entity entity, out T* ptr)
+        public bool TryGetComponentPtrRO(Entity entity, out byte* ptr)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
@@ -657,11 +382,11 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex);
 
-            ptr = (T*)ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
+            ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
             return true;
         }
 
-        public bool TryGetComponentPtrRW(Entity entity, out T* ptr)
+        public bool TryGetComponentPtrRW(Entity entity, out byte* ptr)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
@@ -675,7 +400,7 @@ namespace NZCore
             
 
             var ecs = m_Access->EntityComponentStore;
-            ptr = (T*) ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
+            ptr = ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
             return true;
         }
 
@@ -715,9 +440,24 @@ namespace NZCore
 
         public TypeIndex TypeIndex => m_TypeIndex;
 
-        public static implicit operator UnsafeComponentLookup<T>(ComponentLookup<T> lookup)
+        
+    }
+
+    public static class UntypedComponentLookupExtensions
+    {
+        public static UntypedComponentLookup ToUntyped<T>(this ComponentLookup<T> lookup)
+            where T : unmanaged, IComponentData 
         {
-            return UnsafeUtility.As<ComponentLookup<T>, UnsafeComponentLookup<T>>(ref lookup);
+            return UnsafeUtility.As<ComponentLookup<T>, UntypedComponentLookup>(ref lookup);
+        }
+
+        public static unsafe UntypedComponentLookup GetUntypedComponentLookup(this ref SystemState state, ComponentType componentType)
+        {
+            var isReadOnly = componentType.AccessModeType == ComponentType.AccessMode.ReadOnly;
+            state.AddReaderWriter(componentType);
+            
+            var access = state.EntityManager.GetCheckedEntityDataAccess();
+            return new UntypedComponentLookup(componentType.TypeIndex, access, isReadOnly);
         }
     }
 }

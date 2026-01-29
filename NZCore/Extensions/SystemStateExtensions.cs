@@ -77,5 +77,11 @@ namespace NZCore
             var query = GetSingletonQuery<T>(ref state);
             return query.GetSingletonBufferNoSync<T>(isReadOnly);
         }
+
+        public static UntypedBufferLookup GetUntypedBufferLookup(ref this SystemState state, ComponentType componentType, bool isReadOnly)
+        {
+            state.AddReaderWriter(componentType);
+            return state.EntityManager.GetUntypedBufferLookup(componentType, isReadOnly);
+        }
     }
 }

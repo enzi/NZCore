@@ -86,6 +86,20 @@ namespace NZCore
 
             return comp;
         }
+        
+        public static DynamicBuffer<T> GetSingletonBuffer<T>(this EntityManager entityManager)
+            where T : unmanaged, IBufferElementData
+        {
+            var query = new EntityQueryBuilder(Allocator.Temp)
+                        .WithAll<T>()
+                        .WithOptions(EntityQueryOptions.IncludeSystems)
+                        .Build(entityManager);
+
+            var comp = query.GetSingletonBuffer<T>();
+            query.Dispose();
+
+            return comp;
+        }
 
         public static TComponent GetSystemSingleton<TSystem, TComponent>(this EntityManager entityManager)
             where TComponent : unmanaged, IComponentData
@@ -110,7 +124,7 @@ namespace NZCore
 
         public static void* GetComponentDataRaw(this EntityManager entityManager, Entity entity, ComponentType componentType, bool isReadOnly)
         {
-            return GetComponentDataRaw(entityManager, entity, componentType.TypeIndex, isReadOnly);
+            return entityManager.GetComponentDataRaw(entity, componentType.TypeIndex, isReadOnly);
         }
 
         public static void* GetComponentDataRaw(this EntityManager entityManager, Entity entity, TypeIndex typeIndex, bool isReadOnly)
@@ -135,6 +149,27 @@ namespace NZCore
                     ref lookupCache);
         }
 
+        public static byte* GetBufferPtr(this EntityManager entityManager, Entity entity, ComponentType componentType, bool isReadOnly = false)
+        {
+            // todo add safety
+            
+            var access = entityManager.GetCheckedEntityDataAccess();
+            var ecs = access->EntityComponentStore;
+            var typeIndex = componentType.TypeIndex;
+            
+            BufferHeaderExposed* header;
+            if (isReadOnly)
+            {
+                header = (BufferHeaderExposed*)ecs->GetComponentDataWithTypeRO(entity, typeIndex);
+            }
+            else
+            {
+                header = (BufferHeaderExposed*)ecs->GetComponentDataWithTypeRW(entity, typeIndex, ecs->GlobalSystemVersion);
+            }
+
+            return BufferHeaderExposed.GetElementPointer(header);
+        }
+
         ///////////////////////////////
         /// Restore ComponentLookup ///
         ///////////////////////////////
@@ -151,13 +186,9 @@ namespace NZCore
             var access = entityManager.GetCheckedEntityDataAccess();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var safetyHandles = &access->DependencyManager->Safety;
-#endif
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new ComponentLookup<T>(typeIndex, access, isReadOnly);
 #else
-        return new ComponentLookup<T>(typeIndex, access);
+            return new ComponentLookup<T>(typeIndex, access);
 #endif
         }
 
@@ -168,17 +199,13 @@ namespace NZCore
             where T : unmanaged, IComponentData
         {
             var typeIndex = TypeManager.GetTypeIndex<T>();
-            return GetUnsafeComponentLookup<T>(entityManager, typeIndex, isReadOnly);
+            return entityManager.GetUnsafeComponentLookup<T>(typeIndex, isReadOnly);
         }
 
         internal static UnsafeComponentLookup<T> GetUnsafeComponentLookup<T>(this EntityManager entityManager, TypeIndex typeIndex, bool isReadOnly)
             where T : unmanaged, IComponentData
         {
             var access = entityManager.GetCheckedEntityDataAccess();
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var safetyHandles = &access->DependencyManager->Safety;
-#endif
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new UnsafeComponentLookup<T>(typeIndex, access, isReadOnly);
@@ -227,6 +254,26 @@ namespace NZCore
                 ptrToData,
                 ptrToDefaultData);
             access->EndStructuralChanges(ref changes);
+        }
+        
+        /////////////////////////////
+        /// UntypedBufferLookip   ///
+        /////////////////////////////
+        public static UntypedBufferLookup GetUntypedBufferLookup(this EntityManager entityManager, ComponentType componentType, bool isReadOnly)
+        {
+            var access = entityManager.GetCheckedEntityDataAccess();
+            
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            var safetyHandles = &access->DependencyManager->Safety;
+#endif
+            
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            return new UntypedBufferLookup(componentType.TypeIndex, access, isReadOnly,
+                safetyHandles->GetSafetyHandleForComponentLookup(componentType.TypeIndex, isReadOnly),
+                safetyHandles->GetBufferHandleForBufferLookup(componentType.TypeIndex));
+#else
+            return new UntypedBufferLookup(componentType.TypeIndex, access, isReadOnly);
+#endif
         }
     }
 }

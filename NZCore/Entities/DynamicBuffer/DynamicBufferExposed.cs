@@ -13,7 +13,8 @@ namespace NZCore
     // ReSharper disable once UnusedTypeParameter
     public unsafe struct DynamicBufferExposed<T>
     {
-        [NativeDisableUnsafePtrRestriction] [NoAlias]
+        [NativeDisableUnsafePtrRestriction] 
+        [NoAlias]
         internal BufferHeader* m_Buffer;
 
         // Stores original internal capacity of the buffer header, so heap excess can be removed entirely when trimming.
@@ -26,7 +27,6 @@ namespace NZCore
         internal int m_SafetyReadWriteCount;
 
         [MarshalAs(UnmanagedType.U1)] internal bool m_IsReadOnly;
-
         [MarshalAs(UnmanagedType.U1)] internal bool m_useMemoryInitPattern;
         internal byte m_memoryInitPattern;
 #endif

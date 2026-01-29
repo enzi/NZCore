@@ -13,26 +13,13 @@ namespace NZCore
             where T : ScriptableObjectWithAutoID
         {
             int highestIndex = 0;
-            foreach (var dynamicStat in container)
+            foreach (var element in container)
             {
-                if (dynamicStat.AutoID > highestIndex)
-                    highestIndex = dynamicStat.AutoID;
+                if (element.AutoID > highestIndex)
+                    highestIndex = element.AutoID;
             }
 
             return highestIndex;
         }
-
-        // public static int GetHighestIndex<T>(this List<T> container)
-        //     where T : ScriptableObjectWithDefaultAutoID
-        // {
-        //     int highestIndex = 0;
-        //     foreach (var dynamicStat in container)
-        //     {
-        //         if (dynamicStat.AutoID > highestIndex)
-        //             highestIndex = dynamicStat.AutoID;
-        //     }
-        //
-        //     return highestIndex;
-        // }
     }
 }

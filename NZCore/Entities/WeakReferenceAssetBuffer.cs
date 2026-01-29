@@ -4,11 +4,17 @@
 
 using Unity.Entities;
 using Unity.Entities.Serialization;
+using UnityEngine;
 
 namespace NZCore
 {
     public struct WeakReferenceAssetBuffer : IBufferElementData
     {
         public UntypedWeakReferenceId Id;
+    }
+    
+    public struct UnityObjectReferenceBuffer : IBufferElementData
+    {
+        public UnityObjectRef<Object> Asset;
     }
 }

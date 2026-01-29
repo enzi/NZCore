@@ -47,12 +47,20 @@ namespace NZCore
 
         public static unsafe NativeArray<T> ToNativeArray<T>(void* ptr, int length) where T : struct
         {
-            return NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(ptr, length, Allocator.None);
+            var array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(ptr, length, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref array, AtomicSafetyHandle.Create());
+#endif
+            return array;
         }
 
         public static unsafe NativeArray<T> ToNativeArray<T>(ref this BlobArray<T> blobArray) where T : struct
         {
-            return NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(blobArray.GetUnsafePtr(), blobArray.Length, Allocator.None);
+            var array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(blobArray.GetUnsafePtr(), blobArray.Length, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref array, AtomicSafetyHandle.Create());
+#endif
+            return array;
         }
 
         public static unsafe ref T ElementAt<T>(this NativeArray<T> array, int index)
