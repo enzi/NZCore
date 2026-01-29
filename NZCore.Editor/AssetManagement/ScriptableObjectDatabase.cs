@@ -6,12 +6,51 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NZCore.Editor;
+using NZCore.Settings;
 using UnityEditor;
 using UnityEngine;
 
 namespace NZCore.AssetManagement
 {
-    public class ScriptableObjectDatabase
+    public interface IIndexableDatabase
+    {
+        public void CreateLookup();
+    }
+    
+    public abstract class ScriptableObjectDatabase<T> : SettingsBase
+        where T : ScriptableObject
+    {
+        private static T instance;
+        
+        public static T Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    var assets = AssetDatabase.FindAssets($"t:{typeof(T).Name}");
+
+                    if (assets.Length > 0)
+                    {
+                        instance = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(assets[0]));
+                        
+                        if (instance is IIndexableDatabase indexableDatabase)
+                        {
+                            indexableDatabase.CreateLookup();
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError($"Request DB {typeof(T).Name} could not be found!");
+                    }
+                }
+
+                return instance;
+            }
+        }
+    }
+    
+    public static class ScriptableObjectDatabase
     {
         [MenuItem("Tools/Rebuild SO DB")]
         public static void Rebuild()
@@ -129,6 +168,11 @@ namespace NZCore.AssetManagement
                 
                 managerObject.ApplyModifiedPropertiesWithoutUndo();
                 AssetDatabase.SaveAssetIfDirty(manager);
+
+                if (manager is IIndexableDatabase indexableDatabase)
+                {
+                    indexableDatabase.CreateLookup();
+                }
             }
         }
     }

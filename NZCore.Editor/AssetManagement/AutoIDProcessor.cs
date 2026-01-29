@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using NZCore.Editor;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;

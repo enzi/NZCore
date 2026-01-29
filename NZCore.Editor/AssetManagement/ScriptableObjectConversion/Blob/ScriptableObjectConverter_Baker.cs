@@ -23,6 +23,7 @@ namespace NZCore
 
             var assetContainerEntity = CreateAdditionalEntity(TransformUsageFlags.None);
             var assetBuffer = AddBuffer<WeakReferenceAssetBuffer>(assetContainerEntity);
+            var objectRefBuffer = AddBuffer<UnityObjectReferenceBuffer>(assetContainerEntity);
             
             converter.GatherScriptableObjects();
 
@@ -47,7 +48,7 @@ namespace NZCore
                 BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp);
 
                 ref var blob = ref blobBuilder.ConstructRoot<TBlobStruct>();
-                so.ToBlobData(this, ref blobBuilder, ref blob, assetBuffer, blobReferenceEntity, guid);
+                so.ToBlobData(this, ref blobBuilder, ref blob, objectRefBuffer, assetBuffer, blobReferenceEntity, guid);
                 var blobReference = blobBuilder.CreateBlobAssetReference<TBlobStruct>(Allocator.Persistent);
 
                 AddBlobAsset(ref blobReference, out _);
@@ -77,6 +78,7 @@ namespace NZCore
             
             var assetContainerEntity = CreateAdditionalEntity(TransformUsageFlags.None);
             var assetBuffer = AddBuffer<WeakReferenceAssetBuffer>(assetContainerEntity);
+            var objectRefBuffer = AddBuffer<UnityObjectReferenceBuffer>(assetContainerEntity);
              
             converter.GatherScriptableObjects();
 
@@ -104,7 +106,7 @@ namespace NZCore
                 ref var blob1 = ref blobBuilder1.ConstructRoot<TBlobStruct1>();
                 ref var blob2 = ref blobBuilder2.ConstructRoot<TBlobStruct2>();
 
-                so.ToBlobData(this, ref blobBuilder1, ref blob1, ref blob2, assetBuffer, blobReferenceEntity, guid);
+                so.ToBlobData(this, ref blobBuilder1, ref blob1, ref blob2, objectRefBuffer, assetBuffer, blobReferenceEntity, guid);
 
                 var blobReference1 = blobBuilder1.CreateBlobAssetReference<TBlobStruct1>(Allocator.Persistent);
                 var blobReference2 = blobBuilder2.CreateBlobAssetReference<TBlobStruct2>(Allocator.Persistent);
