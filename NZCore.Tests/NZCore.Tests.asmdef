@@ -11,7 +11,8 @@
         "UnityEngine.TestRunner",
         "NZCore.Testing",
         "Unity.PerformanceTesting",
-        "NZCore"
+        "NZCore",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
         "Editor"

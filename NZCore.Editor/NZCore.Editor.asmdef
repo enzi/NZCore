@@ -8,8 +8,7 @@
     "Unity.Entities.Hybrid",
     "Unity.Entities.UI.Editor",
     "Unity.Mathematics",
-    "NZCore",
-    "NZCore.Authoring"
+    "NZCore"
   ],
   "includePlatforms": [
     "Editor"

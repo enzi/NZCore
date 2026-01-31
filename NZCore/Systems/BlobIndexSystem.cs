@@ -15,24 +15,27 @@ namespace NZCore
         where TBlobReference : unmanaged, IBlobIndex, IBlobAssetReference<TBlobRoot>
         where TBlobRoot : unmanaged
     {
+        private EntityQuery _query;
+
         protected override void OnCreate()
         {
-            RequireForUpdate<TBlobReference>();
+            _query = new EntityQueryBuilder(Allocator.Temp)
+                        .WithAll<TBlobReference>()
+                        .WithOptions(EntityQueryOptions.IncludePrefab)
+                        .Build(ref CheckedStateRef);
+            
+            RequireForUpdate(_query);
         }
 
         protected override void OnStartRunning()
         {
             CheckedStateRef.CreateSingleton(out TIndexList singleton);
 
-            var query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<TBlobReference>()
-                .Build(ref CheckedStateRef);
-
             new BlobIndexJob()
             {
                 List = singleton.GetIndexList(),
                 BlobReference_ReadHandle = SystemAPI.GetComponentTypeHandle<TBlobReference>()
-            }.Run(query);
+            }.Run(_query);
         }
 
         protected override void OnStopRunning()

@@ -2,7 +2,6 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using System.Runtime.CompilerServices;
 using NUnit.Framework;
 using NZCore.NativeContainers.DenseMap;
 using Unity.Burst;
