@@ -10,6 +10,22 @@ namespace NZCore
 {
     public static class SingletonUtility
     {
+        public static T CreateManagedSingleton<T>(this ref SystemState state)
+            where T : class, IInitSingleton
+        {
+            var compType = ComponentType.ReadOnly<T>();
+            var singletonEntity = state.EntityManager.CreateEntity(stackalloc[]
+            {
+                compType
+            });
+            
+            T singletonData = Activator.CreateInstance<T>();
+            singletonData.Init();
+            state.EntityManager.SetComponentObject(singletonEntity, compType, singletonData);
+
+            return singletonData;
+        }
+        
         public static void CreateSingleton<T>(this ref SystemState state)
             where T : unmanaged, IInitSingleton
         {

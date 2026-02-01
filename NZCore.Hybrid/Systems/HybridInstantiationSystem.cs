@@ -28,6 +28,7 @@ namespace NZSpellCasting
            
             state.RequireForUpdate<TransformEntityMappingSingleton>();
             state.RequireForUpdate<WeakAssetLoaderSingleton>();
+            state.RequireForUpdate<EntityRemapBuffer>();
         }
         
         public void OnStartRunning(ref SystemState state)
@@ -52,7 +53,8 @@ namespace NZSpellCasting
             //return;
             
             state.EntityManager.CompleteDependencyBeforeRO<CreateHybridObjectRequestSingleton>();
-        
+
+            var remapBuffer = SystemAPI.GetSingletonBuffer<EntityRemapBuffer>(true).AsNativeArray();
             var createHybrids = SystemAPI.GetSingleton<CreateHybridObjectRequestSingleton>();
             var createEnumerator = createHybrids.Requests.GetEnumerator();
             
@@ -103,21 +105,31 @@ namespace NZSpellCasting
                         });
                     }
 
-                    if (finishedRequest.Request.BindToEntity != Entity.Null && finishedRequest.Request.BindToEntity.Index > 0)
+                    Entity bindToEntity;
+                    if (finishedRequest.Request.BindToEntity.Index < 0)
+                    {
+                        remapBuffer.GetRemappedEntity(finishedRequest.Request.BindToEntity, out bindToEntity);
+                    }
+                    else
+                    {
+                        bindToEntity = finishedRequest.Request.BindToEntity;
+                    }
+
+                    if (bindToEntity != Entity.Null)
                     {
                         entityMapping.AddTransform(
                             finishedRequest.Result.TransformInstanceId, 
-                            finishedRequest.Request.BindToEntity,
+                            bindToEntity,
                             finishedRequest.Result.Instance, 
                             finishedRequest.Result.Animator,
-                            finishedRequest.Request.BindToEntity != Entity.Null, 
+                            bindToEntity != Entity.Null, 
                             finishedRequest.Request.DestroyTime);
                         
-                        state.EntityManager.SetComponentData(finishedRequest.Request.BindToEntity, finishedRequest.Result.HybridAnimator);
+                        state.EntityManager.SetComponentData(bindToEntity, finishedRequest.Result.HybridAnimator);
 
-                        if (SystemAPI.HasBuffer<HybridObjectBuffer>(finishedRequest.Request.BindToEntity))
+                        if (SystemAPI.HasBuffer<HybridObjectBuffer>(bindToEntity))
                         {
-                            var hybridBuffer = SystemAPI.GetBuffer<HybridObjectBuffer>(finishedRequest.Request.BindToEntity);
+                            var hybridBuffer = SystemAPI.GetBuffer<HybridObjectBuffer>(bindToEntity);
 
                             // destroy all previous elements
                             foreach (var element in hybridBuffer)
