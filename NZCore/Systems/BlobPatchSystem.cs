@@ -5,10 +5,12 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Scenes;
 
 namespace NZCore
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateAfter(typeof(SceneSystemGroup))]
     public partial struct BlobPatchSystem : ISystem
     {
         private EntityQuery _patchObjectRefquery;
