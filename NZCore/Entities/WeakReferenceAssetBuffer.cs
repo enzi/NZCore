@@ -13,8 +13,14 @@ namespace NZCore
         public UntypedWeakReferenceId Id;
     }
     
-    public struct UnityObjectReferenceBuffer : IBufferElementData
+    public struct UnityObjectReferencePatchBufferResolved : IComponentData, IEnableableComponent { }
+    
+    public struct UnityObjectReferencePatchBuffer : IBufferElementData
     {
+        public TypeIndex TypeIndex;
+        public Entity BlobEntity;
         public UnityObjectRef<Object> Asset;
+        public long BlobOffset;
+        public int BlobAssetReferenceIndex;
     }
 }
