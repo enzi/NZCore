@@ -2,7 +2,6 @@
 // Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using System;
 using NZCore.AssetManagement;
 using Unity.Entities;
 using UnityEngine;
@@ -17,7 +16,7 @@ namespace NZCore.Authoring
             {
                 foreach (var converter in BlobDatabaseCollector.Converters)
                 {
-                    var instance = Activator.CreateInstance(converter);
+                    var instance = ScriptableObject.CreateInstance(converter);
                 
                     if (instance is IConvertToBlob blobConverter)
                     {
