@@ -37,6 +37,7 @@ namespace NZCore
     public unsafe struct UnsafeBufferLookup<T> where T : unmanaged, IBufferElementData
     {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
+        // the position of this is the same as BufferLookup, so they can align
         internal AtomicSafetyHandle m_Safety0;
         internal AtomicSafetyHandle m_ArrayInvalidationSafety;
         private int m_SafetyReadOnlyCount;

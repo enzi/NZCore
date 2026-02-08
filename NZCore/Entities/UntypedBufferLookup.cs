@@ -19,8 +19,8 @@ namespace NZCore
         internal AtomicSafetyHandle m_ArrayInvalidationSafety;
         private int m_SafetyReadOnlyCount;
         private int m_SafetyReadWriteCount;
-
 #endif
+        
         [NativeDisableUnsafePtrRestriction] private readonly EntityDataAccess* m_Access;
         private LookupCache m_Cache;
         private readonly TypeIndex m_TypeIndex;

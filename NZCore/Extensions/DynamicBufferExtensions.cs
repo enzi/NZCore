@@ -226,5 +226,16 @@ namespace NZCore
             AtomicSafetyHandle.Release(buffer.m_Safety1);
 #endif
         }
+
+        public static UntypedDynamicBuffer ToUntypedBuffer<T>(this DynamicBuffer<T> buffer)
+            where T : unmanaged
+        {
+            var elementSize = UnsafeUtility.SizeOf<T>();
+            var alignOf = UnsafeUtility.AlignOf<T>();
+            
+            ref var exposed = ref UnsafeUtility.As<DynamicBuffer<T>, DynamicBufferExposed<T>>(ref buffer);
+            return new UntypedDynamicBuffer(exposed.m_Buffer, buffer.m_Safety0, default, buffer.m_IsReadOnly == 1,
+                buffer.m_useMemoryInitPattern == 1, buffer.m_memoryInitPattern, exposed.m_InternalCapacity, elementSize, alignOf);
+        }
     }
 }

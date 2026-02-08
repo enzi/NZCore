@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using Unity.Assertions;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -48,9 +49,13 @@ namespace NZCore
 
         /// <summary>
         /// Creates a DynamicHashMap wrapper around an existing DynamicBuffer.
+        /// Auto-initializes with default capacity if buffer is empty.
         /// </summary>
         public DynamicHashMap(DynamicBuffer<TBuffer> buffer)
         {
+            if (buffer.Length == 0)
+                Initialize(buffer, 16);
+
             _buffer = (byte*)buffer.GetUnsafePtr();
             _bufferLength = buffer.Length * UnsafeUtility.SizeOf<TBuffer>();
         }
@@ -129,6 +134,8 @@ namespace NZCore
         /// </summary>
         public void Clear()
         {
+            Assert.IsTrue(_bufferLength >= sizeof(Header), "DynamicHashMap must be initialized before calling Clear()");
+
             ref var header = ref GetHeader();
             header.Count = 0;
             UnsafeUtility.MemSet(GetMetadata(), Empty, header.Capacity);

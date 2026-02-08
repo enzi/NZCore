@@ -1,7 +1,8 @@
-﻿// <copyright project="NZCore.Tests" file="DenseMapTest.cs">
+// <copyright project="NZCore.Tests" file="DenseMapTest.cs">
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
 using NUnit.Framework;
 using NZCore.NativeContainers.DenseMap;
 using Unity.Burst;
@@ -9,300 +10,485 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.PerformanceTesting;
-using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
-namespace NZCore.Tests
+namespace NZCore.Tests.NativeContainers
 {
     public unsafe class DenseMapTest
     {
-        private int warmupCount = 10;
-        private int measureCount = 1000;
+        #region Validity Tests
 
-        [TestCase(100)]
-        [TestCase(1000)]
-        [TestCase(10000)]
-        [TestCase(100000)]
-        [TestCase(1000000)]
-        [Performance]
-        public void Test_DenseMap(int count)
+        [Test]
+        public void Emplace_And_Get_Works()
+        {
+            var map = UnsafeDenseMap<int, int>.Create(16, 0.9, Allocator.Temp);
+
+            map->Emplace(1, 100);
+            map->Emplace(2, 200);
+            map->Emplace(3, 300);
+
+            Assert.AreEqual(3, map->Count);
+
+            Assert.IsTrue(map->Get(1, out var val1));
+            Assert.AreEqual(100, val1);
+
+            Assert.IsTrue(map->Get(2, out var val2));
+            Assert.AreEqual(200, val2);
+
+            Assert.IsTrue(map->Get(3, out var val3));
+            Assert.AreEqual(300, val3);
+
+            map->Dispose();
+        }
+
+        [Test]
+        public void Get_NonExistent_ReturnsFalse()
+        {
+            var map = UnsafeDenseMap<int, int>.Create(16, 0.9, Allocator.Temp);
+
+            map->Emplace(1, 100);
+
+            Assert.IsFalse(map->Get(999, out _));
+
+            map->Dispose();
+        }
+
+        [Test]
+        public void Emplace_Duplicate_ReturnsFalse()
+        {
+            var map = UnsafeDenseMap<int, int>.Create(16, 0.9, Allocator.Temp);
+
+            Assert.IsTrue(map->Emplace(1, 100));
+            Assert.IsFalse(map->Emplace(1, 200)); // duplicate
+
+            Assert.AreEqual(1, map->Count);
+
+            map->Get(1, out var val);
+            Assert.AreEqual(100, val); // original value preserved
+
+            map->Dispose();
+        }
+
+        [Test]
+        public void Resize_PreservesData()
+        {
+            // Start small to force resize
+            var map = UnsafeDenseMap<int, int>.Create(16, 0.9, Allocator.Temp);
+
+            // Add enough to trigger resize
+            for (int i = 0; i < 100; i++)
+            {
+                map->Emplace(i, i * 10);
+            }
+
+            Assert.AreEqual(100, map->Count);
+
+            // Verify all data is still accessible
+            for (int i = 0; i < 100; i++)
+            {
+                Assert.IsTrue(map->Get(i, out var val), $"Key {i} not found after resize");
+                Assert.AreEqual(i * 10, val);
+            }
+
+            map->Dispose();
+        }
+
+        [Test]
+        public void StressTest_ManyInserts()
+        {
+            var map = UnsafeDenseMap<int, int>.Create(1000, 0.9, Allocator.Temp);
+
+            for (int i = 0; i < 10000; i++)
+            {
+                map->Emplace(i, i);
+            }
+
+            Assert.AreEqual(10000, map->Count);
+
+            // Verify random samples
+            var random = new Random(42);
+            for (int i = 0; i < 100; i++)
+            {
+                int key = random.NextInt(0, 10000);
+                Assert.IsTrue(map->Get(key, out var val));
+                Assert.AreEqual(key, val);
+            }
+
+            map->Dispose();
+        }
+
+        #endregion
+
+        #region Burst Jobs
+
+        [BurstCompile]
+        private struct DenseMapInsertJob : IJob
+        {
+            [NativeDisableUnsafePtrRestriction] public UnsafeDenseMap<int, int>* Map;
+            public int Count;
+
+            public void Execute()
+            {
+                for (int i = 0; i < Count; i++)
+                {
+                    Map->Emplace(i, i);
+                }
+            }
+        }
+
+        [BurstCompile]
+        private struct DenseMapSequentialLookupJob : IJob
+        {
+            [NativeDisableUnsafePtrRestriction] [ReadOnly] public UnsafeDenseMap<int, int>* Map;
+            public int Count;
+            public NativeReference<long> Sum;
+
+            public void Execute()
+            {
+                long sum = 0;
+                for (int i = 0; i < Count; i++)
+                {
+                    Map->Get(i, out var value);
+                    sum += value;
+                }
+                Sum.Value = sum;
+            }
+        }
+
+        [BurstCompile]
+        private struct DenseMapRandomLookupJob : IJob
+        {
+            [NativeDisableUnsafePtrRestriction] [ReadOnly] public UnsafeDenseMap<int, int>* Map;
+            [ReadOnly] public NativeArray<int> RandomKeys;
+            public NativeReference<long> Sum;
+
+            public void Execute()
+            {
+                long sum = 0;
+                for (int i = 0; i < RandomKeys.Length; i++)
+                {
+                    Map->Get(RandomKeys[i], out var value);
+                    sum += value;
+                }
+                Sum.Value = sum;
+            }
+        }
+
+        [BurstCompile]
+        private struct HashMapInsertJob : IJob
+        {
+            [NativeDisableUnsafePtrRestriction] public UnsafeHashMap<int, int>* Map;
+            public int Count;
+
+            public void Execute()
+            {
+                for (int i = 0; i < Count; i++)
+                {
+                    Map->Add(i, i);
+                }
+            }
+        }
+
+        [BurstCompile]
+        private struct HashMapSequentialLookupJob : IJob
+        {
+            [NativeDisableUnsafePtrRestriction] [ReadOnly] public UnsafeHashMap<int, int>* Map;
+            public int Count;
+            public NativeReference<long> Sum;
+
+            public void Execute()
+            {
+                long sum = 0;
+                for (int i = 0; i < Count; i++)
+                {
+                    sum += (*Map)[i];
+                }
+                Sum.Value = sum;
+            }
+        }
+
+        [BurstCompile]
+        private struct HashMapRandomLookupJob : IJob
+        {
+            [NativeDisableUnsafePtrRestriction] [ReadOnly] public UnsafeHashMap<int, int>* Map;
+            [ReadOnly] public NativeArray<int> RandomKeys;
+            public NativeReference<long> Sum;
+
+            public void Execute()
+            {
+                long sum = 0;
+                for (int i = 0; i < RandomKeys.Length; i++)
+                {
+                    sum += (*Map)[RandomKeys[i]];
+                }
+                Sum.Value = sum;
+            }
+        }
+
+        #endregion
+
+        #region Performance Tests
+
+        private const int WarmupCount = 3;
+        private const int MeasurementCount = 10;
+        private const int IterationsPerMeasurement = 1;
+        private const int ElementCount = 100000;
+
+        [Test, Performance]
+        public void Perf_Insert_DenseMap()
         {
             UnsafeDenseMap<int, int>* map = null;
 
-            Measure
-                .Method(() =>
+            var job = new DenseMapInsertJob { Count = ElementCount };
+
+            Measure.Method(() =>
                 {
-                    map = UnsafeDenseMap<int, int>.Create((uint)count, 0.9, Allocator.Persistent);
-
-                    int key = 0;
-                    int value = 0;
-                    for (int i = 0; i < count; i++)
-                    {
-                        map->Emplace(key, value);
-
-                        key++;
-                        value++;
-                    }
+                    job.Map = map;
+                    job.Run();
                 })
-                .CleanUp(() =>
-                {
-                    int key = 50;
-                    int value = 50;
-
-                    for (int i = 50; i < count; i++)
-                    {
-                        map->Get(key, out var val);
-
-                        Assert.AreEqual(val, value, "val not equal");
-
-                        key++;
-                        value++;
-                    }
-
-                    map->Dispose();
-                })
-                .WarmupCount(warmupCount)
-                .MeasurementCount(measureCount)
-                .Run();
-        }
-
-        [TestCase(100)]
-        [TestCase(1000)]
-        [TestCase(10000)]
-        [TestCase(100000)]
-        [TestCase(1000000)]
-        [Performance]
-        public void Test_DenseMapDisposeTest(int count)
-        {
-            Measure
-                .Method(() =>
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        var map = UnsafeDenseMap<int, int>.Create(100, 0.9, Allocator.Persistent);
-                        map->Dispose();
-                    }
-                })
-                .WarmupCount(1)
-                .MeasurementCount(1)
-                .Run();
-        }
-
-        [TestCase(100)]
-        [TestCase(1000)]
-        [TestCase(10000)]
-        [TestCase(100000)]
-        [TestCase(1000000)]
-        [Performance]
-        public void Test_DenseMapInsertJob(int count)
-        {
-            UnsafeDenseMap<int, int>* map = null;
-
-            Measure
-                .Method(() =>
-                {
-                    var handle = new DenseMapInsertTestJob()
-                    {
-                        Count = (uint)count,
-                        Map = map
-                    }.Schedule();
-
-                    handle.Complete();
-                })
+                .SetUp(() => { map = UnsafeDenseMap<int, int>.Create((uint)(ElementCount * 1.2), 0.9, Allocator.Persistent); })
                 .CleanUp(() => { map->Dispose(); })
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
+                .Run();
+        }
+
+        [Test, Performance]
+        public void Perf_Insert_UnsafeHashMap()
+        {
+            UnsafeHashMap<int, int>* map = null;
+
+            var job = new HashMapInsertJob { Count = ElementCount };
+
+            Measure.Method(() =>
+                {
+                    job.Map = map;
+                    job.Run();
+                })
+                .SetUp(() => { map = UnsafeCreateHelper.CreateHashMap<int, int>(ElementCount, Allocator.Persistent); })
+                .CleanUp(() => { map->Dispose(); })
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
+                .Run();
+        }
+
+        [Test, Performance]
+        public void Perf_SequentialLookup_DenseMap()
+        {
+            var map = UnsafeDenseMap<int, int>.Create((uint)(ElementCount * 1.2), 0.9, Allocator.Persistent);
+            var sum = new NativeReference<long>(Allocator.Persistent);
+
+            new DenseMapInsertJob { Map = map, Count = ElementCount }.Run();
+
+            var job = new DenseMapSequentialLookupJob { Map = map, Count = ElementCount, Sum = sum };
+
+            Measure.Method(() => job.Run())
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
+                .Run();
+
+            Assert.Greater(sum.Value, 0);
+
+            map->Dispose();
+            sum.Dispose();
+        }
+
+        [Test, Performance]
+        public void Perf_SequentialLookup_UnsafeHashMap()
+        {
+            var map = UnsafeCreateHelper.CreateHashMap<int, int>(ElementCount, Allocator.Persistent);
+            var sum = new NativeReference<long>(Allocator.Persistent);
+
+            new HashMapInsertJob { Map = map, Count = ElementCount }.Run();
+
+            var job = new HashMapSequentialLookupJob { Map = map, Count = ElementCount, Sum = sum };
+
+            Measure.Method(() => job.Run())
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
+                .Run();
+
+            Assert.Greater(sum.Value, 0);
+
+            map->Dispose();
+            sum.Dispose();
+        }
+
+        [Test, Performance]
+        public void Perf_RandomLookup_DenseMap()
+        {
+            var map = UnsafeDenseMap<int, int>.Create((uint)(ElementCount * 1.2), 0.9, Allocator.Persistent);
+            var randomKeys = new NativeArray<int>(ElementCount, Allocator.Persistent);
+            var sum = new NativeReference<long>(Allocator.Persistent);
+
+            new DenseMapInsertJob { Map = map, Count = ElementCount }.Run();
+
+            // Pre-generate random keys
+            var random = new Random(42);
+            for (int i = 0; i < ElementCount; i++)
+            {
+                randomKeys[i] = random.NextInt(0, ElementCount);
+            }
+
+            var job = new DenseMapRandomLookupJob { Map = map, RandomKeys = randomKeys, Sum = sum };
+
+            Measure.Method(() => job.Run())
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
+                .Run();
+
+            Assert.Greater(sum.Value, 0);
+
+            map->Dispose();
+            randomKeys.Dispose();
+            sum.Dispose();
+        }
+
+        [Test, Performance]
+        public void Perf_RandomLookup_UnsafeHashMap()
+        {
+            var map = UnsafeCreateHelper.CreateHashMap<int, int>(ElementCount, Allocator.Persistent);
+            var randomKeys = new NativeArray<int>(ElementCount, Allocator.Persistent);
+            var sum = new NativeReference<long>(Allocator.Persistent);
+
+            new HashMapInsertJob { Map = map, Count = ElementCount }.Run();
+
+            // Pre-generate random keys (same seed for fair comparison)
+            var random = new Random(42);
+            for (int i = 0; i < ElementCount; i++)
+            {
+                randomKeys[i] = random.NextInt(0, ElementCount);
+            }
+
+            var job = new HashMapRandomLookupJob { Map = map, RandomKeys = randomKeys, Sum = sum };
+
+            Measure.Method(() => job.Run())
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
+                .Run();
+
+            Assert.Greater(sum.Value, 0);
+
+            map->Dispose();
+            randomKeys.Dispose();
+            sum.Dispose();
+        }
+
+        #endregion
+
+        #region Scalability Tests
+
+        [TestCase(1000)]
+        [TestCase(10000)]
+        [TestCase(100000)]
+        [TestCase(1000000)]
+        [Performance]
+        public void Perf_Insert_DenseMap_Scaled(int count)
+        {
+            UnsafeDenseMap<int, int>* map = null;
+
+            Measure.Method(() =>
+                {
+                    new DenseMapInsertJob { Map = map, Count = count }.Run();
+                })
                 .SetUp(() => { map = UnsafeDenseMap<int, int>.Create((uint)(count * 1.2), 0.9, Allocator.Persistent); })
-                .WarmupCount(warmupCount) // 10
-                .MeasurementCount(measureCount) // 1000
-                .Run();
-        }
-
-        [TestCase(100)]
-        [TestCase(1000)]
-        [TestCase(10000)]
-        [TestCase(100000)]
-        [TestCase(1000000)]
-        [Performance]
-        public void Test_DenseMapLookupJob(int count)
-        {
-            UnsafeDenseMap<int, int>* map = null;
-
-            Measure
-                .Method(() =>
-                {
-                    var handle = new DenseMapLookupTestJob()
-                    {
-                        Count = (uint)count,
-                        Map = map
-                    }.Schedule();
-
-                    handle.Complete();
-                })
-                .SetUp(() =>
-                {
-                    map = UnsafeDenseMap<int, int>.Create((uint)(count * 1.2), 0.9, Allocator.Persistent);
-
-                    new DenseMapInsertTestJob()
-                    {
-                        Count = (uint)count,
-                        Map = map
-                    }.Run();
-                })
                 .CleanUp(() => { map->Dispose(); })
-                .WarmupCount(warmupCount)
-                .MeasurementCount(measureCount)
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
                 .Run();
         }
 
-        [TestCase(100)]
         [TestCase(1000)]
         [TestCase(10000)]
         [TestCase(100000)]
         [TestCase(1000000)]
         [Performance]
-        public void Test_NativeHashMapInsertJob(int count)
+        public void Perf_Insert_UnsafeHashMap_Scaled(int count)
         {
             UnsafeHashMap<int, int>* map = null;
 
-            Measure
-                .Method(() =>
+            Measure.Method(() =>
                 {
-                    var jobHandle = new NativeHashInsertMapTestJob()
-                    {
-                        Count = (uint)count,
-                        Map = map
-                    }.Schedule();
-
-                    jobHandle.Complete();
+                    new HashMapInsertJob { Map = map, Count = count }.Run();
                 })
-                .CleanUp(() => { map->Dispose(); })
                 .SetUp(() => { map = UnsafeCreateHelper.CreateHashMap<int, int>(count, Allocator.Persistent); })
-                .WarmupCount(warmupCount)
-                .MeasurementCount(measureCount)
+                .CleanUp(() => { map->Dispose(); })
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
                 .Run();
         }
 
-        [TestCase(100)]
         [TestCase(1000)]
         [TestCase(10000)]
         [TestCase(100000)]
         [TestCase(1000000)]
         [Performance]
-        public void Test_NativeHashMapLookupJob(int count)
+        public void Perf_SequentialLookup_DenseMap_Scaled(int count)
         {
-            UnsafeHashMap<int, int>* map = null;
+            var map = UnsafeDenseMap<int, int>.Create((uint)(count * 1.2), 0.9, Allocator.Persistent);
+            var sum = new NativeReference<long>(Allocator.Persistent);
 
-            Measure
-                .Method(() =>
-                {
-                    var handle = new NativeHashMapLookupTestJob()
-                    {
-                        Count = (uint)count,
-                        Map = map
-                    }.Schedule();
+            new DenseMapInsertJob { Map = map, Count = count }.Run();
 
-                    handle.Complete();
-                })
-                .SetUp(() =>
-                {
-                    map = UnsafeCreateHelper.CreateHashMap<int, int>(count, Allocator.Persistent);
+            var job = new DenseMapSequentialLookupJob { Map = map, Count = count, Sum = sum };
 
-                    new NativeHashInsertMapTestJob()
-                    {
-                        Count = (uint)count,
-                        Map = map
-                    }.Run();
-                })
-                .CleanUp(() => { map->Dispose(); })
-                .WarmupCount(warmupCount)
-                .MeasurementCount(measureCount)
+            Measure.Method(() => job.Run())
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
                 .Run();
+
+            map->Dispose();
+            sum.Dispose();
         }
 
-        [BurstCompile]
-        private struct DenseMapInsertTestJob : IJob
+        [TestCase(1000)]
+        [TestCase(10000)]
+        [TestCase(100000)]
+        [TestCase(1000000)]
+        [Performance]
+        public void Perf_SequentialLookup_UnsafeHashMap_Scaled(int count)
         {
-            [NativeDisableUnsafePtrRestriction] public UnsafeDenseMap<int, int>* Map;
-            public uint Count;
-            public Random rng;
+            var map = UnsafeCreateHelper.CreateHashMap<int, int>(count, Allocator.Persistent);
+            var sum = new NativeReference<long>(Allocator.Persistent);
 
-            public void Execute()
-            {
-                int key = 0;
-                int value = 0;
+            new HashMapInsertJob { Map = map, Count = count }.Run();
 
-                for (int i = 0; i < Count; i++)
-                {
-                    Map->Emplace(key, value);
+            var job = new HashMapSequentialLookupJob { Map = map, Count = count, Sum = sum };
 
-                    key++;
-                    value++;
-                }
-            }
+            Measure.Method(() => job.Run())
+                .WarmupCount(WarmupCount)
+                .MeasurementCount(MeasurementCount)
+                .IterationsPerMeasurement(IterationsPerMeasurement)
+                .Run();
+
+            map->Dispose();
+            sum.Dispose();
         }
 
-        [BurstCompile]
-        private struct NativeHashInsertMapTestJob : IJob
+        #endregion
+    }
+
+    internal static unsafe class UnsafeCreateHelper
+    {
+        public static UnsafeHashMap<TKey, TValue>* CreateHashMap<TKey, TValue>(int capacity, Allocator allocator)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
         {
-            [NativeDisableUnsafePtrRestriction] public UnsafeHashMap<int, int>* Map;
-            public uint Count;
-
-            public void Execute()
-            {
-                int key = 0;
-                int value = 0;
-
-                for (int i = 0; i < Count; i++)
-                {
-                    Map->Add(key, value);
-
-                    key++;
-                    value++;
-                }
-            }
-        }
-
-        [BurstCompile]
-        private struct DenseMapLookupTestJob : IJob
-        {
-            [NativeDisableUnsafePtrRestriction] public UnsafeDenseMap<int, int>* Map;
-            public uint Count;
-
-            //[MethodImpl(MethodImplOptions.NoInlining)]
-            public void Execute()
-            {
-                int key = 0;
-
-                for (int i = 0; i < Count; i++)
-                {
-                    Map->Get(key, out var value);
-                    key++;
-
-                    if (value == -1)
-                        Debug.Log("Found");
-                }
-            }
-        }
-
-        [BurstCompile]
-        private struct NativeHashMapLookupTestJob : IJob
-        {
-            [NativeDisableUnsafePtrRestriction] public UnsafeHashMap<int, int>* Map;
-            public uint Count;
-
-            public void Execute()
-            {
-                int key = 0;
-
-                for (int i = 0; i < Count; i++)
-                {
-                    var value = Map[0][key];
-
-                    key++;
-
-                    if (value == -1)
-                        Debug.Log("Found");
-                }
-            }
+            var map = (UnsafeHashMap<TKey, TValue>*)UnsafeUtility.Malloc(
+                UnsafeUtility.SizeOf<UnsafeHashMap<TKey, TValue>>(),
+                UnsafeUtility.AlignOf<UnsafeHashMap<TKey, TValue>>(),
+                allocator);
+            *map = new UnsafeHashMap<TKey, TValue>(capacity, allocator);
+            return map;
         }
     }
 }
