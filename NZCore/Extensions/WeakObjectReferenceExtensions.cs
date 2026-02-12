@@ -3,6 +3,7 @@
 // </copyright>
 
 using Unity.Entities.Content;
+using Unity.Entities.Serialization;
 using UnityEngine;
 
 namespace NZCore
@@ -13,6 +14,12 @@ namespace NZCore
             where T : Object
         {
             return weakRef.Id.IsValid;
+        }
+
+        public static UntypedWeakReferenceId GetInternalId<T>(this WeakObjectReference<T> weakRef)
+            where T : Object
+        {
+            return weakRef.Id;
         }
     }
 }

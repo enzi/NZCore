@@ -67,6 +67,7 @@ namespace NZCore.UIToolkit
         /// </summary>
         public static VisualElement CloneSingleTree(this VisualTreeAsset vta, VisualElement target, bool visible = true)
         {
+            //Debug.Log($"CloneSingleTree {vta.name}");
             vta.CloneTree(target, out int firstElementIndex, out int _);
             var ve = target.ElementAt(firstElementIndex);
             ve.AddToClassList(visible ? visibleClass : hiddenClass);

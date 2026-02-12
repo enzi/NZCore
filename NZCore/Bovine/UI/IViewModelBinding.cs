@@ -16,10 +16,10 @@ namespace BovineLabs.Core.UI
         }
     }
 
-    public interface IViewModelBinding<T> : IViewModelBinding
-        where T : IModelBinding
+    public interface IViewModelBinding<TD> : IViewModelBinding
+        where TD : IModelBinding
     {
-        ref T Value { get; }
+        ref TD Value { get; }
     }
 }
 #endif

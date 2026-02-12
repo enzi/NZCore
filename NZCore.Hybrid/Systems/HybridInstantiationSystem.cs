@@ -10,7 +10,11 @@ using UnityEngine;
 
 namespace NZSpellCasting
 {
+#if NZSPELLCASTING
+    [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
+#else
     [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
+#endif
     [UpdateAfter(typeof(EntityRemapSystem))]
     public partial struct HybridInstantiationSystem : ISystem, ISystemStartStop
     {

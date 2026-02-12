@@ -54,12 +54,12 @@ namespace NZCore.UIToolkit
             return ve;
         }
 
-        public VisualElement LoadPanel(string containerName = null, string elementName = null)
+        public (VisualElement ve, T viewModel) LoadPanel(string containerName = null, string elementName = null)
         {
             return LoadPanel(UIToolkitManager.Instance.GetRoot(containerName), elementName);
         }
 
-        public VisualElement LoadPanel(VisualElement container, string elementName = null)
+        public (VisualElement ve, T viewModel) LoadPanel(VisualElement container, string elementName = null)
         {
             var (ve, binding) = UIToolkitManager.Instance.AddBindablePanel<T>(uniqueKey.ToString(), assetKey.ToString(), container, elementName, priority, visibleOnInstantiate);
 
@@ -68,7 +68,7 @@ namespace NZCore.UIToolkit
 
             binding.Load();
 
-            return ve;
+            return (ve, binding);
         }
 
         public void Unload()

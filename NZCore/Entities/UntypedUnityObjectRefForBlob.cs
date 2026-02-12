@@ -85,6 +85,15 @@ namespace NZCore
         {
             return !left.Equals(right);
         }
+
+        public static implicit operator UnityObjectRef<T>(UnityObjectRefForBlob<T> value)
+        {
+            return new UnityObjectRef<T>
+            {
+                Id = value.Id,
+                Value = value.Value
+            };
+        }
     }
     
     [Serializable]

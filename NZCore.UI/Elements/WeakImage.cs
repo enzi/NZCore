@@ -21,7 +21,7 @@ namespace NZCore.UI
             get => spriteReference;
             set
             {
-                if (spriteReference.Id == value.Id)
+                if (spriteReference.Equals(value))
                     return;
 
                 Release();
@@ -81,7 +81,7 @@ namespace NZCore.UI
         {
             if (isLoaded && spriteReference.IsValidBurst())
             {
-                RuntimeContentManager.ReleaseObjectAsync(spriteReference.Id);
+                RuntimeContentManager.ReleaseObjectAsync(spriteReference.GetInternalId());
             }
 
             isLoading = false;

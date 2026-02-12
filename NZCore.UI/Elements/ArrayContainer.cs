@@ -12,29 +12,29 @@ namespace NZCore.UIToolkit
     [UxmlElement]
     public partial class ArrayContainer : VisualElement
     {
-        [UxmlAttribute("item-template")] [CreateProperty]
+        private IList _itemsSource;
+        
+        [CreateProperty, UxmlAttribute("item-template")]
         public VisualTreeAsset ItemTemplate;
 
         [CreateProperty]
-        public IList ItemsSource
+        public IList itemsSource
         {
-            get => itemsSource;
+            get => _itemsSource;
             set
             {
-                itemsSource = value;
+                _itemsSource = value;
                 Rebuild();
             }
         }
 
-        private IList itemsSource;
-
         private void Rebuild()
         {
             Clear();
-            for (int i = 0; i < itemsSource.Count; i++)
+            for (int i = 0; i < _itemsSource.Count; i++)
             {
                 ItemTemplate.CloneSingleTree(this);
-                ElementAt(i).dataSource = itemsSource[i];
+                ElementAt(i).dataSource = _itemsSource[i];
             }
         }
     }
