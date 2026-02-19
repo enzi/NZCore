@@ -8,14 +8,21 @@ using UnityEditor;
 
 namespace NZCore.AssetManagement
 {
-    public static class BlobDatabaseCollector
+    public static class ScriptableObjectDatabaseCollector
     {
-        public static Type[] Converters;
+        public static Type[] BlobConverters;
+        public static Type[] SettingConverters;
 
         [InitializeOnLoadMethod]
         private static void Initialize()
         {
-            var converters = TypeCache.GetTypesDerivedFrom<IConvertToBlob>();
+            BlobConverters = GetFromInterface<IConvertToBlob>();
+            SettingConverters = GetFromInterface<ISettingsDatabase>();
+        }
+
+        private static Type[] GetFromInterface<T>()
+        {
+            var converters = TypeCache.GetTypesDerivedFrom<T>();
 
             var list = new List<Type>();
             foreach (var converter in converters)
@@ -28,7 +35,7 @@ namespace NZCore.AssetManagement
                 list.Add(converter);
             }
 
-            Converters = list.ToArray();
+            return list.ToArray();
         }
     }
 }

@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using NZCore.AssetManagement;
 using NZCore.UIToolkit;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -32,17 +31,12 @@ namespace NZCore.Editor
 
             List<ScriptableObject> data = AssetDatabaseUtility.GetSubAssets(baseType);
 
-            List<DropdownWrapper> choices = new List<DropdownWrapper>
+            var choices = new List<DropdownWrapper>
             {
-                new()
-                {
-                    DisplayName = "None",
-                    Value = null
-                }
+                new() { DisplayName = "None", Value = null }
             };
 
             ScriptableObject currentSelection = (ScriptableObject)property.boxedValue;
-
             int selectedIndex = 0;
 
             for (int i = 0; i < data.Count; i++)
@@ -50,50 +44,89 @@ namespace NZCore.Editor
                 if (data[i] is not IAutoID)
                     continue;
 
-                if (currentSelection == data[i])
-                    selectedIndex = i + 1; // acount for "None"
-
                 choices.Add(new DropdownWrapper()
                 {
                     DisplayName = data[i].name,
                     Value = data[i]
                 });
-            }
 
-            var root = new PropertyField();
+                if (currentSelection == data[i])
+                    selectedIndex = choices.Count - 1;
+            }
 
             if (attr.UseFlags)
             {
+                return new VisualElement();
             }
-            else
+
+            // Use BaseField layout with a popup-styled button + GenericDropdownMenu
+            var root = new VisualElement();
+            root.AddToClassList("unity-base-field");
+            root.style.flexDirection = FlexDirection.Row;
+            root.style.flexGrow = 1;
+
+            var label = new Label(property.displayName);
+            label.AddToClassList("unity-base-field__label");
+            root.Add(label);
+
+            var inputContainer = new VisualElement();
+            inputContainer.AddToClassList("unity-base-field__input");
+            inputContainer.AddToClassList("unity-base-popup-field__input");
+            inputContainer.AddToClassList("unity-popup-field__input");
+            inputContainer.AddToClassList("unity-property-field__input");
+            inputContainer.style.flexDirection = FlexDirection.Row;
+            inputContainer.style.flexGrow = 1;
+
+            var selectedChoice = choices[selectedIndex];
+            var buttonText = FormatDisplayString(selectedChoice);
+
+            var textElement = new TextElement { text = buttonText };
+            textElement.AddToClassList("unity-text-element");
+            textElement.AddToClassList("unity-popup-field__label");
+            textElement.style.flexGrow = 1;
+            textElement.style.unityTextAlign = TextAnchor.MiddleLeft;
+            textElement.style.overflow = Overflow.Hidden;
+            textElement.style.textOverflow = TextOverflow.Ellipsis;
+            inputContainer.Add(textElement);
+
+            var arrow = new VisualElement();
+            arrow.AddToClassList("unity-base-popup-field__arrow");
+            inputContainer.Add(arrow);
+
+            inputContainer.RegisterCallback<ClickEvent>(evt =>
             {
-                var popupField = new PopupField<DropdownWrapper>(property.displayName, choices, selectedIndex, FormatSelectedValueCallback, FormatListItemCallback);
-                popupField.AddToClassList("unity-toggle__input");
+                evt.StopPropagation();
+            });
 
-                popupField.RegisterCallback<ChangeEvent<DropdownWrapper>>((evt) =>
+            root.Add(inputContainer);
+
+            inputContainer.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                var menu = new GenericDropdownMenu();
+
+                for (int i = 0; i < choices.Count; i++)
                 {
-                    //var id = evt.newValue.Value == null ? 0 : ((IAutoID) evt.newValue.Value).AutoID;
-                    //Debug.Log($"{evt.newValue.DisplayName} -> {id} was picked");
+                    var choice = choices[i];
+                    var isSelected = property.objectReferenceValue == choice.Value;
+                    var displayText = FormatDisplayString(choice);
 
-                    property.objectReferenceValue = evt.newValue.Value;
-                    property.serializedObject.ApplyModifiedProperties();
-                });
+                    menu.AddItem(displayText, isSelected, () =>
+                    {
+                        property.objectReferenceValue = choice.Value;
+                        property.serializedObject.ApplyModifiedProperties();
+                        textElement.text = displayText;
+                    });
+                }
 
-                popupField.AlignLabel();
+                menu.DropDown(inputContainer.worldBound, inputContainer, DropdownMenuSizeMode.Auto);
+            });
 
-                root.Add(popupField);
-            }
+            labelWidthUpdater = new LabelWidthUpdater(root, label);
 
             return root;
         }
 
-        private static string FormatListItemCallback(DropdownWrapper arg)
-        {
-            var id = arg.Value == null ? 0 : ((IAutoID)arg.Value).AutoID;
-            return $"{arg.DisplayName} ({id})";
-        }
-
-        private static string FormatSelectedValueCallback(DropdownWrapper arg)
+        private static string FormatDisplayString(DropdownWrapper arg)
         {
             var id = arg.Value == null ? 0 : ((IAutoID)arg.Value).AutoID;
             return $"{arg.DisplayName} ({id})";

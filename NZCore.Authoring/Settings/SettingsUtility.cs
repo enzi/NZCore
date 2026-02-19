@@ -5,32 +5,33 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NZCore.AssetManagement;
 using UnityEditor;
 using UnityEngine;
 
 namespace NZCore.Settings
 {
-    public class SettingsUtility
+    public static class SettingsUtility
     {
-        private static readonly Dictionary<Type, ISettings> cachedSettings = new();
+        private static readonly Dictionary<Type, ISettingsBaker> CachedSettings = new();
 
         public static T GetSettings<T>()
-            where T : ScriptableObject, ISettings
+            where T : ScriptableObject, ISettingsBaker
         {
             var type = typeof(T);
 
-            if (cachedSettings.TryGetValue(type, out var cached))
+            if (CachedSettings.TryGetValue(type, out var cached))
             {
                 return (T)cached;
             }
 
             var settings = GetSettings<T>(type);
-            cachedSettings.Add(type, settings);
+            CachedSettings.Add(type, settings);
             return settings;
         }
 
         private static T GetSettings<T>(Type type)
-            where T : ScriptableObject, ISettings
+            where T : ScriptableObject, ISettingsBaker
         {
             var filter = type.Namespace == null ? type.Name : $"{type.Namespace}.{type.Name}";
             var assets = AssetDatabase.FindAssets($"t:{filter}");
