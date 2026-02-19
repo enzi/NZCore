@@ -8,6 +8,7 @@ using System.IO;
 using System.Reflection;
 using Newtonsoft.Json;
 using UnityEditor;
+using UnityEngine;
 
 namespace NZCore
 {
@@ -125,29 +126,37 @@ namespace NZCore
         /// </summary>
         public static (string resolvedJsonPath, string csVersion) CSifyJson(object assets, string fileName, string packagePath)
         {
-            var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
-            var csVersion = $"/*{json}*/";
-            var projectFullPath = GetProjectPath();
-            var packageFullPath = Path.GetFullPath($"Packages/{packagePath}");
-
-            if (RemapPath(packageFullPath, out var remappedPackagePath))
+            try
             {
-                packageFullPath = remappedPackagePath;
-            }
+                var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
+                var csVersion = $"/*{json}*/";
+                var projectFullPath = GetProjectPath();
+                var packageFullPath = Path.GetFullPath($"Packages/{packagePath}");
 
-            string jsonPath;
-            if (packageFullPath.Contains(projectFullPath))
-            {
-                var relativePackagePath = packageFullPath.Replace($"{projectFullPath}{Path.DirectorySeparatorChar}", "");
-                jsonPath = $"{relativePackagePath}/{fileName}.settings.cs";
-            }
-            else
-            {
-                // fall back to absolute paths
-                jsonPath = Path.GetFullPath($"Packages/{packagePath}/{fileName}.settings.cs");
-            }
+                if (RemapPath(packageFullPath, out var remappedPackagePath))
+                {
+                    packageFullPath = remappedPackagePath;
+                }
 
-            return (jsonPath, csVersion);
+                string jsonPath;
+                if (packageFullPath.Contains(projectFullPath))
+                {
+                    var relativePackagePath = packageFullPath.Replace($"{projectFullPath}{Path.DirectorySeparatorChar}", "");
+                    jsonPath = $"{relativePackagePath}/{fileName}.settings.cs";
+                }
+                else
+                {
+                    // fall back to absolute paths
+                    jsonPath = Path.GetFullPath($"Packages/{packagePath}/{fileName}.settings.cs");
+                }
+
+                return (jsonPath, csVersion);
+            }
+            catch(Exception e)
+            {
+                Debug.LogError($"CSifyJson - {e.Message}");
+                return (null, null);
+            }
         }
 
         public static bool CheckForJsonChanges(object assets, string fileName, string packagePath)

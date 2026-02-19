@@ -13,6 +13,17 @@ namespace NZCore.Editor
 {
     public static class AssetDatabaseUtility
     {
+        public static T[] GetAssets<T>()
+        {
+            return AssetDatabase.FindAssets($"t:{typeof(T).Name}")
+                                            .Select(AssetDatabase.GUIDToAssetPath)
+                                            .Distinct()
+                                            .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
+                                            .Where(s => s.GetType() == typeof(T))
+                                            .Cast<T>()
+                                            .ToArray();
+        }
+        
         public static List<ScriptableObject> GetSubAssets(this Object asset)
         {
             List<ScriptableObject> assets = new List<ScriptableObject>();
@@ -149,7 +160,8 @@ namespace NZCore.Editor
 
             foreach (var filter in nameFilter)
             {
-                if (childAssets.TryGetSubAssetExists(filter, out var existingAsset))
+                string nameAndFilter = $"{asset.name}{filter}";
+                if (childAssets.TryGetSubAssetExists(nameAndFilter, out var existingAsset))
                 {
                     var so = new SerializedObject(existingAsset);
                     setData(asset, so);
@@ -158,7 +170,7 @@ namespace NZCore.Editor
                 else
                 {
                     var subAsset = ScriptableObject.CreateInstance<TSubAsset>();
-                    subAsset.name = $"{asset.name}{filter}";
+                    subAsset.name = nameAndFilter;
 
                     var so = new SerializedObject(subAsset);
                     setData(asset, so);

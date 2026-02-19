@@ -7,8 +7,10 @@ using System.Collections.Generic;
 using System.Linq;
 using NZCore.Editor;
 using NZCore.Settings;
+using Unity.Entities;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace NZCore.AssetManagement
 {
@@ -16,12 +18,22 @@ namespace NZCore.AssetManagement
     {
         public void CreateLookup();
     }
-    
-    public abstract class ScriptableObjectDatabase<T> : SettingsBase
-        where T : ScriptableObject
+
+    public interface ISettingsBaker
+    {
+        public void Bake(IBaker baker, Entity entity);
+    }
+
+    public interface ISettingsDatabase
+    {
+        public void BakeDatabase(IBaker baker, Entity entity);
+    }
+
+    public abstract class ScriptableObjectDatabase<T> : ScriptableObject, ISettingsBaker, ISettingsDatabase
+        where T : ScriptableObject, ISettingsBaker
     {
         private static T instance;
-        
+
         public static T Instance
         {
             get
@@ -33,7 +45,7 @@ namespace NZCore.AssetManagement
                     if (assets.Length > 0)
                     {
                         instance = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(assets[0]));
-                        
+
                         if (instance is IIndexableDatabase indexableDatabase)
                         {
                             indexableDatabase.CreateLookup();
@@ -41,33 +53,125 @@ namespace NZCore.AssetManagement
                     }
                     else
                     {
-                        Debug.LogError($"Request DB {typeof(T).Name} could not be found!");
+                        Debug.LogError($"Requested {typeof(T).Name} ScriptableObjectDatabase could not be found!");
                     }
                 }
 
                 return instance;
             }
         }
+
+        public abstract void Bake(IBaker baker, Entity entity);
+
+        public void BakeDatabase(IBaker baker, Entity entity)
+        {
+            var settings = SettingsUtility.GetSettings<T>();
+            settings.Bake(baker, entity);
+        }
     }
-    
+
     public static class ScriptableObjectDatabase
     {
         [MenuItem("Tools/Rebuild SO DB")]
         public static void Rebuild()
         {
         }
-        
+
+        public static void DeleteAsset(Object assetToBeDeleted)
+        {
+            var type = assetToBeDeleted.GetType();
+
+            if (!TryGet(type, out var manager, out var managerObject, out var list))
+                return;
+
+            bool hasDeletion = false;
+            for (int i = list.arraySize - 1; i >= 0; i--)
+            {
+                if (list.GetArrayElementAtIndex(i).objectReferenceValue == assetToBeDeleted)
+                {
+                    hasDeletion = true;
+                    list.DeleteArrayElementAtIndex(i);
+                }
+            }
+
+            if (hasDeletion)
+            {
+                managerObject.ApplyModifiedPropertiesWithoutUndo();
+                AssetDatabase.SaveAssetIfDirty(manager);
+            }
+        }
+
+        public static void Update(Type type)
+        {
+            if (!TryGet(type, out var manager, out var managerObject, out var list))
+                return;
+
+            // Cleanup null entries first
+            for (int i = list.arraySize - 1; i >= 0; i--)
+            {
+                if (list.GetArrayElementAtIndex(i).objectReferenceValue == null)
+                {
+                    list.DeleteArrayElementAtIndex(i);
+                }
+            }
+
+            var currentObjects = new List<Object>();
+            for (int i = 0; i < list.arraySize; i++)
+            {
+                var obj = list.GetArrayElementAtIndex(i).objectReferenceValue;
+                if (obj != null)
+                {
+                    currentObjects.Add(obj);
+                }
+            }
+
+            var foundObjects = AssetDatabase.FindAssets($"t:{type.Name}")
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Distinct()
+                .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
+                .Where(s => s.GetType() == type)
+                .ToList();
+
+            var currentSet = new HashSet<Object>(currentObjects);
+            var foundSet = new HashSet<Object>(foundObjects);
+
+            if (currentSet.SetEquals(foundSet))
+                return;
+
+            list.ClearArray();
+
+            foreach (var obj in foundObjects)
+            {
+                list.InsertArrayElementAtIndex(list.arraySize);
+                list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = obj;
+            }
+
+            managerObject.ApplyModifiedPropertiesWithoutUndo();
+
+            if (manager is IIndexableDatabase indexableDatabase)
+            {
+                try
+                {
+                    indexableDatabase.CreateLookup();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"{e.Message}\n{e.StackTrace}");
+                }
+            }
+
+            AssetDatabase.SaveAssetIfDirty(manager);
+        }
+
         private static bool TryGet(Type type, out ScriptableObject manager, out SerializedObject managerObject, out SerializedProperty containerListProperty)
         {
             manager = null;
             managerObject = null;
             containerListProperty = null;
 
-            var attribute = type.GetCustomAttributeRecursive<ScriptableObjectDatabaseAttribute>(out _);
+            var attribute = type.GetCustomAttributeRecursive<RegisterInScriptableObjectDatabaseAttribute>(out _);
             if (attribute == null)
-            {
                 return false;
-            }
 
             var managerGuid = AssetDatabase.FindAssets($"t:{attribute.ManagerType}");
 
@@ -105,75 +209,6 @@ namespace NZCore.AssetManagement
             }
 
             return true;
-        }
-
-        private static void Clear(Type type)
-        {
-            if (!TryGet(type, out var manager, out var managerObject, out var list))
-                return;
-
-            list.ClearArray();
-            managerObject.ApplyModifiedPropertiesWithoutUndo();
-            AssetDatabase.SaveAssetIfDirty(manager);
-        }
-
-        public static void Update(Type type)
-        {
-            if (!TryGet(type, out var manager, out var managerObject, out var list))
-                return;
-
-            var currentObjects = new List<UnityEngine.Object>();
-            for (int i = 0; i < list.arraySize; i++)
-            {
-                var obj = list.GetArrayElementAtIndex(i).objectReferenceValue;
-                if (obj != null)
-                {
-                    currentObjects.Add(obj);
-                }
-            }
-
-            var foundObjects = AssetDatabase.FindAssets($"t:{type.Name}")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Distinct()
-                .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
-                .Where(s => s.GetType() == type)
-                .ToList();
-
-            bool hasChanges = false;
-
-            if (currentObjects.Count != foundObjects.Count)
-            {
-                hasChanges = true;
-            }
-            else
-            {
-                var currentSet = new HashSet<UnityEngine.Object>(currentObjects);
-                var foundSet = new HashSet<UnityEngine.Object>(foundObjects);
-
-                if (!currentSet.Equals((foundSet)))
-                {
-                    hasChanges = true;
-                }
-            }
-
-            if (hasChanges)
-            {
-                list.ClearArray();
-
-                foreach (var obj in foundObjects)
-                {
-                    list.InsertArrayElementAtIndex(list.arraySize);
-                    list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = obj;
-                }
-                
-                managerObject.ApplyModifiedPropertiesWithoutUndo();
-                AssetDatabase.SaveAssetIfDirty(manager);
-
-                if (manager is IIndexableDatabase indexableDatabase)
-                {
-                    indexableDatabase.CreateLookup();
-                }
-            }
         }
     }
 }
