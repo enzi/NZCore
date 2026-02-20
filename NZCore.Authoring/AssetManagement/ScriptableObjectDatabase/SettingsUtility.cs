@@ -20,13 +20,13 @@ namespace NZCore.Settings
         {
             var type = typeof(T);
 
-            if (CachedSettings.TryGetValue(type, out var cached))
+            if (CachedSettings.TryGetValue(type, out var cached) && (T) cached != null)
             {
                 return (T)cached;
             }
 
             var settings = GetSettings<T>(type);
-            CachedSettings.Add(type, settings);
+            CachedSettings[type] = settings;
             return settings;
         }
 

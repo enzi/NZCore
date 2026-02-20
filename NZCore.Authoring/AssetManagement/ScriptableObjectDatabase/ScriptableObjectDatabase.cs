@@ -66,6 +66,7 @@ namespace NZCore.AssetManagement
         public void BakeDatabase(IBaker baker, Entity entity)
         {
             var settings = SettingsUtility.GetSettings<T>();
+            baker.DependsOn(settings);
             settings.Bake(baker, entity);
         }
     }
