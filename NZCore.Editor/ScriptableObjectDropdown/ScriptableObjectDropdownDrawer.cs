@@ -118,7 +118,11 @@ namespace NZCore.Editor
                     });
                 }
 
+#if UNITY_6000_3
                 menu.DropDown(inputContainer.worldBound, inputContainer, DropdownMenuSizeMode.Auto);
+#else
+                menu.DropDown(inputContainer.worldBound, inputContainer, true);
+#endif
             });
 
             labelWidthUpdater = new LabelWidthUpdater(root, label);
