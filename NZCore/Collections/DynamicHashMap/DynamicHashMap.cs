@@ -51,12 +51,22 @@ namespace NZCore
         /// Creates a DynamicHashMap wrapper around an existing DynamicBuffer.
         /// Auto-initializes with default capacity if buffer is empty.
         /// </summary>
-        public DynamicHashMap(DynamicBuffer<TBuffer> buffer)
+        public DynamicHashMap(DynamicBuffer<TBuffer> buffer, bool isReadOnly = false)
         {
             if (buffer.Length == 0)
+            {
                 Initialize(buffer, 16);
+            }
 
-            _buffer = (byte*)buffer.GetUnsafePtr();
+            if (isReadOnly)
+            {
+                _buffer = (byte*)buffer.GetUnsafeReadOnlyPtr();
+            }
+            else
+            {
+                _buffer = (byte*)buffer.GetUnsafePtr();
+            }
+                
             _bufferLength = buffer.Length * UnsafeUtility.SizeOf<TBuffer>();
         }
 
@@ -545,12 +555,12 @@ namespace NZCore
 
     public static class DynamicHashMapExtensions
     {
-        public static DynamicHashMap<TBuffer, TKey, TValue> AsHashMap<TBuffer, TKey, TValue>(this DynamicBuffer<TBuffer> buffer)
+        public static DynamicHashMap<TBuffer, TKey, TValue> AsHashMap<TBuffer, TKey, TValue>(this DynamicBuffer<TBuffer> buffer, bool isReadOnly = false)
             where TBuffer : unmanaged, IDynamicHashMap
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            return new DynamicHashMap<TBuffer, TKey, TValue>(buffer);
+            return new DynamicHashMap<TBuffer, TKey, TValue>(buffer, isReadOnly);
         }
     }
 }
