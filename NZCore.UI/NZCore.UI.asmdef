@@ -9,7 +9,9 @@
     "Unity.Entities.Hybrid",
     "Unity.Entities.UI.Editor",
     "NZCore",
-    "NZCore.Hybrid.Data"
+    "NZCore.Hybrid.Data",
+    "NZCore.MVVM",
+    "NZCore.Inject"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

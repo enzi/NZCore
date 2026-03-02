@@ -16,26 +16,26 @@ namespace NZCore.UIToolkit
         where T : class, IViewModelBinding<TD>, new()
         where TD : unmanaged, IModelBinding
     {
-        private readonly FixedString128Bytes uniqueKey;
-        private readonly FixedString128Bytes assetKey;
-        private readonly int priority;
-        private readonly bool visibleOnInstantiate;
+        private readonly FixedString128Bytes _uniqueKey;
+        private readonly FixedString128Bytes _assetKey;
+        private readonly int _priority;
+        private readonly bool _visibleOnInstantiate;
 
-        private GCHandle handle;
-        private TD* data;
+        private GCHandle _handle;
+        private TD* _data;
 
         public UIHelper(string uniqueKey, string assetKey, int priority = 0, bool visibleOnInstantiate = true)
         {
-            this.uniqueKey = uniqueKey;
-            this.assetKey = assetKey;
-            this.priority = priority;
-            this.visibleOnInstantiate = visibleOnInstantiate;
+            _uniqueKey = uniqueKey;
+            _assetKey = assetKey;
+            _priority = priority;
+            _visibleOnInstantiate = visibleOnInstantiate;
 
-            handle = default;
-            data = default;
+            _handle = default;
+            _data = null;
         }
 
-        public ref TD Model => ref UnsafeUtility.AsRef<TD>(data);
+        public ref TD Model => ref UnsafeUtility.AsRef<TD>(_data);
 
         public VisualElement LoadInterface(string containerName = null, string elementName = null)
         {
@@ -44,10 +44,10 @@ namespace NZCore.UIToolkit
 
         public VisualElement LoadInterface(VisualElement container, string elementName = null)
         {
-            var (ve, binding) = UIToolkitManager.Instance.AddBindableInterface<T>(uniqueKey.ToString(), assetKey.ToString(), container, elementName, priority, visibleOnInstantiate);
+            var (ve, binding) = UIToolkitManager.Instance.AddBindableInterface<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName, _priority, _visibleOnInstantiate);
 
-            handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
-            data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
+            _handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
+            _data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
 
             binding.Load();
 
@@ -61,10 +61,10 @@ namespace NZCore.UIToolkit
 
         public (VisualElement ve, T viewModel) LoadPanel(VisualElement container, string elementName = null)
         {
-            var (ve, binding) = UIToolkitManager.Instance.AddBindablePanel<T>(uniqueKey.ToString(), assetKey.ToString(), container, elementName, priority, visibleOnInstantiate);
+            var (ve, binding) = UIToolkitManager.Instance.AddBindablePanel<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName, _priority, _visibleOnInstantiate);
 
-            handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
-            data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
+            _handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
+            _data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
 
             binding.Load();
 
@@ -73,9 +73,9 @@ namespace NZCore.UIToolkit
 
         public void Unload()
         {
-            var binding = UIToolkitManager.Instance.RemovePanel(uniqueKey.ToString());
+            var binding = UIToolkitManager.Instance.RemovePanel(_uniqueKey.ToString());
 
-            if (handle.IsAllocated)
+            if (_handle.IsAllocated)
             {
                 binding.Unload();
                 if (binding is IDisposable disposable)
@@ -83,9 +83,9 @@ namespace NZCore.UIToolkit
                     disposable.Dispose();
                 }
 
-                handle.Free();
-                handle = default;
-                data = default;
+                _handle.Free();
+                _handle = default;
+                _data = null;
             }
         }
     }

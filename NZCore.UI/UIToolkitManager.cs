@@ -11,33 +11,32 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
 {
-    public class UIToolkitManager : MonoBehaviour
+    public class UIToolkitManager
     {
-        public static UIToolkitManager Instance;
+        public static UIToolkitManager Instance; // todo phase this out
 
         public UIAssetsSingleton Assets = new();
         public UIDocument UIDocument { get; private set; }
         public VisualElement Root { get; private set; }
         public VisualElement DragContainer { get; private set; }
         public VisualElement DragImage { get; private set; }
-        public VisualElement MainButtonsContainer { get; private set; }
+        public VisualElement TooltipContainer { get; private set; }
 
-        private readonly Dictionary<string, VisualElement> registeredElements = new();
+        private readonly Dictionary<string, VisualElement> _registeredElements = new();
 
-        //private readonly Dictionary<string, (VisualElement Element, IViewModelBinding Binding)> loadedPanels = new();
-        private readonly Dictionary<string, (VisualElement Element, IViewModelBinding Binding)> loadedPanels = new();
-        private readonly Dictionary<string, VisualElement> loadedInterfaces = new();
+        private readonly Dictionary<string, (VisualElement Element, IViewModelBinding Binding)> _loadedPanels = new();
+        private readonly Dictionary<string, VisualElement> _loadedInterfaces = new();
 
-        private readonly List<OrderedElement> sortedPanels = new();
+        private readonly List<OrderedElement> _sortedPanels = new();
 
-        public void Awake()
+        public UIToolkitManager()
         {
             Instance = this;
 
-            UIDocument = GetComponent<UIDocument>();
+            UIDocument = MonoBehaviour.FindAnyObjectByType<UIDocument>();
             Root = UIDocument.rootVisualElement.Q<VisualElement>("root");
             DragContainer = UIDocument.rootVisualElement.Q<VisualElement>("dragContainer");
-            MainButtonsContainer = Root.Q<VisualElement>("mainButtonsContainer");
+            TooltipContainer = UIDocument.rootVisualElement.Q<VisualElement>("tooltipContainer");
             
             if (DragContainer != null)
             {
@@ -159,10 +158,10 @@ namespace NZCore.UIToolkit
         private void AddAsSortablePanel(VisualElement rootContainer, VisualElement ve, int order)
         {
             var oe = new OrderedElement(ve, order);
-            sortedPanels.Add(oe);
-            sortedPanels.Sort();
+            _sortedPanels.Add(oe);
+            _sortedPanels.Sort();
 
-            var index = sortedPanels.IndexOf(oe);
+            var index = _sortedPanels.IndexOf(oe);
             rootContainer.Insert(index, ve);
         }
 
@@ -183,10 +182,10 @@ namespace NZCore.UIToolkit
             if (TryLoad<T>(uniqueKey, assetKey, out var container, visibleOnInstantiate, elementName))
             {
                 var oe = new OrderedElement(container.ve, order);
-                sortedPanels.Add(oe);
-                sortedPanels.Sort();
+                _sortedPanels.Add(oe);
+                _sortedPanels.Sort();
 
-                var index = sortedPanels.IndexOf(oe);
+                var index = _sortedPanels.IndexOf(oe);
                 rootContainer.Insert(index, container.ve);
             }
 
@@ -229,7 +228,7 @@ namespace NZCore.UIToolkit
                 ve.name = elementName;
             }
 
-            loadedPanels.Add(uniqueKey, (ve, default));
+            _loadedPanels.Add(uniqueKey, (ve, default));
 
             return ve;
         }
@@ -254,7 +253,7 @@ namespace NZCore.UIToolkit
                 if (elementName != null)
                     ve.name = elementName;
 
-                loadedPanels.Add(uniqueKey, (ve, binding));
+                _loadedPanels.Add(uniqueKey, (ve, binding));
 
                 container = (ve, binding);
 
@@ -303,20 +302,20 @@ namespace NZCore.UIToolkit
             if (elementName != null)
                 ve.name = elementName;
 
-            loadedPanels.Add(uniqueKey, (ve, binding));
+            _loadedPanels.Add(uniqueKey, (ve, binding));
 
             container = (ve, binding);
         }
 
         public bool TryUnload(string uniqueKey, out (VisualElement Element, IViewModelBinding Binding) container)
         {
-            if (loadedPanels.TryGetValue(uniqueKey, out container))
+            if (_loadedPanels.TryGetValue(uniqueKey, out container))
             {
                 container.Element.RemoveFromHierarchy();
-                loadedPanels.Remove(uniqueKey);
+                _loadedPanels.Remove(uniqueKey);
                 if (TryFind(container.Element, out var orderedElement))
                 {
-                    sortedPanels.Remove(orderedElement);
+                    _sortedPanels.Remove(orderedElement);
                 }
                 return true;
             }
@@ -326,23 +325,23 @@ namespace NZCore.UIToolkit
         
         public bool UnloadOrderedPanel()
         {
-            if (sortedPanels.Count == 0)
+            if (_sortedPanels.Count == 0)
             {
                 return false;
             }
 
-            var topPanel = sortedPanels[^1];
+            var topPanel = _sortedPanels[^1];
             // todo, destroy or hide?
             //topPanel.VisualElement.RemoveFromHierarchy();
             //topPanel.VisualElement.
-            sortedPanels.RemoveAt(sortedPanels.Count - 1);
+            _sortedPanels.RemoveAt(_sortedPanels.Count - 1);
 
             return true;
         }
 
         private bool TryFind(VisualElement element, out OrderedElement foundElement)
         {
-            foreach (var orderedElement in sortedPanels)
+            foreach (var orderedElement in _sortedPanels)
             {
                 if (orderedElement.VisualElement == element)
                 {
@@ -360,40 +359,40 @@ namespace NZCore.UIToolkit
         /// </summary>
         public void RegisterElement(string key, VisualElement element)
         {
-            registeredElements.Add(key, element);
+            _registeredElements.Add(key, element);
         }
 
         public bool TryGet(string tooltip, out VisualElement element)
         {
-            return registeredElements.TryGetValue(tooltip, out element);
+            return _registeredElements.TryGetValue(tooltip, out element);
         }
 
         private readonly struct OrderedElement : IComparable<OrderedElement>, IEquatable<OrderedElement>
         {
-            private readonly VisualElement ve;
-            private readonly int order;
+            private readonly VisualElement _ve;
+            private readonly int _order;
 
-            public VisualElement VisualElement => ve;
+            public VisualElement VisualElement => _ve;
 
             public OrderedElement(VisualElement visualElement, int order)
             {
-                ve = visualElement;
-                this.order = order;
+                _ve = visualElement;
+                _order = order;
             }
 
             public int CompareTo(OrderedElement other)
             {
-                return order.CompareTo(other.order);
+                return _order.CompareTo(other._order);
             }
 
             public bool Equals(OrderedElement other)
             {
-                return ve.Equals(other.ve);
+                return _ve.Equals(other._ve);
             }
 
             public override int GetHashCode()
             {
-                return ve.GetHashCode();
+                return _ve.GetHashCode();
             }
         }
     }

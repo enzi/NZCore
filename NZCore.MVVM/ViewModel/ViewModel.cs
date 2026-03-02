@@ -24,7 +24,7 @@ namespace NZCore.MVVM
         private bool _isDisposed;
         private bool _viewCreated;
 
-        public List<ViewModel> Dependencies = new();
+        public readonly List<ViewModel> Dependencies = new();
 
         /// <summary>
         /// The Service Provider for this ViewModel's scope.

@@ -97,6 +97,11 @@ namespace NZCore.MVVM
         public event EventHandler CanExecuteChanged;
 
         /// <summary>
+        /// Occurs when the command is executed.
+        /// </summary>
+        public event Action<T> Executed;
+
+        /// <summary>
         /// Determines whether the command can execute in its current state.
         /// </summary>
         /// <param name="parameter">Data used by the command.</param>
@@ -128,10 +133,12 @@ namespace NZCore.MVVM
                 if (parameter is T typedParameter)
                 {
                     _execute(typedParameter);
+                    Executed?.Invoke(typedParameter);
                 }
                 else if (parameter == null && (!typeof(T).IsValueType || Nullable.GetUnderlyingType(typeof(T)) != null))
                 {
                     _execute(default(T));
+                    Executed?.Invoke(default(T));
                 }
             }
         }

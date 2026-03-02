@@ -13,7 +13,6 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
 {
-    [RequireComponent(typeof(UIToolkitManager))]
     public class LoadAddressableInterface : MonoBehaviour
     {
         public bool LoadAddressables = true;
@@ -60,7 +59,7 @@ namespace NZCore.UIToolkit
                 uiAssets.VisualTreeAssets.Add(customAsset.Key, customAsset.Asset);
             }
 
-            var manager = GetComponent<UIToolkitManager>();
+            var manager = UIToolkitManager.Instance;
             manager.Assets = uiAssets;
             
             var em = World.DefaultGameObjectInjectionWorld.EntityManager;

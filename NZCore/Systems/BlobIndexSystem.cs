@@ -3,10 +3,11 @@
 // </copyright>
 
 using System;
-using NZCore.Interfaces;
+using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
+using NZCore.Interfaces;
 
 namespace NZCore
 {
@@ -20,13 +21,14 @@ namespace NZCore
         protected override void OnCreate()
         {
             _query = new EntityQueryBuilder(Allocator.Temp)
-                        .WithAll<TBlobReference>()
+                        .WithAll<Prefab, TBlobReference>()
                         .WithOptions(EntityQueryOptions.IncludePrefab)
                         .Build(ref CheckedStateRef);
             
             RequireForUpdate(_query);
         }
 
+        [BurstCompile]
         protected override void OnStartRunning()
         {
             CheckedStateRef.CreateSingleton(out TIndexList singleton);
@@ -43,10 +45,9 @@ namespace NZCore
             CheckedStateRef.DisposeSingleton<TIndexList>();
         }
 
-        protected override void OnUpdate()
-        {
-        }
+        protected override void OnUpdate() { }
 
+        [BurstCompile]
         private unsafe struct BlobIndexJob : IJobChunk
         {
             public NativeList<TBlobReference> List;
@@ -54,6 +55,7 @@ namespace NZCore
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
+                //Debug.Log($"BlobIndexJob for {typeof(TBlobReference).Name}");
                 var blobRefs = (TBlobReference*)chunk.GetRequiredComponentDataPtrRO(ref BlobReference_ReadHandle);
 
                 int highestIndex = 0;

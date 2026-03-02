@@ -43,7 +43,7 @@ namespace NZCore
     public interface IConvertToBlob<T> : IConvertToBlob
         where T : unmanaged
     {
-        public void ToBlobData(GenericBlobBaker.ContextBase context, ref BlobBuilder blobBuilder, ref T blob);
+        public void ToBlobData(GenericBlobBaker.ContextBase context, ref BlobBuilder builder, ref T blob);
     }
 
     // 2 blobs
@@ -51,7 +51,7 @@ namespace NZCore
         where T1 : unmanaged
         where T2 : unmanaged
     {
-        public void ToBlobData(GenericBlobBaker.ContextBase context, ref BlobBuilder blobBuilder, ref T1 blob1, ref T2 blob2);
+        public void ToBlobData(GenericBlobBaker.ContextBase context, ref BlobBuilder builder, ref T1 blob1, ref T2 blob2);
     }
     
     public static class GenericBlobBaker
@@ -170,6 +170,7 @@ namespace NZCore
                     blob = blobReference
                 };
 
+                baker.AddComponent<Prefab>(blobReferenceEntity);
                 baker.AddComponent(blobReferenceEntity, blobReferenceComp);
             }
         }

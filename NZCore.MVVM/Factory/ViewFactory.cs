@@ -4,7 +4,6 @@
 
 using System;
 using JetBrains.Annotations;
-using NZCore.Inject;
 using IServiceProvider = NZCore.Inject.IServiceProvider;
 
 namespace NZCore.MVVM
@@ -15,13 +14,13 @@ namespace NZCore.MVVM
     [UsedImplicitly]
     public class ViewFactory : IViewFactory
     {
-        private readonly IServiceProvider container;
-        private readonly IViewModelManager viewModelManager;
+        private readonly IServiceProvider _container;
+        private readonly IViewModelManager _viewModelManager;
 
         public ViewFactory(IServiceProvider container, IViewModelManager viewModelManager)
         {
-            this.container = container;
-            this.viewModelManager = viewModelManager;
+            _container = container;
+            _viewModelManager = viewModelManager;
         }
         
         /// <summary>
@@ -61,7 +60,7 @@ namespace NZCore.MVVM
         {
             var viewModel = CreateViewModel(viewModelType);
             InitializeViewModel(viewModel);
-            model.Container = container;
+            model.Container = _container;
             
             viewModel.Model = model;
             return viewModel;
@@ -112,7 +111,7 @@ namespace NZCore.MVVM
             var viewModel = CreateViewModel<TViewModel, TModel>();
             InitializeViewModel(viewModel);
             
-            model.Container = container;
+            model.Container = _container;
             viewModel.Model = model;
             
             //todo register view and model?
@@ -134,7 +133,7 @@ namespace NZCore.MVVM
 
             var model = new TModel
             {
-                Container = container
+                Container = _container
             };
             viewModel.Model = model;
             return viewModel;
@@ -146,7 +145,7 @@ namespace NZCore.MVVM
         {
             var viewModel = (TRootView) CreateViewModel(typeof(TRootView));
             InitializeViewModel(viewModel);
-            model.Container = container;
+            model.Container = _container;
             viewModel.Model = model;
             return viewModel;
         }
@@ -158,7 +157,7 @@ namespace NZCore.MVVM
             view.SetParentRootView(rootView);
             
             InitializeViewModel(view);
-            model.Container = container;
+            model.Container = _container;
             view.Model = model;
             
             return view;
@@ -172,7 +171,7 @@ namespace NZCore.MVVM
             view.SetParentRootView(rootView);
             
             InitializeViewModel(view);
-            view.Model = new TModel() { Container = container };
+            view.Model = new TModel() { Container = _container };
             
             return view;
         }
@@ -185,7 +184,7 @@ namespace NZCore.MVVM
             view.SetParentRootView(rootView);
             
             InitializeViewModel(view);
-            model.Container = container;
+            model.Container = _container;
             view.Model = model;
             
             return view;
@@ -200,12 +199,12 @@ namespace NZCore.MVVM
         {
             if (viewModelType == null)
                 throw new ArgumentNullException(nameof(viewModelType));
-            if (container == null)
-                throw new ArgumentNullException(nameof(container));
+            if (_container == null)
+                throw new ArgumentNullException(nameof(_container));
             if (!typeof(ViewModel).IsAssignableFrom(viewModelType))
                 throw new ArgumentException($"Type {viewModelType.Name} must inherit from ViewModel", nameof(viewModelType));
 
-            var viewModel = (ViewModel) container.CreateInstance(viewModelType);
+            var viewModel = (ViewModel) _container.CreateInstance(viewModelType);
             return viewModel;
         }
         
@@ -217,7 +216,7 @@ namespace NZCore.MVVM
         {
             // Kick off the full init which includes
             // which also includes the CreateView call
-            viewModel.Initialize(container);
+            viewModel.Initialize(_container);
         }
     }
 }

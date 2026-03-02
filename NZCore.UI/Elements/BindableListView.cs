@@ -2,6 +2,8 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
+using NZCore.MVVM;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
@@ -11,39 +13,42 @@ namespace NZCore.UI
     [UxmlElement]
     public partial class BindableListView : ListView
     {
-        private bool internalChanged;
-        
-        [UxmlAttribute]
+        private ListElementChangedCommand _onItemElementChanged;
+
+        /// <summary>
+        /// Command that notifies when a list item has changed.
+        /// Bind this to your ViewModel's ListChangedCommand property.
+        /// </summary>
         [CreateProperty]
-        public bool changed
+        public ListElementChangedCommand onItemElementChanged
         {
-            get
-            {
-                var tmp = internalChanged;
-                internalChanged = false;
-                return tmp;
-            }
+            get => _onItemElementChanged;
             set
             {
-                if (!internalChanged && value)
+                // Unsubscribe from old command
+                if (_onItemElementChanged != null)
                 {
-                    internalChanged = true;
-                    NotifyPropertyChanged(nameof(changed));
+                    _onItemElementChanged.ItemChanged -= OnItemElementChanged;
+                }
+
+                _onItemElementChanged = value;
+
+                // Subscribe to new command
+                if (_onItemElementChanged != null)
+                {
+                    _onItemElementChanged.ItemChanged += OnItemElementChanged;
                 }
             }
         }
-        
-        protected override void HandleEventBubbleUp(EventBase evt)
+
+        private void OnItemElementChanged(int index)
         {
-            base.HandleEventBubbleUp(evt);
-            
-            if (!internalChanged && evt is IChangeEvent)
-            {
-                schedule.Execute(() =>
-                {
-                    changed = true;
-                }).ExecuteLater(150);
-            }
+            RefreshItem(index);
+        }
+
+        public BindableListView()
+        {
+            bindItem = (element, index) => element.dataSource = itemsSource[index];
         }
     }
 }
