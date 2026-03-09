@@ -16,4 +16,10 @@ namespace NZCore.Interfaces
     {
         public NativeList<T> GetIndexList();
     }
+    
+    public interface IBlobIndexMap<T>
+        where T : unmanaged
+    {
+        public NativeHashMap<int, T> GetMap();
+    }
 }

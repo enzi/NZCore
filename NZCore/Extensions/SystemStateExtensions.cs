@@ -51,14 +51,14 @@ namespace NZCore
         public static T GetSingleton<T>(ref this SystemState state)
             where T : unmanaged, IComponentData
         {
-            var query = GetSingletonQuery<T>(ref state);
+            var query = state.GetSingletonQuery<T>();
             return query.GetSingleton<T>();
         }
 
         public static Entity GetSingletonEntity<T>(ref this SystemState state)
             where T : unmanaged
         {
-            var query = GetSingletonQuery<T>(ref state);
+            var query = state.GetSingletonQuery<T>();
             query.CompleteDependency();
 
             return query.GetSingletonEntity();
@@ -67,14 +67,14 @@ namespace NZCore
         public static DynamicBuffer<T> GetSingletonBuffer<T>(ref this SystemState state)
             where T : unmanaged, IBufferElementData
         {
-            var query = GetSingletonQuery<T>(ref state);
+            var query = state.GetSingletonQuery<T>();
             return query.GetSingletonBuffer<T>();
         }
         
         public static DynamicBuffer<T> GetSingletonBufferNoSync<T>(ref this SystemState state, bool isReadOnly)
             where T : unmanaged, IBufferElementData
         {
-            var query = GetSingletonQuery<T>(ref state);
+            var query = state.GetSingletonQuery<T>();
             return query.GetSingletonBufferNoSync<T>(isReadOnly);
         }
 
