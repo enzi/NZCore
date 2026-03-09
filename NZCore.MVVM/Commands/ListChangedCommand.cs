@@ -9,12 +9,12 @@ namespace NZCore.MVVM
     /// <summary>
     /// A command specifically designed for notifying list item changes.
     /// </summary>
-    public class ListElementChangedCommand : ICommand
+    public class ListChangedCommand : ICommand
     {
         /// <summary>
         /// Event raised when a list item at a specific index has changed.
         /// </summary>
-        public event Action<int> ElementChanged;
+        public event Action ListChanged;
 
         /// <summary>
         /// Occurs when changes occur that affect whether the command should execute.
@@ -39,18 +39,15 @@ namespace NZCore.MVVM
         /// </summary>
         public void Execute(object parameter)
         {
-            if (parameter is int index)
-            {
-                ElementChanged?.Invoke(index);
-            }
+            ListChanged?.Invoke();
         }
 
         /// <summary>
         /// Notifies that an item at the specified index has changed.
         /// </summary>
-        public void NotifyItemChanged(int index)
+        public void NotifyListChanged()
         {
-            ElementChanged?.Invoke(index);
+            ListChanged?.Invoke();
         }
     }
 }

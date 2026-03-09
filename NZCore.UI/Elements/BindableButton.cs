@@ -1,4 +1,4 @@
-﻿// <copyright project="NZCore.UI" file="BindableButton.cs">
+// <copyright project="NZCore.UI" file="BindableButton.cs">
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
@@ -9,13 +9,16 @@ using UnityEngine.UIElements;
 namespace NZCore.UI
 {
     [UxmlElement]
-    public partial class BindableButton : Button
+    public partial class BindableButton : VisualElement
     {
         private bool internalClicked;
+        private readonly Clickable clickable;
 
         public BindableButton()
         {
-            clicked += TriggerClick;
+            clickable = new Clickable(TriggerClick);
+            this.AddManipulator(clickable);
+            focusable = true;
         }
 
         [UxmlAttribute]

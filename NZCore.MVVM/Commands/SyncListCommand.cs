@@ -3,18 +3,20 @@
 // </copyright>
 
 using System;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace NZCore.MVVM
 {
     /// <summary>
-    /// A command specifically designed for notifying list item changes.
+    /// A command designed for triggering a sync in <see cref="SyncedListView"/>
     /// </summary>
-    public class ListElementChangedCommand : ICommand
+    public class SyncListCommand<T> : ICommand
+        where T : unmanaged
     {
         /// <summary>
         /// Event raised when a list item at a specific index has changed.
         /// </summary>
-        public event Action<int> ElementChanged;
+        public event Action<UnsafeList<T>> SyncList;
 
         /// <summary>
         /// Occurs when changes occur that affect whether the command should execute.
@@ -39,18 +41,15 @@ namespace NZCore.MVVM
         /// </summary>
         public void Execute(object parameter)
         {
-            if (parameter is int index)
+            if (parameter is UnsafeList<T> p)
             {
-                ElementChanged?.Invoke(index);
+                SyncList?.Invoke(p);
             }
         }
 
-        /// <summary>
-        /// Notifies that an item at the specified index has changed.
-        /// </summary>
-        public void NotifyItemChanged(int index)
+        public void ExecuteTyped(UnsafeList<T> data)
         {
-            ElementChanged?.Invoke(index);
+            SyncList?.Invoke(data);
         }
     }
 }

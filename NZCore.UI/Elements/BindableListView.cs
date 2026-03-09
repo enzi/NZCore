@@ -1,5 +1,5 @@
 // <copyright project="NZCore.UI" file="BindableListView.cs">
-// Copyright © 2025 Thomas Enzenebner. All rights reserved.
+// Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
@@ -13,35 +13,63 @@ namespace NZCore.UI
     [UxmlElement]
     public partial class BindableListView : ListView
     {
-        private ListElementChangedCommand _onItemElementChanged;
+        private ListElementChangedCommand _onElementChanged;
+        private ListChangedCommand _onListChanged;
 
         /// <summary>
         /// Command that notifies when a list item has changed.
         /// Bind this to your ViewModel's ListChangedCommand property.
         /// </summary>
         [CreateProperty]
-        public ListElementChangedCommand onItemElementChanged
+        public ListElementChangedCommand onElementChanged
         {
-            get => _onItemElementChanged;
+            get => _onElementChanged;
             set
             {
                 // Unsubscribe from old command
-                if (_onItemElementChanged != null)
+                if (_onElementChanged != null)
                 {
-                    _onItemElementChanged.ItemChanged -= OnItemElementChanged;
+                    _onElementChanged.ElementChanged -= OnElementChanged;
                 }
 
-                _onItemElementChanged = value;
+                _onElementChanged = value;
 
                 // Subscribe to new command
-                if (_onItemElementChanged != null)
+                if (_onElementChanged != null)
                 {
-                    _onItemElementChanged.ItemChanged += OnItemElementChanged;
+                    _onElementChanged.ElementChanged += OnElementChanged;
                 }
             }
         }
+        
+        [CreateProperty]
+        public ListChangedCommand onListChanged
+        {
+            get => _onListChanged;
+            set
+            {
+                // Unsubscribe from old command
+                if (_onListChanged != null)
+                {
+                    _onListChanged.ListChanged -= OnListChanged;
+                }
 
-        private void OnItemElementChanged(int index)
+                _onListChanged = value;
+
+                // Subscribe to new command
+                if (_onListChanged != null)
+                {
+                    _onListChanged.ListChanged += OnListChanged;
+                }
+            }
+        }
+        
+        private void OnListChanged()
+        {
+            RefreshItems();
+        }
+
+        private void OnElementChanged(int index)
         {
             RefreshItem(index);
         }
