@@ -2,6 +2,7 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using NZCore.MVVM;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
@@ -13,6 +14,7 @@ namespace NZCore.UI
     {
         private bool internalClicked;
         private readonly Clickable clickable;
+        private ICommand _command;
 
         public BindableButton()
         {
@@ -34,10 +36,18 @@ namespace NZCore.UI
             set => internalClicked = value;
         }
 
+        [CreateProperty]
+        public ICommand command
+        {
+            get => _command;
+            set => _command = value;
+        }
+
         public void TriggerClick()
         {
             wasClicked = true;
             NotifyPropertyChanged(nameof(wasClicked));
+            _command?.Execute(null);
         }
     }
 }
