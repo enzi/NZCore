@@ -10,9 +10,7 @@ namespace NZCore
     public static class UnityObjectRefExtensions
     {
         public static int GetInstanceId<T>(this UnityObjectRef<T> objectRef)
-            where T : Object
-        {
-            return objectRef.Id.instanceId;
-        }
+            where T : Object =>
+            objectRef.Id.instanceId;
     }
 }

@@ -8,14 +8,9 @@ namespace NZCore.Helper
 {
     public static class GenericsHelper
     {
-        public static bool IsTypeOf<T>(this Type type)
-        {
-            return typeof(T).IsAssignableFrom(type);
-        }
-        
-        public static bool HasBaseType(this Type type, Type requiredType)
-        {
-            return type.BaseType == requiredType || (type.BaseType != null && type.BaseType.IsSubclassOf(requiredType));
-        }
+        public static bool IsTypeOf<T>(this Type type) => typeof(T).IsAssignableFrom(type);
+
+        public static bool HasBaseType(this Type type, Type requiredType) =>
+            type.BaseType == requiredType || (type.BaseType != null && type.BaseType.IsSubclassOf(requiredType));
     }
 }

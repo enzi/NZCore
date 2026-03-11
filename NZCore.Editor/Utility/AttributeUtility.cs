@@ -38,17 +38,17 @@ namespace NZCore.Editor
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-            List<TypeWithAttribute<T>> list = new List<TypeWithAttribute<T>>();
-            
+            var list = new List<TypeWithAttribute<T>>();
+
             foreach (var assembly in assemblies)
             {
-                Type[] types = assembly.GetTypes();
-                
+                var types = assembly.GetTypes();
+
                 var matchingTypes = types.Where(type => Attribute.IsDefined(type, typeof(T)));
 
                 foreach (var type in matchingTypes)
                 {
-                    list.Add(new TypeWithAttribute<T>()
+                    list.Add(new TypeWithAttribute<T>
                     {
                         Type = type,
                         Attribute = type.GetCustomAttribute<T>()

@@ -41,10 +41,9 @@ namespace NZCore
     {
         private const byte Empty = 0;
         private const byte Occupied = 0x80; // High bit set = occupied
-        private const byte Deleted = 0x7F;  // Special marker for tombstone
+        private const byte Deleted = 0x7F; // Special marker for tombstone
 
-        [NativeDisableUnsafePtrRestriction]
-        private readonly byte* _buffer;
+        [NativeDisableUnsafePtrRestriction] private readonly byte* _buffer;
         private readonly int _bufferLength;
 
         /// <summary>
@@ -66,7 +65,7 @@ namespace NZCore
             {
                 _buffer = (byte*)buffer.GetUnsafePtr();
             }
-                
+
             _bufferLength = buffer.Length * UnsafeUtility.SizeOf<TBuffer>();
         }
 
@@ -79,20 +78,11 @@ namespace NZCore
             _bufferLength = length;
         }
 
-        private ref Header GetHeader()
-        {
-            return ref UnsafeUtility.AsRef<Header>(_buffer);
-        }
+        private ref Header GetHeader() => ref UnsafeUtility.AsRef<Header>(_buffer);
 
-        private Header* GetHeaderPtr()
-        {
-            return (Header*)_buffer;
-        }
+        private Header* GetHeaderPtr() => (Header*)_buffer;
 
-        private byte* GetMetadata()
-        {
-            return _buffer + sizeof(Header);
-        }
+        private byte* GetMetadata() => _buffer + sizeof(Header);
 
         private Entry* GetEntries()
         {
@@ -167,7 +157,7 @@ namespace NZCore
 
             var firstDeleted = -1;
 
-            for (int i = 0; i < header->Capacity; i++)
+            for (var i = 0; i < header->Capacity; i++)
             {
                 var meta = metadata[index];
 
@@ -185,13 +175,17 @@ namespace NZCore
                 if (meta == Deleted)
                 {
                     if (firstDeleted < 0)
+                    {
                         firstDeleted = (int)index;
+                    }
                 }
                 else if ((meta & 0x7F) == h2)
                 {
                     // Potential match, check key
                     if (entries[index].Key.Equals(key))
+                    {
                         return false; // Key exists
+                    }
                 }
 
                 index = (index + 1) & (uint)header->CapacityMask;
@@ -217,7 +211,7 @@ namespace NZCore
 
             var firstDeleted = -1;
 
-            for (int i = 0; i < header->Capacity; i++)
+            for (var i = 0; i < header->Capacity; i++)
             {
                 var meta = metadata[index];
 
@@ -234,7 +228,9 @@ namespace NZCore
                 if (meta == Deleted)
                 {
                     if (firstDeleted < 0)
+                    {
                         firstDeleted = (int)index;
+                    }
                 }
                 else if ((meta & 0x7F) == h2)
                 {
@@ -272,7 +268,7 @@ namespace NZCore
             var h2 = GetH2(hash);
             var index = hash & (uint)header->CapacityMask;
 
-            for (int i = 0; i < header->Capacity; i++)
+            for (var i = 0; i < header->Capacity; i++)
             {
                 var meta = metadata[index];
 
@@ -312,17 +308,21 @@ namespace NZCore
             var h2 = GetH2(hash);
             var index = hash & (uint)header->CapacityMask;
 
-            for (int i = 0; i < header->Capacity; i++)
+            for (var i = 0; i < header->Capacity; i++)
             {
                 var meta = metadata[index];
 
                 if (meta == Empty)
+                {
                     break;
+                }
 
                 if (meta != Deleted && (meta & 0x7F) == h2)
                 {
                     if (entries[index].Key.Equals(key))
+                    {
                         return ref entries[index].Value;
+                    }
                 }
 
                 index = (index + 1) & (uint)header->CapacityMask;
@@ -345,7 +345,7 @@ namespace NZCore
             var h2 = GetH2(hash);
             var index = hash & (uint)header->CapacityMask;
 
-            for (int i = 0; i < header->Capacity; i++)
+            for (var i = 0; i < header->Capacity; i++)
             {
                 var meta = metadata[index];
 
@@ -385,17 +385,21 @@ namespace NZCore
             var h2 = GetH2(hash);
             var index = hash & (uint)header->CapacityMask;
 
-            for (int i = 0; i < header->Capacity; i++)
+            for (var i = 0; i < header->Capacity; i++)
             {
                 var meta = metadata[index];
 
                 if (meta == Empty)
+                {
                     return false;
+                }
 
                 if (meta != Deleted && (meta & 0x7F) == h2)
                 {
                     if (entries[index].Key.Equals(key))
+                    {
                         return true;
+                    }
                 }
 
                 index = (index + 1) & (uint)header->CapacityMask;
@@ -418,12 +422,14 @@ namespace NZCore
             var h2 = GetH2(hash);
             var index = hash & (uint)header->CapacityMask;
 
-            for (int i = 0; i < header->Capacity; i++)
+            for (var i = 0; i < header->Capacity; i++)
             {
                 var meta = metadata[index];
 
                 if (meta == Empty)
+                {
                     return false;
+                }
 
                 if (meta != Deleted && (meta & 0x7F) == h2)
                 {
@@ -450,7 +456,10 @@ namespace NZCore
             get
             {
                 if (TryGetValue(key, out var value))
+                {
                     return value;
+                }
+
                 throw new InvalidOperationException($"Key not found in DynamicHashMap");
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -458,30 +467,21 @@ namespace NZCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static byte GetH2(uint hash)
-        {
+        private static byte GetH2(uint hash) =>
             // Use upper bits for h2 to get different bits than bucket index
-            return (byte)((hash >> 25) & 0x7F);
-        }
+            (byte)((hash >> 25) & 0x7F);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int AlignUp(int value, int alignment)
-        {
-            return (value + alignment - 1) & ~(alignment - 1);
-        }
+        private static int AlignUp(int value, int alignment) => (value + alignment - 1) & ~(alignment - 1);
 
         /// <summary>
         /// Returns an enumerator that iterates through the hashmap.
         /// </summary>
-        public Enumerator GetEnumerator()
-        {
-            return new Enumerator(_buffer);
-        }
+        public Enumerator GetEnumerator() => new(_buffer);
 
         public struct Enumerator
         {
-            [NativeDisableUnsafePtrRestriction]
-            private readonly byte* _buffer;
+            [NativeDisableUnsafePtrRestriction] private readonly byte* _buffer;
             private readonly byte* _metadata;
             private readonly Entry* _entries;
             private readonly int _capacity;
@@ -503,15 +503,18 @@ namespace NZCore
                 {
                     var meta = _metadata[_index];
                     if (meta != Empty && meta != Deleted)
+                    {
                         return true;
+                    }
                 }
+
                 return false;
             }
 
             public KeyValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => new KeyValue(_entries[_index].Key, _entries[_index].Value);
+                get => new(_entries[_index].Key, _entries[_index].Value);
             }
 
             public void Reset()
@@ -556,11 +559,7 @@ namespace NZCore
     public static class DynamicHashMapExtensions
     {
         public static DynamicHashMap<TBuffer, TKey, TValue> AsHashMap<TBuffer, TKey, TValue>(this DynamicBuffer<TBuffer> buffer, bool isReadOnly = false)
-            where TBuffer : unmanaged, IDynamicHashMap
-            where TKey : unmanaged, IEquatable<TKey>
-            where TValue : unmanaged
-        {
-            return new DynamicHashMap<TBuffer, TKey, TValue>(buffer, isReadOnly);
-        }
+            where TBuffer : unmanaged, IDynamicHashMap where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged =>
+            new(buffer, isReadOnly);
     }
 }

@@ -26,10 +26,10 @@ namespace NZCore.Hybrid
         protected override void OnUpdate()
         {
             EntityManager.CompleteDependencyBeforeRW<HybridAnimatorRequestSingleton>();
-            
+
             var assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
             var deltaTime = SystemAPI.Time.DeltaTime;
-            
+
             ref var singleton = ref SystemAPI.GetSingletonRW<HybridAnimatorRequestSingleton>().ValueRW;
             var enumerator = singleton.ClipRequests.GetEnumerator();
             while (enumerator.MoveNext())
@@ -44,7 +44,7 @@ namespace NZCore.Hybrid
 
                 request.Clear();
             }
-            
+
             foreach (var (hybridAnimatorRW, animatorOverrideRW)
                      in SystemAPI.Query<RefRW<HybridAnimator>, RefRW<AnimatorOverride>>())
             {
@@ -60,9 +60,9 @@ namespace NZCore.Hybrid
                 if (animatorComp.TransitionTo != HybridAnimatorTransitionPhase.None)
                 {
                     var transitionSpeed = TransitionSpeed * deltaTime;
-                    animatorComp.Weight = animatorComp.TransitionTo == HybridAnimatorTransitionPhase.ToCustom ?
-                        Mathf.Min(animatorComp.Weight + transitionSpeed, 1.0f) :
-                        Mathf.Max(animatorComp.Weight - transitionSpeed, 0.0f);
+                    animatorComp.Weight = animatorComp.TransitionTo == HybridAnimatorTransitionPhase.ToCustom
+                        ? Mathf.Min(animatorComp.Weight + transitionSpeed, 1.0f)
+                        : Mathf.Max(animatorComp.Weight - transitionSpeed, 0.0f);
 
                     if (Mathf.Approximately(animatorComp.Weight, animatorComp.TransitionTo == HybridAnimatorTransitionPhase.ToCustom ? 1.0f : 0.0f))
                     {
@@ -81,8 +81,8 @@ namespace NZCore.Hybrid
 
                         if (overridePlayable.IsValid())
                         {
-                            double currentTime = overridePlayable.GetTime();
-                            double duration = overridePlayable.GetDuration();
+                            var currentTime = overridePlayable.GetTime();
+                            var duration = overridePlayable.GetDuration();
 
                             //Debug.Log($"{currentTime} -- {duration} -- {overridePlayable.IsDone()}");
 

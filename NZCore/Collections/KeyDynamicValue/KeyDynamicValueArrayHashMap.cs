@@ -28,18 +28,21 @@ namespace NZCore
         public KeyDynamicValueArrayHashMap(int initialCapacity, int keyOffset, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
-            AllocatorManager.AllocatorHandle temp = allocator;
+            var temp = allocator;
             Initialize(initialCapacity, keyOffset, ref temp);
         }
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        private void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator) where TAllocator : unmanaged, AllocatorManager.IAllocator
+        private void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator)
+            where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
 
             if (UnsafeUtility.IsNativeContainerType<TKey>())
+            {
                 AtomicSafetyHandle.SetNestedContainer(m_Safety, true);
+            }
 
             CollectionHelper.SetStaticSafetyId<KeyValueArrayHashMap<TKey, TKeyInterpreter>>(ref m_Safety, ref staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
@@ -48,10 +51,7 @@ namespace NZCore
             _unsafeKeyValueArrayHashMap = UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>.Create(initialCapacity, ref allocator);
         }
 
-        public bool ContainsKey(TKey key)
-        {
-            return _unsafeKeyValueArrayHashMap->TryPeekFirstRefValue(key);
-        }
+        public bool ContainsKey(TKey key) => _unsafeKeyValueArrayHashMap->TryPeekFirstRefValue(key);
 
         public void SetArrays(NativeArray<TKey> keysArray, NativeArray<byte> valueArray)
         {
@@ -97,27 +97,23 @@ namespace NZCore
             UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>.Destroy(_unsafeKeyValueArrayHashMap);
         }
 
-        public KeyDynamicValueArrayHashMapEnumerator<TKey, TKeyInterpreter> GetValuesForKey(TKey key)
-        {
-            return new KeyDynamicValueArrayHashMapEnumerator<TKey, TKeyInterpreter>
+        public KeyDynamicValueArrayHashMapEnumerator<TKey, TKeyInterpreter> GetValuesForKey(TKey key) =>
+            new()
             {
                 Map = _unsafeKeyValueArrayHashMap,
                 Key = key,
                 IsFirst = true
             };
-        }
 
         // helper jobs
 
-        public JobHandle ScheduleCalculateBuckets(NativeArray<TKey> keysArray, NativeArray<byte> valuesArray, JobHandle dependency)
-        {
-            return new CalculateBucketsJob()
+        public JobHandle ScheduleCalculateBuckets(NativeArray<TKey> keysArray, NativeArray<byte> valuesArray, JobHandle dependency) =>
+            new CalculateBucketsJob
             {
                 Hashmap = this,
                 Keys = keysArray,
                 Values = valuesArray
             }.Schedule(dependency);
-        }
 
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob

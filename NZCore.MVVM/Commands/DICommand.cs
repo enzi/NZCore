@@ -23,7 +23,7 @@ namespace NZCore.MVVM
         /// <param name="container">The Service Provider for resolving dependencies.</param>
         /// <param name="execute">The execution logic that receives the container and parameter.</param>
         /// <param name="canExecute">The execution status logic that receives the container and parameter.</param>
-        public DICommand(IServiceProvider container, Action<IServiceProvider, object> execute, 
+        public DICommand(IServiceProvider container, Action<IServiceProvider, object> execute,
             Func<IServiceProvider, object, bool> canExecute = null)
         {
             _container = container ?? throw new ArgumentNullException(nameof(container));
@@ -37,13 +37,11 @@ namespace NZCore.MVVM
         /// <param name="container">The DI container for resolving dependencies.</param>
         /// <param name="execute">The execution logic that receives the container.</param>
         /// <param name="canExecute">The execution status logic that receives the container.</param>
-        public DICommand(IServiceProvider container, Action<IServiceProvider> execute, 
+        public DICommand(IServiceProvider container, Action<IServiceProvider> execute,
             Func<IServiceProvider, bool> canExecute = null)
-            : this(container, 
+            : this(container,
                 execute != null ? (c, _) => execute(c) : null,
-                canExecute != null ? (c, _) => canExecute(c) : null)
-        {
-        }
+                canExecute != null ? (c, _) => canExecute(c) : null) { }
 
         /// <summary>
         /// Occurs when changes occur that affect whether the command should execute.
@@ -55,10 +53,7 @@ namespace NZCore.MVVM
         /// </summary>
         /// <param name="parameter">Data used by the command.</param>
         /// <returns>True if this command can be executed; otherwise, false.</returns>
-        public bool CanExecute(object parameter)
-        {
-            return _canExecute?.Invoke(_container, parameter) ?? true;
-        }
+        public bool CanExecute(object parameter) => _canExecute?.Invoke(_container, parameter) ?? true;
 
         /// <summary>
         /// Executes the command.
@@ -97,7 +92,7 @@ namespace NZCore.MVVM
         /// <param name="container">The DI container for resolving dependencies.</param>
         /// <param name="execute">The asynchronous execution logic that receives the container and parameter.</param>
         /// <param name="canExecute">The execution status logic that receives the container and parameter.</param>
-        public AsyncDICommand(IServiceProvider container, Func<IServiceProvider, object, Task> execute, 
+        public AsyncDICommand(IServiceProvider container, Func<IServiceProvider, object, Task> execute,
             Func<IServiceProvider, object, bool> canExecute = null)
         {
             _container = container ?? throw new ArgumentNullException(nameof(container));
@@ -111,13 +106,11 @@ namespace NZCore.MVVM
         /// <param name="container">The DI container for resolving dependencies.</param>
         /// <param name="execute">The asynchronous execution logic that receives the container.</param>
         /// <param name="canExecute">The execution status logic that receives the container.</param>
-        public AsyncDICommand(IServiceProvider container, Func<IServiceProvider, Task> execute, 
+        public AsyncDICommand(IServiceProvider container, Func<IServiceProvider, Task> execute,
             Func<IServiceProvider, bool> canExecute = null)
-            : this(container, 
+            : this(container,
                 execute != null ? (c, _) => execute(c) : null,
-                canExecute != null ? (c, _) => canExecute(c) : null)
-        {
-        }
+                canExecute != null ? (c, _) => canExecute(c) : null) { }
 
         /// <summary>
         /// Occurs when changes occur that affect whether the command should execute.
@@ -134,10 +127,7 @@ namespace NZCore.MVVM
         /// </summary>
         /// <param name="parameter">Data used by the command.</param>
         /// <returns>True if this command can be executed; otherwise, false.</returns>
-        public bool CanExecute(object parameter)
-        {
-            return !_isExecuting && (_canExecute?.Invoke(_container, parameter) ?? true);
-        }
+        public bool CanExecute(object parameter) => !_isExecuting && (_canExecute?.Invoke(_container, parameter) ?? true);
 
         /// <summary>
         /// Executes the command asynchronously.

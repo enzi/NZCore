@@ -6,6 +6,6 @@ using Unity.Entities;
 using UnityEngine;
 
 #if ENTITIES_1_4_0
-[assembly:RegisterUnityEngineComponentType(typeof(Camera))]
-[assembly:RegisterUnityEngineComponentType(typeof(Animator))]
+[assembly: RegisterUnityEngineComponentType(typeof(Camera))]
+[assembly: RegisterUnityEngineComponentType(typeof(Animator))]
 #endif

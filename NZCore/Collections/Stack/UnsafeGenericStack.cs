@@ -57,14 +57,14 @@ namespace NZCore
         {
             //list.Add(in item);
 
-            int byteSize = UnsafeUtility.SizeOf<T>();
-            int oldLength = List.Length;
+            var byteSize = UnsafeUtility.SizeOf<T>();
+            var oldLength = List.Length;
             List.Resize(oldLength + byteSize, NativeArrayOptions.UninitializedMemory);
             var ptrToData = UnsafeUtility.AddressOf(ref data);
 
             UnsafeUtility.MemCpy(List.Ptr + oldLength, ptrToData, byteSize);
 
-            OffsetLookup.Add(new OffsetLookup()
+            OffsetLookup.Add(new OffsetLookup
             {
                 Offset = oldLength
             });
@@ -76,19 +76,14 @@ namespace NZCore
         /// <returns>The item returned by reference.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Top<T>()
-            where T : unmanaged
-        {
+            where T : unmanaged =>
             //return ref list.ElementAt(list.m_length - 1);
-
-            return ref UnsafeUtility.AsRef<T>(List.Ptr + List.m_length - UnsafeUtility.SizeOf<T>());
-        }
+            ref UnsafeUtility.AsRef<T>(List.Ptr + List.m_length - UnsafeUtility.SizeOf<T>());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetFromIndex<T>(int index)
-            where T : unmanaged
-        {
-            return ref UnsafeUtility.AsRef<T>(List.Ptr + OffsetLookup[index].Offset);
-        }
+            where T : unmanaged =>
+            ref UnsafeUtility.AsRef<T>(List.Ptr + OffsetLookup[index].Offset);
 
         /// <summary>
         /// Pop the item on top of the stack.
@@ -101,7 +96,7 @@ namespace NZCore
 
             var size = UnsafeUtility.SizeOf<T>();
 
-            T data = *(T*)(List.Ptr + (List.m_length) - size);
+            var data = *(T*)(List.Ptr + List.m_length - size);
 
             List.Resize(List.m_length - size);
             OffsetLookup.Resize(OffsetLookup.m_length - 1);

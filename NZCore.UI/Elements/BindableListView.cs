@@ -41,7 +41,7 @@ namespace NZCore.UI
                 }
             }
         }
-        
+
         [CreateProperty]
         public ListChangedCommand onListChanged
         {
@@ -63,7 +63,7 @@ namespace NZCore.UI
                 }
             }
         }
-        
+
         private void OnListChanged()
         {
             RefreshItems();

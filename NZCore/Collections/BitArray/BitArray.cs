@@ -76,7 +76,7 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray8 : IBitArray<BitArray8>
     {
-        [SerializeField] byte data;
+        [SerializeField] private byte data;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 8u;
@@ -107,7 +107,10 @@ namespace NZCore
         /// Constructor.
         /// </summary>
         /// <param name="initValue">Initialization value.</param>
-        public BitArray8(byte initValue) => data = initValue;
+        public BitArray8(byte initValue)
+        {
+            data = initValue;
+        }
 
 
         /// <summary>
@@ -203,7 +206,7 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray16 : IBitArray<BitArray16>
     {
-        [SerializeField] ushort data;
+        [SerializeField] private ushort data;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 16u;
@@ -213,11 +216,12 @@ namespace NZCore
 
         /// <summary>True if all bits are 1.</summary>
         public bool AllTrue => data == ushort.MaxValue;
-        
+
         public ushort Value => data;
 
         /// <summary>Returns the bit array in a human-readable form.</summary>
-        public string HumanizedData => System.Text.RegularExpressions.Regex.Replace($"{{{Convert.ToString(data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
+        public string HumanizedData => System.Text.RegularExpressions.Regex
+                                             .Replace($"{{{Convert.ToString(data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
 
         /// <summary>
         /// Returns the state of the bit at a specific index.
@@ -234,7 +238,10 @@ namespace NZCore
         /// Constructor.
         /// </summary>
         /// <param name="initValue">Initialization value.</param>
-        public BitArray16(ushort initValue) => data = initValue;
+        public BitArray16(ushort initValue)
+        {
+            data = initValue;
+        }
 
         /// <summary>
         /// Bit-wise Not operator
@@ -329,7 +336,7 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray32 : IBitArray<BitArray32>
     {
-        [SerializeField] uint data;
+        [SerializeField] private uint data;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 32u;
@@ -339,11 +346,12 @@ namespace NZCore
 
         /// <summary>True if all bits are 1.</summary>
         public bool AllTrue => data == uint.MaxValue;
-        
+
         public uint Value => data;
 
         /// <summary>Returns the bit array in a human-readable form.</summary>
-        public string HumanizedData => System.Text.RegularExpressions.Regex.Replace($"{{{Convert.ToString(data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
+        public string HumanizedData => System.Text.RegularExpressions.Regex
+                                             .Replace($"{{{Convert.ToString(data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
 
         /// <summary>
         /// Returns the state of the bit at a specific index.
@@ -360,7 +368,10 @@ namespace NZCore
         /// Constructor.
         /// </summary>
         /// <param name="initValue">Initialization value.</param>
-        public BitArray32(uint initValue) => data = initValue;
+        public BitArray32(uint initValue)
+        {
+            data = initValue;
+        }
 
         /// <summary>
         /// Bit-wise And
@@ -455,7 +466,7 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray64 : IBitArray<BitArray64>
     {
-        [SerializeField] ulong data;
+        [SerializeField] private ulong data;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 64u;
@@ -465,12 +476,13 @@ namespace NZCore
 
         /// <summary>True if all bits are 1.</summary>
         public bool AllTrue => data == ulong.MaxValue;
-        
+
         public ulong Value => data;
 
         /// <summary>Returns the bit array in a human-readable form.</summary>
-        public string HumanizedData => System.Text.RegularExpressions.Regex.Replace($"{{{Convert.ToString((long)data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.")
-            .TrimEnd('.');
+        public string HumanizedData => System.Text.RegularExpressions.Regex
+                                             .Replace($"{{{Convert.ToString((long)data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.")
+                                             .TrimEnd('.');
 
         /// <summary>
         /// Returns the state of the bit at a specific index.
@@ -487,7 +499,10 @@ namespace NZCore
         /// Constructor.
         /// </summary>
         /// <param name="initValue">Initialization value.</param>
-        public BitArray64(ulong initValue) => data = initValue;
+        public BitArray64(ulong initValue)
+        {
+            data = initValue;
+        }
 
         /// <summary>
         /// Bit-wise Not operator
@@ -573,8 +588,8 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray128 : IBitArray<BitArray128>
     {
-        [SerializeField] ulong data1;
-        [SerializeField] ulong data2;
+        [SerializeField] private ulong data1;
+        [SerializeField] private ulong data2;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 128u;
@@ -584,7 +599,7 @@ namespace NZCore
 
         /// <summary>True if all bits are 1.</summary>
         public bool AllTrue => data1 == ulong.MaxValue && data2 == ulong.MaxValue;
-        
+
         public ulong Value1 => data1;
         public ulong Value2 => data2;
 
@@ -607,9 +622,13 @@ namespace NZCore
             set
             {
                 if (index < 64u)
-                    data1 = (value ? (data1 | (1uL << (int)index)) : (data1 & ~(1uL << (int)index)));
+                {
+                    data1 = value ? data1 | (1uL << (int)index) : data1 & ~(1uL << (int)index);
+                }
                 else
-                    data2 = (value ? (data2 | (1uL << (int)(index - 64u))) : (data2 & ~(1uL << (int)(index - 64u))));
+                {
+                    data2 = value ? data2 | (1uL << (int)(index - 64u)) : data2 & ~(1uL << (int)(index - 64u));
+                }
             }
         }
 
@@ -714,10 +733,10 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray256 : IBitArray<BitArray256>
     {
-        [SerializeField] ulong data1;
-        [SerializeField] ulong data2;
-        [SerializeField] ulong data3;
-        [SerializeField] ulong data4;
+        [SerializeField] private ulong data1;
+        [SerializeField] private ulong data2;
+        [SerializeField] private ulong data3;
+        [SerializeField] private ulong data4;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 256u;
@@ -727,7 +746,7 @@ namespace NZCore
 
         /// <summary>True if all bits are 1.</summary>
         public bool AllTrue => data1 == ulong.MaxValue && data2 == ulong.MaxValue && data3 == ulong.MaxValue && data4 == ulong.MaxValue;
-        
+
         public ulong Value1 => data1;
         public ulong Value2 => data2;
         public ulong Value3 => data3;
@@ -931,7 +950,7 @@ namespace NZCore
         /// <param name="index">Bit index.</param>
         /// <param name="data">Bit array data.</param>
         /// <param name="value">Value to set the bit to.</param>
-        public static void Set8(uint index, ref byte data, bool value) => data = (byte)(value ? (data | (1u << (int)index)) : (data & ~(1u << (int)index)));
+        public static void Set8(uint index, ref byte data, bool value) => data = (byte)(value ? data | (1u << (int)index) : data & ~(1u << (int)index));
 
         /// <summary>
         /// Set a bit at a specific index.
@@ -939,7 +958,7 @@ namespace NZCore
         /// <param name="index">Bit index.</param>
         /// <param name="data">Bit array data.</param>
         /// <param name="value">Value to set the bit to.</param>
-        public static void Set16(uint index, ref ushort data, bool value) => data = (ushort)(value ? (data | (1u << (int)index)) : (data & ~(1u << (int)index)));
+        public static void Set16(uint index, ref ushort data, bool value) => data = (ushort)(value ? data | (1u << (int)index) : data & ~(1u << (int)index));
 
         /// <summary>
         /// Set a bit at a specific index.
@@ -947,7 +966,7 @@ namespace NZCore
         /// <param name="index">Bit index.</param>
         /// <param name="data">Bit array data.</param>
         /// <param name="value">Value to set the bit to.</param>
-        public static void Set32(uint index, ref uint data, bool value) => data = (value ? (data | (1u << (int)index)) : (data & ~(1u << (int)index)));
+        public static void Set32(uint index, ref uint data, bool value) => data = value ? data | (1u << (int)index) : data & ~(1u << (int)index);
 
         /// <summary>
         /// Set a bit at a specific index.
@@ -955,7 +974,7 @@ namespace NZCore
         /// <param name="index">Bit index.</param>
         /// <param name="data">Bit array data.</param>
         /// <param name="value">Value to set the bit to.</param>
-        public static void Set64(uint index, ref ulong data, bool value) => data = (value ? (data | (1uL << (int)index)) : (data & ~(1uL << (int)index)));
+        public static void Set64(uint index, ref ulong data, bool value) => data = value ? data | (1uL << (int)index) : data & ~(1uL << (int)index);
 
         /// <summary>
         /// Set a bit at a specific index.
@@ -967,9 +986,13 @@ namespace NZCore
         public static void Set128(uint index, ref ulong data1, ref ulong data2, bool value)
         {
             if (index < 64u)
-                data1 = (value ? (data1 | (1uL << (int)index)) : (data1 & ~(1uL << (int)index)));
+            {
+                data1 = value ? data1 | (1uL << (int)index) : data1 & ~(1uL << (int)index);
+            }
             else
-                data2 = (value ? (data2 | (1uL << (int)(index - 64u))) : (data2 & ~(1uL << (int)(index - 64u))));
+            {
+                data2 = value ? data2 | (1uL << (int)(index - 64u)) : data2 & ~(1uL << (int)(index - 64u));
+            }
         }
 
         /// <summary>
@@ -984,13 +1007,21 @@ namespace NZCore
         public static void Set256(uint index, ref ulong data1, ref ulong data2, ref ulong data3, ref ulong data4, bool value)
         {
             if (index < 64u)
-                data1 = (value ? (data1 | (1uL << (int)index)) : (data1 & ~(1uL << (int)index)));
+            {
+                data1 = value ? data1 | (1uL << (int)index) : data1 & ~(1uL << (int)index);
+            }
             else if (index < 128u)
-                data2 = (value ? (data2 | (1uL << (int)(index - 64u))) : (data2 & ~(1uL << (int)(index - 64u))));
+            {
+                data2 = value ? data2 | (1uL << (int)(index - 64u)) : data2 & ~(1uL << (int)(index - 64u));
+            }
             else if (index < 192u)
-                data3 = (value ? (data3 | (1uL << (int)(index - 64u))) : (data3 & ~(1uL << (int)(index - 128u))));
+            {
+                data3 = value ? data3 | (1uL << (int)(index - 64u)) : data3 & ~(1uL << (int)(index - 128u));
+            }
             else
-                data4 = (value ? (data4 | (1uL << (int)(index - 64u))) : (data4 & ~(1uL << (int)(index - 192u))));
+            {
+                data4 = value ? data4 | (1uL << (int)(index - 64u)) : data4 & ~(1uL << (int)(index - 192u));
+            }
         }
     }
 }

@@ -9,213 +9,216 @@ using IServiceProvider = NZCore.Inject.IServiceProvider;
 namespace NZCore.MVVM
 {
     /// <summary>
-    /// Factory for creating ViewModels with proper DI integration and initialization.
+    /// Factory for creating ViewModels and Views with proper DI integration.
+    /// ViewModels are pure C# objects; Views are VisualElements linked to ViewModels via InitializeView().
     /// </summary>
     [UsedImplicitly]
     public class ViewFactory : IViewFactory
     {
         private readonly IServiceProvider _container;
-        private readonly IViewModelManager _viewModelManager;
 
-        public ViewFactory(IServiceProvider container, IViewModelManager viewModelManager)
+        public ViewFactory(IServiceProvider container)
         {
             _container = container;
-            _viewModelManager = viewModelManager;
         }
-        
-        /// <summary>
-        /// Creates a ViewModel of the specified type with DI injection.
-        /// </summary>
-        /// <typeparam name="TViewModel">The type of ViewModel to create.</typeparam>
-        /// <returns>The created and initialized ViewModel.</returns>
-        public TViewModel CreateViewModel<TViewModel>() 
+
+        // ── ViewModel creation ────────────────────────────────────────────────
+
+        public TViewModel CreateViewModel<TViewModel>()
             where TViewModel : ViewModel
         {
-            var viewModel = (TViewModel)CreateViewModel(typeof(TViewModel));
+            var viewModel = (TViewModel)CreateViewModelInstance(typeof(TViewModel));
             InitializeViewModel(viewModel);
             return viewModel;
         }
 
-        /// <summary>
-        /// Creates a ViewModel of the specified type with DI injection and a specific model.
-        /// </summary>
-        /// <typeparam name="TViewModel">The type of ViewModel to create.</typeparam>
-        /// <param name="model">The model to associate with the ViewModel.</param>
-        /// <returns>The created and initialized ViewModel.</returns>
-        public TViewModel CreateViewModel<TViewModel>(Model model) 
+        public TViewModel CreateViewModel<TViewModel>(Model model)
             where TViewModel : ViewModel
         {
-            var viewModel = (TViewModel) CreateViewModel(typeof(TViewModel), model);
-            InitializeViewModel(viewModel);
-            return viewModel;
-        }
-
-        /// <summary>
-        /// Creates a ViewModel of the specified type with DI injection and a specific model.
-        /// </summary>
-        /// <param name="viewModelType">The type of ViewModel to create.</param>
-        /// <param name="model">The model to associate with the ViewModel.</param>
-        /// <returns>The created and initialized ViewModel.</returns>
-        public ViewModel CreateViewModel(Type viewModelType, Model model)
-        {
-            var viewModel = CreateViewModel(viewModelType);
-            InitializeViewModel(viewModel);
-            model.Container = _container;
-            
-            viewModel.Model = model;
-            return viewModel;
-        }
-
-        /// <summary>
-        /// Creates a RootView of the specified type with DI injection.
-        /// </summary>
-        /// <typeparam name="TRootView">The type of RootView to create.</typeparam>
-        /// <returns>The created and initialized RootView.</returns>
-        public TRootView CreateRootView<TRootView>() 
-            where TRootView : RootView
-        {
-            var viewModel = (TRootView)CreateViewModel(typeof(TRootView));
-            InitializeViewModel(viewModel);
-            return viewModel;
-        }
-
-        /// <summary>
-        /// Creates a strongly-typed ViewModel with DI injection.
-        /// </summary>
-        /// <typeparam name="TViewModel">The type of ViewModel to create.</typeparam>
-        /// <typeparam name="TModel">The type of model the ViewModel manages.</typeparam>
-        
-        /// <returns>The created and initialized strongly-typed ViewModel.</returns>
-        public TViewModel CreateViewModel<TViewModel, TModel>() 
-            where TViewModel : ViewModel<TModel> 
-            where TModel : Model, new()
-        {
-            var viewModel = (TViewModel)CreateViewModel(typeof(TViewModel));
-            InitializeViewModel(viewModel);
-            
-            return viewModel;
-        }
-
-        /// <summary>
-        /// Creates a strongly-typed ViewModel with DI injection and a specific model.
-        /// </summary>
-        /// <typeparam name="TViewModel">The type of ViewModel to create.</typeparam>
-        /// <typeparam name="TModel">The type of model the ViewModel manages.</typeparam>
-        
-        /// <param name="model">The strongly-typed model to associate with the ViewModel.</param>
-        /// <returns>The created and initialized strongly-typed ViewModel.</returns>
-        public TViewModel CreateViewModel<TViewModel, TModel>(TModel model) 
-            where TViewModel : ViewModel<TModel> 
-            where TModel : Model, new()
-        {
-            var viewModel = CreateViewModel<TViewModel, TModel>();
-            InitializeViewModel(viewModel);
-            
-            model.Container = _container;
-            viewModel.Model = model;
-            
-            //todo register view and model?
-            return viewModel;
-        }
-
-        /// <summary>
-        /// Creates a strongly-typed RootView with DI injection.
-        /// </summary>
-        /// <typeparam name="TRootView">The type of RootView to create.</typeparam>
-        /// <typeparam name="TModel">The type of model the RootView manages.</typeparam>
-        /// <returns>The created and initialized strongly-typed RootView.</returns>
-        public TRootView CreateRootView<TRootView, TModel>() 
-            where TRootView : RootView<TModel> 
-            where TModel : Model, new()
-        {
-            var viewModel = (TRootView) CreateViewModel(typeof(TRootView));
-            InitializeViewModel(viewModel);
-
-            var model = new TModel
-            {
-                Container = _container
-            };
-            viewModel.Model = model;
-            return viewModel;
-        }
-        
-        public TRootView CreateRootView<TRootView, TModel>(TModel model) 
-            where TRootView : RootView<TModel> 
-            where TModel : Model, new()
-        {
-            var viewModel = (TRootView) CreateViewModel(typeof(TRootView));
+            var viewModel = (TViewModel)CreateViewModelInstance(typeof(TViewModel));
             InitializeViewModel(viewModel);
             model.Container = _container;
             viewModel.Model = model;
             return viewModel;
         }
-        
-        public TChildView CreateChildViewModel<TChildView>(RootView rootView, Model model)
-            where TChildView : ChildView
-        {
-            var view = (TChildView) CreateViewModel(typeof(TChildView));
-            view.SetParentRootView(rootView);
-            
-            InitializeViewModel(view);
-            model.Container = _container;
-            view.Model = model;
-            
-            return view;
-        }
-        
-        public TChildView CreateChildViewModel<TChildView, TModel>(RootView rootView) 
-            where TChildView : ChildView<TModel>
-            where TModel : Model, new()
-        {
-            var view = (TChildView) CreateViewModel(typeof(TChildView));
-            view.SetParentRootView(rootView);
-            
-            InitializeViewModel(view);
-            view.Model = new TModel() { Container = _container };
-            
-            return view;
-        }
 
-        public TChildView CreateChildViewModel<TChildView, TModel>(RootView rootView, TModel model) 
-            where TChildView : ChildView
-            where TModel : Model, new()
-        {
-            var view = (TChildView) CreateViewModel(typeof(TChildView));
-            view.SetParentRootView(rootView);
-            
-            InitializeViewModel(view);
-            model.Container = _container;
-            view.Model = model;
-            
-            return view;
-        }
-        
-        /// <summary>
-        /// Creates a ViewModel of the specified type with DI injection.
-        /// </summary>
-        /// <param name="viewModelType">The type of ViewModel to create.</param>
-        /// <returns>The created and initialized ViewModel.</returns>
         public ViewModel CreateViewModel(Type viewModelType)
         {
-            if (viewModelType == null)
-                throw new ArgumentNullException(nameof(viewModelType));
-            if (_container == null)
-                throw new ArgumentNullException(nameof(_container));
-            if (!typeof(ViewModel).IsAssignableFrom(viewModelType))
-                throw new ArgumentException($"Type {viewModelType.Name} must inherit from ViewModel", nameof(viewModelType));
-
-            var viewModel = (ViewModel) _container.CreateInstance(viewModelType);
+            var viewModel = CreateViewModelInstance(viewModelType);
+            InitializeViewModel(viewModel);
             return viewModel;
         }
-        
-        /// <summary>
-        /// Initializes the ViewModel with the Service Provider and creates its view.
-        /// </summary>
-        /// <param name="viewModel">The ViewModel to initialize.</param>
+
+        public ViewModel CreateViewModel(Type viewModelType, Model model)
+        {
+            var viewModel = CreateViewModelInstance(viewModelType);
+            InitializeViewModel(viewModel);
+            model.Container = _container;
+            viewModel.Model = model;
+            return viewModel;
+        }
+
+        public TViewModel CreateViewModel<TViewModel, TModel>()
+            where TViewModel : ViewModel<TModel>
+            where TModel : Model, new()
+        {
+            var viewModel = (TViewModel)CreateViewModelInstance(typeof(TViewModel));
+            InitializeViewModel(viewModel);
+            return viewModel;
+        }
+
+        public TViewModel CreateViewModel<TViewModel, TModel>(TModel model)
+            where TViewModel : ViewModel<TModel>
+            where TModel : Model, new()
+        {
+            var viewModel = (TViewModel)CreateViewModelInstance(typeof(TViewModel));
+            InitializeViewModel(viewModel);
+            model.Container = _container;
+            viewModel.Model = model;
+            return viewModel;
+        }
+
+        // ── View initialization ───────────────────────────────────────────────
+
+        public TView InitializeView<TView>(ViewModel viewModel)
+            where TView : View
+        {
+            var view = (TView)_container.CreateInstance(typeof(TView));
+            view.InitializeView(viewModel);
+            return view;
+        }
+
+        // ── Paired RootView + RootViewModel ──────────────────────────────────
+
+        public TRootView CreateRootView<TRootView, TRootViewModel>()
+            where TRootView : RootView
+            where TRootViewModel : RootViewModel
+        {
+            var viewModel = CreateViewModel<TRootViewModel>();
+            var view = (TRootView)_container.CreateInstance(typeof(TRootView));
+            view.InitializeView(viewModel);
+            return view;
+        }
+
+        public TRootView CreateRootView<TRootView, TRootViewModel, TModel>()
+            where TRootView : RootView
+            where TRootViewModel : RootViewModel<TModel>
+            where TModel : Model, new()
+        {
+            var viewModel = CreateViewModel<TRootViewModel>();
+            var model = new TModel { Container = _container };
+            viewModel.Model = model;
+            var view = (TRootView)_container.CreateInstance(typeof(TRootView));
+            view.InitializeView(viewModel);
+            return view;
+        }
+
+        public TRootView CreateRootView<TRootView, TRootViewModel, TModel>(TModel model)
+            where TRootView : RootView
+            where TRootViewModel : RootViewModel<TModel>
+            where TModel : Model, new()
+        {
+            var viewModel = CreateViewModel<TRootViewModel>();
+            model.Container = _container;
+            viewModel.Model = model;
+            var view = (TRootView)_container.CreateInstance(typeof(TRootView));
+            view.InitializeView(viewModel);
+            return view;
+        }
+
+        // ── Paired ChildView + ChildViewModel ────────────────────────────────
+
+        public TChildView CreateChildView<TChildView, TChildViewModel>(RootView rootView)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel
+        {
+            var viewModel = CreateViewModel<TChildViewModel>();
+            var childView = (TChildView)_container.CreateInstance(typeof(TChildView));
+            rootView.AddChildView(childView, viewModel);
+            return childView;
+        }
+
+        public TChildView CreateChildView<TChildView, TChildViewModel>(RootView rootView, Model model)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel
+        {
+            var viewModel = (TChildViewModel)CreateViewModelInstance(typeof(TChildViewModel));
+            var childView = (TChildView)_container.CreateInstance(typeof(TChildView));
+            rootView.AddChildView(childView, viewModel); // sets AssociatedView via InitializeView
+            model.Container = _container;
+            viewModel.Model = model; // triggers OnViewModelModelChanged on the View ✓
+            return childView;
+        }
+
+        public TChildView CreateChildView<TChildView, TChildViewModel, TModel>(RootView rootView)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel<TModel>
+            where TModel : Model, new()
+        {
+            var viewModel = (TChildViewModel)CreateViewModelInstance(typeof(TChildViewModel));
+            var childView = (TChildView)_container.CreateInstance(typeof(TChildView));
+            rootView.AddChildView(childView, viewModel);
+            var model = new TModel { Container = _container };
+            viewModel.Model = model;
+            return childView;
+        }
+
+        public TChildView CreateChildView<TChildView, TChildViewModel, TModel>(RootView rootView, TModel model)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel<TModel>
+            where TModel : Model, new()
+        {
+            var viewModel = (TChildViewModel)CreateViewModelInstance(typeof(TChildViewModel));
+            var childView = (TChildView)_container.CreateInstance(typeof(TChildView));
+            rootView.AddChildView(childView, viewModel);
+            model.Container = _container;
+            viewModel.Model = model;
+            return childView;
+        }
+
+        // ── Detached ChildView ────────────────────────────────────────────────
+
+        public TChildView CreateDetachedChildView<TChildView, TChildViewModel>(RootView rootView, Model model)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel
+        {
+            var rootViewModel = (RootViewModel)rootView.ViewModel;
+            var viewModel = (TChildViewModel)CreateViewModelInstance(typeof(TChildViewModel));
+            viewModel.SetParentRootViewModel(rootViewModel);
+            InitializeViewModel(viewModel);
+
+            var childView = (TChildView)_container.CreateInstance(typeof(TChildView));
+            childView.SetParentRootView(rootView);
+            childView.InitializeView(viewModel); // sets AssociatedView, calls CreateView
+            model.Container = _container;
+            viewModel.Model = model; // triggers OnViewModelModelChanged on the View ✓
+            return childView;
+        }
+
+        // ── Helpers ──────────────────────────────────────────────────────────
+
+        private ViewModel CreateViewModelInstance(Type viewModelType)
+        {
+            if (viewModelType == null)
+            {
+                throw new ArgumentNullException(nameof(viewModelType));
+            }
+
+            if (_container == null)
+            {
+                throw new ArgumentNullException(nameof(_container));
+            }
+
+            if (!typeof(ViewModel).IsAssignableFrom(viewModelType))
+            {
+                throw new ArgumentException($"Type {viewModelType.Name} must inherit from ViewModel", nameof(viewModelType));
+            }
+
+            return (ViewModel)_container.CreateInstance(viewModelType);
+        }
+
         private void InitializeViewModel(ViewModel viewModel)
         {
-            // Kick off the full init which includes
-            // which also includes the CreateView call
             viewModel.Initialize(_container);
         }
     }

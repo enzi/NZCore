@@ -21,7 +21,7 @@ namespace NZCore.Editor
 
         public BlockWriter(StringBuilder stringBuilder, int indent = 0)
         {
-            this.StringBuilder = stringBuilder;
+            StringBuilder = stringBuilder;
             indentLevel = indent;
         }
 
@@ -71,7 +71,9 @@ namespace NZCore.Editor
             WriteIndent();
 
             if (customIndent > 0)
+            {
                 WriteIndent(customIndent);
+            }
 
             StringBuilder.Append(text);
             StringBuilder.Append('\n');
@@ -96,7 +98,9 @@ namespace NZCore.Editor
         public void WriteIndent(int indentAmount)
         {
             for (var i = 0; i < indentAmount; i++)
+            {
                 StringBuilder.Append($"{Indent}");
+            }
         }
     }
 }

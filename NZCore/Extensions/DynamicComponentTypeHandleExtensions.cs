@@ -8,9 +8,6 @@ namespace NZCore
 {
     public static class DynamicComponentTypeHandleExtensions
     {
-        public static ref readonly TypeIndex GetTypeIndex(this ref DynamicComponentTypeHandle handle)
-        {
-            return ref handle.m_TypeIndex;
-        }
+        public static ref readonly TypeIndex GetTypeIndex(this ref DynamicComponentTypeHandle handle) => ref handle.m_TypeIndex;
     }
 }

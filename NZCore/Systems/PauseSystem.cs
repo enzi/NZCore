@@ -26,32 +26,30 @@ namespace NZCore
             Enabled = false;
         }
 
-        protected override void OnUpdate()
-        {
-        }
+        protected override void OnUpdate() { }
     }
-    
+
     public class PauseRateManager : IRateManager
     {
         private EntityQuery query;
         private bool isPresentation;
-        
+
         private bool isPaused;
         private bool hasUpdated;
         private double pauseTime;
-        
+
         public float Timestep { get; set; }
 
         public PauseRateManager(ComponentSystemGroup group, bool isPresentation)
         {
             query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<PauseGame>()
-                .WithOptions(EntityQueryOptions.IncludeSystems)
-                .Build(group);
+                    .WithAll<PauseGame>()
+                    .WithOptions(EntityQueryOptions.IncludeSystems)
+                    .Build(group);
 
             this.isPresentation = isPresentation;
         }
-        
+
         public bool ShouldGroupUpdate(ComponentSystemGroup group)
         {
             if (hasUpdated)
@@ -59,9 +57,9 @@ namespace NZCore
                 hasUpdated = false;
                 return false;
             }
-            
+
             var pauses = query.ToComponentDataArray<PauseGame>(group.WorldUpdateAllocator);
-            
+
             var shouldPause = false;
 
             if (isPresentation)

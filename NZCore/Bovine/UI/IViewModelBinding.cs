@@ -7,13 +7,9 @@ namespace BovineLabs.Core.UI
 {
     public interface IViewModelBinding
     {
-        void Load()
-        {
-        }
+        void Load() { }
 
-        void Unload()
-        {
-        }
+        void Unload() { }
     }
 
     public interface IViewModelBinding<TD> : IViewModelBinding

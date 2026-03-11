@@ -19,20 +19,14 @@ namespace NZCore.UIToolkit.Data
             App = new MVVMApplication();
             Manager = new UIToolkitManager();
 
-            App.RegisterServices((provider =>
-            {
-                provider.RegisterSingleton(Manager);
-            }));
+            App.RegisterServices(provider => { provider.RegisterSingleton(Manager); });
         }
-        
+
         public void Dispose()
         {
             App.Shutdown();
         }
 
-        public IViewFactory GetViewFactory()
-        {
-            return App.GetService<IViewFactory>();
-        }
+        public IViewFactory GetViewFactory() => App.GetService<IViewFactory>();
     }
 }

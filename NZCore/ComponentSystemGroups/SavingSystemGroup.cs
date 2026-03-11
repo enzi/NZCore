@@ -16,7 +16,5 @@ namespace NZCore
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     [UpdateAfter(typeof(SceneSystemGroup))]
 #endif
-    public partial class SavingSystemGroup : ComponentSystemGroup
-    {
-    }
+    public partial class SavingSystemGroup : ComponentSystemGroup { }
 }

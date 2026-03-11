@@ -17,20 +17,20 @@ namespace NZCore
             this NativeParallelMultiHashMap<TKey, TValue> hashmap,
             TKey key)
             where TKey : unmanaged, IEquatable<TKey>
-            where TValue : unmanaged
-        {
-            return TryPeekFirstRefValue(hashmap.m_MultiHashMapData.m_Buffer, key);
-        }
+            where TValue : unmanaged =>
+            TryPeekFirstRefValue(hashmap.m_MultiHashMapData.m_Buffer, key);
 
         private static unsafe bool TryPeekFirstRefValue<TKey>(UnsafeParallelHashMapData* data, TKey key)
             where TKey : unmanaged, IEquatable<TKey>
         {
             if (data->allocatedIndexLength <= 0)
+            {
                 return false;
+            }
 
             // First find the slot based on the hash
-            int* buckets = (int*)data->buckets;
-            int bucket = key.GetHashCode() & data->bucketCapacityMask;
+            var buckets = (int*)data->buckets;
+            var bucket = key.GetHashCode() & data->bucketCapacityMask;
             return TryPeekNextRefValue(data, key, buckets[bucket]);
         }
 
@@ -38,9 +38,11 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
         {
             if (entryIdx < 0 || entryIdx >= data->keyCapacity)
+            {
                 return false;
+            }
 
-            int* nextPtrs = (int*)data->next;
+            var nextPtrs = (int*)data->next;
             while (!(*(TKey*)(data->keys + entryIdx * sizeof(TKey))).Equals(key))
             {
                 entryIdx = nextPtrs[entryIdx];
@@ -80,7 +82,7 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            UnsafeParallelHashMapBucketData data = hashMap.GetUnsafeBucketData();
+            var data = hashMap.GetUnsafeBucketData();
 
             var buckets = (int*)data.buckets;
             var nextPtrs = (int*)data.next;
@@ -230,7 +232,7 @@ namespace NZCore
             {
                 isFirst = true;
                 this.hashmap = hashmap;
-                iterator = new NativeParallelMultiHashMapIterator<TKey>()
+                iterator = new NativeParallelMultiHashMapIterator<TKey>
                 {
                     key = key,
                     EntryIndex = -1,
@@ -240,9 +242,7 @@ namespace NZCore
                 value = null;
             }
 
-            public void Dispose()
-            {
-            }
+            public void Dispose() { }
 
             public bool MoveNext()
             {
@@ -259,7 +259,8 @@ namespace NZCore
             public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(value);
         }
 
-        private static unsafe bool TryGetFirstRefValue<TKey, TValue>(UnsafeParallelHashMapData* data, out byte* itemPtr, ref NativeParallelMultiHashMapIterator<TKey> it)
+        private static unsafe bool TryGetFirstRefValue<TKey, TValue>(UnsafeParallelHashMapData* data, out byte* itemPtr,
+            ref NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
@@ -271,17 +272,18 @@ namespace NZCore
             }
 
             // First find the slot based on the hash
-            int* buckets = (int*)data->buckets;
-            int bucket = it.key.GetHashCode() & data->bucketCapacityMask;
+            var buckets = (int*)data->buckets;
+            var bucket = it.key.GetHashCode() & data->bucketCapacityMask;
             it.EntryIndex = it.NextEntryIndex = buckets[bucket];
             return TryGetNextRefValue<TKey, TValue>(data, out itemPtr, ref it);
         }
 
-        private static unsafe bool TryGetNextRefValue<TKey, TValue>(UnsafeParallelHashMapData* data, out byte* itemPtr, ref NativeParallelMultiHashMapIterator<TKey> it)
+        private static unsafe bool TryGetNextRefValue<TKey, TValue>(UnsafeParallelHashMapData* data, out byte* itemPtr,
+            ref NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            int entryIdx = it.NextEntryIndex;
+            var entryIdx = it.NextEntryIndex;
             it.NextEntryIndex = -1;
             it.EntryIndex = -1;
             itemPtr = null;
@@ -291,7 +293,7 @@ namespace NZCore
                 return false;
             }
 
-            int* nextPtrs = (int*)data->next;
+            var nextPtrs = (int*)data->next;
             while (!UnsafeUtility.ReadArrayElement<TKey>(data->keys, entryIdx).Equals(it.key))
             {
                 entryIdx = nextPtrs[entryIdx];

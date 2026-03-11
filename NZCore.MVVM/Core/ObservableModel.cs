@@ -16,6 +16,7 @@ namespace NZCore.MVVM
     /// <param name="oldValue">The old value of the property.</param>
     /// <param name="newValue">The new value of the property.</param>
     public delegate void PropertyValueChangedHandler(string propertyName, object oldValue, object newValue);
+
     /// <summary>
     /// Base class for models that support property change notification.
     /// Extends the existing Model class with observable capabilities.
@@ -27,12 +28,12 @@ namespace NZCore.MVVM
         /// Occurs when a property value changes.
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
-        
+
         /// <summary>
         /// Occurs when a property value is changing.
         /// </summary>
         public event PropertyChangingEventHandler PropertyChanging;
-        
+
         /// <summary>
         /// Occurs when a property value changes, providing old and new values.
         /// </summary>
@@ -41,17 +42,13 @@ namespace NZCore.MVVM
         /// <summary>
         /// Initializes a new instance of the ObservableModel class.
         /// </summary>
-        protected ObservableModel() : base()
-        {
-        }
+        protected ObservableModel() : base() { }
 
         /// <summary>
         /// Initializes a new instance of the ObservableModel class with a specific GUID.
         /// </summary>
         /// <param name="guid">The GUID to use.</param>
-        protected ObservableModel(UnityEngine.Hash128 guid) : base(guid)
-        {
-        }
+        protected ObservableModel(UnityEngine.Hash128 guid) : base(guid) { }
 
         /// <summary>
         /// Sets the value of a property and raises PropertyChanged if the value changed.
@@ -64,7 +61,9 @@ namespace NZCore.MVVM
         protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = "")
         {
             if (EqualityComparer<T>.Default.Equals(field, value))
+            {
                 return false;
+            }
 
             var oldValue = field;
             OnPropertyChanging(propertyName);
@@ -87,9 +86,11 @@ namespace NZCore.MVVM
         protected bool SetProperty<T>(ref T field, T value, out T oldValue, [CallerMemberName] string propertyName = "")
         {
             oldValue = field;
-            
+
             if (EqualityComparer<T>.Default.Equals(field, value))
+            {
                 return false;
+            }
 
             OnPropertyChanging(propertyName);
             field = value;
@@ -98,7 +99,7 @@ namespace NZCore.MVVM
             return true;
         }
 
-        
+
         protected virtual void OnPropertyChanging([CallerMemberName] string propertyName = "")
         {
             PropertyChanging?.Invoke(this, new PropertyChangingEventArgs(propertyName));

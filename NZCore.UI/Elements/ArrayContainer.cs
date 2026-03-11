@@ -18,8 +18,8 @@ namespace NZCore.UI
         private IList _itemsSource;
         private ListElementChangedCommand _onElementChanged;
         private ListChangedCommand _onListChanged;
-        
-        [CreateProperty, UxmlAttribute("item-template")]
+
+        [CreateProperty] [UxmlAttribute("item-template")]
         public VisualTreeAsset ItemTemplate;
 
         [CreateProperty]
@@ -32,7 +32,7 @@ namespace NZCore.UI
                 Rebuild();
             }
         }
-        
+
         /// <summary>
         /// Command that notifies when a list item has changed.
         /// Bind this to your ViewModel's ListChangedCommand property.
@@ -58,7 +58,7 @@ namespace NZCore.UI
                 }
             }
         }
-        
+
         [CreateProperty]
         public ListChangedCommand onListChanged
         {
@@ -90,7 +90,7 @@ namespace NZCore.UI
         private void Rebuild()
         {
             Clear();
-            for (int i = 0; i < _itemsSource.Count; i++)
+            for (var i = 0; i < _itemsSource.Count; i++)
             {
                 ItemTemplate.CloneSingleTree(this);
                 ElementAt(i).dataSource = _itemsSource[i];

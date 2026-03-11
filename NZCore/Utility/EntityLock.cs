@@ -11,14 +11,14 @@ namespace NZCore.Utility
     {
         private readonly RefRW<SpinLockComponent> _lockComponent;
         private bool _acquired;
-    
+
         public EntityLockGuard(ref UnsafeComponentLookup<SpinLockComponent> lockLookup, Entity entity)
         {
             _lockComponent = lockLookup.GetRefRW(entity, false);
             _acquired = true;
             _lockComponent.ValueRW.SpinLock.Acquire();
         }
-    
+
         public void Dispose()
         {
             if (!_acquired)
@@ -33,9 +33,6 @@ namespace NZCore.Utility
 
     public static class EntityLockExtensions
     {
-        public static EntityLockGuard Lock(this ref UnsafeComponentLookup<SpinLockComponent> lockLookup, Entity entity)
-        {
-            return new EntityLockGuard(ref lockLookup, entity);
-        }
+        public static EntityLockGuard Lock(this ref UnsafeComponentLookup<SpinLockComponent> lockLookup, Entity entity) => new(ref lockLookup, entity);
     }
 }

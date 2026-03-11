@@ -13,12 +13,12 @@ namespace NZCore.Inject
         /// A new instance is created each time the service is requested.
         /// </summary>
         Transient,
-        
+
         /// <summary>
         /// A single instance is created per scope.
         /// </summary>
         Scoped,
-        
+
         /// <summary>
         /// A single instance is created for the entire application.
         /// </summary>

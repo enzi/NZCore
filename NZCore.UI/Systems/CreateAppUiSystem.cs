@@ -13,7 +13,7 @@ namespace NZCore.UIToolkit
     public partial class CreateAppUiSystem : SystemBase
     {
         private MVVMApplication _app;
-        
+
         protected override void OnCreate() { }
 
         protected override void OnUpdate()

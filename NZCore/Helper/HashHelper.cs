@@ -3,7 +3,7 @@
 // </copyright>
 
 using System;
-using Hash128 = UnityEngine.Hash128; 
+using Hash128 = UnityEngine.Hash128;
 using Unity.Entities;
 
 namespace NZCore
@@ -11,7 +11,7 @@ namespace NZCore
     public static class HashHelper
     {
         private const int PrimeNumber = 397;
-        
+
         public static int GetEntityAndByteHash(Entity entity, byte type)
         {
             var result = PrimeNumber + entity.GetHashCode();
@@ -35,7 +35,7 @@ namespace NZCore
 
         public static int GetSourceTargetHash(Entity source, Entity target)
         {
-            bool side = source.Index < target.Index;
+            var side = source.Index < target.Index;
 
             var result = PrimeNumber + (side ? source.Index : target.Index);
             result = PrimeNumber * result + (side ? target.Index : source.Index);
@@ -49,23 +49,20 @@ namespace NZCore
                 return (a.GetHashCode() * PrimeNumber) ^ b.GetHashCode();
             }
         }
-        
+
         public static ulong HashULongs(ulong a, ulong b)
         {
             // Use a variation of the FNV-1a hash algorithm
-            ulong hash = 14695981039346656037UL; // FNV offset basis
-    
+            var hash = 14695981039346656037UL; // FNV offset basis
+
             hash ^= a;
             hash *= 1099511628211UL; // FNV prime
             hash ^= b;
             hash *= 1099511628211UL;
-    
+
             return hash;
         }
 
-        public static Hash128 GenerateHash128()
-        {
-            return Hash128.Compute(Guid.NewGuid().ToByteArray());
-        }
+        public static Hash128 GenerateHash128() => Hash128.Compute(Guid.NewGuid().ToByteArray());
     }
 }

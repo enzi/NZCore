@@ -10,12 +10,12 @@ namespace NZCore
     {
         public Entity* Ptr;
     }
-    
+
     public unsafe struct BytePointer
     {
         public byte* Ptr;
     }
-    
+
     public unsafe struct VoidPointer
     {
         public void* Ptr;

@@ -7,101 +7,84 @@ using System;
 namespace NZCore.MVVM
 {
     /// <summary>
-    /// Interface for creating ViewModels with proper DI integration.
+    /// Interface for creating ViewModels and Views with proper DI integration.
+    /// ViewModels and Views are created separately and linked via InitializeView().
     /// </summary>
     public interface IViewFactory
     {
-        /// <summary>
-        /// Creates a ViewModel of the specified type with DI injection.
-        /// </summary>
-        /// <typeparam name="TViewModel">The type of ViewModel to create.</typeparam>
-        
-        /// <returns>The created and initialized ViewModel.</returns>
-        TViewModel CreateViewModel<TViewModel>() 
+        // ── ViewModel creation (pure C# objects) ──────────────────────────────
+
+        TViewModel CreateViewModel<TViewModel>()
             where TViewModel : ViewModel;
 
-        /// <summary>
-        /// Creates a ViewModel of the specified type with DI injection and a specific model.
-        /// </summary>
-        /// <typeparam name="TViewModel">The type of ViewModel to create.</typeparam>
-        
-        /// <param name="model">The model to associate with the ViewModel.</param>
-        /// <returns>The created and initialized ViewModel.</returns>
-        TViewModel CreateViewModel<TViewModel>(Model model) 
+        TViewModel CreateViewModel<TViewModel>(Model model)
             where TViewModel : ViewModel;
 
-        /// <summary>
-        /// Creates a ViewModel of the specified type with DI injection.
-        /// </summary>
-        /// <param name="viewModelType">The type of ViewModel to create.</param>
-        
-        /// <returns>The created and initialized ViewModel.</returns>
         ViewModel CreateViewModel(Type viewModelType);
 
-        /// <summary>
-        /// Creates a ViewModel of the specified type with DI injection and a specific model.
-        /// </summary>
-        /// <param name="viewModelType">The type of ViewModel to create.</param>
-        
-        /// <param name="model">The model to associate with the ViewModel.</param>
-        /// <returns>The created and initialized ViewModel.</returns>
         ViewModel CreateViewModel(Type viewModelType, Model model);
 
-        /// <summary>
-        /// Creates a strongly-typed ViewModel with DI injection.
-        /// </summary>
-        /// <typeparam name="TViewModel">The type of ViewModel to create.</typeparam>
-        /// <typeparam name="TModel">The type of model the ViewModel manages.</typeparam>
-        
-        /// <returns>The created and initialized strongly-typed ViewModel.</returns>
-        TViewModel CreateViewModel<TViewModel, TModel>() 
-            where TViewModel : ViewModel<TModel> 
+        TViewModel CreateViewModel<TViewModel, TModel>()
+            where TViewModel : ViewModel<TModel>
             where TModel : Model, new();
 
-        /// <summary>
-        /// Creates a strongly-typed ViewModel with DI injection and a specific model.
-        /// </summary>
-        /// <typeparam name="TViewModel">The type of ViewModel to create.</typeparam>
-        /// <typeparam name="TModel">The type of model the ViewModel manages.</typeparam>
-        
-        /// <param name="model">The strongly-typed model to associate with the ViewModel.</param>
-        /// <returns>The created and initialized strongly-typed ViewModel.</returns>
-        TViewModel CreateViewModel<TViewModel, TModel>(TModel model) 
-            where TViewModel : ViewModel<TModel> 
+        TViewModel CreateViewModel<TViewModel, TModel>(TModel model)
+            where TViewModel : ViewModel<TModel>
             where TModel : Model, new();
 
-        public TRootView CreateRootView<TRootView, TModel>()
-            where TRootView : RootView<TModel>
-            where TModel : Model, new();
-
-        public TRootView CreateRootView<TRootView, TModel>(TModel model)
-            where TRootView : RootView<TModel>
-            where TModel : Model, new();
-        
-        TChildView CreateChildViewModel<TChildView>(RootView rootView, Model model)
-            where TChildView : ChildView;
-        
-        /// <summary>
-        /// Creates a strongly-typed ChildView with DI injection.
-        /// </summary>
-        /// <typeparam name="TChildView">The type of ChildView to create.</typeparam>
-        /// <typeparam name="TModel">The type of model the ChildView manages.</typeparam>
-        /// <param name="rootView">The RootView of the ChildView.</param>
-        /// <returns>The created and initialized strongly-typed ChildView.</returns>
-        TChildView CreateChildViewModel<TChildView, TModel>(RootView rootView) 
-            where TChildView : ChildView<TModel> 
-            where TModel : Model, new();
+        // ── View initialization (links a View to an existing ViewModel) ────────
 
         /// <summary>
-        /// Creates a strongly-typed ViewModel with DI injection and a specific model.
+        /// Creates a View of the specified type and links it to the provided ViewModel.
+        /// Sets the ViewModel as the data source and calls CreateView().
         /// </summary>
-        /// <typeparam name="TChildView">The type of ChildView to create.</typeparam>
-        /// <typeparam name="TModel">The type of model the ViewModel manages.</typeparam>
-        /// <param name="model">The strongly-typed model to associate with the ViewModel.</param>
-        /// <param name="rootView">The RootView of the ChildView.</param>
-        /// <returns>The created and initialized strongly-typed ViewModel.</returns>
-        TChildView CreateChildViewModel<TChildView, TModel>(RootView rootView, TModel model) 
-            where TChildView : ChildView 
+        TView InitializeView<TView>(ViewModel viewModel)
+            where TView : View;
+
+        // ── Convenience: paired RootView + RootViewModel creation ─────────────
+
+        TRootView CreateRootView<TRootView, TRootViewModel>()
+            where TRootView : RootView
+            where TRootViewModel : RootViewModel;
+
+        TRootView CreateRootView<TRootView, TRootViewModel, TModel>()
+            where TRootView : RootView
+            where TRootViewModel : RootViewModel<TModel>
             where TModel : Model, new();
+
+        TRootView CreateRootView<TRootView, TRootViewModel, TModel>(TModel model)
+            where TRootView : RootView
+            where TRootViewModel : RootViewModel<TModel>
+            where TModel : Model, new();
+
+        // ── Convenience: paired ChildView + ChildViewModel creation ───────────
+
+        TChildView CreateChildView<TChildView, TChildViewModel>(RootView rootView)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel;
+
+        TChildView CreateChildView<TChildView, TChildViewModel>(RootView rootView, Model model)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel;
+
+        TChildView CreateChildView<TChildView, TChildViewModel, TModel>(RootView rootView)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel<TModel>
+            where TModel : Model, new();
+
+        TChildView CreateChildView<TChildView, TChildViewModel, TModel>(RootView rootView, TModel model)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel<TModel>
+            where TModel : Model, new();
+
+        // ── Detached ChildView (no UIElements hierarchy addition) ─────────────
+
+        /// <summary>
+        /// Creates and initializes a ChildView+ViewModel pair without adding it to the RootView's
+        /// UIElements hierarchy. Useful for views that are manually parented into sub-containers.
+        /// </summary>
+        TChildView CreateDetachedChildView<TChildView, TChildViewModel>(RootView rootView, Model model)
+            where TChildView : ChildView
+            where TChildViewModel : ChildViewModel;
     }
 }

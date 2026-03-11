@@ -37,14 +37,13 @@ namespace NZCore.UIToolkit
 
         public ref TD Model => ref UnsafeUtility.AsRef<TD>(_data);
 
-        public VisualElement LoadInterface(string containerName = null, string elementName = null)
-        {
-            return LoadInterface(UIToolkitManager.Instance.GetRoot(containerName), elementName);
-        }
+        public VisualElement LoadInterface(string containerName = null, string elementName = null) =>
+            LoadInterface(UIToolkitManager.Instance.GetRoot(containerName), elementName);
 
         public VisualElement LoadInterface(VisualElement container, string elementName = null)
         {
-            var (ve, binding) = UIToolkitManager.Instance.AddBindableInterface<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName, _priority, _visibleOnInstantiate);
+            var (ve, binding) = UIToolkitManager.Instance.AddBindableInterface<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName,
+                _priority, _visibleOnInstantiate);
 
             _handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
             _data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
@@ -54,14 +53,13 @@ namespace NZCore.UIToolkit
             return ve;
         }
 
-        public (VisualElement ve, T viewModel) LoadPanel(string containerName = null, string elementName = null)
-        {
-            return LoadPanel(UIToolkitManager.Instance.GetRoot(containerName), elementName);
-        }
+        public (VisualElement ve, T viewModel) LoadPanel(string containerName = null, string elementName = null) =>
+            LoadPanel(UIToolkitManager.Instance.GetRoot(containerName), elementName);
 
         public (VisualElement ve, T viewModel) LoadPanel(VisualElement container, string elementName = null)
         {
-            var (ve, binding) = UIToolkitManager.Instance.AddBindablePanel<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName, _priority, _visibleOnInstantiate);
+            var (ve, binding) = UIToolkitManager.Instance.AddBindablePanel<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName, _priority,
+                _visibleOnInstantiate);
 
             _handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
             _data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);

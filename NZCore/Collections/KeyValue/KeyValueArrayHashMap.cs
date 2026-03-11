@@ -28,18 +28,21 @@ namespace NZCore
         public KeyValueArrayHashMap(int initialCapacity, int keyOffset, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
-            AllocatorManager.AllocatorHandle temp = allocator;
+            var temp = allocator;
             Initialize(initialCapacity, keyOffset, ref temp);
         }
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        private void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator) where TAllocator : unmanaged, AllocatorManager.IAllocator
+        private void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator)
+            where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
 
             if (UnsafeUtility.IsNativeContainerType<TKey>() || UnsafeUtility.IsNativeContainerType<TValue>())
+            {
                 AtomicSafetyHandle.SetNestedContainer(m_Safety, true);
+            }
 
             CollectionHelper.SetStaticSafetyId<KeyValueArrayHashMap<TKey, TValue>>(ref m_Safety, ref staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
@@ -48,10 +51,7 @@ namespace NZCore
             _unsafeKeyValueArrayHashMap = UnsafeKeyValueArrayHashMap<TKey, TValue>.Create(initialCapacity, keyOffset, ref allocator);
         }
 
-        public bool ContainsKey(TKey key)
-        {
-            return _unsafeKeyValueArrayHashMap->TryPeekFirstRefValue(key);
-        }
+        public bool ContainsKey(TKey key) => _unsafeKeyValueArrayHashMap->TryPeekFirstRefValue(key);
 
         public void SetArrays(NativeArray<TKey> keysArray, NativeArray<TValue> valueArray)
         {
@@ -97,27 +97,23 @@ namespace NZCore
             UnsafeKeyValueArrayHashMap<TKey, TValue>.Destroy(_unsafeKeyValueArrayHashMap);
         }
 
-        public KeyValueArrayHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key)
-        {
-            return new KeyValueArrayHashMapEnumerator<TKey, TValue>
+        public KeyValueArrayHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key) =>
+            new()
             {
                 Map = _unsafeKeyValueArrayHashMap,
                 Key = key,
                 IsFirst = true
             };
-        }
 
         // helper jobs
 
-        public JobHandle ScheduleCalculateBuckets(NativeArray<TKey> keysArray, NativeArray<TValue> valuesArray, JobHandle dependency)
-        {
-            return new CalculateBucketsJob()
+        public JobHandle ScheduleCalculateBuckets(NativeArray<TKey> keysArray, NativeArray<TValue> valuesArray, JobHandle dependency) =>
+            new CalculateBucketsJob
             {
                 Hashmap = this,
                 Keys = keysArray,
                 Values = valuesArray
             }.Schedule(dependency);
-        }
 
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob

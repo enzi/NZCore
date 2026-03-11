@@ -7,9 +7,10 @@ using System.Collections.Generic;
 namespace NZCore.MVVM
 {
     /// <summary>
-    /// Base class for root-level ViewModels that manage application or major section navigation.
+    /// Base class for root-level Views that manage child Views.
+    /// Extends View (VisualElement). Pairs with a RootViewModel.
     /// </summary>
-    public abstract class RootView : ViewModel
+    public abstract class RootView : View
     {
         private readonly List<ChildView> _childViews = new();
 
@@ -18,47 +19,50 @@ namespace NZCore.MVVM
         /// </summary>
         protected IReadOnlyList<ChildView> ChildViews => _childViews;
 
-        protected override void OnInitialize()
-        {
-            base.OnInitialize();
-            
-            ViewModelManager.RegisterRootView(this);
-        }
-
         /// <summary>
-        /// Adds a child view to this root view.
+        /// Adds a child view to this root view and wires it to its ViewModel.
         /// </summary>
-        /// <param name="childView">The child view to add.</param>
-        protected virtual void AddChildView(ChildView childView)
+        public virtual void AddChildView(ChildView childView, ChildViewModel childViewModel)
         {
             if (childView == null || _childViews.Contains(childView))
-                return;
-
-            _childViews.Add(childView);
-            
-            // Set parent relationship
-            childView.SetParentRootView(this);
-            
-            // Initialize the child view with the child scope
-            if (!childView.IsInitialized)
             {
-                childView.Initialize(ServiceProvider);
+                return;
             }
 
-            // Add to UI hierarchy
+            var rootViewModel = (RootViewModel)ViewModel;
+
+            _childViews.Add(childView);
+
+            // Set the ViewModel-layer parent relationship
+            childViewModel.SetParentRootViewModel(rootViewModel);
+
+            // Initialize the ChildViewModel if not already initialized
+            if (!childViewModel.IsInitialized && rootViewModel != null)
+            {
+                childViewModel.Initialize(rootViewModel.ServiceProvider);
+            }
+
+            // Set the View-layer parent reference
+            childView.SetParentRootView(this);
+
+            // Link the View to its ViewModel (sets dataSource, calls CreateView)
+            childView.InitializeView(childViewModel);
+
+            // Add to UIElements hierarchy
             Add(childView);
-            
+
             OnChildViewAdded(childView);
         }
 
         /// <summary>
         /// Removes a child view from this root view.
         /// </summary>
-        /// <param name="childView">The child view to remove.</param>
         public virtual void RemoveChildView(ChildView childView)
         {
             if (childView == null || !_childViews.Remove(childView))
+            {
                 return;
+            }
 
             // Remove from UI hierarchy
             if (childView.parent == this)
@@ -66,9 +70,9 @@ namespace NZCore.MVVM
                 Remove(childView);
             }
 
-            // Dispose the child view
-            childView.Dispose();
-            
+            // Dispose the child ViewModel
+            childView.ViewModel?.Dispose();
+
             OnChildViewRemoved(childView);
         }
 
@@ -87,46 +91,45 @@ namespace NZCore.MVVM
         /// <summary>
         /// Called when a child view is added.
         /// </summary>
-        /// <param name="childView">The child view that was added.</param>
-        protected virtual void OnChildViewAdded(ChildView childView)
-        {
-        }
+        protected virtual void OnChildViewAdded(ChildView childView) { }
 
         /// <summary>
         /// Called when a child view is removed.
         /// </summary>
-        /// <param name="childView">The child view that was removed.</param>
-        protected virtual void OnChildViewRemoved(ChildView childView)
-        {
-        }
+        protected virtual void OnChildViewRemoved(ChildView childView) { }
+
+        // ── ChildViewModel lookup helpers ─────────────────────────────────────
+
+        protected ChildViewModel GetChildViewModel(Model model)
+            => ViewModelManager?.GetChildViewModel(model, (RootViewModel)ViewModel);
+
+        protected ChildViewModel GetChildViewModel(UnityEngine.Hash128 guid)
+            => ViewModelManager?.GetChildViewModel(guid, (RootViewModel)ViewModel);
+
+        protected TChildViewModel GetChildViewModel<TChildViewModel>(Model model)
+            where TChildViewModel : ChildViewModel
+            => ViewModelManager?.GetChildViewModel<TChildViewModel>(model, (RootViewModel)ViewModel);
+
+        protected TChildViewModel GetChildViewModel<TChildViewModel>(UnityEngine.Hash128 guid)
+            where TChildViewModel : ChildViewModel
+            => ViewModelManager?.GetChildViewModel<TChildViewModel>(guid, (RootViewModel)ViewModel);
 
         public override void RemoveView()
         {
-            OnUnregisterViewModel();
+            ViewModel?.OnUnregisterViewModel();
         }
 
         public override void DeleteView(ViewModel viewInitiator)
         {
-            OnUnregisterViewModel();
-        }
-
-        protected override void OnRegisterViewModel()
-        {
-            ViewModelManager.RegisterRootView(this);
-        }
-
-        protected override void OnUnregisterViewModel()
-        {
-            ViewModelManager.UnregisterRootView(this);
+            ViewModel?.OnUnregisterViewModel();
         }
 
         /// <summary>
         /// Disposes the root view and all child views.
         /// </summary>
-        protected override void OnDispose()
+        public void Dispose()
         {
             ClearChildViews();
-            base.OnDispose();
         }
     }
 }

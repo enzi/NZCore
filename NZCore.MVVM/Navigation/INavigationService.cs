@@ -50,7 +50,7 @@ namespace NZCore.MVVM
         /// <typeparam name="TViewModel">The type of ViewModel to navigate to.</typeparam>
         /// <param name="parameters">Optional navigation parameters.</param>
         /// <returns>The created ViewModel instance.</returns>
-        TViewModel NavigateTo<TViewModel>(NavigationParameters parameters = null) 
+        TViewModel NavigateTo<TViewModel>(NavigationParameters parameters = null)
             where TViewModel : ViewModel;
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace NZCore.MVVM
         /// <typeparam name="TViewModel">The type of ViewModel to navigate to.</typeparam>
         /// <param name="parameters">Optional navigation parameters.</param>
         /// <returns>The created ViewModel instance.</returns>
-        TViewModel NavigateToRoot<TViewModel>(NavigationParameters parameters = null) 
+        TViewModel NavigateToRoot<TViewModel>(NavigationParameters parameters = null)
             where TViewModel : ViewModel;
 
         /// <summary>
@@ -106,10 +106,7 @@ namespace NZCore.MVVM
         /// <typeparam name="T">The type of the parameter value.</typeparam>
         /// <param name="key">The parameter key.</param>
         /// <returns>The parameter value, or default if not found.</returns>
-        public T GetValue<T>(string key)
-        {
-            return TryGetValue(key, out var value) && value is T typedValue ? typedValue : default;
-        }
+        public T GetValue<T>(string key) => TryGetValue(key, out var value) && value is T typedValue ? typedValue : default;
 
         /// <summary>
         /// Sets a parameter value.

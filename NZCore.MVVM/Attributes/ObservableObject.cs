@@ -7,6 +7,7 @@ using System;
 namespace NZCore.MVVM
 {
     public class ObservableObjectAttribute : Attribute { }
+
     public class ObservablePropertyAttribute : Attribute
     {
         public bool ReportOldValue { get; }
@@ -16,7 +17,7 @@ namespace NZCore.MVVM
             ReportOldValue = reportOldValue;
         }
     }
-    
+
     public class AlsoNotifyAttribute : Attribute
     {
         public AlsoNotifyAttribute(string propertyName) { }

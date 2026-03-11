@@ -22,7 +22,7 @@ namespace NZCore
             {
                 throw new Exception("Function needs to be static!");
             }
-            
+
             if (function.Method.GetCustomAttributes(typeof(MonoPInvokeCallbackAttribute), false).Length == 0)
             {
                 throw new Exception("Function is missing MonoPInvokeCallback attribute!");

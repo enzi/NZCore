@@ -43,7 +43,7 @@ namespace NZCore
             NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
-            UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>* unsafeArrayHashMap = allocator.Allocate(default(UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>), 1);
+            var unsafeArrayHashMap = allocator.Allocate(default(UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>), 1);
 
             unsafeArrayHashMap->m_Allocator = allocator.Handle;
 
@@ -64,9 +64,14 @@ namespace NZCore
         public void SetArrays(NativeArray<TKey> keyArray, NativeArray<byte> valueArray)
         {
             if (!keyArray.IsCreated || !valueArray.IsCreated)
+            {
                 throw new Exception("Key or values are not created!");
+            }
+
             if (keyArray.Length != valueArray.Length)
+            {
                 throw new Exception("Key and value length is not the same!");
+            }
 
             if (valueArray.Length == 0)
             {
@@ -77,8 +82,8 @@ namespace NZCore
             Keys = (TKey*)keyArray.GetUnsafeReadOnlyPtr();
             Values = (byte*)valueArray.GetUnsafeReadOnlyPtr();
 
-            int length = keyArray.Length;
-            int bucketLength = length * 2;
+            var length = keyArray.Length;
+            var bucketLength = length * 2;
 
             keyCapacity = length;
             bucketLength = math.ceilpow2(bucketLength);
@@ -99,7 +104,7 @@ namespace NZCore
         private void Clear()
         {
             // set all to -1
-            UnsafeUtility.MemSet(next->Ptr, 0xff, (keyCapacity) * 8);
+            UnsafeUtility.MemSet(next->Ptr, 0xff, keyCapacity * 8);
             UnsafeUtility.MemSet(buckets->Ptr, 0xff, (bucketCapacityMask + 1) * 8);
 
             next->m_length = 0;
@@ -113,14 +118,14 @@ namespace NZCore
         {
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
 
-            int valueIndex = 0;
-            for (int i = 0; i < allocatedIndexLength; i++)
+            var valueIndex = 0;
+            for (var i = 0; i < allocatedIndexLength; i++)
             {
                 var key = Keys[i];
                 var bucketIndex = key.GetHashCode() & bucketCapacityMask;
 
                 (*next)[i] = (*buckets)[bucketIndex];
-                (*buckets)[bucketIndex] = new DynamicValueIndexer()
+                (*buckets)[bucketIndex] = new DynamicValueIndexer
                 {
                     Index = i,
                     ValueIndex = valueIndex
@@ -142,7 +147,7 @@ namespace NZCore
             }
 
             // First find the slot based on the hash            
-            int bucket = key.GetHashCode() & bucketCapacityMask;
+            var bucket = key.GetHashCode() & bucketCapacityMask;
             it.EntryIndex = it.NextEntryIndex = (*buckets)[bucket];
             return TryGetNextRefValue(out item, ref it);
         }
@@ -180,24 +185,30 @@ namespace NZCore
         public bool TryPeekFirstRefValue(TKey key)
         {
             if (allocatedIndexLength <= 0)
+            {
                 return false;
+            }
 
             // First find the slot based on the hash            
-            int bucket = key.GetHashCode() & bucketCapacityMask;
+            var bucket = key.GetHashCode() & bucketCapacityMask;
             return TryPeekNextRefValue(key, (*buckets)[bucket]);
         }
 
         public bool TryPeekNextRefValue(TKey key, DynamicValueIndexer entryIdx)
         {
             if (entryIdx.Index < 0 || entryIdx.Index >= keyCapacity)
+            {
                 return false;
+            }
 
             while (!Keys[entryIdx.Index].Equals(key))
             {
                 entryIdx = (*next)[entryIdx.Index];
 
                 if (entryIdx.Index < 0 || entryIdx.Index >= keyCapacity)
+                {
                     return false;
+                }
             }
 
             return true;
@@ -235,7 +246,9 @@ namespace NZCore
         {
             //Avoids going beyond the end of the collection.
             if (!IsFirst)
+            {
                 return Map->TryGetNextRefValue(out value, ref iterator);
+            }
 
             IsFirst = false;
             return Map->TryGetFirstRefValue(Key, out value, out iterator);
@@ -261,7 +274,7 @@ namespace NZCore
         public int Index;
         public int ValueIndex;
 
-        public static DynamicValueIndexer Null => new DynamicValueIndexer()
+        public static DynamicValueIndexer Null => new()
         {
             Index = -1,
             ValueIndex = -1

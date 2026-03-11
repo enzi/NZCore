@@ -29,7 +29,9 @@ namespace NZCore.MVVM
         public void Dispose()
         {
             if (_disposed)
+            {
                 return;
+            }
 
             _unsubscribeAction?.Invoke();
             _disposed = true;

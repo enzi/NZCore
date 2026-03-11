@@ -15,10 +15,10 @@ namespace NZCore.UI.Elements
         where TStructData : unmanaged
     {
         private SyncListCommand<TStructData> _onSyncList;
-        
+
         private List<TViewData> _items;
         private NativeList<TStructData> _trackArray;
-        
+
 
         [CreateProperty]
         public SyncListCommand<TStructData> syncList
@@ -53,7 +53,7 @@ namespace NZCore.UI.Elements
 
             RegisterCallback<AttachToPanelEvent>(_ => itemsSource = _items);
             RegisterCallback<DetachFromPanelEvent>(_ => _trackArray.Dispose());
-            
+
             bindItem = (element, index) => element.dataSource = itemsSource[index];
         }
 
@@ -74,7 +74,7 @@ namespace NZCore.UI.Elements
 
             var ptr1 = list.Ptr;
             var ptr2 = _trackArray.GetUnsafeReadOnlyPtr();
-            
+
             for (var i = 0; i < list.Length; i++)
             {
                 // todo what if _trackArray is smaller. it reads beyond memory
@@ -86,6 +86,7 @@ namespace NZCore.UI.Elements
                 _items[i] = UpdateItem(_items[i], ptr1[i]);
                 RefreshItem(i);
             }
+
             _trackArray.CopyFrom(list);
         }
 

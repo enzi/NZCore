@@ -20,15 +20,9 @@ namespace NZCore
             serializedGuid = null;
         }
 
-        public override bool Equals(object obj)
-        {
-            return obj is SerializableGuid guid && internalGuid.Equals(guid.internalGuid);
-        }
+        public override bool Equals(object obj) => obj is SerializableGuid guid && internalGuid.Equals(guid.internalGuid);
 
-        public override int GetHashCode()
-        {
-            return -1324198676 + internalGuid.GetHashCode();
-        }
+        public override int GetHashCode() => -1324198676 + internalGuid.GetHashCode();
 
         public void OnAfterDeserialize()
         {

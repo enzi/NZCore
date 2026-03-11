@@ -48,7 +48,7 @@ namespace NZCore.MVVM
         /// <summary>
         /// Gets the default version (0.0.0).
         /// </summary>
-        public static ModelVersion Default => new ModelVersion(0, 0, 0);
+        public static ModelVersion Default => new(0, 0, 0);
 
         /// <summary>
         /// Compares this version with another version.
@@ -58,7 +58,10 @@ namespace NZCore.MVVM
         public int CompareTo(ModelVersion other)
         {
             var majorComparison = _major.CompareTo(other._major);
-            if (majorComparison != 0) return majorComparison;
+            if (majorComparison != 0)
+            {
+                return majorComparison;
+            }
 
             var minorComparison = _minor.CompareTo(other._minor);
             return minorComparison != 0 ? minorComparison : _patch.CompareTo(other._patch);
@@ -69,20 +72,14 @@ namespace NZCore.MVVM
         /// </summary>
         /// <param name="other">The other version to compare.</param>
         /// <returns>True if the versions are equal; otherwise, false.</returns>
-        public bool Equals(ModelVersion other)
-        {
-            return _major == other._major && _minor == other._minor && _patch == other._patch;
-        }
+        public bool Equals(ModelVersion other) => _major == other._major && _minor == other._minor && _patch == other._patch;
 
         /// <summary>
         /// Determines whether this version is equal to another object.
         /// </summary>
         /// <param name="obj">The other object to compare.</param>
         /// <returns>True if the objects are equal; otherwise, false.</returns>
-        public override bool Equals(object obj)
-        {
-            return obj is ModelVersion other && Equals(other);
-        }
+        public override bool Equals(object obj) => obj is ModelVersion other && Equals(other);
 
         /// <summary>
         /// Gets the hash code for this version.
@@ -103,57 +100,36 @@ namespace NZCore.MVVM
         /// Returns the string representation of this version.
         /// </summary>
         /// <returns>The version string in format "major.minor.patch".</returns>
-        public override string ToString()
-        {
-            return $"{_major}.{_minor}.{_patch}";
-        }
+        public override string ToString() => $"{_major}.{_minor}.{_patch}";
 
         /// <summary>
         /// Determines whether two versions are equal.
         /// </summary>
-        public static bool operator ==(ModelVersion left, ModelVersion right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(ModelVersion left, ModelVersion right) => left.Equals(right);
 
         /// <summary>
         /// Determines whether two versions are not equal.
         /// </summary>
-        public static bool operator !=(ModelVersion left, ModelVersion right)
-        {
-            return !left.Equals(right);
-        }
+        public static bool operator !=(ModelVersion left, ModelVersion right) => !left.Equals(right);
 
         /// <summary>
         /// Determines whether the left version is less than the right version.
         /// </summary>
-        public static bool operator <(ModelVersion left, ModelVersion right)
-        {
-            return left.CompareTo(right) < 0;
-        }
+        public static bool operator <(ModelVersion left, ModelVersion right) => left.CompareTo(right) < 0;
 
         /// <summary>
         /// Determines whether the left version is greater than the right version.
         /// </summary>
-        public static bool operator >(ModelVersion left, ModelVersion right)
-        {
-            return left.CompareTo(right) > 0;
-        }
+        public static bool operator >(ModelVersion left, ModelVersion right) => left.CompareTo(right) > 0;
 
         /// <summary>
         /// Determines whether the left version is less than or equal to the right version.
         /// </summary>
-        public static bool operator <=(ModelVersion left, ModelVersion right)
-        {
-            return left.CompareTo(right) <= 0;
-        }
+        public static bool operator <=(ModelVersion left, ModelVersion right) => left.CompareTo(right) <= 0;
 
         /// <summary>
         /// Determines whether the left version is greater than or equal to the right version.
         /// </summary>
-        public static bool operator >=(ModelVersion left, ModelVersion right)
-        {
-            return left.CompareTo(right) >= 0;
-        }
+        public static bool operator >=(ModelVersion left, ModelVersion right) => left.CompareTo(right) >= 0;
     }
 }

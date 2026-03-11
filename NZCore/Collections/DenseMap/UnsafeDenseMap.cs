@@ -87,7 +87,7 @@ namespace NZCore.NativeContainers.DenseMap
             _entries = (Entry*)block;
             _metadata = (sbyte*)(block + arrayLength * UnsafeUtility.SizeOf<Entry>());
 
-            for (int i = 0; i < arrayLength; i++)
+            for (var i = 0; i < arrayLength; i++)
             {
                 _metadata[i] = UnsafeDenseMap.EmptyBucket;
             }
@@ -99,7 +99,7 @@ namespace NZCore.NativeContainers.DenseMap
 
         public static UnsafeDenseMap<TKey, TValue>* Create(uint length, double loadFactor, AllocatorManager.AllocatorHandle allocator)
         {
-            UnsafeDenseMap<TKey, TValue>* map = allocator.Allocate(default(UnsafeDenseMap<TKey, TValue>), 1);
+            var map = allocator.Allocate(default(UnsafeDenseMap<TKey, TValue>), 1);
             *map = new UnsafeDenseMap<TKey, TValue>(length, loadFactor, allocator);
             return map;
         }
@@ -123,7 +123,7 @@ namespace NZCore.NativeContainers.DenseMap
             var h2 = H2(hashcode);
             //var target = new v128(UnsafeUtility.As<uint, sbyte>(ref h2));
             var target = X86.Sse2.set1_epi8(UnsafeUtility.As<uint, sbyte>(ref h2));
-            uint index = (_goldenRatio * hashcode) >> _shift;
+            var index = (_goldenRatio * hashcode) >> _shift;
             uint jumpDistance = 0;
 
             while (true)
@@ -134,7 +134,7 @@ namespace NZCore.NativeContainers.DenseMap
 
                 while (mask != 0)
                 {
-                    int bitPos = math.tzcnt(mask);
+                    var bitPos = math.tzcnt(mask);
                     ref var entry = ref UnsafeUtility.ArrayElementAsRef<Entry>(_entries, (int)index + bitPos);
 
                     if (entry.Key.Equals(key))
@@ -181,7 +181,7 @@ namespace NZCore.NativeContainers.DenseMap
         public uint CompareGetMask(v128 a, v128 b)
         {
             var cmp = X86.Sse2.cmpeq_epi8(a, b);
-            int mask = X86.Sse2.movemask_epi8(cmp);
+            var mask = X86.Sse2.movemask_epi8(cmp);
 
             return (uint)mask;
         }
@@ -193,7 +193,7 @@ namespace NZCore.NativeContainers.DenseMap
             var h2 = H2(hashcode);
             //var target = new v128(UnsafeUtility.As<uint, sbyte>(ref h2));
             var target = X86.Sse2.set1_epi8(UnsafeUtility.As<uint, sbyte>(ref h2));
-            uint index = (_goldenRatio * hashcode) >> _shift;
+            var index = (_goldenRatio * hashcode) >> _shift;
             uint jumpDistance = 0;
 
             while (true)
@@ -203,7 +203,7 @@ namespace NZCore.NativeContainers.DenseMap
 
                 while (mask > 0)
                 {
-                    int bitPos = math.tzcnt(mask);
+                    var bitPos = math.tzcnt(mask);
                     //ref var entry = ref UnsafeUtility.ArrayElementAsRef<Entry>(_entries, (int) index + bitPos);
                     var entry = UnsafeUtility.ReadArrayElement<Entry>(_entries, (int)index + bitPos);
                     //var entry = *(_entries + (int)index + bitPos);
@@ -264,7 +264,7 @@ namespace NZCore.NativeContainers.DenseMap
 
             arrayLength = (uint)newSize;
 
-            for (int i = 0; i < newSize; i++)
+            for (var i = 0; i < newSize; i++)
             {
                 _metadata[i] = UnsafeDenseMap.EmptyBucket;
             }
@@ -280,7 +280,7 @@ namespace NZCore.NativeContainers.DenseMap
                 var entry = *(oldEntries + i);
 
                 var hashcode = (uint)entry.Key.GetHashCode();
-                uint index = (_goldenRatio * hashcode) >> _shift;
+                var index = (_goldenRatio * hashcode) >> _shift;
                 uint jumpDistance = 0;
 
                 while (true)
@@ -316,11 +316,9 @@ namespace NZCore.NativeContainers.DenseMap
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static uint ResetLowestSetBit(uint value)
-        {
+        internal static uint ResetLowestSetBit(uint value) =>
             // It's lowered to BLSR on x86
-            return value & value - 1;
-        }
+            value & (value - 1);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static uint H2(uint hashcode) => hashcode & 0b01111111;

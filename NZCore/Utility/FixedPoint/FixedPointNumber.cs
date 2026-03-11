@@ -26,16 +26,13 @@ namespace NZCore
         public double GetDouble();
         public float GetFloat();
 
-        public static T GetOriginal(double val)
-        {
-            return default;
-        }
+        public static T GetOriginal(double val) => default;
     }
 
     public struct FixedPointInt24 : IFixedPoint<FixedPointInt24>
     {
         private int _value;
-        
+
         public const int Precision = 24;
 
         public FixedPointInt24(int value)
@@ -43,40 +40,35 @@ namespace NZCore
             _value = value << Precision;
         }
 
-        public double GetDouble()
-        {
-            return _value * 5.960464477539062e-08;
-        }
+        public double GetDouble() => _value * 5.960464477539062e-08;
 
-        public float GetFloat()
-        {
+        public float GetFloat() =>
             //throw new NotImplementedException();
-            return 0;
-        }
+            0;
 
         public static FixedPointInt24 Unnormalize(double val)
         {
             var tmp = (int)(val / 5.960464477539062e-08);
-            return new FixedPointInt24()
+            return new FixedPointInt24
             {
                 _value = tmp
             };
         }
     }
-    
+
     public static class FixedPointInt24Extensions
     {
         public static void Multiply(this ref FixedPointInt24 val2, double normalizedFixedPoint)
         {
             var tmp = val2.GetDouble() * normalizedFixedPoint;
-            val2 = new FixedPointInt24((int) tmp);
+            val2 = new FixedPointInt24((int)tmp);
         }
     }
-    
+
     public struct FixedPointInt8 : IFixedPoint<FixedPointInt24>
     {
         private int _value;
-        
+
         public const int Precision = 8;
 
         public FixedPointInt8(int value)
@@ -84,62 +76,49 @@ namespace NZCore
             _value = value << Precision;
         }
 
-        public double GetDouble()
-        {
-            return _value * 0.00390625;
-        }
+        public double GetDouble() => _value * 0.00390625;
 
-        public float GetFloat()
-        {
+        public float GetFloat() =>
             //throw new NotImplementedException();
-            return 0;
-        }
+            0;
 
         public static FixedPointInt8 Unnormalize(double val)
         {
             var tmp = (int)(val / 0.00390625);
-            return new FixedPointInt8()
+            return new FixedPointInt8
             {
                 _value = tmp
             };
         }
     }
-    
+
     public static class FixedPointInt8Extensions
     {
         public static void Multiply(this ref FixedPointInt8 val2, double normalizedFixedPoint)
         {
             var tmp = val2.GetDouble() * normalizedFixedPoint;
-            val2 = new FixedPointInt8((int) tmp);
+            val2 = new FixedPointInt8((int)tmp);
         }
     }
-    
-    
+
+
     public struct FixedPointFloat24 : IFixedPoint<FixedPointFloat24>
     {
         public float Value;
-        
+
         public const int Precision = 24;
 
-        public double GetDouble()
-        {
-            return Value;
-        }
+        public double GetDouble() => Value;
 
-        public float GetFloat()
-        {
-            return Value;
-        }
+        public float GetFloat() => Value;
 
-        public static FixedPointFloat24 Unnormalize(double val)
-        {
-            return new FixedPointFloat24()
+        public static FixedPointFloat24 Unnormalize(double val) =>
+            new()
             {
-                Value = (float) val
+                Value = (float)val
             };
-        }
     }
-    
+
     public static class FixedPointFloat24Extensions
     {
         public static void Multiply(this ref FixedPointFloat24 val2, double normalizedFixedPoint)
@@ -148,38 +127,32 @@ namespace NZCore
             val2 = FixedPointFloat24.Unnormalize(tmp);
         }
     }
-    
+
     public struct FixedPointLong24 : IFixedPoint<FixedPointLong24>
     {
         private long Value;
-        
+
         public const int Precision = 24;
-        
+
         public FixedPointLong24(int value)
         {
             Value = value << Precision;
         }
 
-        public double GetDouble()
-        {
-            return Value * 5.960464477539062e-08;
-        }
+        public double GetDouble() => Value * 5.960464477539062e-08;
 
-        public float GetFloat()
-        {
-            return Value;
-        }
+        public float GetFloat() => Value;
 
         public static FixedPointLong24 Unnormalize(double val)
         {
             var tmp = (long)(val / 5.960464477539062e-08);
-            return new FixedPointLong24()
+            return new FixedPointLong24
             {
                 Value = tmp
             };
         }
     }
-    
+
     public static class FixedPointLong24Extensions
     {
         public static void Multiply(this ref FixedPointLong24 val2, double normalizedFixedPoint)

@@ -34,19 +34,14 @@ namespace NZCore
             state.AddReaderWriter(ComponentType.ReadOnly(tmp));
         }
 
-        public static JobHandle GetInternalDependency(ref this SystemState state)
-        {
-            return state.m_JobHandle;
-        }
+        public static JobHandle GetInternalDependency(ref this SystemState state) => state.m_JobHandle;
 
         public static EntityQuery GetSingletonQuery<T>(ref this SystemState state)
-            where T : unmanaged
-        {
-            return new EntityQueryBuilder(Allocator.Temp)
+            where T : unmanaged =>
+            new EntityQueryBuilder(Allocator.Temp)
                 .WithAll<T>()
                 .WithOptions(EntityQueryOptions.IncludeSystems)
                 .Build(ref state);
-        }
 
         public static T GetSingleton<T>(ref this SystemState state)
             where T : unmanaged, IComponentData
@@ -70,7 +65,7 @@ namespace NZCore
             var query = state.GetSingletonQuery<T>();
             return query.GetSingletonBuffer<T>();
         }
-        
+
         public static DynamicBuffer<T> GetSingletonBufferNoSync<T>(ref this SystemState state, bool isReadOnly)
             where T : unmanaged, IBufferElementData
         {

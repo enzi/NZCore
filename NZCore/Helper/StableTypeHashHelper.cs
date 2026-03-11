@@ -19,14 +19,14 @@ namespace NZCore.Helper
      * */
     public static class StableTypeHashHelper
     {
-        const ulong kFNV1A64OffsetBasis = 14695981039346656037;
+        private const ulong kFNV1A64OffsetBasis = 14695981039346656037;
 
         public static ulong GetFixedHash(Type type)
         {
             var hash = HashTypeName(type);
             // If we shouldn't walk the type's fields just return the type name hash.
             // UnityEngine objects have their own serialization mechanism so exclude hashing their internals
-            if (type.IsArray || type.IsPointer || type.IsPrimitive || type.IsEnum || (TypeManager.UnityEngineObjectType?.IsAssignableFrom(type) == true))
+            if (type.IsArray || type.IsPointer || type.IsPrimitive || type.IsEnum || TypeManager.UnityEngineObjectType?.IsAssignableFrom(type) == true)
             {
                 return hash;
             }
@@ -42,18 +42,22 @@ namespace NZCore.Helper
 
             var fields = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
-            ulong fieldsLength = (ulong)fields.Length;
+            var fieldsLength = (ulong)fields.Length;
             ulong fieldIndex = 0;
             for (ulong i = 0; i < fieldsLength; i++)
             {
                 var field = fields[i];
                 // statics have no effect on data layout
                 if (field.IsStatic)
+                {
                     continue;
-                
+                }
+
                 if (field.Name == "m_Safety")
+                {
                     continue;
-                
+                }
+
                 var fieldType = field.FieldType;
                 ulong fieldTypeHash = 0;
 
@@ -108,7 +112,7 @@ namespace NZCore.Helper
             var hash = HashTypeNameVerbose(type);
             // If we shouldn't walk the type's fields just return the type name hash.
             // UnityEngine objects have their own serialization mechanism so exclude hashing their internals
-            if (type.IsArray || type.IsPointer || type.IsPrimitive || type.IsEnum || (TypeManager.UnityEngineObjectType?.IsAssignableFrom(type) == true))
+            if (type.IsArray || type.IsPointer || type.IsPrimitive || type.IsEnum || TypeManager.UnityEngineObjectType?.IsAssignableFrom(type) == true)
             {
                 return hash;
             }
@@ -121,21 +125,25 @@ namespace NZCore.Helper
 
             // Only non-pod and non-unityengine types could possibly have a version attribute
             hash = TypeHash.CombineFNV1A64(hash, HashVersionAttribute(type));
-           
+
             var fields = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
-            ulong fieldsLength = (ulong)fields.Length;
+            var fieldsLength = (ulong)fields.Length;
             ulong fieldIndex = 0;
             for (ulong i = 0; i < fieldsLength; i++)
             {
                 var field = fields[i];
                 // statics have no effect on data layout
                 if (field.IsStatic)
+                {
                     continue;
-                
+                }
+
                 if (field.Name == "m_Safety")
+                {
                     continue;
-                
+                }
+
                 var fieldType = field.FieldType;
                 ulong fieldTypeHash = 0;
 
@@ -187,7 +195,7 @@ namespace NZCore.Helper
 
         private static ulong HashTypeName(Type type)
         {
-            ulong hash = HashNamespace(type);
+            var hash = HashNamespace(type);
             hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Name));
             hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Assembly.GetName().Name));
 
@@ -198,10 +206,10 @@ namespace NZCore.Helper
 
             return hash;
         }
-        
+
         private static ulong HashTypeNameVerbose(Type type)
         {
-            ulong hash = HashNamespaceVerbose(type);
+            var hash = HashNamespaceVerbose(type);
             hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Name));
             hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Assembly.GetName().Name));
 
@@ -232,7 +240,7 @@ namespace NZCore.Helper
 
             return hash;
         }
-        
+
         private static ulong HashNamespaceVerbose(Type type)
         {
             var hash = kFNV1A64OffsetBasis;
@@ -257,7 +265,7 @@ namespace NZCore.Helper
 
         private static ulong HashVersionAttribute(Type type)
         {
-            int version = 0;
+            var version = 0;
 
             var versionAttribute = type.GetCustomAttribute<TypeManager.TypeVersionAttribute>(true);
             if (versionAttribute != null)

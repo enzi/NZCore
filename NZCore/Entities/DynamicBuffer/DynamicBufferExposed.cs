@@ -13,8 +13,7 @@ namespace NZCore
     // ReSharper disable once UnusedTypeParameter
     public unsafe struct DynamicBufferExposed<T>
     {
-        [NativeDisableUnsafePtrRestriction] 
-        [NoAlias]
+        [NativeDisableUnsafePtrRestriction] [NoAlias]
         internal BufferHeader* m_Buffer;
 
         internal int m_InternalCapacity;
@@ -25,8 +24,11 @@ namespace NZCore
         internal int m_SafetyReadOnlyCount;
         internal int m_SafetyReadWriteCount;
 
-        /*[MarshalAs(UnmanagedType.U1)]*/ internal bool m_IsReadOnly;
-        /*[MarshalAs(UnmanagedType.U1)]*/ internal bool m_useMemoryInitPattern;
+        /*[MarshalAs(UnmanagedType.U1)]*/
+        internal bool m_IsReadOnly;
+
+        /*[MarshalAs(UnmanagedType.U1)]*/
+        internal bool m_useMemoryInitPattern;
         internal byte m_memoryInitPattern;
 #endif
     }

@@ -13,15 +13,14 @@ namespace NZCore.UIToolkit
         private const string visibleClass = "visible";
         private const string hiddenClass = "hidden";
 
-        public static bool IsVisible(this VisualElement visualElement)
-        {
-            return visualElement.resolvedStyle.display == DisplayStyle.Flex;
-        }
+        public static bool IsVisible(this VisualElement visualElement) => visualElement.resolvedStyle.display == DisplayStyle.Flex;
 
         public static bool ToggleVisualElement(this VisualElement visualElement)
         {
             if (visualElement == null)
+            {
                 return false;
+            }
 
             if (visualElement.resolvedStyle.display == DisplayStyle.Flex)
             {
@@ -41,12 +40,16 @@ namespace NZCore.UIToolkit
         public static void ShowVisualElement(this VisualElement visualElement, bool state)
         {
             if (visualElement == null)
+            {
                 return;
+            }
 
             if (state)
             {
                 if (visualElement.ClassListContains(visibleClass))
+                {
                     return;
+                }
 
                 visualElement.RemoveFromClassList(hiddenClass);
                 visualElement.AddToClassList(visibleClass);
@@ -54,7 +57,9 @@ namespace NZCore.UIToolkit
             else
             {
                 if (visualElement.ClassListContains(hiddenClass))
+                {
                     return;
+                }
 
                 visualElement.RemoveFromClassList(visibleClass);
                 visualElement.AddToClassList(hiddenClass);
@@ -68,7 +73,7 @@ namespace NZCore.UIToolkit
         public static VisualElement CloneSingleTree(this VisualTreeAsset vta, VisualElement target, bool visible = true)
         {
             //Debug.Log($"CloneSingleTree {vta.name}");
-            vta.CloneTree(target, out int firstElementIndex, out int _);
+            vta.CloneTree(target, out var firstElementIndex, out var _);
             var ve = target.ElementAt(firstElementIndex);
             ve.AddToClassList(visible ? visibleClass : hiddenClass);
 
@@ -91,7 +96,7 @@ namespace NZCore.UIToolkit
 
             var ve = tmp.ElementAt(0);
             ve.AddToClassList(visible ? visibleClass : hiddenClass);
-            
+
 #if UNITY_6000_3_OR_NEWER
             var vea = vta.visualTreeNoAlloc;
 #else
@@ -110,13 +115,13 @@ namespace NZCore.UIToolkit
             {
                 return;
             }
-        
+
             foreach (var className in asset.classes)
             {
                 element.AddToClassList(className);
             }
         }
-        
+
         private static void AssignStyleSheetFromAssetToElement(
             this VisualElementAsset asset,
             VisualElement element)
@@ -128,12 +133,12 @@ namespace NZCore.UIToolkit
                     element.AddStyleSheetPath(sheetPath);
                 }
             }
-        
+
             if (!asset.hasStylesheets)
             {
                 return;
             }
-        
+
             foreach (var styleSheet in asset.stylesheets)
             {
                 if (styleSheet != null)
@@ -146,11 +151,13 @@ namespace NZCore.UIToolkit
         public static List<T> GetActiveElements<T>(this VisualElement ve)
             where T : VisualElement
         {
-            List<T> tmp = new List<T>();
+            var tmp = new List<T>();
             ve.Query<T>().ForEach((T element) =>
             {
                 if (element.resolvedStyle.display == DisplayStyle.Flex)
+                {
                     tmp.Add(element);
+                }
             });
 
             return tmp;
@@ -169,7 +176,7 @@ namespace NZCore.UIToolkit
             scrollContainer.style.flexWrap = new StyleEnum<Wrap>(wrapMode);
             scrollContainer.style.flexDirection = new StyleEnum<FlexDirection>(direction);
         }
-        
+
         public static Matrix4x4 GetTransformMatrix(this VisualElement element)
         {
             var resolvedStyle = element.resolvedStyle;

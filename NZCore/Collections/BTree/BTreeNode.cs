@@ -17,7 +17,7 @@ namespace NZCore.NativeContainers.BTree
         public UnsafeList<BTreeEntry<TKey, TValue>> Entries { get; set; }
 
         public bool IsLeaf => Children.Length == 0;
-        public bool HasReachedMaxEntries => Entries.Length == (2 * degree) - 1;
+        public bool HasReachedMaxEntries => Entries.Length == 2 * degree - 1;
         public bool HasReachedMinEntries => Entries.Length == degree - 1;
 
         public BTreeNode(int degree)

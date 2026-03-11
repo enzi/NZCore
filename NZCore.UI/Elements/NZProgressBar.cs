@@ -77,7 +77,9 @@ namespace NZCore.UI
             set
             {
                 if (titleRight != null)
+                {
                     titleRight.text = value;
+                }
             }
         }
 
@@ -113,20 +115,24 @@ namespace NZCore.UI
             set
             {
                 if (EqualityComparer<float>.Default.Equals(_value, value))
+                {
                     return;
+                }
 
                 //Debug.Log($"value changed {m_Value}");
 
                 if (panel != null)
                 {
-                    using ChangeEvent<float> pooled = ChangeEvent<float>.GetPooled(_value, value);
+                    using var pooled = ChangeEvent<float>.GetPooled(_value, value);
 
                     pooled.target = this;
                     SetValueWithoutNotify(value);
                     SendEvent(pooled);
                 }
                 else
+                {
                     SetValueWithoutNotify(value);
+                }
             }
         }
 
@@ -134,20 +140,20 @@ namespace NZCore.UI
         public NZProgressBar()
         {
             AddToClassList(USSClassName);
-            VisualElement root = new VisualElement()
+            var root = new VisualElement
             {
-                name = USSClassName,
+                name = USSClassName
             };
 
-            background = new VisualElement() { name = "background" };
+            background = new VisualElement { name = "background" };
             background.AddToClassList(BackgroundUssClassName);
             root.Add(background);
 
-            progress = new VisualElement() { name = "progress" };
+            progress = new VisualElement { name = "progress" };
             progress.AddToClassList(ProgressUssClassName);
             background.Add(progress);
 
-            titleContainer = new VisualElement() { name = "title-container" };
+            titleContainer = new VisualElement { name = "title-container" };
             titleContainer.AddToClassList(TitleContainerUssClassName);
             background.Add(titleContainer);
 
@@ -164,17 +170,17 @@ namespace NZCore.UI
 
             if (TitleStyle == NZProgressBarTitleStyle.Center)
             {
-                titleLeft = new Label() { name = "title-center" };
+                titleLeft = new Label { name = "title-center" };
                 titleLeft.AddToClassList(TitleCenterUssClassName);
                 titleContainer.Add(titleLeft);
             }
             else
             {
-                titleLeft = new Label() { name = "title-left" };
+                titleLeft = new Label { name = "title-left" };
                 titleLeft.AddToClassList(TitleLeftUssClassName);
                 titleContainer.Add(titleLeft);
 
-                titleRight = new Label() { name = "title-right" };
+                titleRight = new Label { name = "title-right" };
                 titleRight.AddToClassList(TitleRightUssClassName);
                 titleContainer.Add(titleRight);
             }
@@ -196,19 +202,25 @@ namespace NZCore.UI
             right = CalculateProgressWidth(right);
 
             if (right >= 0)
+            {
                 progress.style.right = right;
+            }
         }
 
         private float CalculateProgressWidth(float width)
         {
             if (background == null || progress == null)
+            {
                 return 0f;
+            }
 
             if (float.IsNaN(background.layout.width))
+            {
                 return 0f;
+            }
 
             var maxWidth = background.layout.width - 2;
-            float lala = maxWidth - Mathf.Max((maxWidth) * width / HighValue, MinVisibleProgress);
+            var lala = maxWidth - Mathf.Max(maxWidth * width / HighValue, MinVisibleProgress);
 
             //Debug.Log($"background width: {maxWidth} highValue: {highValue} ratio: {width} -> {lala}");
             return lala;

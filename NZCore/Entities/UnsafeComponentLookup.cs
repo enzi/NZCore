@@ -12,18 +12,17 @@ namespace NZCore
     [NativeContainer]
     public unsafe struct UnsafeComponentLookup<T> where T : unmanaged, IComponentData
     {
-        [NativeDisableUnsafePtrRestriction] 
-        internal readonly EntityDataAccess* m_Access;
+        [NativeDisableUnsafePtrRestriction] internal readonly EntityDataAccess* m_Access;
         internal LookupCache m_Cache;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal AtomicSafetyHandle m_Safety;
 #endif
         internal readonly TypeIndex m_TypeIndex;
         internal uint m_GlobalSystemVersion;
-        readonly byte m_IsZeroSized; // cache of whether T is zero-sized
+        private readonly byte m_IsZeroSized; // cache of whether T is zero-sized
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        readonly byte m_IsReadOnly;
+        private readonly byte m_IsReadOnly;
 #endif
 
 
@@ -116,7 +115,7 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
             var ecs = m_Access->EntityComponentStore;
-            
+
 #if ENTITIES_1_3_2
             return ecs->HasComponent(entity, m_TypeIndex, out _);
 #else
@@ -140,7 +139,7 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
             var ecs = m_Access->EntityComponentStore;
-            
+
 #if ENTITIES_1_3_2
             return ecs->HasComponent(system.m_Entity, m_TypeIndex, out _);
 #else
@@ -168,7 +167,7 @@ namespace NZCore
             if (m_IsZeroSized != 0)
             {
                 componentData = default;
-                
+
 #if ENTITIES_1_3_2
                 return ecs->HasComponent(entity, m_TypeIndex, out _);
 #else
@@ -213,9 +212,16 @@ namespace NZCore
             var chunk = ecs->GetChunk(entity);
             var archetype = ecs->GetArchetype(chunk);
             if (Hint.Unlikely(archetype != m_Cache.Archetype))
+            {
                 m_Cache.Update(archetype, m_TypeIndex);
+            }
+
             var typeIndexInArchetype = m_Cache.IndexInArchetype;
-            if (typeIndexInArchetype == -1) return false;
+            if (typeIndexInArchetype == -1)
+            {
+                return false;
+            }
+
             var chunkVersion = archetype->Chunks.GetChangeVersion(typeIndexInArchetype, chunk.ListIndex);
 
             return ChangeVersionUtility.DidChange(chunkVersion, version);
@@ -246,7 +252,9 @@ namespace NZCore
                 ecs->AssertEntityHasComponent(entity, m_TypeIndex);
 
                 if (m_IsZeroSized != 0)
+                {
                     return default;
+                }
 
                 void* ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
                 UnsafeUtility.CopyPtrToStructure(ptr, out T data);
@@ -262,7 +270,9 @@ namespace NZCore
                 ecs->AssertEntityHasComponent(entity, m_TypeIndex);
 
                 if (m_IsZeroSized != 0)
+                {
                     return;
+                }
 
                 void* ptr = ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
                 UnsafeUtility.CopyStructureToPtr(ref value, ptr);
@@ -372,7 +382,9 @@ namespace NZCore
             ecs->AssertEntityHasComponent(system.m_Entity, m_TypeIndex);
 
             if (m_IsZeroSized != 0)
+            {
                 return default;
+            }
 
             void* ptr = ecs->GetComponentDataWithTypeRW(system.m_Entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
@@ -399,7 +411,9 @@ namespace NZCore
             ecs->AssertEntityHasComponent(entity, m_TypeIndex);
 
             if (m_IsZeroSized != 0)
+            {
                 return default;
+            }
 
             void* ptr =
                 isReadOnly
@@ -428,7 +442,9 @@ namespace NZCore
             ecs->AssertEntityHasComponent(entity, m_TypeIndex);
 
             if (m_IsZeroSized != 0)
+            {
                 return default;
+            }
 
             void* ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -451,13 +467,17 @@ namespace NZCore
 #endif
             if (!HasComponent(entity))
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
+            {
                 return new RefRW<T>(null, default);
+            }
 #else
                 return new RefRW<T>(null);
 #endif
 
             if (m_IsZeroSized != 0)
+            {
                 return default;
+            }
 
             var ecs = m_Access->EntityComponentStore;
             void* ptr =
@@ -485,13 +505,17 @@ namespace NZCore
 #endif
             if (!HasComponent(entity))
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
+            {
                 return new RefRO<T>(null, default);
+            }
 #else
                 return new RefRO<T>(null);
 #endif
 
             if (m_IsZeroSized != 0)
+            {
                 return default;
+            }
 
             var ecs = m_Access->EntityComponentStore;
             void* ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
@@ -502,9 +526,10 @@ namespace NZCore
 #endif
         }
 
-        SafeBitRef MakeSafeBitRef(ulong* ptr, int offsetInBits)
+        private SafeBitRef MakeSafeBitRef(ulong* ptr, int offsetInBits)
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            => new SafeBitRef(ptr, offsetInBits, m_Safety);
+            =>
+                new(ptr, offsetInBits, m_Safety);
 #else
             => new SafeBitRef(ptr, offsetInBits);
 #endif
@@ -547,7 +572,9 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
             if (!HasComponent(entity))
+            {
                 return new EnabledRefRW<T2>(default, default);
+            }
 
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);
@@ -593,7 +620,9 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
             if (!HasComponent(entity))
+            {
                 return new EnabledRefRO<T2>(default);
+            }
 
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);
@@ -636,9 +665,14 @@ namespace NZCore
             ecs->AssertEntityHasComponent(entity, m_TypeIndex);
 
             if (m_IsZeroSized != 0)
-                throw new ArgumentException($"UnsafeComponentLookup<{typeof(T)}> indexer can not index the component because it is zero sized, you can use Exists instead.");
+            {
+                throw new ArgumentException(
+                    $"UnsafeComponentLookup<{typeof(T)}> indexer can not index the component because it is zero sized, you can use Exists instead.");
+            }
 
-            void* ptr = bumpVersion ? ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache) : ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
+            void* ptr = bumpVersion
+                ? ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache)
+                : ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
 
             return ref UnsafeUtility.AsRef<T>(ptr);
         }
@@ -672,10 +706,10 @@ namespace NZCore
                 ptr = null;
                 return false;
             }
-            
+
 
             var ecs = m_Access->EntityComponentStore;
-            ptr = (T*) ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
+            ptr = (T*)ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
             return true;
         }
 
@@ -686,7 +720,9 @@ namespace NZCore
             var archetype = ecs->GetArchetype(chunk);
 
             if (Hint.Unlikely(archetype != m_Cache.Archetype))
+            {
                 m_Cache.Update(archetype, m_TypeIndex);
+            }
 
             archetype->Chunks.SetChangeVersion(m_Cache.IndexInArchetype, chunk.ListIndex, m_GlobalSystemVersion);
         }
@@ -703,11 +739,15 @@ namespace NZCore
             var chunk = ecs->GetChunk(entity);
             var archetype = ecs->GetArchetype(chunk);
             if (Hint.Unlikely(archetype != m_Cache.Archetype))
+            {
                 m_Cache.Update(archetype, m_TypeIndex);
+            }
 
             var typeIndexInArchetype = m_Cache.IndexInArchetype;
             if (typeIndexInArchetype == -1)
+            {
                 return 0;
+            }
 
             var chunkVersion = archetype->Chunks.GetChangeVersion(typeIndexInArchetype, chunk.ListIndex);
             return chunkVersion;
@@ -715,9 +755,7 @@ namespace NZCore
 
         public TypeIndex TypeIndex => m_TypeIndex;
 
-        public static implicit operator UnsafeComponentLookup<T>(ComponentLookup<T> lookup)
-        {
-            return UnsafeUtility.As<ComponentLookup<T>, UnsafeComponentLookup<T>>(ref lookup);
-        }
+        public static implicit operator UnsafeComponentLookup<T>(ComponentLookup<T> lookup) =>
+            UnsafeUtility.As<ComponentLookup<T>, UnsafeComponentLookup<T>>(ref lookup);
     }
 }

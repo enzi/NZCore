@@ -12,7 +12,7 @@ namespace NZCore.Editor
         public static Texture2D LoadIconTexture(string path)
         {
             var texture = (Texture2D)AssetDatabase.LoadAssetAtPath(path, typeof(Texture2D));
-            
+
             // if (texture != null &&
             //     !Mathf.Approximately(texture.GetPixelsPerPoint(), (float)Bridge.GUIUtility.pixelsPerPoint) &&
             //     !Mathf.Approximately((float)Bridge.GUIUtility.pixelsPerPoint % 1f, 0.0f))

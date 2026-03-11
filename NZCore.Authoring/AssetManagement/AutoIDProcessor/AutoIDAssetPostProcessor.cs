@@ -17,18 +17,18 @@ namespace NZCore.AssetManagement
         private static AssetDeleteResult OnWillDeleteAsset(string assetPath, RemoveAssetOptions options)
         {
             var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
-        
+
             if (asset == null)
             {
                 return AssetDeleteResult.DidNotDelete;
             }
 
             ScriptableObjectDatabase.DeleteAsset(asset);
-        
+
             return AssetDeleteResult.DidNotDelete;
         }
     }
-    
+
     public class AutoIDAssetPostProcessor : AssetPostprocessor
     {
         [UsedImplicitly]
@@ -55,7 +55,7 @@ namespace NZCore.AssetManagement
                 }
 
                 processors.ProcessAsset(asset);
-                
+
                 foreach (var subAsset in AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath))
                 {
                     processors.ProcessAsset(subAsset);
@@ -140,7 +140,9 @@ namespace NZCore.AssetManagement
             for (var i = 1; i < int.MaxValue; i++)
             {
                 if (!map.ContainsKey(i))
+                {
                     return i;
+                }
             }
 
             return -1;
@@ -156,13 +158,13 @@ namespace NZCore.AssetManagement
                 processor = null;
                 return false;
             }
-            
+
             var assetType = asset.GetType();
             processor = new AutoIDProcessor(assetType);
-            
+
             return true;
         }
-        
+
         public static bool TryGetProcessor(this Dictionary<Type, AutoIDProcessor> processors, Object asset, out AutoIDProcessor processor)
         {
             if (asset is not IAutoID)
@@ -170,7 +172,7 @@ namespace NZCore.AssetManagement
                 processor = null;
                 return false;
             }
-            
+
             var assetType = asset.GetType();
             if (!processors.TryGetValue(assetType, out processor))
             {
@@ -179,7 +181,7 @@ namespace NZCore.AssetManagement
 
             return true;
         }
-        
+
         internal static void ProcessAsset(this Dictionary<Type, AutoIDProcessor> processors, Object asset)
         {
             if (processors.TryGetProcessor(asset, out var processor))

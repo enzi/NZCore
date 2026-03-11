@@ -14,23 +14,18 @@ namespace NZCore
     [StructLayout(LayoutKind.Explicit)]
     public unsafe struct EntityRemapBuffer : IBufferElementData
     {
-        [FieldOffset(0)]
-        public Entity RemappedEntity;
-        
+        [FieldOffset(0)] public Entity RemappedEntity;
+
         // automatic 
-        [FieldOffset(8)]
-        public Entity* RewritePtr;
-        
+        [FieldOffset(8)] public Entity* RewritePtr;
+
         // manual
-        [FieldOffset(8)]
-        public int DeferredEntityIndex;
-        [FieldOffset(12)]
-        public int DeferredEntityVersion;
-        
-        [FieldOffset(16)]
-        public byte Automatic;
+        [FieldOffset(8)] public int DeferredEntityIndex;
+        [FieldOffset(12)] public int DeferredEntityVersion;
+
+        [FieldOffset(16)] public byte Automatic;
     }
-    
+
 #if NZSPELLCASTING
     [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
     [UpdateAfter(typeof(BeginEffectsSystemGroupCommandBufferSystem))]
@@ -77,21 +72,21 @@ namespace NZCore
     {
         public static void AddRemapEntity(this ref EntityCommandBuffer commandBuffer, Entity remapBufferEntity, Entity deferredEntity)
         {
-            commandBuffer.AppendToBuffer(remapBufferEntity, new EntityRemapBuffer()
+            commandBuffer.AppendToBuffer(remapBufferEntity, new EntityRemapBuffer
             {
                 RemappedEntity = deferredEntity,
                 DeferredEntityIndex = deferredEntity.Index,
                 DeferredEntityVersion = deferredEntity.Version
             });
         }
-        
+
         /// <summary>
         /// Automatically patch a deferred entity, just make sure the rewritePtr doesn't change for any reason like a list resize
         /// </summary>
-        public static unsafe void AddRemapEntityParallel(this ref EntityCommandBuffer.ParallelWriter commandBuffer, int threadIndex, Entity remapBufferEntity, 
+        public static unsafe void AddRemapEntityParallel(this ref EntityCommandBuffer.ParallelWriter commandBuffer, int threadIndex, Entity remapBufferEntity,
             Entity deferredEntity, Entity* rewritePtr)
         {
-            commandBuffer.AppendToBuffer(threadIndex, remapBufferEntity, new EntityRemapBuffer()
+            commandBuffer.AppendToBuffer(threadIndex, remapBufferEntity, new EntityRemapBuffer
             {
                 Automatic = 1,
                 RewritePtr = rewritePtr,
@@ -99,10 +94,10 @@ namespace NZCore
             });
         }
 
-        public static void AddRemapEntityParallel(this ref EntityCommandBuffer.ParallelWriter commandBuffer, int threadIndex, Entity remapBufferEntity, 
+        public static void AddRemapEntityParallel(this ref EntityCommandBuffer.ParallelWriter commandBuffer, int threadIndex, Entity remapBufferEntity,
             Entity deferredEntity)
         {
-            commandBuffer.AppendToBuffer(threadIndex, remapBufferEntity, new EntityRemapBuffer()
+            commandBuffer.AppendToBuffer(threadIndex, remapBufferEntity, new EntityRemapBuffer
             {
                 RemappedEntity = deferredEntity,
                 DeferredEntityIndex = deferredEntity.Index,

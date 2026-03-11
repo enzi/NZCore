@@ -21,7 +21,7 @@ namespace NZCore.UIToolkit
         private AddressablesAndHandles<VisualTreeAsset> visualTreeAssets;
         private AddressablesAndHandles<GameObject> worldInterfaceAssets;
         private AddressablesAndHandles<SpriteAtlas> spriteAtlas;
-        
+
         public List<CustomUIAsset> CustomAssets = new();
 
         public async void Start()
@@ -47,13 +47,13 @@ namespace NZCore.UIToolkit
                 }
             }
 
-            var uiAssets = new UIAssetsSingleton()
+            var uiAssets = new UIAssetsSingleton
             {
                 VisualTreeAssets = visualTreeAssets.Assets,
                 SpriteAtlasAssets = spriteAtlas.Assets,
                 WorldInterfaceAssets = worldInterfaceAssets.Assets
             };
-            
+
             foreach (var customAsset in CustomAssets)
             {
                 uiAssets.VisualTreeAssets.Add(customAsset.Key, customAsset.Asset);
@@ -61,7 +61,7 @@ namespace NZCore.UIToolkit
 
             var manager = UIToolkitManager.Instance;
             manager.Assets = uiAssets;
-            
+
             var em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
             var entity = em.CreateEntity();
@@ -78,7 +78,7 @@ namespace NZCore.UIToolkit
             worldInterfaceAssets?.UnloadAll();
         }
     }
-    
+
     [Serializable]
     public class CustomUIAsset
     {

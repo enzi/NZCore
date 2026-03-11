@@ -9,29 +9,30 @@ namespace NZCore.MVVM
 {
     public interface IViewModelManager
     {
-        public void AddModel(Model model);
-        public void RemoveModel(Model model);
-        public void RemoveModel(Hash128 modelId);
-        
-        public void RegisterRootView(RootView rootView);
-        public void UnregisterRootView(RootView rootView);
-        
-        public void RegisterChildView(ChildView childView, RootView rootView);
-        public void UnregisterChildView(ChildView childView, RootView rootView);
+        void AddModel(Model model);
+        void RemoveModel(Model model);
+        void RemoveModel(Hash128 modelId);
 
-        public ChildView GetChildViewModel(Hash128 modelHash, RootView rootView);
-        public ChildView GetChildViewModel(Model model, RootView rootView);
-        
-        public TChildView GetChildViewModel<TChildView>(Hash128 modelHash, RootView rootView)
-            where TChildView : ChildView;
-        public TChildView GetChildViewModel<TChildView>(Model model, RootView rootView)
-            where TChildView : ChildView;
-        
-        public IReadOnlyCollection<ChildView> GetChildViews(RootView rootView);
-        public IReadOnlyCollection<RootView> GetRootViews();
-        public Model GetModel(Hash128 modelId);
-        public ViewModel GetViewModel(Hash128 modelId);
-        public void Clear();
-        public void Reset();
+        void RegisterRootViewModel(RootViewModel rootViewModel);
+        void UnregisterRootViewModel(RootViewModel rootViewModel);
+
+        void RegisterChildViewModel(ChildViewModel childViewModel, RootViewModel rootViewModel);
+        void UnregisterChildViewModel(ChildViewModel childViewModel, RootViewModel rootViewModel);
+
+        ChildViewModel GetChildViewModel(Hash128 modelHash, RootViewModel rootViewModel);
+        ChildViewModel GetChildViewModel(Model model, RootViewModel rootViewModel);
+
+        TChildViewModel GetChildViewModel<TChildViewModel>(Hash128 modelHash, RootViewModel rootViewModel)
+            where TChildViewModel : ChildViewModel;
+
+        TChildViewModel GetChildViewModel<TChildViewModel>(Model model, RootViewModel rootViewModel)
+            where TChildViewModel : ChildViewModel;
+
+        IReadOnlyCollection<ChildViewModel> GetChildViewModels(RootViewModel rootViewModel);
+        IReadOnlyCollection<RootViewModel> GetRootViewModels();
+        Model GetModel(Hash128 modelId);
+        ViewModel GetViewModel(Hash128 modelId);
+        void Clear();
+        void Reset();
     }
 }

@@ -13,13 +13,9 @@ namespace NZCore
         Cleanup
     }
 
-    public struct DestroyEntity : IComponentData, IEnableableComponent
-    {
-    }
+    public struct DestroyEntity : IComponentData, IEnableableComponent { }
 
-    public struct NZCleanupEntity : IComponentData, IEnableableComponent
-    {
-    }
+    public struct NZCleanupEntity : IComponentData, IEnableableComponent { }
 
     public struct DestroyMapElement
     {

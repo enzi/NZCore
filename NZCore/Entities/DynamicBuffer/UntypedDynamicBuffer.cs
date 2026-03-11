@@ -15,8 +15,7 @@ namespace NZCore
 {
     public unsafe struct UntypedDynamicBuffer
     {
-        [NativeDisableUnsafePtrRestriction]
-        [NoAlias]
+        [NativeDisableUnsafePtrRestriction] [NoAlias]
         private readonly BufferHeader* _buffer;
 
         private readonly int _internalCapacity;
@@ -34,7 +33,7 @@ namespace NZCore
         internal byte m_UseMemoryInitPattern;
         internal byte m_MemoryInitPattern;
 #endif
-        
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal UntypedDynamicBuffer(BufferHeader* header, AtomicSafetyHandle safety, AtomicSafetyHandle arrayInvalidationSafety, bool isReadOnly,
             bool useMemoryInitPattern, byte memoryInitPattern, int internalCapacity, int elementSize, int alignOf)
@@ -50,7 +49,7 @@ namespace NZCore
             m_MemoryInitPattern = memoryInitPattern;
             _alignOf = alignOf;
             ElementSize = elementSize;
-            
+
             //AtomicSafetyHandle.SetNestedContainer(m_Safety0, true);
             //AtomicSafetyHandle.SetNestedContainer(m_Safety1, true);
         }
@@ -64,7 +63,7 @@ namespace NZCore
             ElementSize = elementSize;
         }
 #endif
-        
+
         public int Length
         {
             get
@@ -74,7 +73,7 @@ namespace NZCore
             }
             set => ResizeUninitialized(value);
         }
-        
+
         public int Capacity
         {
             get
@@ -92,26 +91,30 @@ namespace NZCore
 #endif
                 CheckWriteAccessAndInvalidateArrayAliases();
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                BufferHeader.SetCapacity(_buffer, value, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1, m_MemoryInitPattern, _internalCapacity);
+                BufferHeader.SetCapacity(_buffer, value, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1,
+                    m_MemoryInitPattern, _internalCapacity);
 #else
                 BufferHeader.SetCapacity(_buffer, value, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0, _internalCapacity);
 #endif
             }
         }
-        
+
         public bool IsEmpty => !IsCreated || Length == 0;
         public bool IsCreated => _buffer != null;
-        
 
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS"), Conditional("UNITY_DOTS_DEBUG")]
-        void CheckBounds(int index)
+
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
+        private void CheckBounds(int index)
         {
             if ((uint)index >= (uint)Length)
+            {
                 throw new IndexOutOfRangeException($"Index {index} is out of range in DynamicBuffer of '{Length}' Length.");
+            }
         }
-        
+
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        void CheckReadAccess()
+        private void CheckReadAccess()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety0);
@@ -120,7 +123,7 @@ namespace NZCore
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        void CheckWriteAccess()
+        private void CheckWriteAccess()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety0);
@@ -129,14 +132,14 @@ namespace NZCore
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        void CheckWriteAccessAndInvalidateArrayAliases()
+        private void CheckWriteAccessAndInvalidateArrayAliases()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety0);
             AtomicSafetyHandle.CheckWriteAndBumpSecondaryVersion(m_Safety1);
 #endif
         }
-        
+
         public void* this[int index]
         {
             get
@@ -149,18 +152,17 @@ namespace NZCore
             {
                 CheckWriteAccess();
                 CheckBounds(index);
-                var ptr = BufferHeader.GetElementPointer(_buffer) + (index * ElementSize);
+                var ptr = BufferHeader.GetElementPointer(_buffer) + index * ElementSize;
                 UnsafeUtility.MemCpy(ptr, value, ElementSize);
-
             }
         }
-        
+
         public void ResizeUninitialized(int length)
         {
             EnsureCapacity(length);
             _buffer->Length = length;
         }
-        
+
         public void Resize(int length, NativeArrayOptions options)
         {
             EnsureCapacity(length);
@@ -170,37 +172,40 @@ namespace NZCore
             if (options == NativeArrayOptions.ClearMemory && oldLength < length)
             {
                 var num = length - oldLength;
-                byte* ptr = BufferHeader.GetElementPointer(_buffer);
+                var ptr = BufferHeader.GetElementPointer(_buffer);
                 UnsafeUtility.MemClear(ptr + oldLength * ElementSize, num * ElementSize);
             }
         }
-        
+
         public void EnsureCapacity(int length)
         {
             CheckWriteAccessAndInvalidateArrayAliases();
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            BufferHeader.EnsureCapacity(_buffer, length, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1, m_MemoryInitPattern);
+            BufferHeader.EnsureCapacity(_buffer, length, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1,
+                m_MemoryInitPattern);
 #else
             BufferHeader.EnsureCapacity(m_Buffer, length, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0);
 #endif
         }
-        
+
         public void Clear()
         {
             CheckWriteAccessAndInvalidateArrayAliases();
 
             _buffer->Length = 0;
         }
-        
+
         public void TrimExcess()
         {
             CheckWriteAccessAndInvalidateArrayAliases();
 
-            byte* oldPtr = _buffer->Pointer;
-            int length = _buffer->Length;
+            var oldPtr = _buffer->Pointer;
+            var length = _buffer->Length;
 
             if (length == Capacity || oldPtr == null)
+            {
                 return;
+            }
 
             bool isInternal;
             byte* newPtr;
@@ -213,11 +218,11 @@ namespace NZCore
             }
             else
             {
-                newPtr = (byte*)Memory.Unmanaged.Allocate((long) ElementSize * length, _alignOf, Allocator.Persistent);
+                newPtr = (byte*)Memory.Unmanaged.Allocate((long)ElementSize * length, _alignOf, Allocator.Persistent);
                 isInternal = false;
             }
 
-            UnsafeUtility.MemCpy(newPtr, oldPtr, (long) ElementSize * length);
+            UnsafeUtility.MemCpy(newPtr, oldPtr, (long)ElementSize * length);
 
             _buffer->Capacity = Math.Max(length, _internalCapacity);
             _buffer->Pointer = isInternal ? null : newPtr;
@@ -228,7 +233,7 @@ namespace NZCore
         public int Add(void* elem)
         {
             CheckWriteAccess();
-            int length = Length;
+            var length = Length;
             ResizeUninitialized(length + 1);
             this[length] = elem;
             return length;
@@ -237,10 +242,10 @@ namespace NZCore
         public void Insert(int index, void* elem)
         {
             CheckWriteAccess();
-            int length = Length;
+            var length = Length;
             ResizeUninitialized(length + 1);
             CheckBounds(index); //CheckBounds after ResizeUninitialized since index == length is allowed
-            byte* basePtr = BufferHeader.GetElementPointer(_buffer);
+            var basePtr = BufferHeader.GetElementPointer(_buffer);
             UnsafeUtility.MemMove(basePtr + (index + 1) * ElementSize, basePtr + index * ElementSize, (long)ElementSize * (length - index));
             this[index] = elem;
         }
@@ -248,10 +253,10 @@ namespace NZCore
         public void AddRange(void* elements, int count)
         {
             CheckWriteAccess();
-            int oldLength = Length;
+            var oldLength = Length;
             ResizeUninitialized(oldLength + count);
 
-            byte* basePtr = BufferHeader.GetElementPointer(_buffer);
+            var basePtr = BufferHeader.GetElementPointer(_buffer);
             UnsafeUtility.MemCpy(basePtr + (long)oldLength * ElementSize, elements, (long)ElementSize * count);
         }
 
@@ -260,10 +265,13 @@ namespace NZCore
             CheckWriteAccess();
             CheckBounds(index);
             if (count == 0)
+            {
                 return;
+            }
+
             CheckBounds(index + count - 1);
 
-            byte* basePtr = BufferHeader.GetElementPointer(_buffer);
+            var basePtr = BufferHeader.GetElementPointer(_buffer);
 
             UnsafeUtility.MemMove(basePtr + index * ElementSize, basePtr + (index + count) * ElementSize, (long)ElementSize * (Length - count - index));
 
@@ -275,12 +283,15 @@ namespace NZCore
             CheckWriteAccess();
             CheckBounds(index);
             if (count == 0)
+            {
                 return;
+            }
+
             CheckBounds(index + count - 1);
 
             ref var l = ref _buffer->Length;
-            byte* basePtr = BufferHeader.GetElementPointer(_buffer);
-            int copyFrom = math.max(l - count, index + count);
+            var basePtr = BufferHeader.GetElementPointer(_buffer);
+            var copyFrom = math.max(l - count, index + count);
             void* dst = basePtr + index * ElementSize;
             void* src = basePtr + copyFrom * ElementSize;
             UnsafeUtility.MemMove(dst, src, (l - copyFrom) * ElementSize);
@@ -299,10 +310,10 @@ namespace NZCore
 
             ref var l = ref _buffer->Length;
             l -= 1;
-            int newLength = l;
+            var newLength = l;
             if (index != newLength)
             {
-                byte* basePtr = BufferHeader.GetElementPointer(_buffer);
+                var basePtr = BufferHeader.GetElementPointer(_buffer);
                 this[index] = basePtr + newLength; // todo check if this is correct
                 //UnsafeUtility.WriteArrayElement(basePtr, index, UnsafeUtility.ReadArrayElement<T>(basePtr, newLength));
             }
@@ -332,7 +343,7 @@ namespace NZCore
         }
 
         public NativeArray<T> AsNativeArray<T>()
-        where T : unmanaged
+            where T : unmanaged
         {
             CheckReadAccess();
 
@@ -347,10 +358,8 @@ namespace NZCore
         }
 
         public NativeArray<T> ToNativeArray<T>(AllocatorManager.AllocatorHandle allocator)
-            where T : unmanaged
-        {
-            return CollectionHelper.CreateNativeArray<T>(AsNativeArray<T>(), allocator);
-        }
+            where T : unmanaged =>
+            CollectionHelper.CreateNativeArray<T>(AsNativeArray<T>(), allocator);
 
         public void CopyFrom<T>(DynamicBuffer<T> v)
             where T : unmanaged

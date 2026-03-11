@@ -90,10 +90,7 @@ namespace NZCore
             *queueReadHead = 0; // math.min(*this.queueReadHead, *this.queueWriteHead);
         }
 
-        public ref T ElementAt(int index)
-        {
-            return ref UnsafeUtility.AsRef<T>(queue + index);
-        }
+        public ref T ElementAt(int index) => ref UnsafeUtility.AsRef<T>(queue + index);
 
         /// <summary> Try add some work to the queue. </summary>
         /// <param name="ptr"> The work slot. </param>

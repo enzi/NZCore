@@ -14,9 +14,9 @@ namespace NZCore.UI.Elements
 
         private NZCellSettings[] headerSettings;
 
-        public Color HeaderColor = new Color(0.29f, 0.29f, 0.29f);
-        public Color RowColor2 = new Color(0.18f, 0.18f, 0.18f);
-        public Color RowColor1 = new Color(0.12f, 0.12f, 0.12f);
+        public Color HeaderColor = new(0.29f, 0.29f, 0.29f);
+        public Color RowColor2 = new(0.18f, 0.18f, 0.18f);
+        public Color RowColor1 = new(0.12f, 0.12f, 0.12f);
 
         private List<NZRow> rows = new();
 
@@ -25,7 +25,7 @@ namespace NZCore.UI.Elements
             style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Column);
             OddState = oddState;
         }
-        
+
         public void SetColumnSettings(params NZCellSettings[] settings)
         {
             headerSettings = settings;
@@ -33,13 +33,13 @@ namespace NZCore.UI.Elements
 
         public VisualElement AddHeader()
         {
-            NZRow row = CreateRow(HeaderColor);
-            
+            var row = CreateRow(HeaderColor);
+
             for (var i = 0; i < headerSettings.Length; i++)
             {
                 var settings = headerSettings[i];
                 var cell = new NZRowCell(settings, 0);
-                cell.Add(new Label() { text = settings.HeaderName});
+                cell.Add(new Label { text = settings.HeaderName });
                 row.Add(cell);
             }
 
@@ -48,13 +48,13 @@ namespace NZCore.UI.Elements
 
         public VisualElement AddRow(string[] values, int depth = 0)
         {
-            NZRow row = CreateRow(GetOddStateColor());
+            var row = CreateRow(GetOddStateColor());
             rows.Add(row);
-            
-            for (int i = 0; i < values.Length; i++)
+
+            for (var i = 0; i < values.Length; i++)
             {
                 var cell = new NZRowCell(headerSettings[i], depth);
-                cell.Add(new Label() { text = values[i]});
+                cell.Add(new Label { text = values[i] });
                 row.Add(cell);
             }
 
@@ -63,10 +63,10 @@ namespace NZCore.UI.Elements
 
         public VisualElement AddRow(VisualElement[] values, int depth = 0)
         {
-            NZRow row = CreateRow(GetOddStateColor());
+            var row = CreateRow(GetOddStateColor());
             rows.Add(row);
-            
-            for (int i = 0; i < values.Length; i++)
+
+            for (var i = 0; i < values.Length; i++)
             {
                 var element = values[i];
                 if (element == null)
@@ -82,13 +82,13 @@ namespace NZCore.UI.Elements
 
             return row;
         }
-        
+
         public NZRow AddSpanRow(VisualElement element)
         {
-            NZRow row = CreateRow(GetOddStateColor());
+            var row = CreateRow(GetOddStateColor());
             rows.Add(row);
-            
-            var cell = new NZRowCell(new NZCellSettings() { Percent = 100 }, 0);
+
+            var cell = new NZRowCell(new NZCellSettings { Percent = 100 }, 0);
             cell.Add(element);
             row.Add(cell);
 
@@ -97,17 +97,14 @@ namespace NZCore.UI.Elements
 
         public NZRow CreateRow(Color backgroundColor)
         {
-            NZRow row = new NZRow(backgroundColor);
+            var row = new NZRow(backgroundColor);
             OddState = !OddState;
-            
+
             Add(row);
             return row;
         }
 
-        private Color GetOddStateColor()
-        {
-            return OddState ? RowColor2 : RowColor1;
-        }
+        private Color GetOddStateColor() => OddState ? RowColor2 : RowColor1;
 
         public void ClearTable()
         {
@@ -115,11 +112,11 @@ namespace NZCore.UI.Elements
             {
                 hierarchy.Remove(row);
             }
-            
+
             rows.Clear();
         }
     }
-    
+
     public class NZRow : VisualElement
     {
         public NZRow(Color backgroundColor)
@@ -150,7 +147,7 @@ namespace NZCore.UI.Elements
             }
         }
     }
-    
+
     public class NZCellSettings
     {
         public string HeaderName;

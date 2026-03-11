@@ -19,13 +19,13 @@ namespace NZCore
     {
         private static bool initialized;
         private static bool appDomainUnloadRegistered;
-        
+
         private static UnsafeHashMap<ulong, StableTypeIndex> stableTypeMap;
         private static UnsafeHashMap<StableTypeIndex, ulong> stableHashMap;
 
 #if UNITY_EDITOR
-        public static Dictionary<string, ulong> typeNameMap; 
-            
+        public static Dictionary<string, ulong> typeNameMap;
+
         [InitializeOnLoadMethod]
 #endif
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
@@ -37,33 +37,33 @@ namespace NZCore
             }
 
             initialized = true;
-            
+
             TypeManager.Initialize();
-            
+
             stableTypeMap = new UnsafeHashMap<ulong, StableTypeIndex>(1024, Allocator.Persistent);
             stableHashMap = new UnsafeHashMap<StableTypeIndex, ulong>(1024, Allocator.Persistent);
-            
+
 #if UNITY_EDITOR
             typeNameMap = new Dictionary<string, ulong>();
 #endif
-            
+
             BuildMap();
-            
+
             fixed (UnsafeHashMap<ulong, StableTypeIndex>* ptr = &stableTypeMap)
             {
                 StableTypeMap.Ref.Data = new IntPtr(ptr);
             }
-            
+
             fixed (UnsafeHashMap<StableTypeIndex, ulong>* ptr = &stableHashMap)
             {
                 StableHashMap.Ref.Data = new IntPtr(ptr);
             }
-            
+
             if (!appDomainUnloadRegistered)
             {
                 AppDomain.CurrentDomain.DomainUnload += CurrentDomainOnDomainUnload;
                 AppDomain.CurrentDomain.ProcessExit += CurrentDomainOnProcessExit;
-                
+
                 appDomainUnloadRegistered = true;
             }
         }
@@ -95,20 +95,20 @@ namespace NZCore
         {
             var allTypes = TypeManager.GetAllTypes();
 
-            stableTypeMap.Add(0, new StableTypeIndex() { Value = 0 });
-            stableHashMap.Add(new StableTypeIndex(){ Value = 0}, 0);
+            stableTypeMap.Add(0, new StableTypeIndex { Value = 0 });
+            stableHashMap.Add(new StableTypeIndex { Value = 0 }, 0);
 
-            for (int i = 1; i < allTypes.Length;i++)
+            for (var i = 1; i < allTypes.Length; i++)
             {
                 var typeInfo = allTypes[i];
-                
+
                 var hash = StableTypeHashHelper.GetFixedHash(typeInfo.Type);
 
                 if (hash == 0)
                 {
                     continue;
                 }
-                
+
                 if (stableTypeMap.ContainsKey(hash))
                 {
                     // entities 1.3.10 can have duplicate types
@@ -120,15 +120,12 @@ namespace NZCore
 #if UNITY_EDITOR
                 typeNameMap[typeInfo.Type.Name] = hash;
 #endif
-                stableTypeMap.Add(hash, new StableTypeIndex() { Value = typeInfo.TypeIndex.Value });
-                stableHashMap.Add(new StableTypeIndex() { Value = typeInfo.TypeIndex.Value }, hash);
+                stableTypeMap.Add(hash, new StableTypeIndex { Value = typeInfo.TypeIndex.Value });
+                stableHashMap.Add(new StableTypeIndex { Value = typeInfo.TypeIndex.Value }, hash);
             }
         }
-        
-        public static Type GetTypeFromStableTypeIndex(StableTypeIndex typeIndex)
-        {
-            return TypeManager.GetType(typeIndex);
-        }
+
+        public static Type GetTypeFromStableTypeIndex(StableTypeIndex typeIndex) => TypeManager.GetType(typeIndex);
 
         public static TypeIndex GetStableTypeIndex<T>()
             where T : unmanaged
@@ -136,10 +133,10 @@ namespace NZCore
             var hash = StableTypeHashHelper.GetFixedHash(typeof(T));
             return GetTypeIndexFromStableTypeHash(hash);
         }
-        
+
         public static bool TryGetTypeIndexFromStableTypeHash(ulong hash, out TypeIndex typeIndex)
         {
-            var map = *(UnsafeHashMap<ulong, StableTypeIndex>*) StableTypeMap.Ref.Data;
+            var map = *(UnsafeHashMap<ulong, StableTypeIndex>*)StableTypeMap.Ref.Data;
 
             if (map.TryGetValue(hash, out var typeIndex2))
             {
@@ -153,16 +150,16 @@ namespace NZCore
 
         public static TypeIndex GetTypeIndexFromStableTypeHash(ulong hash)
         {
-            var map = *(UnsafeHashMap<ulong, StableTypeIndex>*) StableTypeMap.Ref.Data;
+            var map = *(UnsafeHashMap<ulong, StableTypeIndex>*)StableTypeMap.Ref.Data;
 
             if (map.TryGetValue(hash, out var stableTypeIndex))
             {
                 return stableTypeIndex;
             }
-            
+
             return TypeIndex.Null;
         }
-        
+
         public static bool TryGetTypeInfoFromStableTypeHash(ulong hash, out TypeManager.TypeInfo type)
         {
             if (TryGetTypeIndexFromStableTypeHash(hash, out var typeIndex))
@@ -175,23 +172,21 @@ namespace NZCore
             return false;
         }
 
-        public static TypeManager.TypeInfo GetTypeInfo(TypeIndex typeIndex)
-        {
-            return TypeManager.GetTypeInfo(typeIndex);
-        }
-        
+        public static TypeManager.TypeInfo GetTypeInfo(TypeIndex typeIndex) => TypeManager.GetTypeInfo(typeIndex);
+
         public static ulong GetStableTypeHashFromTypeIndex(TypeIndex typeIndex)
         {
-            var map = *(UnsafeHashMap<StableTypeIndex, ulong>*) StableHashMap.Ref.Data;
+            var map = *(UnsafeHashMap<StableTypeIndex, ulong>*)StableHashMap.Ref.Data;
             return map.TryGetValue(typeIndex, out var hash) ? hash : 0;
         }
-        
+
         private struct StableTypeManagerKey { }
+
         private struct StableTypeMap
         {
             public static readonly SharedStatic<IntPtr> Ref = SharedStatic<IntPtr>.GetOrCreate<StableTypeManagerKey, StableTypeMap>();
         }
-        
+
         private struct StableHashMap
         {
             public static readonly SharedStatic<IntPtr> Ref = SharedStatic<IntPtr>.GetOrCreate<StableTypeManagerKey, StableHashMap>();
@@ -201,32 +196,16 @@ namespace NZCore
     [StructLayout(LayoutKind.Explicit, Size = 4)]
     public struct StableTypeIndex : IComparable<StableTypeIndex>, IEquatable<StableTypeIndex>
     {
-        [FieldOffset(0)]
-        public int Value;
-        
-        public int CompareTo(StableTypeIndex other)
-        {
-            return Value.CompareTo(other.Value);
-        }
+        [FieldOffset(0)] public int Value;
 
-        public bool Equals(StableTypeIndex other)
-        {
-            return Value == other.Value;
-        }
+        public int CompareTo(StableTypeIndex other) => Value.CompareTo(other.Value);
 
-        public override int GetHashCode()
-        {
-            return Value;
-        }
-        
-        public static implicit operator StableTypeIndex(TypeIndex typeIndex)
-        {
-            return UnsafeUtility.As<TypeIndex, StableTypeIndex>(ref typeIndex);
-        }
-        
-        public static implicit operator TypeIndex(StableTypeIndex typeIndex)
-        {
-            return UnsafeUtility.As<StableTypeIndex, TypeIndex>(ref typeIndex);
-        }
+        public bool Equals(StableTypeIndex other) => Value == other.Value;
+
+        public override int GetHashCode() => Value;
+
+        public static implicit operator StableTypeIndex(TypeIndex typeIndex) => UnsafeUtility.As<TypeIndex, StableTypeIndex>(ref typeIndex);
+
+        public static implicit operator TypeIndex(StableTypeIndex typeIndex) => UnsafeUtility.As<StableTypeIndex, TypeIndex>(ref typeIndex);
     }
 }

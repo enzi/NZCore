@@ -11,51 +11,27 @@ namespace NZCore
     public static class EnumHelper
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Contains(this byte keys, byte flag)
-        {
-            return (keys & flag) == flag;
-        }
+        public static bool Contains(this byte keys, byte flag) => (keys & flag) == flag;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ContainsAny(this byte keys, byte flag)
-        {
-            return (keys & flag) != 0;
-        }
+        public static bool ContainsAny(this byte keys, byte flag) => (keys & flag) != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Contains(this int keys, int flag)
-        {
-            return (keys & flag) == flag;
-        }
+        public static bool Contains(this int keys, int flag) => (keys & flag) == flag;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ContainsAny(this int keys, int flag)
-        {
-            return (keys & flag) != 0;
-        }
+        public static bool ContainsAny(this int keys, int flag) => (keys & flag) != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Contains(this uint keys, uint flag)
-        {
-            return (keys & flag) == flag;
-        }
+        public static bool Contains(this uint keys, uint flag) => (keys & flag) == flag;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ContainsAny(this uint keys, uint flag)
-        {
-            return (keys & flag) != 0;
-        }
+        public static bool ContainsAny(this uint keys, uint flag) => (keys & flag) != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Contains(this ulong keys, ulong flag)
-        {
-            return (keys & flag) == flag;
-        }
+        public static bool Contains(this ulong keys, ulong flag) => (keys & flag) == flag;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool ContainsAny(this ulong keys, ulong flag)
-        {
-            return (keys & flag) != 0uL;
-        }
+        public static bool ContainsAny(this ulong keys, ulong flag) => (keys & flag) != 0uL;
     }
 }

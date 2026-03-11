@@ -12,10 +12,8 @@ namespace NZCore
     public static unsafe class BlobExtension
     {
         public static int GetLength<T>(this BlobAssetReference<T> blob)
-            where T : unmanaged
-        {
-            return blob.m_data.Header->Length;
-        }
+            where T : unmanaged =>
+            blob.m_data.Header->Length;
 
         /// <summary>
         /// Evaluate EXISTING blobs for valid data. used for live-rebaking
@@ -27,7 +25,9 @@ namespace NZCore
             where T : unmanaged
         {
             if (blob.m_data.m_Ptr == null) // likely default blob data which has never been created in the first place
+            {
                 return false; // so don't throw an invalid here
+            }
 
             var validationPtr = blob.m_data.Header->ValidationPtr;
             return validationPtr != blob.m_data.m_Ptr;
@@ -37,13 +37,17 @@ namespace NZCore
             where T : unmanaged, IBufferElementData
         {
             if (!bufferLookup.HasBuffer(entity))
+            {
                 return;
+            }
 
             var buffer = bufferLookup[entity];
             var tmp2 = builder.Allocate(ref blobArray, buffer.Length);
 
-            for (int i = 0; i < buffer.Length; i++)
+            for (var i = 0; i < buffer.Length; i++)
+            {
                 tmp2[i] = buffer[i];
+            }
         }
 
         public static T* CopyBlob<T>(this ref BlobAssetReference<T> blobReference)
@@ -63,18 +67,18 @@ namespace NZCore
         {
             var header = blobReference.m_data.Header;
             var length = header->Length;
-            
+
             //var copyPtr = UnsafeUtility.Malloc(length, 16, Allocator.Persistent);
             //UnsafeUtility.MemCpy(copyPtr, blobReference.m_data.m_Ptr, length);
             var startPtr = blobReference.m_data.m_Ptr;
 
-            byte[] bytes = new byte[length];
+            var bytes = new byte[length];
 
-            for (int i =0; i < length;i++)
+            for (var i = 0; i < length; i++)
             {
                 bytes[i] = startPtr[i];
             }
-            
+
             File.WriteAllBytes(filePath, bytes);
         }
     }

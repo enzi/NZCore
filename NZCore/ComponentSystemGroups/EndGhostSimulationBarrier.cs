@@ -7,7 +7,5 @@ using Unity.Entities;
 namespace NZCore
 {
     [UpdateInGroup(typeof(SimulationSystemGroup), OrderLast = true)]
-    public partial class EndGhostSimulationBarrier : EntityCommandBufferSystem
-    {
-    }    
+    public partial class EndGhostSimulationBarrier : EntityCommandBufferSystem { }
 }

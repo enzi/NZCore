@@ -33,9 +33,7 @@ namespace NZCore.MVVM
         /// <param name="execute">The asynchronous execution logic.</param>
         /// <param name="canExecute">The execution status logic.</param>
         public AsyncCommand(Func<Task> execute, Func<bool> canExecute = null)
-            : this(execute != null ? _ => execute() : null, canExecute != null ? _ => canExecute() : null)
-        {
-        }
+            : this(execute != null ? _ => execute() : null, canExecute != null ? _ => canExecute() : null) { }
 
         /// <summary>
         /// Occurs when changes occur that affect whether the command should execute.
@@ -52,10 +50,7 @@ namespace NZCore.MVVM
         /// </summary>
         /// <param name="parameter">Data used by the command.</param>
         /// <returns>True if this command can be executed; otherwise, false.</returns>
-        public bool CanExecute(object parameter)
-        {
-            return !_isExecuting && (_canExecute?.Invoke(parameter) ?? true);
-        }
+        public bool CanExecute(object parameter) => !_isExecuting && (_canExecute?.Invoke(parameter) ?? true);
 
         /// <summary>
         /// Executes the command asynchronously.
@@ -166,7 +161,9 @@ namespace NZCore.MVVM
         public bool CanExecute(object parameter)
         {
             if (_isExecuting)
+            {
                 return false;
+            }
 
             if (parameter is T typedParameter)
             {
@@ -176,7 +173,7 @@ namespace NZCore.MVVM
             // If parameter is null and T is a reference type or nullable, allow it
             if (parameter == null && (!typeof(T).IsValueType || Nullable.GetUnderlyingType(typeof(T)) != null))
             {
-                return _canExecute?.Invoke(default(T)) ?? true;
+                return _canExecute?.Invoke(default) ?? true;
             }
 
             return false;
@@ -201,7 +198,7 @@ namespace NZCore.MVVM
                     }
                     else if (parameter == null && (!typeof(T).IsValueType || Nullable.GetUnderlyingType(typeof(T)) != null))
                     {
-                        _execute(default(T));
+                        _execute(default);
                     }
                 }
                 catch (Exception ex)
@@ -237,7 +234,7 @@ namespace NZCore.MVVM
                     }
                     else if (parameter == null && (!typeof(T).IsValueType || Nullable.GetUnderlyingType(typeof(T)) != null))
                     {
-                        await _execute(default(T));
+                        await _execute(default);
                     }
                 }
                 finally

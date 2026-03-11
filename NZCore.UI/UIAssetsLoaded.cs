@@ -6,7 +6,5 @@ using Unity.Entities;
 
 namespace NZCore.UIToolkit
 {
-    public struct UIAssetsLoaded : IComponentData
-    {
-    }
+    public struct UIAssetsLoaded : IComponentData { }
 }

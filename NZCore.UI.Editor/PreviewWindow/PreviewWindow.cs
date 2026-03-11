@@ -23,29 +23,30 @@ namespace NZCore.UI.Editor
     {
         private class PersistentData
         {
-            public Vector2 m_PreviewDir = new Vector2(120, -20);
+            public Vector2 m_PreviewDir = new(120, -20);
             public float m_AvatarScale = 1.0f;
             public float m_ZoomFactor = 1.0f;
             public Vector3 m_PivotPositionOffset = Vector3.zero;
         }
 
         private PersistentData ViewData;
-        
+
         private const string ViewDataKey = "nz-preview-window";
-        
+
         public static PreviewWindow Instance;
         public static readonly List<DeferredGizmo> DeferredGizmos = new();
-        
+
         private static readonly Type previewRenderUtilityType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.PreviewRenderUtility");
-        
-        private static readonly FieldInfo k_RenderTexture = previewRenderUtilityType.GetField("m_RenderTexture", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly FieldInfo k_RenderTexture =
+            previewRenderUtilityType.GetField("m_RenderTexture", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public Animator Animator;
         private HybridAnimator hybridAnimator;
         public ref HybridAnimator HybridAnimator => ref hybridAnimator;
-        
+
         public Action OnSetupFinished;
-        
+
         private NZAvatarPreview avatarPreview;
         private PreviewRenderUtility previewRenderUtility;
         private GameObject previewObject;
@@ -60,14 +61,14 @@ namespace NZCore.UI.Editor
             Instance = this;
 
             viewDataKey = ViewDataKey;
-            
+
             wireframeMaterial = new Material(Shader.Find("Hidden/Internal-Colored"));
-            
+
             var styles = AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.enzisoft.nzcore/NZCore.UI.Editor/PreviewWindow/PreviewWindow.uss");
             styleSheets.Add(styles);
-            
+
             AddToClassList("preview-container");
-            
+
             var objectField = new ObjectField
             {
                 label = "Preview Object",
@@ -75,12 +76,13 @@ namespace NZCore.UI.Editor
                 viewDataKey = "preview-window-object"
             };
 
-            objectField.RegisterValueChangedCallback(evt => {
+            objectField.RegisterValueChangedCallback(evt =>
+            {
                 previewObject = evt.newValue as GameObject;
-                
+
                 SetupAvatarPreview();
             });
-            
+
             Add(objectField);
 
             var resetButton = new Button(() =>
@@ -94,15 +96,12 @@ namespace NZCore.UI.Editor
             };
 
             Add(resetButton);
-            
+
             previewContainer = new IMGUIContainer();
-            previewContainer.onGUIHandler = () =>
-            {
-                Draw(Event.current.type);
-            };
-            
+            previewContainer.onGUIHandler = () => { Draw(Event.current.type); };
+
             previewContainer.AddToClassList("imgui-preview-container");
-            
+
             Add(previewContainer);
             RegisterCallback<GeometryChangedEvent>(OnGeometryChangedEvent);
         }
@@ -113,12 +112,12 @@ namespace NZCore.UI.Editor
             {
                 return;
             }
-            
+
             ViewData.m_PivotPositionOffset = avatarPreview.m_PivotPositionOffset;
             ViewData.m_AvatarScale = avatarPreview.m_AvatarScale;
             ViewData.m_ZoomFactor = avatarPreview.m_ZoomFactor;
             ViewData.m_PreviewDir = avatarPreview.m_PreviewDir;
-            
+
             ExposedViewData.ExposedViewData.SaveViewData(this);
         }
 
@@ -132,13 +131,13 @@ namespace NZCore.UI.Editor
 
         private void OnGeometryChangedEvent(GeometryChangedEvent evt)
         {
-            float pixelsPerPoint = EditorGUIUtility.pixelsPerPoint;
+            var pixelsPerPoint = EditorGUIUtility.pixelsPerPoint;
 
-            Rect r = previewContainer.contentRect;
-            
-            int width = (int) (r.width * (double) pixelsPerPoint);
-            int height = (int) (r.height * (double) pixelsPerPoint);
-            
+            var r = previewContainer.contentRect;
+
+            var width = (int)(r.width * (double)pixelsPerPoint);
+            var height = (int)(r.height * (double)pixelsPerPoint);
+
             gizmoRenderTexture = new RenderTexture(width, height, GraphicsFormat.R16G16B16A16_SFloat, SystemInfo.GetGraphicsFormat(DefaultFormat.DepthStencil));
 
             if (wireframeMaterial != null)
@@ -155,7 +154,7 @@ namespace NZCore.UI.Editor
         public void Cleanup()
         {
             avatarPreview?.OnDisable();
-            
+
             if (gizmoRenderTexture != null)
             {
                 gizmoRenderTexture.Release();
@@ -208,7 +207,7 @@ namespace NZCore.UI.Editor
             {
                 avatarPreview.DoAvatarPreview(previewContainer.contentRect, GUIStyle.none);
             }
-                
+
             if (eventType == EventType.Repaint)
             {
                 DrawGizmos(previewContainer.contentRect);
@@ -223,10 +222,10 @@ namespace NZCore.UI.Editor
             {
                 return;
             }
-            
+
             Handles.SetCamera(previewContainer.contentRect, previewRenderUtility.camera);
             Handles.color = Color.green;
-            
+
             foreach (var deferredGizmo in DeferredGizmos)
             {
                 switch (deferredGizmo.Type)
@@ -252,10 +251,10 @@ namespace NZCore.UI.Editor
                         throw new ArgumentOutOfRangeException();
                 }
             }
-            
+
             DeferredGizmos.Clear();
         }
-        
+
         public void SetTimeRecursively(double time)
         {
             hybridAnimator.SetTimeRecursively(time);

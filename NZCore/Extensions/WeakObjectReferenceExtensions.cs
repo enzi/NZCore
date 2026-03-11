@@ -11,15 +11,11 @@ namespace NZCore
     public static class WeakObjectReferenceExtensions
     {
         public static bool IsValidBurst<T>(this WeakObjectReference<T> weakRef)
-            where T : Object
-        {
-            return weakRef.Id.IsValid;
-        }
+            where T : Object =>
+            weakRef.Id.IsValid;
 
         public static UntypedWeakReferenceId GetInternalId<T>(this WeakObjectReference<T> weakRef)
-            where T : Object
-        {
-            return weakRef.Id;
-        }
+            where T : Object =>
+            weakRef.Id;
     }
 }

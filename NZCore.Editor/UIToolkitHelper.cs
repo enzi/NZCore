@@ -27,17 +27,17 @@ namespace NZCore.Editor
 
             return header;
         }
-        
+
         public static void SetPickingModeRecursive(this VisualElement element, PickingMode pickingMode)
         {
             element.pickingMode = pickingMode;
-            
-            foreach (var child in element.hierarchy.Children()) 
+
+            foreach (var child in element.hierarchy.Children())
             {
                 SetPickingModeRecursive(child, pickingMode);
             }
         }
-        
+
         public static VisualElement GetStructInspector<T>(T data)
             where T : struct
         {
@@ -45,11 +45,11 @@ namespace NZCore.Editor
             content.SetTarget(data);
             return content;
         }
-        
+
         public static unsafe VisualElement GetStructInspector<T>(byte* ptr)
             where T : unmanaged
         {
-            ref T data = ref *(T*)ptr;
+            ref var data = ref *(T*)ptr;
             var content = new PropertyElement();
             content.SetTarget(data);
             return content;
@@ -77,29 +77,29 @@ namespace NZCore.Editor
         public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, ref byte* ptr, bool drawHeader = true)
             where T : unmanaged
         {
-            ref T data = ref *(T*)ptr;
+            ref var data = ref *(T*)ptr;
             if (drawHeader)
             {
                 root.AddBoldLabel($"{typeof(T).Name}");
             }
 
             root.AddStructInspector(data);
-            root.Add(new VisualElement() { pickingMode = PickingMode.Ignore}); // just used as a break
+            root.Add(new VisualElement { pickingMode = PickingMode.Ignore }); // just used as a break
             ptr += sizeof(T);
             return ref data;
         }
-        
+
         public static unsafe ref T DrawPropertyDrawer<T>(this VisualElement root, byte* ptr, string propertyName, bool drawHeader = true)
             where T : unmanaged
         {
-            ref T data = ref *(T*)ptr;
+            ref var data = ref *(T*)ptr;
             if (drawHeader)
             {
                 root.AddBoldLabel(propertyName);
             }
 
             root.AddStructInspector(data);
-            root.Add(new VisualElement() { pickingMode = PickingMode.Ignore}); // just used as a break
+            root.Add(new VisualElement { pickingMode = PickingMode.Ignore }); // just used as a break
             return ref data;
         }
 
@@ -116,7 +116,7 @@ namespace NZCore.Editor
 
             root.Add(lbl);
         }
-        
+
         public static void RecreateUI(this SerializedProperty property, VisualElement root, Action<VisualElement, SerializedProperty> createMethod)
         {
             root.ClearUI();
@@ -125,7 +125,7 @@ namespace NZCore.Editor
 
             root.Bind(property.serializedObject);
         }
-        
+
         public static void RecreateUI(this SerializedProperty property, VisualElement root, Action createMethod)
         {
             root.ClearUI();
@@ -138,7 +138,7 @@ namespace NZCore.Editor
         public static void ClearUI(this VisualElement root)
         {
             root.Clear();
-            
+
 #if ENABLE_RUNTIME_DATA_BINDINGS
             root.ClearBindings();
 #endif
@@ -151,9 +151,8 @@ namespace NZCore.Editor
             return spacer;
         }
 
-        public static VisualElement GetSpacer(int height)
-        {
-            return new VisualElement
+        public static VisualElement GetSpacer(int height) =>
+            new()
             {
                 name = "Spacer",
                 style =
@@ -161,7 +160,6 @@ namespace NZCore.Editor
                     height = height
                 }
             };
-        }
 
         public static void SetBorder(this VisualElement target, float width)
         {
@@ -170,7 +168,7 @@ namespace NZCore.Editor
             target.style.borderTopWidth = width;
             target.style.borderBottomWidth = width;
         }
-        
+
         public static void SetBorderColor(this VisualElement target, Color color)
         {
             target.style.borderTopColor = color;
@@ -183,7 +181,7 @@ namespace NZCore.Editor
         public static void SetEditorIcon(this VisualElement target, string iconName)
         {
             var guiContent = EditorGUIUtility.TrIconContent(iconName, "Play the timeline");
-            var tmpImage = (Texture2D) guiContent.image;
+            var tmpImage = (Texture2D)guiContent.image;
             tmpImage.filterMode = FilterMode.Bilinear;
             target.style.backgroundImage = new StyleBackground(tmpImage);
         }
@@ -199,52 +197,54 @@ namespace NZCore.Editor
                     right = 0,
                     top = 0,
                     bottom = 0,
-                    
+
                     // replaces unityBackgroundScaleMode as it's obsolete 
                     backgroundPositionX = new BackgroundPosition(BackgroundPositionKeyword.Center),
                     backgroundPositionY = new BackgroundPosition(BackgroundPositionKeyword.Center),
                     backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat),
                     backgroundSize = new BackgroundSize(new Length(percentCoverage, LengthUnit.Percent), new Length(percentCoverage, LengthUnit.Percent))
-                },
+                }
             };
 
             child.SetEditorIcon(iconName);
-            
+
             target.Add(child);
         }
-        
+
         public static void DrawVerticalLineFast(this MeshGenerationContext ctx, float x, float minY, float maxY, Color color, float thickness = 1.0f)
         {
             var mesh = ctx.Allocate(4, 6);
 
-            float halfThickness = thickness * 0.5f;
-            
+            var halfThickness = thickness * 0.5f;
+
             // TL 0 ... TR 1
             // BL 2 ... BR 3
-            
+
             mesh.SetNextVertex(new Vertex { position = new Vector3(x - halfThickness, minY, 0), tint = color });
             mesh.SetNextVertex(new Vertex { position = new Vector3(x + halfThickness, minY, 0), tint = color });
             mesh.SetNextVertex(new Vertex { position = new Vector3(x - halfThickness, maxY, 0), tint = color });
             mesh.SetNextVertex(new Vertex { position = new Vector3(x + halfThickness, maxY, 0), tint = color });
-            
+
             // needs clockwise :)
             mesh.SetNextIndex(0);
             mesh.SetNextIndex(1);
             mesh.SetNextIndex(2);
-            
+
             mesh.SetNextIndex(2);
             mesh.SetNextIndex(1);
             mesh.SetNextIndex(3);
         }
-        
+
         public static void DrawRect(this MeshGenerationContext mgc, Rect rect, Color color, Color? playModeTint = null)
         {
             if (mgc == null)
+            {
                 throw new ArgumentNullException(nameof(mgc));
+            }
 
-            Color tintColor = playModeTint ?? Color.white;
-            
-            Vertex[] vertices = new Vertex[4];
+            var tintColor = playModeTint ?? Color.white;
+
+            var vertices = new Vertex[4];
             ushort[] indices = { 0, 1, 2, 2, 3, 0 };
 
             vertices[0] = new Vertex
@@ -252,46 +252,53 @@ namespace NZCore.Editor
                 position = new Vector3(rect.x, rect.y, Vertex.nearZ),
                 tint = color * tintColor
             };
-            
+
             vertices[1] = new Vertex
             {
                 position = new Vector3(rect.x, rect.y + rect.height, Vertex.nearZ),
                 tint = color * tintColor
             };
-            
+
             vertices[2] = new Vertex
             {
                 position = new Vector3(rect.x + rect.width, rect.y + rect.height, Vertex.nearZ),
                 tint = color * tintColor
             };
-            
+
             vertices[3] = new Vertex
             {
                 position = new Vector3(rect.x + rect.width, rect.y, Vertex.nearZ),
                 tint = color * tintColor
             };
-            
-            MeshWriteData meshWriteData = mgc.Allocate(vertices.Length, indices.Length);
+
+            var meshWriteData = mgc.Allocate(vertices.Length, indices.Length);
             meshWriteData.SetAllVertices(vertices);
             meshWriteData.SetAllIndices(indices);
         }
 
         public static void SetLayout(this VisualElement element, Rect value)
         {
-            if (/*element.isLayoutManual &&*/ element.layout == value)
+            if ( /*element.isLayoutManual &&*/ element.layout == value)
+            {
                 return;
-            
-            Rect layout = element.layout;
+            }
+
+            var layout = element.layout;
             VersionChangeType changeType = 0;
             if (!Mathf.Approximately(layout.x, value.x) || !Mathf.Approximately(layout.y, value.y))
+            {
                 changeType |= VersionChangeType.Transform;
+            }
+
             if (!Mathf.Approximately(layout.width, value.width) || !Mathf.Approximately(layout.height, value.height))
+            {
                 changeType |= VersionChangeType.Size;
-            
+            }
+
             //element.layout = value;
             //this.isLayoutManual = true;
-            
-            IStyle style = element.style;
+
+            var style = element.style;
             style.position = Position.Absolute;
             style.marginLeft = 0.0f;
             style.marginRight = 0.0f;
@@ -303,10 +310,12 @@ namespace NZCore.Editor
             style.bottom = float.NaN;
             style.width = value.width;
             style.height = value.height;
-            
+
             if (changeType == 0)
+            {
                 return;
-            
+            }
+
             //element.IncrementVersion(changeType);
         }
     }

@@ -50,7 +50,7 @@ namespace NZCore
             var jobProducer = new JobNativeMultiHashMapVisitKeyValueProducer<TJob, TKey, TValue>
             {
                 HashMap = hashMap,
-                JobData = jobData,
+                JobData = jobData
             };
 
             var scheduleParams = new JobsUtility.JobScheduleParameters(
@@ -72,8 +72,7 @@ namespace NZCore
             where TValue : unmanaged
         {
             /// <summary> The <see cref="NativeParallelMultiHashMap{TKey,TValue}" />. </summary>
-            [ReadOnly]
-            public NativeParallelMultiHashMap<TKey, TValue> HashMap;
+            [ReadOnly] public NativeParallelMultiHashMap<TKey, TValue> HashMap;
 
             /// <summary> The job. </summary>
             internal TJob JobData;
@@ -129,9 +128,9 @@ namespace NZCore
                     var keys = bucketData.keys;
                     var values = bucketData.values;
 
-                    for (int i = begin; i < end; i++)
+                    for (var i = begin; i < end; i++)
                     {
-                        int entryIndex = buckets[i];
+                        var entryIndex = buckets[i];
 
                         while (entryIndex != -1)
                         {

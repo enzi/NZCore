@@ -21,10 +21,10 @@ namespace NZCore
         protected override void OnCreate()
         {
             _query = new EntityQueryBuilder(Allocator.Temp)
-                        .WithAll<Prefab, TBlobReference>()
-                        .WithOptions(EntityQueryOptions.IncludePrefab)
-                        .Build(ref CheckedStateRef);
-            
+                     .WithAll<Prefab, TBlobReference>()
+                     .WithOptions(EntityQueryOptions.IncludePrefab)
+                     .Build(ref CheckedStateRef);
+
             RequireForUpdate(_query);
         }
 
@@ -33,7 +33,7 @@ namespace NZCore
         {
             CheckedStateRef.CreateSingleton(out TIndexList singleton);
 
-            new BlobIndexListJob()
+            new BlobIndexListJob
             {
                 List = singleton.GetIndexList(),
                 BlobReference_ReadHandle = SystemAPI.GetComponentTypeHandle<TBlobReference>()
@@ -58,21 +58,23 @@ namespace NZCore
                 //Debug.Log($"BlobIndexJob for {typeof(TBlobReference).Name}");
                 var blobRefs = (TBlobReference*)chunk.GetRequiredComponentDataPtrRO(ref BlobReference_ReadHandle);
 
-                int highestIndex = 0;
+                var highestIndex = 0;
 
-                for (int i = 0; i < chunk.Count; i++)
+                for (var i = 0; i < chunk.Count; i++)
                 {
                     var blobRef = blobRefs[i];
 
-                    int blobIndex = blobRef.BlobIndex;
+                    var blobIndex = blobRef.BlobIndex;
 
                     if (blobIndex > highestIndex)
+                    {
                         highestIndex = blobIndex;
+                    }
                 }
 
                 List.Resize(highestIndex + 1, NativeArrayOptions.ClearMemory);
 
-                for (int i = 0; i < chunk.Count; i++)
+                for (var i = 0; i < chunk.Count; i++)
                 {
                     var blobRef = blobRefs[i];
 
@@ -84,7 +86,7 @@ namespace NZCore
             }
         }
     }
-    
+
     public partial class BlobIndexMapSystem<TIndexList, TBlobReference, TBlobRoot> : SystemBase
         where TIndexList : unmanaged, IInitSingleton, IDisposable, IBlobIndexMap<TBlobReference>
         where TBlobReference : unmanaged, IBlobIndex, IBlobAssetReference<TBlobRoot>
@@ -95,10 +97,10 @@ namespace NZCore
         protected override void OnCreate()
         {
             _query = new EntityQueryBuilder(Allocator.Temp)
-                        .WithAll<Prefab, TBlobReference>()
-                        .WithOptions(EntityQueryOptions.IncludePrefab)
-                        .Build(ref CheckedStateRef);
-            
+                     .WithAll<Prefab, TBlobReference>()
+                     .WithOptions(EntityQueryOptions.IncludePrefab)
+                     .Build(ref CheckedStateRef);
+
             RequireForUpdate(_query);
         }
 
@@ -107,7 +109,7 @@ namespace NZCore
         {
             CheckedStateRef.CreateSingleton(out TIndexList singleton);
 
-            new BlobIndexMapJob()
+            new BlobIndexMapJob
             {
                 Map = singleton.GetMap(),
                 BlobReference_ReadHandle = SystemAPI.GetComponentTypeHandle<TBlobReference>()
@@ -132,11 +134,11 @@ namespace NZCore
                 //Debug.Log($"BlobIndexJob for {typeof(TBlobReference).Name}");
                 var blobRefs = (TBlobReference*)chunk.GetRequiredComponentDataPtrRO(ref BlobReference_ReadHandle);
 
-                for (int i = 0; i < chunk.Count; i++)
+                for (var i = 0; i < chunk.Count; i++)
                 {
                     var blobRef = blobRefs[i];
 
-                    Map.TryAdd(blobRef.BlobIndex, new TBlobReference()
+                    Map.TryAdd(blobRef.BlobIndex, new TBlobReference
                     {
                         blob = blobRef.blob
                     });

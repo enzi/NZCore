@@ -23,7 +23,7 @@ namespace NZCore
             streamingState_ReadHandle = state.GetComponentLookup<SceneSectionStreamingSystem.StreamingState>(true);
             requestSceneLoaded_ReadHandle = state.GetComponentLookup<RequestSceneLoaded>(true);
         }
-        
+
         public void Update(ref SystemState state)
         {
             sceneReference_ReadHandle.Update(ref state);
@@ -98,15 +98,15 @@ namespace NZCore
 
             return true;
         }
-        
+
         private static bool IsSectionLoaded(ref SystemState state, Entity sectionEntity)
         {
             if (!state.EntityManager.HasComponent<SceneSectionStreamingSystem.StreamingState>(sectionEntity))
             {
                 return false;
             }
-            
-            return state.EntityManager.GetComponentData<SceneSectionStreamingSystem.StreamingState>(sectionEntity).Status == 
+
+            return state.EntityManager.GetComponentData<SceneSectionStreamingSystem.StreamingState>(sectionEntity).Status ==
                    SceneSectionStreamingSystem.StreamingStatus.Loaded;
         }
 
@@ -149,7 +149,7 @@ namespace NZCore
 
             return streamingState_ReadHandle[sectionEntity].Status == SceneSectionStreamingSystem.StreamingStatus.Loaded;
         }
-        
+
         public void OpenScene(EntityCommandBuffer ecb, Entity entity)
         {
             if (requestSceneLoaded_ReadHandle.HasComponent(entity))

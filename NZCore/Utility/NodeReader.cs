@@ -17,14 +17,14 @@ namespace NZCore
         public byte* CurrentPtr => ptr + offset;
         public int Offset => offset;
         public bool CanRead => offset < bufferLength;
-        
+
         public NodeReader(byte* ptr, int bufferLength)
         {
             this.ptr = ptr;
             this.bufferLength = bufferLength;
             offset = 0;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T ReadFromNode<T>()
             where T : unmanaged
@@ -39,7 +39,7 @@ namespace NZCore
         {
             var tmp = ptr + offset;
             offset += length * UnsafeUtility.SizeOf<T>();
-            return (T*) tmp;
+            return (T*)tmp;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -47,14 +47,14 @@ namespace NZCore
         {
             offset += newOffset;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOffset<T>()
             where T : unmanaged
         {
             offset += UnsafeUtility.SizeOf<T>();
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetOffset(int newOffset)
         {
@@ -65,9 +65,6 @@ namespace NZCore
     public static class NodeReaderExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe NodeReader AsNodeReader(this ref BlobArray<byte> blobArray)
-        {
-            return new NodeReader((byte*) blobArray.GetUnsafePtr(), blobArray.Length);
-        }
+        public static unsafe NodeReader AsNodeReader(this ref BlobArray<byte> blobArray) => new((byte*)blobArray.GetUnsafePtr(), blobArray.Length);
     }
 }

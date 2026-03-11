@@ -6,7 +6,5 @@ using Unity.Entities;
 
 namespace NZCore
 {
-    public struct IgnoreInOpenSubSceneQuery : IComponentData
-    {
-    }
+    public struct IgnoreInOpenSubSceneQuery : IComponentData { }
 }

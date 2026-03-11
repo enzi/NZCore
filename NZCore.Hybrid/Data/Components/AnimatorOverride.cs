@@ -20,7 +20,7 @@ namespace NZCore.Hybrid
         public void SetClip(WeakObjectReference<AnimationClip> clip, float speed)
         {
             State = AnimatorOverrideEnum.Requested;
-            
+
             _animationClip = clip;
             _speed = speed;
         }

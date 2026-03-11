@@ -29,7 +29,7 @@ namespace NZCore
 
             if (!useEnabledMask)
             {
-                for (int entityIndexInChunk = 0; entityIndexInChunk < chunkEntityCount; ++entityIndexInChunk)
+                for (var entityIndexInChunk = 0; entityIndexInChunk < chunkEntityCount; ++entityIndexInChunk)
                 {
                     JobData.Execute(entityIndexInChunk);
                 }
@@ -38,7 +38,7 @@ namespace NZCore
             {
                 if (chunkEnabledMask.DetermineFastPath())
                 {
-                    int chunkEndIndex = 0;
+                    var chunkEndIndex = 0;
                     while (EnabledBitUtility.TryGetNextRange(chunkEnabledMask, chunkEndIndex, out var entityIndexInChunk, out chunkEndIndex))
                     {
                         while (entityIndexInChunk < chunkEndIndex)
@@ -50,9 +50,9 @@ namespace NZCore
                 }
                 else
                 {
-                    ulong mask64 = chunkEnabledMask.ULong0;
-                    int count = math.min(64, chunkEntityCount);
-                    for (int entityIndexInChunk = 0; entityIndexInChunk < count; ++entityIndexInChunk)
+                    var mask64 = chunkEnabledMask.ULong0;
+                    var count = math.min(64, chunkEntityCount);
+                    for (var entityIndexInChunk = 0; entityIndexInChunk < count; ++entityIndexInChunk)
                     {
                         if ((mask64 & 1) != 0)
                         {

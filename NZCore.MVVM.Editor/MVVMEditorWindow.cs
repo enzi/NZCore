@@ -15,7 +15,7 @@ namespace NZCore.MVVM.Editor
         {
             app = new MVVMApplication();
             viewFactory = app.GetService<IViewFactory>();
-            
+
             CreateView();
         }
 

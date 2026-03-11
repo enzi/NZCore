@@ -19,7 +19,7 @@ namespace NZCore
         {
             CheckedStateRef.CreateSingleton<DateTimeSingleton>();
 
-            SystemAPI.SetSingleton(new DateTimeSingleton()
+            SystemAPI.SetSingleton(new DateTimeSingleton
             {
                 UtcNowBinary = DateTime.UtcNow.ToBinary()
             });
@@ -39,7 +39,7 @@ namespace NZCore
             {
                 lastElapsed = currentElapsed;
 
-                SystemAPI.SetSingleton(new DateTimeSingleton()
+                SystemAPI.SetSingleton(new DateTimeSingleton
                 {
                     UtcNowBinary = DateTime.UtcNow.ToBinary()
                 });

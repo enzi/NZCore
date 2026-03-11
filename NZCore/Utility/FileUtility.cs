@@ -14,12 +14,12 @@ namespace NZCore
 
             if (hasChanges)
             {
-                string directory = Path.GetDirectoryName(filePath);
+                var directory = Path.GetDirectoryName(filePath);
                 if (!string.IsNullOrEmpty(directory))
                 {
                     Directory.CreateDirectory(directory);
                 }
-                
+
                 File.WriteAllText(filePath, content);
             }
 
@@ -29,7 +29,9 @@ namespace NZCore
         public static bool CheckForChanges(string filePath, string content)
         {
             if (!File.Exists(filePath))
+            {
                 return true;
+            }
 
             var oldData = File.ReadAllText(filePath);
 

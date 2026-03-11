@@ -30,10 +30,11 @@ namespace NZCore
         private AllocatorManager.AllocatorHandle allocator;
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal static UnsafeParallelListHashMap<TKey, TValue>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        internal static UnsafeParallelListHashMap<TKey, TValue>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator,
+            NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
-            UnsafeParallelListHashMap<TKey, TValue>* unsafeArrayHashMap = allocator.Allocate(default(UnsafeParallelListHashMap<TKey, TValue>), 1);
+            var unsafeArrayHashMap = allocator.Allocate(default(UnsafeParallelListHashMap<TKey, TValue>), 1);
 
             unsafeArrayHashMap->allocator = allocator.Handle;
 
@@ -53,9 +54,15 @@ namespace NZCore
         public void SetArrays(UnsafeParallelList<TKey> keyArray, UnsafeParallelList<TValue> valueArray)
         {
             if (!keyArray.IsCreated || !valueArray.IsCreated)
+            {
                 throw new Exception("Key or values are not created!");
+            }
+
             if (keyArray.Length != valueArray.Length)
+            {
                 throw new Exception("Key and value length is not the same!");
+            }
+
             if (keyArray.Length == 0 || valueArray.Length == 0)
             {
                 allocatedIndexLength = 0;
@@ -65,8 +72,8 @@ namespace NZCore
             Keys = keyArray;
             Values = valueArray;
 
-            int length = keyArray.Length;
-            int bucketLength = length * 2;
+            var length = keyArray.Length;
+            var bucketLength = length * 2;
 
             keyCapacity = length;
             bucketLength = math.ceilpow2(bucketLength);
@@ -103,19 +110,19 @@ namespace NZCore
         {
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
 
-            int ii = 0;
-            for (int k = 0; k < JobsUtility.ThreadIndexCount; k++)
+            var ii = 0;
+            for (var k = 0; k < JobsUtility.ThreadIndexCount; k++)
             {
                 var blockCount = Keys.BlockCount(k);
                 var keyPtr = (byte*)Keys.GetUnsafeList(k).Ptr;
                 var valuePtr = (byte*)Values.GetUnsafeList(k).Ptr;
 
-                for (int i = 0; i < blockCount; i++)
+                for (var i = 0; i < blockCount; i++)
                 {
                     var bucketIndex = UnsafeUtility.ReadArrayElement<TKey>(keyPtr, i).GetHashCode() & bucketCapacityMask;
 
                     (*next)[ii] = (*buckets)[bucketIndex];
-                    (*buckets)[bucketIndex] = new MultipleArrayIndexer()
+                    (*buckets)[bucketIndex] = new MultipleArrayIndexer
                     {
                         InternalIndex = ii,
                         PtrToKey = keyPtr + i * UnsafeUtility.SizeOf<TKey>(),
@@ -139,7 +146,7 @@ namespace NZCore
             }
 
             // First find the slot based on the hash            
-            int bucket = key.GetHashCode() & bucketCapacityMask;
+            var bucket = key.GetHashCode() & bucketCapacityMask;
             it.EntryIndex = it.NextEntryIndex = (*buckets)[bucket];
             return TryGetNextRefValue(out item, ref it);
         }
@@ -177,10 +184,12 @@ namespace NZCore
         public bool TryPeekFirstRefValue(TKey key)
         {
             if (allocatedIndexLength <= 0)
+            {
                 return false;
+            }
 
             // First find the slot based on the hash            
-            int bucket = key.GetHashCode() & bucketCapacityMask;
+            var bucket = key.GetHashCode() & bucketCapacityMask;
             return TryPeekNextRefValue(key, (*buckets)[bucket]);
         }
 
@@ -234,7 +243,9 @@ namespace NZCore
         {
             //Avoids going beyond the end of the collection.
             if (!IsFirst)
+            {
                 return Map->TryGetNextRefValue(out value, ref iterator);
+            }
 
             IsFirst = false;
             return Map->TryGetFirstRefValue(Key, out value, out iterator);
@@ -265,11 +276,11 @@ namespace NZCore
         //public int listIndex;
         //public int elementIndex;
 
-        public static MultipleArrayIndexer Null => new MultipleArrayIndexer()
+        public static MultipleArrayIndexer Null => new()
         {
             InternalIndex = -1,
             PtrToKey = null,
-            PtrToValue = null,
+            PtrToValue = null
             //listIndex = 0,
             //elementIndex = 0,
         };

@@ -37,27 +37,19 @@ namespace NZCore.UIToolkit
             Root = UIDocument.rootVisualElement.Q<VisualElement>("root");
             DragContainer = UIDocument.rootVisualElement.Q<VisualElement>("dragContainer");
             TooltipContainer = UIDocument.rootVisualElement.Q<VisualElement>("tooltipContainer");
-            
+
             if (DragContainer != null)
             {
                 DragImage = DragContainer.Q<VisualElement>("dragImage");
             }
         }
 
-        public VisualElement GetRoot(string containerName = null)
-        {
-            return containerName == null ? Root : Root.Q<VisualElement>(containerName);
-        }
+        public VisualElement GetRoot(string containerName = null) => containerName == null ? Root : Root.Q<VisualElement>(containerName);
 
-        public VisualElement AddInterface(string assetKey, bool visibleOnInstantiate = true)
-        {
-            return AddInterface(assetKey, Root, visibleOnInstantiate);
-        }
+        public VisualElement AddInterface(string assetKey, bool visibleOnInstantiate = true) => AddInterface(assetKey, Root, visibleOnInstantiate);
 
-        public VisualElement AddInterface(string assetKey, string containerName = null, bool visibleOnInstantiate = true)
-        {
-            return AddInterface(assetKey, GetRoot(containerName), visibleOnInstantiate);
-        }
+        public VisualElement AddInterface(string assetKey, string containerName = null, bool visibleOnInstantiate = true) =>
+            AddInterface(assetKey, GetRoot(containerName), visibleOnInstantiate);
 
         public VisualElement AddInterface(string assetKey, VisualElement rootContainer, bool visibleOnInstantiate = true)
         {
@@ -70,21 +62,22 @@ namespace NZCore.UIToolkit
             return null;
         }
 
-        public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
-            where T : class, IViewModelBinding, new()
-        {
-            return AddBindableInterface<T>(uniqueKey, assetKey, Root, elementName, order, visibleOnInstantiate);
-        }
+        public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, string elementName = null, int order = 0,
+            bool visibleOnInstantiate = true)
+            where T : class, IViewModelBinding, new() =>
+            AddBindableInterface<T>(uniqueKey, assetKey, Root, elementName, order, visibleOnInstantiate);
 
-        public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null,
+            int order = 0, bool visibleOnInstantiate = true)
             where T : class, IViewModelBinding, new()
         {
-            VisualElement rootContainer = GetRoot(containerName);
+            var rootContainer = GetRoot(containerName);
 
             return AddBindableInterface<T>(uniqueKey, assetKey, rootContainer, elementName, order, visibleOnInstantiate);
         }
 
-        public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null,
+            int order = 0, bool visibleOnInstantiate = true)
             where T : class, IViewModelBinding, new()
         {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
@@ -111,7 +104,8 @@ namespace NZCore.UIToolkit
             return ve;
         }
 
-        public VisualElement AddPanel(string uniqueKey, VisualTreeAsset asset, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        public VisualElement AddPanel(string uniqueKey, VisualTreeAsset asset, VisualElement rootContainer, string elementName = null, int order = 0,
+            bool visibleOnInstantiate = true)
         {
             var ve = CloneAndAdd(uniqueKey, asset, visibleOnInstantiate, elementName);
             AddAsSortablePanel(rootContainer, ve, order);
@@ -119,17 +113,14 @@ namespace NZCore.UIToolkit
             return ve;
         }
 
-        public VisualElement AddPanel(string uniqueKey, string assetKey, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
-        {
-            return AddPanel(uniqueKey, assetKey, Root, elementName, order, visibleOnInstantiate);
-        }
+        public VisualElement AddPanel(string uniqueKey, string assetKey, string elementName = null, int order = 0, bool visibleOnInstantiate = true) =>
+            AddPanel(uniqueKey, assetKey, Root, elementName, order, visibleOnInstantiate);
 
-        public VisualElement AddPanel(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
-        {
-            return AddPanel(uniqueKey, assetKey, GetRoot(containerName), elementName, order, visibleOnInstantiate);
-        }
+        public VisualElement AddPanel(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0,
+            bool visibleOnInstantiate = true) => AddPanel(uniqueKey, assetKey, GetRoot(containerName), elementName, order, visibleOnInstantiate);
 
-        public VisualElement AddPanel(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        public VisualElement AddPanel(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0,
+            bool visibleOnInstantiate = true)
         {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
             {
@@ -165,13 +156,13 @@ namespace NZCore.UIToolkit
             rootContainer.Insert(index, ve);
         }
 
-        public (VisualElement, T) AddBindablePanel<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
-            where T : class, IViewModelBinding, new()
-        {
-            return AddBindablePanel<T>(uniqueKey, assetKey, GetRoot(containerName), elementName, order, visibleOnInstantiate);
-        }
+        public (VisualElement, T) AddBindablePanel<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0,
+            bool visibleOnInstantiate = true)
+            where T : class, IViewModelBinding, new() =>
+            AddBindablePanel<T>(uniqueKey, assetKey, GetRoot(containerName), elementName, order, visibleOnInstantiate);
 
-        public (VisualElement, T) AddBindablePanel<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0, bool visibleOnInstantiate = true)
+        public (VisualElement, T) AddBindablePanel<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0,
+            bool visibleOnInstantiate = true)
             where T : class, IViewModelBinding, new()
         {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
@@ -192,10 +183,7 @@ namespace NZCore.UIToolkit
             return container;
         }
 
-        public IViewModelBinding RemovePanel(string uniqueKey)
-        {
-            return TryUnload(uniqueKey, out var panel) ? panel.Binding : null;
-        }
+        public IViewModelBinding RemovePanel(string uniqueKey) => TryUnload(uniqueKey, out var panel) ? panel.Binding : null;
 
         public bool TryLoad(string uniqueKey, string assetKey, out VisualElement ve, bool visibleOnInstantiate = true, string elementName = null)
         {
@@ -235,7 +223,8 @@ namespace NZCore.UIToolkit
 
         // Binding related methods
 
-        public bool TryLoad<T>(string uniqueKey, string assetKey, VisualElement rootContainer, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true, string elementName = null)
+        public bool TryLoad<T>(string uniqueKey, string assetKey, VisualElement rootContainer, out (VisualElement ve, T binding) container,
+            bool visibleOnInstantiate = true, string elementName = null)
             where T : class, IViewModelBinding, new()
         {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
@@ -251,7 +240,9 @@ namespace NZCore.UIToolkit
                 ve.dataSource = binding;
 
                 if (elementName != null)
+                {
                     ve.name = elementName;
+                }
 
                 _loadedPanels.Add(uniqueKey, (ve, binding));
 
@@ -268,7 +259,8 @@ namespace NZCore.UIToolkit
             }
         }
 
-        public bool TryLoad<T>(string uniqueKey, string assetKey, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true, string elementName = null)
+        public bool TryLoad<T>(string uniqueKey, string assetKey, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true,
+            string elementName = null)
             where T : class, IViewModelBinding, new()
         {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
@@ -292,7 +284,8 @@ namespace NZCore.UIToolkit
             }
         }
 
-        public void Load<T>(string uniqueKey, VisualTreeAsset asset, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true, string elementName = null)
+        public void Load<T>(string uniqueKey, VisualTreeAsset asset, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true,
+            string elementName = null)
             where T : class, IViewModelBinding, new()
         {
             var ve = asset.CloneSingleTree(visibleOnInstantiate);
@@ -300,7 +293,9 @@ namespace NZCore.UIToolkit
             ve.dataSource = binding;
 
             if (elementName != null)
+            {
                 ve.name = elementName;
+            }
 
             _loadedPanels.Add(uniqueKey, (ve, binding));
 
@@ -317,12 +312,13 @@ namespace NZCore.UIToolkit
                 {
                     _sortedPanels.Remove(orderedElement);
                 }
+
                 return true;
             }
 
             return false;
         }
-        
+
         public bool UnloadOrderedPanel()
         {
             if (_sortedPanels.Count == 0)
@@ -362,10 +358,7 @@ namespace NZCore.UIToolkit
             _registeredElements.Add(key, element);
         }
 
-        public bool TryGet(string tooltip, out VisualElement element)
-        {
-            return _registeredElements.TryGetValue(tooltip, out element);
-        }
+        public bool TryGet(string tooltip, out VisualElement element) => _registeredElements.TryGetValue(tooltip, out element);
 
         private readonly struct OrderedElement : IComparable<OrderedElement>, IEquatable<OrderedElement>
         {
@@ -380,20 +373,11 @@ namespace NZCore.UIToolkit
                 _order = order;
             }
 
-            public int CompareTo(OrderedElement other)
-            {
-                return _order.CompareTo(other._order);
-            }
+            public int CompareTo(OrderedElement other) => _order.CompareTo(other._order);
 
-            public bool Equals(OrderedElement other)
-            {
-                return _ve.Equals(other._ve);
-            }
+            public bool Equals(OrderedElement other) => _ve.Equals(other._ve);
 
-            public override int GetHashCode()
-            {
-                return _ve.GetHashCode();
-            }
+            public override int GetHashCode() => _ve.GetHashCode();
         }
     }
 }

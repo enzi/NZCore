@@ -20,12 +20,14 @@ namespace NZCore.Hybrid
 
             var assets = loadHandle.Result;
 
-            Dictionary<string, T> val = new Dictionary<string, T>();
+            var val = new Dictionary<string, T>();
 
             if (assets.Count < keys.Count)
+            {
                 Debug.LogError($"Not all assets could be loaded! {assets.Count} != {keys.Count}");
+            }
 
-            for (int i = 0; i < assets.Count; i++)
+            for (var i = 0; i < assets.Count; i++)
             {
                 val.Add(keys[i], assets[i]);
             }
@@ -36,7 +38,7 @@ namespace NZCore.Hybrid
         public static async Task<AddressablesAndHandles<T>> LoadAssetsFromLabel<T>(string labelName) where T : class
         {
             var val = new AddressablesAndHandles<T>();
-            
+
             IList<string> keys = new[]
             {
                 labelName
@@ -44,7 +46,7 @@ namespace NZCore.Hybrid
 
             try
             {
-                AsyncOperationHandle<IList<IResourceLocation>> locationsHandle = Addressables.LoadResourceLocationsAsync(keys, Addressables.MergeMode.Union, typeof(T));
+                var locationsHandle = Addressables.LoadResourceLocationsAsync(keys, Addressables.MergeMode.Union, typeof(T));
                 await locationsHandle.Task;
 
                 if (locationsHandle.OperationException != null)
@@ -53,10 +55,10 @@ namespace NZCore.Hybrid
                 }
 
                 var locations = locationsHandle.Result;
-                
+
                 var loadOps = new List<AsyncOperationHandle>(locations.Count);
 
-                foreach (IResourceLocation location in locations)
+                foreach (var location in locations)
                 {
                     var loadHandle = Addressables.LoadAssetAsync<T>(location);
                     loadHandle.Completed += (assetHandle) =>

@@ -10,10 +10,7 @@ namespace BovineLabs.Core.UI
     public interface IViewModelBindingHash<T> : IViewModelBinding<T>, IDataSourceViewHashProvider
         where T : unmanaged, IModelBindingHashData
     {
-        long IDataSourceViewHashProvider.GetViewHashCode()
-        {
-            return Value.Version;
-        }
+        long IDataSourceViewHashProvider.GetViewHashCode() => Value.Version;
     }
 
     public interface IModelBindingHashData : IModelBinding

@@ -14,7 +14,7 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            UnsafeHashMap<TKey, TValue>* hashMap = AllocatorManager.Allocate<UnsafeHashMap<TKey, TValue>>(allocator);
+            var hashMap = AllocatorManager.Allocate<UnsafeHashMap<TKey, TValue>>(allocator);
             *hashMap = new UnsafeHashMap<TKey, TValue>(initialCapacity, allocator);
             return hashMap;
         }

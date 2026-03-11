@@ -26,7 +26,7 @@ namespace NZCore.UI
                 Debug.LogError($"{filePath} could not be found!");
             }
         }
-        
+
         /// <summary>
         /// Load a style directly from a file path
         /// </summary>

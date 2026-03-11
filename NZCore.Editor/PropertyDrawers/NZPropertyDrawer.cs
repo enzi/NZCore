@@ -21,7 +21,7 @@ namespace NZCore.Editor
             if (attr.Inline)
             {
                 Debug.Log("NZPropertyDrawer inline");
-                GroupBox groupBox = new GroupBox
+                var groupBox = new GroupBox
                 {
                     style =
                     {
@@ -55,7 +55,7 @@ namespace NZCore.Editor
                 {
                     if (child.name == "name")
                     {
-                        Label lbl = new Label(child.stringValue)
+                        var lbl = new Label(child.stringValue)
                         {
                             style =
                             {

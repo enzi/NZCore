@@ -7,5 +7,6 @@ using System;
 namespace NZCore.MVVM
 {
     public class NotifyChangedAttribute : Attribute { }
+
     public class NotifyPropertyChangedAttribute : Attribute { }
 }

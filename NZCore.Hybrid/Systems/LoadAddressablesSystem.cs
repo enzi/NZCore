@@ -26,9 +26,7 @@ namespace NZCore.Hybrid
             addressables = new Dictionary<Hash128, AddressableAndHandle<GameObject>>();
         }
 
-        protected override void OnUpdate()
-        {
-        }
+        protected override void OnUpdate() { }
 
         protected override void OnDestroy()
         {
@@ -43,7 +41,9 @@ namespace NZCore.Hybrid
                 if (tmp.Handle.IsDone)
                 {
                     if (tmp.Asset == null)
+                    {
                         tmp.Asset = tmp.Handle.Result;
+                    }
 
                     prefab = tmp.Asset;
                     return true;
@@ -54,7 +54,7 @@ namespace NZCore.Hybrid
                 //Debug.Log($"Loading Addressable {key.ToString()}");
                 var handle = Addressables.LoadAssetAsync<GameObject>(key.ToString());
 
-                addressables.Add(key, new AddressableAndHandle<GameObject>()
+                addressables.Add(key, new AddressableAndHandle<GameObject>
                 {
                     Handle = handle
                 });

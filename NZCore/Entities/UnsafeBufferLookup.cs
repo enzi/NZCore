@@ -23,19 +23,19 @@ namespace NZCore
 
 #endif
         [NativeDisableUnsafePtrRestriction] private readonly EntityDataAccess* m_Access;
-        LookupCache m_Cache;
+        private LookupCache m_Cache;
         private readonly TypeIndex m_TypeIndex;
 
-        uint m_GlobalSystemVersion;
-        int m_InternalCapacity;
-        private readonly byte  m_IsReadOnly;
+        private uint m_GlobalSystemVersion;
+        private int m_InternalCapacity;
+        private readonly byte m_IsReadOnly;
 
         internal uint GlobalSystemVersion => m_GlobalSystemVersion;
 
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal UnsafeBufferLookup(TypeIndex typeIndex, EntityDataAccess* access, bool isReadOnly,
-                                  AtomicSafetyHandle safety, AtomicSafetyHandle arrayInvalidationSafety)
+            AtomicSafetyHandle safety, AtomicSafetyHandle arrayInvalidationSafety)
         {
             m_Safety0 = safety;
             m_ArrayInvalidationSafety = arrayInvalidationSafety;
@@ -81,7 +81,7 @@ namespace NZCore
                 bufferData = default;
                 return false;
             }
-            
+
             var header = bumpVersion
                 ? (BufferHeader*)ecs->GetOptionalComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache)
                 : (BufferHeader*)ecs->GetOptionalComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
@@ -89,7 +89,7 @@ namespace NZCore
             if (header != null)
             {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                bufferData =  new DynamicBuffer<T>(header, m_Safety0, m_ArrayInvalidationSafety, m_IsReadOnly != 0, false, 0, m_InternalCapacity);
+                bufferData = new DynamicBuffer<T>(header, m_Safety0, m_ArrayInvalidationSafety, m_IsReadOnly != 0, false, 0, m_InternalCapacity);
 #else
                 bufferData = new DynamicBuffer<T>(header, m_InternalCapacity);
 #endif
@@ -101,7 +101,7 @@ namespace NZCore
                 return false;
             }
         }
-       
+
         public bool EntityExists(Entity entity)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -110,9 +110,9 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
             return ecs->Exists(entity);
         }
-       
+
         public bool HasBuffer(Entity entity) => HasBuffer(entity, out _);
-        
+
         public bool HasBuffer(Entity entity, out bool entityExists)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -121,16 +121,23 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
             return ecs->HasComponent(entity, m_TypeIndex, ref m_Cache, out entityExists);
         }
-        
+
         public bool DidChange(Entity entity, uint version)
         {
             var ecs = m_Access->EntityComponentStore;
             var chunk = ecs->GetChunk(entity);
             var archetype = ecs->GetArchetype(chunk);
             if (Hint.Unlikely(archetype != m_Cache.Archetype))
+            {
                 m_Cache.Update(archetype, m_TypeIndex);
+            }
+
             var typeIndexInArchetype = m_Cache.IndexInArchetype;
-            if (typeIndexInArchetype == -1) return false;
+            if (typeIndexInArchetype == -1)
+            {
+                return false;
+            }
+
             var chunkVersion = archetype->Chunks.GetChangeVersion(typeIndexInArchetype, chunk.ListIndex);
 
             return ChangeVersionUtility.DidChange(chunkVersion, version);
@@ -150,9 +157,9 @@ namespace NZCore
                 ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);
 #endif
 
-                var header = (m_IsReadOnly != 0)?
-                    (BufferHeader*)ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache) :
-                    (BufferHeader*)ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
+                var header = m_IsReadOnly != 0
+                    ? (BufferHeader*)ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache)
+                    : (BufferHeader*)ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 return new DynamicBuffer<T>(header, m_Safety0, m_ArrayInvalidationSafety, m_IsReadOnly != 0, false, 0, m_InternalCapacity);
@@ -192,7 +199,7 @@ namespace NZCore
             // NOTE: We could in theory fetch all this data from m_Access.EntityComponentStore and void the SystemState from being passed in.
             //       That would unfortunately allow this API to be called from a job. So we use the required system parameter as a way of signifying to the user that this can only be invoked from main thread system code.
             //       Additionally this makes the API symmetric to ComponentTypeHandle.
-            m_GlobalSystemVersion =  systemState.m_EntityComponentStore->GlobalSystemVersion;
+            m_GlobalSystemVersion = systemState.m_EntityComponentStore->GlobalSystemVersion;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             var safetyHandles = &m_Access->DependencyManager->Safety;
@@ -201,13 +208,14 @@ namespace NZCore
 #endif
         }
 
-        SafeBitRef MakeSafeBitRef(ulong* ptr, int offsetInBits)
+        private SafeBitRef MakeSafeBitRef(ulong* ptr, int offsetInBits)
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            => new SafeBitRef(ptr, offsetInBits, m_Safety0);
+            =>
+                new(ptr, offsetInBits, m_Safety0);
 #else
             => new SafeBitRef(ptr, offsetInBits);
 #endif
-        
+
         public EnabledRefRW<T2> GetEnabledRefRW<T2>(Entity entity) where T2 : unmanaged, IEnableableComponent, IBufferElementData
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -231,7 +239,9 @@ namespace NZCore
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety0);
 #endif
             if (!HasBuffer(entity))
+            {
                 return new EnabledRefRW<T2>(default, default);
+            }
 
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);
@@ -241,7 +251,7 @@ namespace NZCore
 
             return new EnabledRefRW<T2>(MakeSafeBitRef(ptr, indexInBitField), ptrChunkDisabledCount);
         }
-        
+
         public EnabledRefRO<T2> GetEnabledRefRO<T2>(Entity entity) where T2 : unmanaged, IEnableableComponent, IBufferElementData
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -261,7 +271,9 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety0);
 #endif
             if (!HasBuffer(entity))
+            {
                 return new EnabledRefRO<T2>(default);
+            }
 
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);
@@ -269,7 +281,7 @@ namespace NZCore
             var ptr = ecs->GetEnabledRawRO(entity, m_TypeIndex, ref m_Cache, out indexInBitField, out _);
             return new EnabledRefRO<T2>(MakeSafeBitRef(ptr, indexInBitField));
         }
-        
+
         public DynamicBuffer<T> GetBuffer(Entity entity, bool bumpVersion)
         {
             var ecs = m_Access->EntityComponentStore;
@@ -292,7 +304,7 @@ namespace NZCore
                 return new DynamicBuffer<T>(header, m_InternalCapacity);
 #endif
         }
-        
+
         public void SetChangeVersion(Entity entity)
         {
             var ecs = m_Access->EntityComponentStore;
@@ -300,14 +312,13 @@ namespace NZCore
             var archetype = ecs->GetArchetype(chunk);
 
             if (Hint.Unlikely(archetype != m_Cache.Archetype))
+            {
                 m_Cache.Update(archetype, m_TypeIndex);
+            }
 
             archetype->Chunks.SetChangeVersion(m_Cache.IndexInArchetype, chunk.ListIndex, m_GlobalSystemVersion);
         }
-        
-        public static implicit operator UnsafeBufferLookup<T>(BufferLookup<T> lookup)
-        {
-            return UnsafeUtility.As<BufferLookup<T>, UnsafeBufferLookup<T>>(ref lookup);
-        }
+
+        public static implicit operator UnsafeBufferLookup<T>(BufferLookup<T> lookup) => UnsafeUtility.As<BufferLookup<T>, UnsafeBufferLookup<T>>(ref lookup);
     }
 }

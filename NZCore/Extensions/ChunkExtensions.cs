@@ -21,11 +21,15 @@ namespace NZCore
             var archetype = ecs->GetArchetype(chunk.m_Chunk);
 
             if (Hint.Unlikely(archetype != handle.m_LookupCache.Archetype))
+            {
                 handle.m_LookupCache.Update(archetype, handle.m_TypeIndex);
+            }
 
             var typeIndexInArchetype = handle.m_LookupCache.IndexInArchetype;
             if (typeIndexInArchetype == -1)
+            {
                 return;
+            }
 
             archetype->Chunks.SetChangeVersion(typeIndexInArchetype, chunk.m_Chunk.ListIndex, handle.GlobalSystemVersion);
         }
@@ -37,11 +41,15 @@ namespace NZCore
             var archetype = ecs->GetArchetype(chunk.m_Chunk);
 
             if (Hint.Unlikely(archetype != handle.m_LookupCache.Archetype))
+            {
                 handle.m_LookupCache.Update(archetype, handle.m_TypeIndex);
+            }
 
             var typeIndexInArchetype = handle.m_LookupCache.IndexInArchetype;
             if (typeIndexInArchetype == -1)
+            {
                 return;
+            }
 
             archetype->Chunks.SetChangeVersion(typeIndexInArchetype, chunk.m_Chunk.ListIndex, handle.GlobalSystemVersion);
         }
@@ -71,22 +79,24 @@ namespace NZCore
 #endif
             }
 
-            byte* ptr = (bufferTypeHandle.IsReadOnly)
+            var ptr = bufferTypeHandle.IsReadOnly
                 ? ChunkDataUtility.GetComponentDataRO(chunk.m_Chunk, archetype, 0, typeIndexInArchetype)
                 : GetComponentDataRW(chunk.m_Chunk, archetype, 0, typeIndexInArchetype, bufferTypeHandle.GlobalSystemVersion, bumpVersion);
 
-            int internalCapacity = archetype->BufferCapacities[typeIndexInArchetype];
+            var internalCapacity = archetype->BufferCapacities[typeIndexInArchetype];
             var length = chunk.Count;
             int stride = archetype->SizeOfs[typeIndexInArchetype];
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new BufferAccessor<T>(ptr, length, stride, bufferTypeHandle.IsReadOnly, bufferTypeHandle.m_Safety0, bufferTypeHandle.m_Safety1, internalCapacity);
+            return new BufferAccessor<T>(ptr, length, stride, bufferTypeHandle.IsReadOnly, bufferTypeHandle.m_Safety0, bufferTypeHandle.m_Safety1,
+                internalCapacity);
 #else
             return new BufferAccessor<T>(ptr, length, stride, internalCapacity);
 #endif
         }
 
-        private static byte* GetComponentDataRW(ChunkIndex chunk, Archetype* archetype, int index, int indexInTypeArray, uint globalSystemVersion, bool bumpVersion = true)
+        private static byte* GetComponentDataRW(ChunkIndex chunk, Archetype* archetype, int index, int indexInTypeArray, uint globalSystemVersion,
+            bool bumpVersion = true)
         {
             var offset = archetype->Offsets[indexInTypeArray];
             var sizeOf = archetype->SizeOfs[indexInTypeArray];
@@ -103,7 +113,7 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool DetermineFastPath(this v128 chunkEnabledMask)
         {
-            int edgeCount =
+            var edgeCount =
                 math.countbits(chunkEnabledMask.ULong0 ^ (chunkEnabledMask.ULong0 << 1)) +
                 math.countbits(chunkEnabledMask.ULong1 ^ (chunkEnabledMask.ULong1 << 1)) - 1;
 
@@ -160,21 +170,22 @@ namespace NZCore
 
             return isReadOnly
                 ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex)
-                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex, ecs->GlobalSystemVersion);
+                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex,
+                    ecs->GlobalSystemVersion);
         }
-        
+
         public static byte* GetSharedComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex, Entity entity)
         {
             var ecs = chunk.m_EntityComponentStore;
             var sharedComponentIndex = ecs->GetSharedComponentDataIndex(entity, typeIndex);
-            return (byte*) ecs->GetSharedComponentDataAddr_Unmanaged(sharedComponentIndex, typeIndex);
+            return (byte*)ecs->GetSharedComponentDataAddr_Unmanaged(sharedComponentIndex, typeIndex);
         }
 
         public static byte* GetSharedComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex)
         {
             var ecs = chunk.m_EntityComponentStore;
             var sharedComponentIndex = GetSharedComponentDataIndex(chunk, typeIndex);
-            return (byte*) ecs->GetSharedComponentDataAddr_Unmanaged(sharedComponentIndex, typeIndex);
+            return (byte*)ecs->GetSharedComponentDataAddr_Unmanaged(sharedComponentIndex, typeIndex);
         }
 
         public static int GetSharedComponentDataIndex(this in ArchetypeChunk chunk, TypeIndex typeIndex)
@@ -182,13 +193,14 @@ namespace NZCore
             var ecs = chunk.m_EntityComponentStore;
             var archetype = ecs->GetArchetype(chunk.m_Chunk);
             var indexInTypeArray = ChunkDataUtility.GetIndexInTypeArray(archetype, typeIndex);
-            
+
             var sharedComponentValueArray = archetype->Chunks.GetSharedComponentValues(chunk.m_Chunk.ListIndex);
             var sharedComponentOffset = indexInTypeArray - archetype->FirstSharedComponent;
             return sharedComponentValueArray[sharedComponentOffset];
         }
-        
-        public static ulong* GetRequiredEnabledBitsPtrRW<T>(this in ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<T> typeHandle, out int* ptrChunkDisabledCount)
+
+        public static ulong* GetRequiredEnabledBitsPtrRW<T>(this in ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<T> typeHandle,
+            out int* ptrChunkDisabledCount)
             where T : unmanaged, IComponentData, IEnableableComponent
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -225,7 +237,8 @@ namespace NZCore
             return ptr;
         }
 
-        public static ref v128 GetRequiredEnabledBitsRW<T>(this in ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<T> typeHandle, out int* ptrChunkDisabledCount)
+        public static ref v128 GetRequiredEnabledBitsRW<T>(this in ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<T> typeHandle,
+            out int* ptrChunkDisabledCount)
             where T : unmanaged, IComponentData, IEnableableComponent
         {
             var ptr = GetRequiredEnabledBitsPtrRW(archetypeChunk, ref typeHandle, out ptrChunkDisabledCount);
@@ -260,22 +273,25 @@ namespace NZCore
                 bufferTypeHandle.m_LookupCache.Update(archetype, typeIndex);
             }
 
-            byte* ptr = (bufferTypeHandle.IsReadOnly)
+            var ptr = bufferTypeHandle.IsReadOnly
                 ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, archetype, 0, typeIndex, ref bufferTypeHandle.m_LookupCache)
-                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, archetype, 0, typeIndex, bufferTypeHandle.GlobalSystemVersion, ref bufferTypeHandle.m_LookupCache);
+                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, archetype, 0, typeIndex, bufferTypeHandle.GlobalSystemVersion,
+                    ref bufferTypeHandle.m_LookupCache);
 
-            int internalCapacity = archetype->BufferCapacities[bufferTypeHandle.m_LookupCache.IndexInArchetype];
+            var internalCapacity = archetype->BufferCapacities[bufferTypeHandle.m_LookupCache.IndexInArchetype];
             var length = chunk.Count;
             int stride = bufferTypeHandle.m_LookupCache.ComponentSizeOf;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new BufferAccessor<T>(ptr, length, stride, bufferTypeHandle.IsReadOnly, bufferTypeHandle.m_Safety0, bufferTypeHandle.m_Safety1, internalCapacity);
+            return new BufferAccessor<T>(ptr, length, stride, bufferTypeHandle.IsReadOnly, bufferTypeHandle.m_Safety0, bufferTypeHandle.m_Safety1,
+                internalCapacity);
 #else
             return new BufferAccessor<T>(ptr, length, stride, internalCapacity);
 #endif
         }
-        
-        public static void CopyEnableMaskFrom<TD, TS>(this ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<TD> destination, ref ComponentTypeHandle<TS> source)
+
+        public static void CopyEnableMaskFrom<TD, TS>(this ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<TD> destination,
+            ref ComponentTypeHandle<TS> source)
             where TD : unmanaged, IComponentData, IEnableableComponent
             where TS : unmanaged, IComponentData, IEnableableComponent
         {
@@ -313,14 +329,14 @@ namespace NZCore
             var src = ChunkDataUtility.GetEnabledRefRO(archetypeChunk.m_Chunk, archetypeChunk.Archetype.Archetype, source.m_LookupCache.IndexInArchetype).Ptr;
 
             var chunks = archetype->Chunks;
-            int memoryOrderIndexInArchetype = archetype->TypeIndexInArchetypeToMemoryOrderIndex[source.m_LookupCache.IndexInArchetype];
+            var memoryOrderIndexInArchetype = archetype->TypeIndexInArchetypeToMemoryOrderIndex[source.m_LookupCache.IndexInArchetype];
             var srcPtrChunkDisabledCount = chunks.GetPointerToChunkDisabledCountForType(memoryOrderIndexInArchetype, archetypeChunk.m_Chunk.ListIndex);
 
             dst[0] = src[0];
             dst[1] = src[1];
             *dstPtrChunkDisabledCount = *srcPtrChunkDisabledCount;
         }
-        
+
         public static ref T GetChunkComponentDataRW<T>(this ArchetypeChunk archetypeChunk, ref ComponentTypeHandle<T> typeHandle)
             where T : unmanaged, IComponentData
         {
@@ -329,7 +345,8 @@ namespace NZCore
 #endif
             var metaChunkEntity = archetypeChunk.m_Chunk.MetaChunkEntity;
             archetypeChunk.m_EntityComponentStore->AssertEntityHasComponent(metaChunkEntity, typeHandle.m_TypeIndex);
-            var ptr = archetypeChunk.m_EntityComponentStore->GetComponentDataWithTypeRW(metaChunkEntity, typeHandle.m_TypeIndex, typeHandle.GlobalSystemVersion);
+            var ptr = archetypeChunk.m_EntityComponentStore->GetComponentDataWithTypeRW(metaChunkEntity, typeHandle.m_TypeIndex,
+                typeHandle.GlobalSystemVersion);
             return ref UnsafeUtility.AsRef<T>(ptr);
         }
     }

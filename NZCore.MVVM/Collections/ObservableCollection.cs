@@ -52,7 +52,9 @@ namespace NZCore.MVVM
             set
             {
                 if (_disposed)
+                {
                     throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+                }
 
                 var oldItem = _items[index];
                 _items[index] = value;
@@ -65,9 +67,7 @@ namespace NZCore.MVVM
         /// <summary>
         /// Initializes a new instance of the ObservableCollection class.
         /// </summary>
-        public ObservableCollection()
-        {
-        }
+        public ObservableCollection() { }
 
         /// <summary>
         /// Initializes a new instance of the ObservableCollection class with the specified items.
@@ -88,7 +88,9 @@ namespace NZCore.MVVM
         public void Add(T item)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+            }
 
             _items.Add(item);
             OnPropertyChanged(nameof(Count));
@@ -103,14 +105,20 @@ namespace NZCore.MVVM
         public void AddRange(IEnumerable<T> items)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+            }
 
             if (items == null)
+            {
                 return;
+            }
 
             var itemsList = items.ToList();
             if (itemsList.Count == 0)
+            {
                 return;
+            }
 
             var startIndex = _items.Count;
             _items.AddRange(itemsList);
@@ -126,10 +134,14 @@ namespace NZCore.MVVM
         public void Clear()
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+            }
 
             if (_items.Count == 0)
+            {
                 return;
+            }
 
             _items.Clear();
             OnPropertyChanged(nameof(Count));
@@ -142,10 +154,7 @@ namespace NZCore.MVVM
         /// </summary>
         /// <param name="item">The item to locate.</param>
         /// <returns>True if the item is found; otherwise, false.</returns>
-        public bool Contains(T item)
-        {
-            return _items.Contains(item);
-        }
+        public bool Contains(T item) => _items.Contains(item);
 
         /// <summary>
         /// Copies the elements of the collection to an array.
@@ -161,20 +170,14 @@ namespace NZCore.MVVM
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
         /// <returns>An enumerator for the collection.</returns>
-        public IEnumerator<T> GetEnumerator()
-        {
-            return _items.GetEnumerator();
-        }
+        public IEnumerator<T> GetEnumerator() => _items.GetEnumerator();
 
         /// <summary>
         /// Determines the index of a specific item in the collection.
         /// </summary>
         /// <param name="item">The item to locate.</param>
         /// <returns>The index of the item if found; otherwise, -1.</returns>
-        public int IndexOf(T item)
-        {
-            return _items.IndexOf(item);
-        }
+        public int IndexOf(T item) => _items.IndexOf(item);
 
         /// <summary>
         /// Inserts an item at the specified index.
@@ -184,7 +187,9 @@ namespace NZCore.MVVM
         public void Insert(int index, T item)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+            }
 
             _items.Insert(index, item);
             OnPropertyChanged(nameof(Count));
@@ -200,11 +205,15 @@ namespace NZCore.MVVM
         public bool Remove(T item)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+            }
 
             var index = _items.IndexOf(item);
             if (index < 0)
+            {
                 return false;
+            }
 
             _items.RemoveAt(index);
             OnPropertyChanged(nameof(Count));
@@ -220,7 +229,9 @@ namespace NZCore.MVVM
         public void RemoveAt(int index)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+            }
 
             var item = _items[index];
             _items.RemoveAt(index);
@@ -237,10 +248,14 @@ namespace NZCore.MVVM
         public int RemoveRange(IEnumerable<T> items)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+            }
 
             if (items == null)
+            {
                 return 0;
+            }
 
             var removedItems = new List<T>();
             foreach (var item in items)
@@ -268,7 +283,9 @@ namespace NZCore.MVVM
         public void ReplaceAll(IEnumerable<T> items)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+            }
 
             _items.Clear();
             if (items != null)
@@ -289,10 +306,14 @@ namespace NZCore.MVVM
         public void Move(int oldIndex, int newIndex)
         {
             if (_disposed)
+            {
                 throw new ObjectDisposedException(nameof(ObservableCollection<T>));
+            }
 
             if (oldIndex == newIndex)
+            {
                 return;
+            }
 
             var item = _items[oldIndex];
             _items.RemoveAt(oldIndex);
@@ -306,10 +327,7 @@ namespace NZCore.MVVM
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
         /// <returns>An enumerator for the collection.</returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Raises the CollectionChanged event.
@@ -335,7 +353,9 @@ namespace NZCore.MVVM
         public void Dispose()
         {
             if (_disposed)
+            {
                 return;
+            }
 
             _disposed = true;
             CollectionChanged = null;

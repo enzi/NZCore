@@ -17,13 +17,9 @@ namespace NZCore.Jobs
     [JobProducerType(typeof(JobChunkWorkerExtensions.JobChunkWorkerProducer<>))]
     public interface IJobChunkWorkerBeginEnd
     {
-        void OnWorkerBegin()
-        {
-        }
+        void OnWorkerBegin() { }
 
-        void OnWorkerEnd()
-        {
-        }
+        void OnWorkerEnd() { }
 
         void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask);
     }
@@ -88,10 +84,8 @@ namespace NZCore.Jobs
             this T jobData,
             EntityQuery query,
             JobHandle dependsOn)
-            where T : struct, IJobChunkWorkerBeginEnd
-        {
-            return ScheduleInternal(ref jobData, query, dependsOn, ScheduleMode.Single, default(NativeArray<int>));
-        }
+            where T : struct, IJobChunkWorkerBeginEnd =>
+            ScheduleInternal(ref jobData, query, dependsOn, ScheduleMode.Single, default);
 
         /// <summary>
         /// Adds an <see cref="IJobChunkWorkerBeginEnd"/> instance to the job scheduler queue for sequential (non-parallel) execution.
@@ -112,10 +106,8 @@ namespace NZCore.Jobs
             this ref T jobData,
             EntityQuery query,
             JobHandle dependsOn)
-            where T : struct, IJobChunkWorkerBeginEnd
-        {
-            return ScheduleInternal(ref jobData, query, dependsOn, ScheduleMode.Single, default(NativeArray<int>));
-        }
+            where T : struct, IJobChunkWorkerBeginEnd =>
+            ScheduleInternal(ref jobData, query, dependsOn, ScheduleMode.Single, default);
 
         /// <summary>
         /// Adds an <see cref="IJobChunkWorkerBeginEnd"/> instance to the job scheduler queue for parallel execution.
@@ -135,10 +127,8 @@ namespace NZCore.Jobs
             this T jobData,
             EntityQuery query,
             JobHandle dependsOn)
-            where T : struct, IJobChunkWorkerBeginEnd
-        {
-            return ScheduleInternal(ref jobData, query, dependsOn, ScheduleMode.Parallel, default(NativeArray<int>));
-        }
+            where T : struct, IJobChunkWorkerBeginEnd =>
+            ScheduleInternal(ref jobData, query, dependsOn, ScheduleMode.Parallel, default);
 
         /// <summary>
         /// Adds an <see cref="IJobChunkWorkerBeginEnd"/> instance to the job scheduler queue for parallel execution.
@@ -159,10 +149,8 @@ namespace NZCore.Jobs
             this ref T jobData,
             EntityQuery query,
             JobHandle dependsOn)
-            where T : struct, IJobChunkWorkerBeginEnd
-        {
-            return ScheduleInternal(ref jobData, query, dependsOn, ScheduleMode.Parallel, default(NativeArray<int>));
-        }
+            where T : struct, IJobChunkWorkerBeginEnd =>
+            ScheduleInternal(ref jobData, query, dependsOn, ScheduleMode.Parallel, default);
 
         /// <summary>
         /// Runs the job immediately on the current thread.
@@ -173,7 +161,7 @@ namespace NZCore.Jobs
         public static void Run<T>(this T jobData, EntityQuery query)
             where T : struct, IJobChunkWorkerBeginEnd
         {
-            ScheduleInternal(ref jobData, query, default(JobHandle), ScheduleMode.Run, default(NativeArray<int>));
+            ScheduleInternal(ref jobData, query, default, ScheduleMode.Run, default);
         }
 
         /// <summary>
@@ -186,7 +174,7 @@ namespace NZCore.Jobs
         public static void RunByRef<T>(this ref T jobData, EntityQuery query)
             where T : struct, IJobChunkWorkerBeginEnd
         {
-            ScheduleInternal(ref jobData, query, default(JobHandle), ScheduleMode.Run, default(NativeArray<int>));
+            ScheduleInternal(ref jobData, query, default, ScheduleMode.Run, default);
         }
 
         internal static unsafe void RunByRefWithoutJobs<T>(this ref T jobData, EntityQuery query)
@@ -194,7 +182,9 @@ namespace NZCore.Jobs
         {
             var queryImpl = query._GetImpl();
             if (queryImpl->_Access->IsInExclusiveTransaction)
+            {
                 throw new InvalidOperationException("You can't schedule an IJobChunkWorkerBeginEnd while an exclusive transaction is active");
+            }
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
             queryImpl->_Access->DependencyManager->ForEachStructuralChange.BeginIsInForEach(queryImpl);
 #endif
@@ -208,10 +198,10 @@ namespace NZCore.Jobs
                 var chunkCacheIterator = new UnsafeChunkCacheIterator(queryImpl->_Filter, queryImpl->_QueryData->HasEnableableComponents != 0,
                     queryImpl->GetMatchingChunkCache(), queryImpl->_QueryData->MatchingArchetypes.Ptr);
 
-                int chunkIndex = -1;
+                var chunkIndex = -1;
                 v128 chunkEnabledMask = default;
                 while (chunkCacheIterator.MoveNextChunk(ref chunkIndex, out var archetypeChunk, out _,
-                           out byte useEnabledMask, ref chunkEnabledMask))
+                           out var useEnabledMask, ref chunkEnabledMask))
                 {
                     jobData.Execute(archetypeChunk, chunkIndex, useEnabledMask != 0, chunkEnabledMask);
                 }
@@ -221,10 +211,10 @@ namespace NZCore.Jobs
                 // Fast path for queries with no filtering and no enableable components
                 var cachedChunkList = queryImpl->GetMatchingChunkCache();
                 var chunkIndices = cachedChunkList.ChunkIndices;
-                int chunkCount = cachedChunkList.Length;
-                ArchetypeChunk chunk = new ArchetypeChunk(ChunkIndex.Null, cachedChunkList.EntityComponentStore);
+                var chunkCount = cachedChunkList.Length;
+                var chunk = new ArchetypeChunk(ChunkIndex.Null, cachedChunkList.EntityComponentStore);
                 v128 defaultMask = default;
-                for (int chunkIndex = 0; chunkIndex < chunkCount; ++chunkIndex)
+                for (var chunkIndex = 0; chunkIndex < chunkCount; ++chunkIndex)
                 {
                     chunk.m_Chunk = chunkIndices[chunkIndex];
                     //Assert.AreNotEqual(0, chunk.Count);
@@ -246,18 +236,21 @@ namespace NZCore.Jobs
         {
             var queryImpl = query._GetImpl();
             if (queryImpl->_Access->IsInExclusiveTransaction)
+            {
                 throw new InvalidOperationException("You can't schedule an IJobChunkWorkerBeginEnd while an exclusive transaction is active");
+            }
+
             var queryData = queryImpl->_QueryData;
             var cachedChunks = queryImpl->GetMatchingChunkCache();
             var totalChunkCount = cachedChunks.Length;
-            bool isParallel = (mode == ScheduleMode.Parallel);
+            var isParallel = mode == ScheduleMode.Parallel;
 
-            JobChunkWorkerWrapper<T> jobChunkWrapper = new JobChunkWorkerWrapper<T>
+            var jobChunkWrapper = new JobChunkWorkerWrapper<T>
             {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 safety = new EntityQuerySafetyHandles(queryImpl),
                 // If this array exists, it's likely still being written to by a job, so we need to bypass the safety system to get its buffer pointer
-                ChunkBaseEntityIndices = (isParallel && chunkBaseEntityIndices.Length > 0)
+                ChunkBaseEntityIndices = isParallel && chunkBaseEntityIndices.Length > 0
                     ? (int*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(chunkBaseEntityIndices)
                     : null,
 #endif
@@ -303,7 +296,9 @@ namespace NZCore.Jobs
             internal static void Initialize()
             {
                 if (reflectionData.Data == IntPtr.Zero)
+                {
                     reflectionData.Data = JobsUtility.CreateJobReflectionData(typeof(JobChunkWorkerWrapper<T>), typeof(T), (ExecuteJobFunction)Execute);
+                }
             }
 
             public delegate void ExecuteJobFunction(
@@ -323,7 +318,7 @@ namespace NZCore.Jobs
                 ExecuteInternal(ref jobWrapper, bufferRangePatchData, ref ranges, jobIndex);
             }
 
-            internal unsafe static void ExecuteInternal(
+            internal static unsafe void ExecuteInternal(
                 ref JobChunkWorkerWrapper<T> jobWrapper,
                 IntPtr bufferRangePatchData,
                 ref JobRanges ranges,
@@ -334,14 +329,14 @@ namespace NZCore.Jobs
                     jobWrapper.QueryHasEnableableComponents != 0,
                     jobWrapper.CachedChunks, jobWrapper.MatchingArchetypes.Ptr);
 
-                bool isParallel = jobWrapper.IsParallel == 1;
-                bool isFiltering = jobWrapper.Filter.RequiresMatchesFilter;
-                bool executed = false;
+                var isParallel = jobWrapper.IsParallel == 1;
+                var isFiltering = jobWrapper.Filter.RequiresMatchesFilter;
+                var executed = false;
 
                 while (true)
                 {
-                    int beginChunkIndex = 0;
-                    int endChunkIndex = chunks.Length;
+                    var beginChunkIndex = 0;
+                    var endChunkIndex = chunks.Length;
 
                     // If we are running the job in parallel, steal some work.
                     if (isParallel)
@@ -369,9 +364,9 @@ namespace NZCore.Jobs
                     {
                         // Fast path with no entity/chunk filtering active: we can just iterate over the cached chunk list directly.
                         var chunkIndices = chunks.ChunkIndices;
-                        ArchetypeChunk chunk = new ArchetypeChunk(ChunkIndex.Null, chunks.EntityComponentStore);
+                        var chunk = new ArchetypeChunk(ChunkIndex.Null, chunks.EntityComponentStore);
                         v128 defaultMask = default;
-                        for (int chunkIndex = beginChunkIndex; chunkIndex < endChunkIndex; ++chunkIndex)
+                        for (var chunkIndex = beginChunkIndex; chunkIndex < endChunkIndex; ++chunkIndex)
                         {
                             chunk.m_Chunk = chunkIndices[chunkIndex];
                             //Assert.AreNotEqual(0, chunk.Count);
@@ -382,7 +377,7 @@ namespace NZCore.Jobs
                             // This range check can be disabled on a per-container basis by adding [NativeDisableParallelForRestriction] to the container field in the job struct.
                             if (Hint.Unlikely(jobWrapper.ChunkBaseEntityIndices != null))
                             {
-                                int chunkBaseEntityIndex = jobWrapper.ChunkBaseEntityIndices[chunkIndex];
+                                var chunkBaseEntityIndex = jobWrapper.ChunkBaseEntityIndices[chunkIndex];
                                 JobsUtility.PatchBufferMinMaxRanges(bufferRangePatchData,
                                     UnsafeUtility.AddressOf(ref jobWrapper), chunkBaseEntityIndex, chunk.Count);
                             }
@@ -400,11 +395,11 @@ namespace NZCore.Jobs
                         // With any filtering active, we need to iterate using the UnsafeChunkCacheIterator.
                         // Update cache range
                         chunkCacheIterator.Length = endChunkIndex;
-                        int chunkIndex = beginChunkIndex - 1;
+                        var chunkIndex = beginChunkIndex - 1;
 
                         v128 chunkEnabledMask = default;
                         while (chunkCacheIterator.MoveNextChunk(ref chunkIndex, out var chunk, out var chunkEntityCount,
-                                   out byte useEnabledMask, ref chunkEnabledMask))
+                                   out var useEnabledMask, ref chunkEnabledMask))
                         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                             // For containers passed in the job struct, parallel jobs can limit writes to a range of indices.
@@ -413,7 +408,7 @@ namespace NZCore.Jobs
                             // This range check can be disabled on a per-container basis by adding [NativeDisableParallelForRestriction] to the container field in the job struct.
                             if (Hint.Unlikely(jobWrapper.ChunkBaseEntityIndices != null))
                             {
-                                int chunkBaseEntityIndex = jobWrapper.ChunkBaseEntityIndices[chunkIndex];
+                                var chunkBaseEntityIndex = jobWrapper.ChunkBaseEntityIndices[chunkIndex];
                                 JobsUtility.PatchBufferMinMaxRanges(bufferRangePatchData,
                                     UnsafeUtility.AddressOf(ref jobWrapper), chunkBaseEntityIndex, chunk.Count);
                             }

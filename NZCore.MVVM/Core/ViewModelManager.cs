@@ -11,7 +11,7 @@ using UnityEngine;
 namespace NZCore.MVVM
 {
     /// <summary>
-    /// Manages ViewModels and their relationships to Models across multiple RootViews.
+    /// Manages ViewModels and their relationships to Models across multiple RootViewModels.
     /// Provides lookup and creation services for the MVVM framework.
     /// </summary>
     [UsedImplicitly]
@@ -19,100 +19,95 @@ namespace NZCore.MVVM
     {
         private readonly Dictionary<Hash128, Model> _modelLookup = new();
         private readonly Dictionary<Hash128, ViewModel> _viewModelLookup = new();
-        private readonly Dictionary<RootView, Dictionary<Hash128, ChildView>> _childViewLookups = new();
+        private readonly Dictionary<RootViewModel, Dictionary<Hash128, ChildViewModel>> _childViewLookups = new();
 
         /// <summary>
-        /// Registers a RootView with the manager, creating its child view lookup.
+        /// Registers a RootViewModel with the manager.
         /// </summary>
-        /// <param name="rootView">The RootView to register.</param>
-        /// <param name="model">The model of the RootView</param>
-        public void RegisterRootView(RootView rootView)
+        public void RegisterRootViewModel(RootViewModel rootViewModel)
         {
-            if (rootView == null)
+            if (rootViewModel == null)
             {
-                throw new ArgumentNullException(nameof(rootView));
+                throw new ArgumentNullException(nameof(rootViewModel));
             }
 
-            if (!_childViewLookups.ContainsKey(rootView))
+            if (!_childViewLookups.ContainsKey(rootViewModel))
             {
-                _childViewLookups[rootView] = new Dictionary<Hash128, ChildView>();
+                _childViewLookups[rootViewModel] = new Dictionary<Hash128, ChildViewModel>();
             }
 
-            if (rootView.Model != null)
+            if (rootViewModel.Model != null)
             {
-                rootView.Model.ClearCache();
-                _viewModelLookup.TryAdd(rootView.Model.Guid, rootView);
-                AddModel(rootView.Model);
+                rootViewModel.Model.ClearCache();
+                _viewModelLookup.TryAdd(rootViewModel.Model.Guid, rootViewModel);
+                AddModel(rootViewModel.Model);
             }
         }
 
         /// <summary>
-        /// Unregisters a RootView and cleans up its child views.
+        /// Unregisters a RootViewModel and cleans up its child ViewModels.
         /// </summary>
-        /// <param name="rootView">The RootView to unregister.</param>
-        public void UnregisterRootView(RootView rootView)
+        public void UnregisterRootViewModel(RootViewModel rootViewModel)
         {
-            if (rootView == null)
+            if (rootViewModel == null)
             {
                 return;
             }
 
-            if (_childViewLookups.TryGetValue(rootView, out var childViews))
+            if (_childViewLookups.TryGetValue(rootViewModel, out var childViewModels))
             {
-                // Dispose all child views
-                foreach (var childView in childViews.Values)
+                foreach (var childViewModel in childViewModels.Values)
                 {
-                    childView?.Dispose();
+                    childViewModel?.Dispose();
                 }
 
-                childViews.Clear();
-                _childViewLookups.Remove(rootView);
+                childViewModels.Clear();
+                _childViewLookups.Remove(rootViewModel);
             }
 
-            if (rootView.Model != null)
+            if (rootViewModel.Model != null)
             {
-                rootView.Model.ClearCache();
-                _viewModelLookup.Remove(rootView.Model.Guid);
-                RemoveModel(rootView.Model);
+                rootViewModel.Model.ClearCache();
+                _viewModelLookup.Remove(rootViewModel.Model.Guid);
+                RemoveModel(rootViewModel.Model);
             }
         }
 
-        public void RegisterChildView(ChildView childView, RootView rootView)
+        public void RegisterChildViewModel(ChildViewModel childViewModel, RootViewModel rootViewModel)
         {
-            if (childView.Model == null)
+            if (childViewModel.Model == null)
             {
                 return;
             }
 
-            childView.Model.ClearCache();
-            AddModel(childView.Model);
+            childViewModel.Model.ClearCache();
+            AddModel(childViewModel.Model);
 
-            if (_childViewLookups.TryGetValue(rootView, out var childLookup))
+            if (_childViewLookups.TryGetValue(rootViewModel, out var childLookup))
             {
-                childLookup.Add(childView.Model.Guid, childView);
+                childLookup.Add(childViewModel.Model.Guid, childViewModel);
             }
             else
             {
-                Debug.LogError($"RootView  {rootView.name} not found!");
+                Debug.LogError($"RootViewModel {rootViewModel.GetType().Name} not found!");
             }
         }
 
-        public void UnregisterChildView(ChildView childView, RootView rootView)
+        public void UnregisterChildViewModel(ChildViewModel childViewModel, RootViewModel rootViewModel)
         {
-            if (childView.Model == null)
+            if (childViewModel.Model == null)
             {
                 return;
             }
 
-            RemoveModel(childView.Model);
-            var childLookup = _childViewLookups[rootView];
-            childLookup.Remove(childView.Model.Guid);
+            RemoveModel(childViewModel.Model);
+            var childLookup = _childViewLookups[rootViewModel];
+            childLookup.Remove(childViewModel.Model.Guid);
         }
 
         /// <summary>
         /// Adds a model to the lookup system.
         /// </summary>
-        /// <param name="model">The model to add.</param>
         public void AddModel(Model model)
         {
             if (model == null)
@@ -120,14 +115,12 @@ namespace NZCore.MVVM
                 throw new ArgumentNullException(nameof(model));
             }
 
-            //Debug.Log($"AddModel: {model.Guid} {typeof(Model).Name}");
             _modelLookup.TryAdd(model.Guid, model);
         }
 
         /// <summary>
         /// Removes a model from the lookup system.
         /// </summary>
-        /// <param name="model">The model to remove.</param>
         public void RemoveModel(Model model)
         {
             if (model == null)
@@ -135,14 +128,12 @@ namespace NZCore.MVVM
                 return;
             }
 
-            //Debug.Log($"RemoveModel: {model.Guid} {typeof(Model).Name}");
             RemoveModel(model.Guid);
         }
 
         /// <summary>
         /// Removes a model by its GUID from the lookup system.
         /// </summary>
-        /// <param name="modelId">The GUID of the model to remove.</param>
         public void RemoveModel(Hash128 modelId)
         {
             _modelLookup.Remove(modelId);
@@ -157,16 +148,16 @@ namespace NZCore.MVVM
             // Remove from all child view lookups
             foreach (var childViewLookup in _childViewLookups.Values)
             {
-                if (childViewLookup.TryGetValue(modelId, out var childView))
+                if (childViewLookup.TryGetValue(modelId, out var childViewModel))
                 {
-                    childView?.Dispose();
+                    childViewModel?.Dispose();
                     childViewLookup.Remove(modelId);
                 }
             }
         }
 
-        public TChildView GetChildViewModel<TChildView>(Hash128 modelHash, RootView rootView)
-            where TChildView : ChildView
+        public TChildViewModel GetChildViewModel<TChildViewModel>(Hash128 modelHash, RootViewModel rootViewModel)
+            where TChildViewModel : ChildViewModel
         {
             var model = GetModel(modelHash);
 
@@ -175,84 +166,62 @@ namespace NZCore.MVVM
                 Debug.LogError($"Model is null - {modelHash}");
                 return null;
             }
-            
-            return (TChildView)GetChildViewModel(model, rootView);
+
+            return (TChildViewModel)GetChildViewModel(model, rootViewModel);
         }
 
-        /// <summary>
-        /// Gets a ChildView for the specified model and RootView, creating it if necessary.
-        /// </summary>
-        /// <typeparam name="TChildView">The type of ChildView to get or create.</typeparam>
-        /// <param name="model">The model to get the view for.</param>
-        /// <param name="rootView">The RootView that will contain the child view.</param>
-        /// <returns>The ChildView associated with the model and RootView.</returns>
-        public TChildView GetChildViewModel<TChildView>(Model model, RootView rootView)
-            where TChildView : ChildView =>
-            (TChildView)GetChildViewModel(model, rootView);
+        public TChildViewModel GetChildViewModel<TChildViewModel>(Model model, RootViewModel rootViewModel)
+            where TChildViewModel : ChildViewModel =>
+            (TChildViewModel)GetChildViewModel(model, rootViewModel);
 
-        /// <summary>
-        /// Gets a ChildView for the specified model and RootView, creating it if necessary.
-        /// </summary>
-        /// <param name="model">The model to get the view for.</param>
-        /// <param name="rootView">The RootView that will contain the child view.</param>
-        /// <returns>The ChildView associated with the model and RootView.</returns>
-        public ChildView GetChildViewModel(Model model, RootView rootView)
+        public ChildViewModel GetChildViewModel(Model model, RootViewModel rootViewModel)
         {
             if (model == null)
             {
                 throw new ArgumentNullException(nameof(model));
             }
 
-            // Try to find existing child view for this model in this RootView
-            return GetChildViewModel(model.Guid, rootView);
+            return GetChildViewModel(model.Guid, rootViewModel);
         }
 
-        public ChildView GetChildViewModel(Hash128 modelHash, RootView rootView)
+        public ChildViewModel GetChildViewModel(Hash128 modelHash, RootViewModel rootViewModel)
         {
-            if (rootView == null)
+            if (rootViewModel == null)
             {
-                throw new ArgumentNullException(nameof(rootView));
+                throw new ArgumentNullException(nameof(rootViewModel));
             }
 
-            // Try to find existing child view for this model in this RootView
-            return _childViewLookups[rootView].GetValueOrDefault(modelHash);
+            return _childViewLookups[rootViewModel].GetValueOrDefault(modelHash);
         }
 
         /// <summary>
-        /// Gets all child views for a specific RootView.
+        /// Gets all child ViewModels for a specific RootViewModel.
         /// </summary>
-        /// <param name="rootView">The RootView to get child views for.</param>
-        /// <returns>A read-only collection of child views.</returns>
-        public IReadOnlyCollection<ChildView> GetChildViews(RootView rootView)
+        public IReadOnlyCollection<ChildViewModel> GetChildViewModels(RootViewModel rootViewModel)
         {
-            if (rootView == null)
+            if (rootViewModel == null)
             {
-                return Array.Empty<ChildView>();
+                return Array.Empty<ChildViewModel>();
             }
 
-            return _childViewLookups.TryGetValue(rootView, out var childViews)
-                ? childViews.Values.ToArray()
-                : Array.Empty<ChildView>();
+            return _childViewLookups.TryGetValue(rootViewModel, out var childViewModels)
+                ? childViewModels.Values.ToArray()
+                : Array.Empty<ChildViewModel>();
         }
 
         /// <summary>
-        /// Gets all registered RootViews.
+        /// Gets all registered RootViewModels.
         /// </summary>
-        /// <returns>A read-only collection of RootViews.</returns>
-        public IReadOnlyCollection<RootView> GetRootViews() => _childViewLookups.Keys.ToArray();
+        public IReadOnlyCollection<RootViewModel> GetRootViewModels() => _childViewLookups.Keys.ToArray();
 
         /// <summary>
         /// Gets a model by its GUID.
         /// </summary>
-        /// <param name="modelId">The GUID of the model.</param>
-        /// <returns>The model if found; otherwise, null.</returns>
         public Model GetModel(Hash128 modelId) => _modelLookup.GetValueOrDefault(modelId);
 
         /// <summary>
         /// Gets a ViewModel by its associated model GUID.
         /// </summary>
-        /// <param name="modelId">The GUID of the model.</param>
-        /// <returns>The ViewModel if found; otherwise, null.</returns>
         public ViewModel GetViewModel(Hash128 modelId) => _viewModelLookup.GetValueOrDefault(modelId);
 
         /// <summary>
@@ -260,18 +229,16 @@ namespace NZCore.MVVM
         /// </summary>
         public void Clear()
         {
-            // Dispose all ViewModels
             foreach (var viewModel in _viewModelLookup.Values)
             {
                 viewModel?.Dispose();
             }
 
-            // Dispose all child views
             foreach (var childViewLookup in _childViewLookups.Values)
             {
-                foreach (var childView in childViewLookup.Values)
+                foreach (var childViewModel in childViewLookup.Values)
                 {
-                    childView?.Dispose();
+                    childViewModel?.Dispose();
                 }
             }
 
@@ -280,7 +247,6 @@ namespace NZCore.MVVM
             _viewModelLookup.Clear();
         }
 
-        // todo prototype method to fully reset
         public void Reset()
         {
             Clear();

@@ -7,20 +7,18 @@ using UnityEngine.UIElements;
 namespace NZCore.UI.Elements
 {
     [UxmlElement]
-    public partial class SplitView : TwoPaneSplitView
-    {
-    }
+    public partial class SplitView : TwoPaneSplitView { }
 
     public static class SplitViewExtensions
     {
         private const string draglineAnchorIdentifier = "unity-dragline-anchor";
-        
+
         public static void LinkSplitViews(params SplitView[] splitViews)
         {
             foreach (var splitView in splitViews)
             {
                 var anchor = splitView.Q<VisualElement>(draglineAnchorIdentifier);
-                
+
                 anchor.RegisterCallback(new EventCallback<PointerMoveEvent>(evt =>
                 {
                     if (evt.target.HasPointerCapture(evt.pointerId))
@@ -33,7 +31,9 @@ namespace NZCore.UI.Elements
 
         private static void SyncSplitViews(SplitView source, SplitView[] splitViews)
         {
-            float newPos = source.orientation == TwoPaneSplitViewOrientation.Horizontal ? source.fixedPane.style.width.value.value : source.fixedPane.style.height.value.value;
+            var newPos = source.orientation == TwoPaneSplitViewOrientation.Horizontal
+                ? source.fixedPane.style.width.value.value
+                : source.fixedPane.style.height.value.value;
             if (newPos == 0)
             {
                 return;

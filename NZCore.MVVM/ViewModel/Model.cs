@@ -13,10 +13,8 @@ namespace NZCore.MVVM
     [Serializable]
     public abstract class Model
     {
-        [SerializeField] 
-        private Hash128 _guid;
-        [SerializeField, HideInInspector] 
-        private ModelVersion _version;
+        [SerializeField] private Hash128 _guid;
+        [SerializeField] [HideInInspector] private ModelVersion _version;
 
         public Hash128 Guid
         {

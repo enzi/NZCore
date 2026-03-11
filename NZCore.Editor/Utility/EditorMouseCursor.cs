@@ -46,7 +46,9 @@ namespace NZCore.Editor
             get
             {
                 if (_defaultCursorId != null)
+                {
                     return _defaultCursorId;
+                }
 
                 _defaultCursorId = typeof(Cursor).GetProperty("defaultCursorId", BindingFlags.NonPublic | BindingFlags.Instance);
 

@@ -20,7 +20,7 @@ namespace NZCore.Hybrid
         {
             Requests = new ParallelList<HybridAudioRequest>(0, Allocator.Persistent);
         }
-        
+
         public void Dispose()
         {
             Requests.Dispose();

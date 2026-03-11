@@ -9,15 +9,15 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UI.Elements
 {
-        /// <summary>
+    /// <summary>
     /// Manipulator which monitors Press, Hold and Release events in order to drag visuals.
     /// </summary>
     public class Draggable : Pressable
     {
-        static readonly PropertyInfo k_IsHandledByDraggable = 
-            typeof(PointerMoveEvent).GetProperty("isHandledByDraggable", 
+        private static readonly PropertyInfo k_IsHandledByDraggable =
+            typeof(PointerMoveEvent).GetProperty("isHandledByDraggable",
                 BindingFlags.Instance | BindingFlags.NonPublic);
-        
+
         /// <summary>
         /// The direction of the drag.
         /// </summary>
@@ -28,26 +28,28 @@ namespace NZCore.UI.Elements
             /// Horizontal drag.
             /// </summary>
             Horizontal = 1 << 0,
+
             /// <summary>
             /// Vertical drag.
             /// </summary>
             Vertical = 1 << 1,
+
             /// <summary>
             /// Free drag.
             /// </summary>
-            Free = Horizontal | Vertical,
+            Free = Horizontal | Vertical
         }
-        
-        readonly Action<Draggable> m_DownHandler;
 
-        readonly Action<Draggable> m_DragHandler;
+        private readonly Action<Draggable> m_DownHandler;
 
-        readonly Action<Draggable> m_UpHandler;
+        private readonly Action<Draggable> m_DragHandler;
 
-        bool m_IsDown;
+        private readonly Action<Draggable> m_UpHandler;
 
-        Vector2 m_LastPos = Vector2.zero;
-        
+        private bool m_IsDown;
+
+        private Vector2 m_LastPos = Vector2.zero;
+
         /// <summary>
         /// Construct a Draggable manipulator.
         /// </summary>
@@ -61,11 +63,11 @@ namespace NZCore.UI.Elements
             m_DragHandler = dragHandler;
             m_UpHandler = upHandler;
             m_DownHandler = downHandler;
-            
+
             longPressDuration = -1;
             keepEventPropagation = false;
         }
-        
+
         /// <summary>
         /// The direction of the drag.
         /// </summary>
@@ -75,7 +77,7 @@ namespace NZCore.UI.Elements
         /// The delta position between the last frame and the current one.
         /// </summary>
         public Vector2 deltaPos { get; internal set; } = Vector2.zero;
-        
+
         /// <summary>
         /// The delta position between the start of the drag and the current frame.
         /// </summary>
@@ -90,7 +92,7 @@ namespace NZCore.UI.Elements
         /// The world position received from the imGui native event.
         /// </summary>
         public Vector2 position { get; internal set; }
-        
+
         /// <summary>
         /// The start position of the drag, based on the world position received from the imGui native event.
         /// </summary>
@@ -100,7 +102,7 @@ namespace NZCore.UI.Elements
         /// Has the pointer moved since the last <see cref="PointerDownEvent"/>.
         /// </summary>
         public bool hasMoved { get; internal set; }
-        
+
         /// <summary>
         /// The threshold in pixels to start the drag operation.
         /// </summary>
@@ -112,7 +114,9 @@ namespace NZCore.UI.Elements
         public void Cancel()
         {
             if (active)
+            {
                 target?.Blur();
+            }
         }
 
         /// <summary>
@@ -126,7 +130,7 @@ namespace NZCore.UI.Elements
             deltaPos = Vector2.zero;
             deltaStartPos = Vector2.zero;
             this.localPosition = localPosition;
-            position = (evt is PointerDownEvent e) ? e.position : ((MouseDownEvent)evt).mousePosition;
+            position = evt is PointerDownEvent e ? e.position : ((MouseDownEvent)evt).mousePosition;
             m_LastPos = position;
             m_IsDown = true;
             hasMoved = false;
@@ -148,13 +152,12 @@ namespace NZCore.UI.Elements
             deltaPos = Vector2.zero;
             deltaStartPos = Vector2.zero;
             this.localPosition = localPosition;
-            position = (evt is PointerUpEvent e) ? e.position : ((MouseUpEvent)evt).mousePosition;
+            position = evt is PointerUpEvent e ? e.position : ((MouseUpEvent)evt).mousePosition;
 
             m_UpHandler?.Invoke(this);
             base.ProcessUpEvent(evt, localPosition, pointerId);
         }
-        
-      
+
 
         /// <summary>
         /// This method processes the move event sent to the target Element.
@@ -166,15 +169,15 @@ namespace NZCore.UI.Elements
             if (m_IsDown)
             {
                 this.localPosition = localPosition;
-                position = (evt is PointerMoveEvent e) ? e.position : ((MouseMoveEvent)evt).mousePosition;
+                position = evt is PointerMoveEvent e ? e.position : ((MouseMoveEvent)evt).mousePosition;
                 deltaPos = position - m_LastPos;
                 deltaStartPos = position - startPosition;
                 m_LastPos = position;
-                
-                var canDrag = 
-                    hasMoved || 
-                    (evt is PointerMoveEvent pme && pme.pointerId == PointerId.mousePointerId) || 
-                    evt is MouseMoveEvent || 
+
+                var canDrag =
+                    hasMoved ||
+                    (evt is PointerMoveEvent pme && pme.pointerId == PointerId.mousePointerId) ||
+                    evt is MouseMoveEvent ||
                     IsDraggingInDirection();
 
                 if (canDrag || !hasMoved)
@@ -199,7 +202,7 @@ namespace NZCore.UI.Elements
             base.ProcessMoveEvent(evt, localPosition);
         }
 
-        bool IsDraggingInDirection()
+        private bool IsDraggingInDirection()
         {
             var r = dragDirection switch
             {
@@ -217,12 +220,14 @@ namespace NZCore.UI.Elements
                     DragDirection.Vertical => Mathf.Abs(deltaStartPos.x) >= threshold,
                     _ => false
                 };
-                
+
                 // if we are dragging in a cross direction, we cancel the drag
                 if (isCrossDirection)
+                {
                     m_IsDown = false;
+                }
             }
-            
+
             return r;
         }
     }

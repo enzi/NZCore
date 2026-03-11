@@ -62,7 +62,9 @@ namespace NZCore.MVVM
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action)
         {
             if (action != NotifyCollectionChangedAction.Reset)
+            {
                 throw new ArgumentException("This constructor can only be used for Reset actions.", nameof(action));
+            }
 
             Action = action;
             NewStartingIndex = -1;
@@ -107,7 +109,9 @@ namespace NZCore.MVVM
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object newItem, object oldItem, int index)
         {
             if (action != NotifyCollectionChangedAction.Replace)
+            {
                 throw new ArgumentException("This constructor can only be used for Replace actions.", nameof(action));
+            }
 
             Action = action;
             NewItems = new[] { newItem };
@@ -126,7 +130,9 @@ namespace NZCore.MVVM
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object changedItem, int index, int oldIndex)
         {
             if (action != NotifyCollectionChangedAction.Move)
+            {
                 throw new ArgumentException("This constructor can only be used for Move actions.", nameof(action));
+            }
 
             Action = action;
             NewItems = new[] { changedItem };

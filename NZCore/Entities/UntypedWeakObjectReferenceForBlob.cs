@@ -15,8 +15,7 @@ namespace NZCore
     public struct WeakObjectReferenceForBlob<T> : IEquatable<WeakObjectReferenceForBlob<T>>
         where T : Object
     {
-        [SerializeField] 
-        public UntypedWeakObjectReferenceForBlob Id;
+        [SerializeField] public UntypedWeakObjectReferenceForBlob Id;
 
         public static implicit operator WeakObjectReference<T>(WeakObjectReferenceForBlob<T> weakObjectRef) => new(weakObjectRef.Id);
         public static implicit operator WeakObjectReferenceForBlob<T>(WeakObjectReference<T> weakRef) => new() { Id = weakRef.Id };
@@ -27,14 +26,14 @@ namespace NZCore
         public override bool Equals(object obj) => obj is WeakObjectReferenceForBlob<T> other && Equals(other);
         public override int GetHashCode() => Id.GetHashCode();
     }
-    
+
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public struct UntypedWeakObjectReferenceForBlob : IEquatable<UntypedWeakObjectReferenceForBlob>
     {
         public RuntimeGlobalObjectId GlobalId;
         public WeakReferenceGenerationType GenerationType;
-        
+
         public UntypedWeakObjectReferenceForBlob(UntypedWeakReferenceId weakRef)
         {
             GlobalId = weakRef.GlobalId;
@@ -50,20 +49,11 @@ namespace NZCore
             GenerationType = weakRef.GenerationType
         };
 
-        public WeakObjectReference<AnimationClip> AsAnimationClip()
-        {
-            return new WeakObjectReference<AnimationClip>(this);
-        }
-        
-        public WeakObjectReference<AudioClip> AsAudioClip()
-        {
-            return new WeakObjectReference<AudioClip>(this);
-        }
-        
-        public WeakObjectReference<GameObject> AsGameObject()
-        {
-            return new WeakObjectReference<GameObject>(this);
-        }
+        public WeakObjectReference<AnimationClip> AsAnimationClip() => new(this);
+
+        public WeakObjectReference<AudioClip> AsAudioClip() => new(this);
+
+        public WeakObjectReference<GameObject> AsGameObject() => new(this);
 
         public static bool operator ==(UntypedWeakObjectReferenceForBlob left, UntypedWeakObjectReferenceForBlob right) => left.Equals(right);
         public static bool operator !=(UntypedWeakObjectReferenceForBlob left, UntypedWeakObjectReferenceForBlob right) => !left.Equals(right);

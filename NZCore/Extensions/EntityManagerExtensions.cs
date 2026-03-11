@@ -14,9 +14,9 @@ namespace NZCore
             where T : unmanaged
         {
             var query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<T>()
-                .WithOptions(EntityQueryOptions.IncludeSystems)
-                .Build(entityManager);
+                        .WithAll<T>()
+                        .WithOptions(EntityQueryOptions.IncludeSystems)
+                        .Build(entityManager);
 
             var entity = query.GetSingletonEntity();
             query.Dispose();
@@ -28,11 +28,11 @@ namespace NZCore
             where T : IComponentData
         {
             var query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<T>()
-                .WithOptions(EntityQueryOptions.IncludeSystems)
-                .Build(entityManager);
+                        .WithAll<T>()
+                        .WithOptions(EntityQueryOptions.IncludeSystems)
+                        .Build(entityManager);
 
-            bool has = !query.IsEmptyIgnoreFilter;
+            var has = !query.IsEmptyIgnoreFilter;
             query.Dispose();
             return has;
         }
@@ -49,9 +49,9 @@ namespace NZCore
             where T : unmanaged, IComponentData
         {
             var query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<T>()
-                .WithOptions(EntityQueryOptions.IncludeSystems)
-                .Build(entityManager);
+                        .WithAll<T>()
+                        .WithOptions(EntityQueryOptions.IncludeSystems)
+                        .Build(entityManager);
 
             var comp = query.GetSingleton<T>();
             query.Dispose();
@@ -64,9 +64,9 @@ namespace NZCore
         {
             //var query = entityManager.CreateEntityQuery(ComponentType.ReadWrite<T>());
             var query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAllRW<T>()
-                .WithOptions(EntityQueryOptions.IncludeSystems)
-                .Build(entityManager);
+                        .WithAllRW<T>()
+                        .WithOptions(EntityQueryOptions.IncludeSystems)
+                        .Build(entityManager);
 
             query.SetSingleton(data);
             query.Dispose();
@@ -76,9 +76,9 @@ namespace NZCore
             where T : class, IComponentData
         {
             var query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<T>()
-                .WithOptions(EntityQueryOptions.IncludeSystems)
-                .Build(entityManager);
+                        .WithAll<T>()
+                        .WithOptions(EntityQueryOptions.IncludeSystems)
+                        .Build(entityManager);
 
             var entity = query.GetSingletonEntity();
             var comp = entityManager.GetComponentObject<T>(entity);
@@ -86,7 +86,7 @@ namespace NZCore
 
             return comp;
         }
-        
+
         public static DynamicBuffer<T> GetSingletonBuffer<T>(this EntityManager entityManager)
             where T : unmanaged, IBufferElementData
         {
@@ -122,17 +122,17 @@ namespace NZCore
             entityManager.GetCheckedEntityDataAccess()->EntityComponentStore->IncrementGlobalSystemVersion();
         }
 
-        public static void* GetComponentDataRaw(this EntityManager entityManager, Entity entity, ComponentType componentType, bool isReadOnly)
-        {
-            return entityManager.GetComponentDataRaw(entity, componentType.TypeIndex, isReadOnly);
-        }
+        public static void* GetComponentDataRaw(this EntityManager entityManager, Entity entity, ComponentType componentType, bool isReadOnly) =>
+            entityManager.GetComponentDataRaw(entity, componentType.TypeIndex, isReadOnly);
 
         public static void* GetComponentDataRaw(this EntityManager entityManager, Entity entity, TypeIndex typeIndex, bool isReadOnly)
         {
             var access = entityManager.GetCheckedEntityDataAccess();
             var ecs = access->EntityComponentStore;
 
-            return isReadOnly ? ecs->GetComponentDataWithTypeRO(entity, typeIndex) : ecs->GetComponentDataWithTypeRW(entity, typeIndex, ecs->GlobalSystemVersion);
+            return isReadOnly
+                ? ecs->GetComponentDataWithTypeRO(entity, typeIndex)
+                : ecs->GetComponentDataWithTypeRW(entity, typeIndex, ecs->GlobalSystemVersion);
         }
 
         public static byte* GetComponentDataRaw(this EntityManager entityManager, TypeIndex typeIndex, Entity entity, bool isReadOnly)
@@ -144,19 +144,21 @@ namespace NZCore
             LookupCache lookupCache = default;
 
             return isReadOnly
-                ? ChunkDataUtility.GetOptionalComponentDataWithTypeRO(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk, typeIndex, ref lookupCache)
-                : ChunkDataUtility.GetOptionalComponentDataWithTypeRW(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk, typeIndex, ecs->GlobalSystemVersion,
+                ? ChunkDataUtility.GetOptionalComponentDataWithTypeRO(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk,
+                    typeIndex, ref lookupCache)
+                : ChunkDataUtility.GetOptionalComponentDataWithTypeRW(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk,
+                    typeIndex, ecs->GlobalSystemVersion,
                     ref lookupCache);
         }
 
         public static byte* GetBufferPtr(this EntityManager entityManager, Entity entity, ComponentType componentType, bool isReadOnly = false)
         {
             // todo add safety
-            
+
             var access = entityManager.GetCheckedEntityDataAccess();
             var ecs = access->EntityComponentStore;
             var typeIndex = componentType.TypeIndex;
-            
+
             BufferHeaderExposed* header;
             if (isReadOnly)
             {
@@ -237,36 +239,38 @@ namespace NZCore
             return system.EntityManager.GetSharedComponentLookup<T>(isReadOnly);
         }
 
-        public static void AddSharedComponentData(this EntityManager entityManager, TypeIndex typeIndex, NativeArray<Entity> entities, void* ptrToData, void* ptrToDefaultData)
+        public static void AddSharedComponentData(this EntityManager entityManager, TypeIndex typeIndex, NativeArray<Entity> entities, void* ptrToData,
+            void* ptrToDefaultData)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
             if (TypeManager.IsManagedType(typeIndex))
             {
-                throw new ArgumentException($"Can't use this API with a Managed Shared Component, {TypeManager.GetType(typeIndex)} must be a blittable, unmanaged type");
+                throw new ArgumentException(
+                    $"Can't use this API with a Managed Shared Component, {TypeManager.GetType(typeIndex)} must be a blittable, unmanaged type");
             }
 #endif
             var access = entityManager.GetCheckedEntityDataAccess();
             var changes = access->BeginStructuralChanges();
             var componentType = ComponentType.ReadWrite(typeIndex);
-            
+
             access->AddSharedComponentDataDuringStructuralChange_Unmanaged(entities,
                 componentType,
                 ptrToData,
                 ptrToDefaultData);
             access->EndStructuralChanges(ref changes);
         }
-        
+
         /////////////////////////////
         /// UntypedBufferLookip   ///
         /////////////////////////////
         public static UntypedBufferLookup GetUntypedBufferLookup(this EntityManager entityManager, ComponentType componentType, bool isReadOnly)
         {
             var access = entityManager.GetCheckedEntityDataAccess();
-            
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             var safetyHandles = &access->DependencyManager->Safety;
 #endif
-            
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new UntypedBufferLookup(componentType.TypeIndex, access, isReadOnly,
                 safetyHandles->GetSafetyHandleForComponentLookup(componentType.TypeIndex, isReadOnly),

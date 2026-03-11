@@ -1,6 +1,5 @@
 
-.imgui-preview-container
-{
+.imgui-preview-container {
     height: 100%;
     flex-grow: 1;
     min-height: 300px;

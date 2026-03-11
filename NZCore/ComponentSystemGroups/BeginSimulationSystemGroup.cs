@@ -17,7 +17,5 @@ namespace NZCore
     [UpdateAfter(typeof(GhostSimulationSystemGroup))]
     [UpdateBefore(typeof(PredictedSimulationSystemGroup))]
 #endif
-    public partial class BeginSimulationSystemGroup : ComponentSystemGroup
-    {
-    }
+    public partial class BeginSimulationSystemGroup : ComponentSystemGroup { }
 }

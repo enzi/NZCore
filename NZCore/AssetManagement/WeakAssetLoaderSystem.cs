@@ -71,7 +71,7 @@ namespace NZCore.AssetManagement
 
         internal void Update(float deltaTime)
         {
-            for (int i = loadRequests.Length - 1; i >= 0; i--)
+            for (var i = loadRequests.Length - 1; i >= 0; i--)
             {
                 ref var req = ref loadRequests.ElementAt(i);
                 var loadStatus = RuntimeContentManager.GetObjectLoadingStatus(req);
@@ -84,7 +84,7 @@ namespace NZCore.AssetManagement
                     case ObjectLoadingStatus.Loading:
                         break;
                     case ObjectLoadingStatus.Completed:
-                        var assetDependency = new AssetDependency()
+                        var assetDependency = new AssetDependency
                         {
                             UntypedAssetId = req
                         };
@@ -102,7 +102,7 @@ namespace NZCore.AssetManagement
                 }
             }
 
-            for (int i = unloadRequests.Length - 1; i >= 0; i--)
+            for (var i = unloadRequests.Length - 1; i >= 0; i--)
             {
                 ref var req = ref unloadRequests.ElementAt(i);
 
@@ -132,7 +132,7 @@ namespace NZCore.AssetManagement
                 }
             }
         }
-        
+
         /// <summary>
         /// Call this first to load a specific asset
         /// </summary>
@@ -140,7 +140,9 @@ namespace NZCore.AssetManagement
         public bool Load(UntypedWeakReferenceId untypedWeakReference)
         {
             if (!untypedWeakReference.IsValid)
+            {
                 return false;
+            }
 
             var hash = untypedWeakReference.GlobalId.AssetGUID;
 
@@ -151,7 +153,7 @@ namespace NZCore.AssetManagement
 
             //Debug.Log($"Loading {hash}");
             RuntimeContentManager.LoadObjectAsync(untypedWeakReference);
-            
+
             requestedAssets.Add(hash);
             loadRequests.Add(untypedWeakReference);
 
@@ -166,7 +168,9 @@ namespace NZCore.AssetManagement
             where T : Object
         {
             if (!weakRef.IsValidBurst())
+            {
                 return false;
+            }
 
             var hash = weakRef.Id.GlobalId.AssetGUID;
 
@@ -182,23 +186,19 @@ namespace NZCore.AssetManagement
 
             return true;
         }
-        
-        public bool HasLoaded(UntypedWeakReferenceId untypedWeakReference)
-        {
+
+        public bool HasLoaded(UntypedWeakReferenceId untypedWeakReference) =>
             //Debug.Log($"TryGetResult returning {hash} prefab. {weakRef.LoadingStatus}/{weakRef.IsReferenceValid}/{weakRef.Result}");
-            return assetDependencyMap.ContainsKey(untypedWeakReference.GlobalId.AssetGUID);
-        }
+            assetDependencyMap.ContainsKey(untypedWeakReference.GlobalId.AssetGUID);
 
         /// <summary>
         /// After a Load has been called, call this method to get the actual asset object
         /// </summary>
         /// <returns>Returns true when loading has been completed</returns>
         public bool HasLoaded<T>(WeakObjectReference<T> weakRef)
-            where T : Object
-        {
+            where T : Object =>
             //Debug.Log($"TryGetResult returning {hash} prefab. {weakRef.LoadingStatus}/{weakRef.IsReferenceValid}/{weakRef.Result}");
-            return assetDependencyMap.ContainsKey(weakRef.Id.GlobalId.AssetGUID);
-        }
+            assetDependencyMap.ContainsKey(weakRef.Id.GlobalId.AssetGUID);
 
         /// <summary>
         /// After TryGetResult was successful, the entity should be registered as a dependency
@@ -250,16 +250,22 @@ namespace NZCore.AssetManagement
             }
 
             if (!entityToAssetsMap.TryGetFirstValue(entity, out var val, out var it))
+            {
                 return;
+            }
 
             if (val == weakRef.Id)
+            {
                 entityToAssetsMap.Remove(it);
+            }
             else
             {
                 while (entityToAssetsMap.TryGetNextValue(out val, ref it))
                 {
                     if (val != weakRef.Id)
+                    {
                         continue;
+                    }
 
                     entityToAssetsMap.Remove(it);
                     break;

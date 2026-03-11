@@ -72,10 +72,7 @@ namespace NZCore.Inject
         /// <summary>
         /// Resolves a service from the container.
         /// </summary>
-        public T Resolve<T>() where T : class
-        {
-            return (T)Resolve(typeof(T));
-        }
+        public T Resolve<T>() where T : class => (T)Resolve(typeof(T));
 
         /// <summary>
         /// Resolves a service from the container.
@@ -93,10 +90,7 @@ namespace NZCore.Inject
         /// <summary>
         /// Creates a new scope.
         /// </summary>
-        public IServiceProvider CreateScope()
-        {
-            return new ServiceProvider(rootProvider);
-        }
+        public IServiceProvider CreateScope() => new ServiceProvider(rootProvider);
 
         /// <summary>
         /// Gets an instance of a service based on its descriptor.
@@ -143,20 +137,11 @@ namespace NZCore.Inject
             return instance;
         }
 
-        public T CreateInstance<T>()
-        {
-            return (T)CreateInstance(typeof(T));
-        }
+        public T CreateInstance<T>() => (T)CreateInstance(typeof(T));
 
-        public object CreateInstance(Type implementationType)
-        {
-            return CreateInstance(implementationType, null);
-        }
+        public object CreateInstance(Type implementationType) => CreateInstance(implementationType, null);
 
-        public object CreateInstance(IServiceDescriptor descriptor)
-        {
-            return CreateInstance(descriptor.ImplementationType, descriptor.Factory);
-        }
+        public object CreateInstance(IServiceDescriptor descriptor) => CreateInstance(descriptor.ImplementationType, descriptor.Factory);
 
         /// <summary>
         /// Creates a new instance of a service.
@@ -203,7 +188,7 @@ namespace NZCore.Inject
                 var parameters = constructor.GetParameters();
                 var parameterInstances = new object[parameters.Length];
 
-                for (int i = 0; i < parameters.Length; i++)
+                for (var i = 0; i < parameters.Length; i++)
                 {
                     var parameterType = parameters[i].ParameterType;
 
@@ -240,16 +225,16 @@ namespace NZCore.Inject
             var props = implementationType
                         .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                         .Where(m => m.GetCustomAttribute<InjectAttribute>() != null);
-            
+
             foreach (var property in props)
             {
                 property.SetValue(instance, Resolve(property.PropertyType));
             }
-            
+
             var fields = implementationType
-                        .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                        .Where(m => m.GetCustomAttribute<InjectAttribute>() != null);
-            
+                         .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                         .Where(m => m.GetCustomAttribute<InjectAttribute>() != null);
+
             foreach (var field in fields)
             {
                 field.SetValue(instance, Resolve(field.FieldType));

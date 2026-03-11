@@ -25,14 +25,12 @@ namespace NZCore
 #endif
 
         public ParallelListHashMap(AllocatorManager.AllocatorHandle allocator)
-            : this(1, allocator)
-        {
-        }
+            : this(1, allocator) { }
 
         public ParallelListHashMap(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
-            AllocatorManager.AllocatorHandle temp = allocator;
+            var temp = allocator;
             Initialize(initialCapacity, ref temp);
         }
 
@@ -43,7 +41,9 @@ namespace NZCore
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
 
             if (UnsafeUtility.IsNativeContainerType<TKey>() || UnsafeUtility.IsNativeContainerType<TValue>())
+            {
                 AtomicSafetyHandle.SetNestedContainer(m_Safety, true);
+            }
 
             CollectionHelper.SetStaticSafetyId<ParallelListHashMap<TKey, TValue>>(ref m_Safety, ref s_staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
@@ -52,10 +52,7 @@ namespace NZCore
             _unsafeParallelListHashMap = UnsafeParallelListHashMap<TKey, TValue>.Create(initialCapacity, ref allocator);
         }
 
-        public bool ContainsKey(TKey key)
-        {
-            return _unsafeParallelListHashMap->TryPeekFirstRefValue(key);
-        }
+        public bool ContainsKey(TKey key) => _unsafeParallelListHashMap->TryPeekFirstRefValue(key);
 
         public void SetArrays(UnsafeParallelList<TKey> keyArray, UnsafeParallelList<TValue> valueArray)
         {
@@ -96,14 +93,12 @@ namespace NZCore
             UnsafeParallelListHashMap<TKey, TValue>.Destroy(_unsafeParallelListHashMap);
         }
 
-        public UnsafeParallelListHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key)
-        {
-            return new UnsafeParallelListHashMapEnumerator<TKey, TValue>
+        public UnsafeParallelListHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key) =>
+            new()
             {
                 Map = _unsafeParallelListHashMap,
                 Key = key,
                 IsFirst = true
             };
-        }
     }
 }

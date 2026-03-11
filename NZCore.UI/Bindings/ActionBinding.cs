@@ -18,8 +18,7 @@ namespace NZCore.UIToolkit
 
         public object dataSource => null;
 
-        [CreateProperty] 
-        public PropertyPath dataSourcePath { get; private set; }
+        [CreateProperty] public PropertyPath dataSourcePath { get; private set; }
 
         [UxmlAttribute("data-source-path")]
         public string DataSourcePathString
@@ -55,9 +54,7 @@ namespace NZCore.UIToolkit
             {
                 action = () => PropertyContainer.TrySetValue(ref source, in path, true);
             }
-            else if (PropertyContainer.TryGetValue(ref source, in path, out action))
-            {
-            }
+            else if (PropertyContainer.TryGetValue(ref source, in path, out action)) { }
             else
             {
                 throw new NotImplementedException();

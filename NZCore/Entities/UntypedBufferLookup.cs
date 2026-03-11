@@ -20,7 +20,7 @@ namespace NZCore
         private int m_SafetyReadOnlyCount;
         private int m_SafetyReadWriteCount;
 #endif
-        
+
         [NativeDisableUnsafePtrRestriction] private readonly EntityDataAccess* m_Access;
         private LookupCache m_Cache;
         private readonly TypeIndex m_TypeIndex;
@@ -91,7 +91,7 @@ namespace NZCore
                 return false;
             }
 
-            var headerPtr = (m_IsReadOnly != 0)
+            var headerPtr = m_IsReadOnly != 0
                 ? (BufferHeader*)ecs->GetOptionalComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache)
                 : (BufferHeader*)ecs->GetOptionalComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
@@ -145,7 +145,11 @@ namespace NZCore
             }
 
             var typeIndexInArchetype = m_Cache.IndexInArchetype;
-            if (typeIndexInArchetype == -1) return false;
+            if (typeIndexInArchetype == -1)
+            {
+                return false;
+            }
+
             var chunkVersion = archetype->Chunks.GetChangeVersion(typeIndexInArchetype, chunk.ListIndex);
 
             return ChangeVersionUtility.DidChange(chunkVersion, version);
@@ -162,7 +166,7 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
                 ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);
 #endif
-                var header = (m_IsReadOnly != 0)
+                var header = m_IsReadOnly != 0
                     ? (BufferHeader*)ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache)
                     : (BufferHeader*)ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
@@ -209,7 +213,8 @@ namespace NZCore
 
         private SafeBitRef MakeSafeBitRef(ulong* ptr, int offsetInBits)
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            => new SafeBitRef(ptr, offsetInBits, m_Safety0);
+            =>
+                new(ptr, offsetInBits, m_Safety0);
 #else
             => new SafeBitRef(ptr, offsetInBits);
 #endif
@@ -264,7 +269,9 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety0);
 #endif
             if (!HasBuffer(entity))
+            {
                 return new EnabledRefRO<T2>(default);
+            }
 
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);

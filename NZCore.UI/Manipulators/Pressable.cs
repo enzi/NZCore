@@ -8,13 +8,13 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UI.Elements
 {
-   public class Pressable : PointerManipulator
+    public class Pressable : PointerManipulator
     {
         /// <summary>
         /// The event invoked when the element is pressed.
         /// </summary>
         public event Action clicked;
-        
+
         /// <summary>
         /// The event invoked when the element is pressed.
         /// </summary>
@@ -29,7 +29,7 @@ namespace NZCore.UI.Elements
         /// Check if the element is currently pressed.
         /// </summary>
         public bool active { get; private set; }
-        
+
         /// <summary>
         /// The duration of a long press in milliseconds.
         /// <para>
@@ -47,17 +47,17 @@ namespace NZCore.UI.Elements
         public bool keepEventPropagation { get; set; } = true;
 
         private Event m_MoveEvent;
- 
+
         private Touch m_TouchMoveEvent;
- 
+
         private Event m_UpEvent;
- 
+
         private Touch m_TouchUpEvent;
- 
+
         private IVisualElementScheduledItem m_DeferDeactivate;
-         
+
         private IVisualElementScheduledItem m_DeferLongPress;
- 
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -67,12 +67,12 @@ namespace NZCore.UI.Elements
             m_TouchMoveEvent = new Touch { phase = TouchPhase.Moved };
             m_UpEvent = new Event { type = EventType.MouseUp };
             m_TouchUpEvent = new Touch { phase = TouchPhase.Ended };
-            
+
             activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
-            activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Alt});
-            activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Control});
+            activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Alt });
+            activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Control });
         }
-        
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -82,7 +82,7 @@ namespace NZCore.UI.Elements
         {
             clicked += handler;
         }
-        
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -99,13 +99,13 @@ namespace NZCore.UI.Elements
         /// <param name="evt">The base event to use to invoke the press.</param>
         public void InvokePressed(EventBase evt) => Invoke(evt);
 
-        void Invoke(EventBase evt)
+        private void Invoke(EventBase evt)
         {
             clicked?.Invoke();
             clickedWithEventInfo?.Invoke(evt);
             PostProcessDisabledState();
         }
-        
+
         /// <summary>
         /// Invoke the LongPressed event.
         /// </summary>
@@ -115,7 +115,7 @@ namespace NZCore.UI.Elements
             PostProcessDisabledState();
         }
 
-        void PostProcessDisabledState()
+        private void PostProcessDisabledState()
         {
             if (!target.enabledInHierarchy)
             {
@@ -194,8 +194,8 @@ namespace NZCore.UI.Elements
 #if !UNITY_2023_1_OR_NEWER
             target.UnregisterCallback<MouseDownEvent>(OnMouseDown);
 #endif
-           // target.UnregisterCallback<KeyDownEvent>(OnKeyDown);
-           // target.UnregisterCallback<KeyUpEvent>(OnKeyUp);
+            // target.UnregisterCallback<KeyDownEvent>(OnKeyDown);
+            // target.UnregisterCallback<KeyUpEvent>(OnKeyUp);
         }
 
         /// <summary>
@@ -204,32 +204,23 @@ namespace NZCore.UI.Elements
         /// <param name="evt"> The event to process.</param>
         /// <param name="localPos"> The local position of the pointer.</param>
         /// <param name="pointerId"> The pointer id.</param>
-        protected virtual void ProcessDownEvent(EventBase evt, Vector2 localPos, int pointerId)
-        {
-            
-        }
-        
+        protected virtual void ProcessDownEvent(EventBase evt, Vector2 localPos, int pointerId) { }
+
         /// <summary>
         /// Custom handling of pointer leave events.
         /// </summary>
         /// <param name="evt"> The event to process.</param>
         /// <param name="localPos"> The local position of the pointer.</param>
         /// <param name="pointerId"> The pointer id.</param>
-        protected virtual void ProcessUpEvent(EventBase evt, Vector2 localPos, int pointerId)
-        {
-            
-        }
-        
+        protected virtual void ProcessUpEvent(EventBase evt, Vector2 localPos, int pointerId) { }
+
         /// <summary>
         /// Custom handling of pointer move events.
         /// </summary>
         /// <param name="evt"> The event to process.</param>
         /// <param name="localPos"> The local position of the pointer.</param>
-        protected virtual void ProcessMoveEvent(EventBase evt, Vector2 localPos)
-        {
-            
-        }
-        
+        protected virtual void ProcessMoveEvent(EventBase evt, Vector2 localPos) { }
+
         // void OnKeyDown(KeyDownEvent evt)
         // {
         //     if (evt.keyCode.IsSubmitType())
@@ -248,17 +239,19 @@ namespace NZCore.UI.Elements
         //         evt.StopPropagation();
         //     }
         // }
-        
-        void OnPointerEnter(PointerEnterEvent evt)
+
+        private void OnPointerEnter(PointerEnterEvent evt)
         {
             if (!target.enabledInHierarchy)
+            {
                 return;
-            
+            }
+
             //if (evt.pointerId == PointerId.mousePointerId)
-           //     AddHoveredState();
+            //     AddHoveredState();
         }
-        
-        void OnPointerLeave(PointerLeaveEvent evt)
+
+        private void OnPointerLeave(PointerLeaveEvent evt)
         {
             //RemoveHoverState();
         }
@@ -277,43 +270,56 @@ namespace NZCore.UI.Elements
         //     target.RemoveFromClassList(Styles.hoveredUssClassName);
         // }
 
-        void OnPointerDown(PointerDownEvent evt)
+        private void OnPointerDown(PointerDownEvent evt)
         {
             if (!CanStartManipulation(evt))
+            {
                 return;
-            
+            }
+
             Activate(evt.pointerId);
             ProcessDownEvent(evt, evt.localPosition, evt.pointerId);
             evt.StopPropagation();
         }
-        
-        void OnMouseDown(MouseDownEvent evt)
+
+        private void OnMouseDown(MouseDownEvent evt)
         {
             if (active)
             {
                 if (!target.HasMouseCapture())
+                {
                     target.CaptureMouse();
+                }
+
                 evt.StopPropagation();
             }
         }
 
-        void OnPointerMove(PointerMoveEvent evt)
+        private void OnPointerMove(PointerMoveEvent evt)
         {
             if (!CanStopManipulation(evt))
+            {
                 return;
-            
+            }
+
             var parent = target?.parent;
             if (parent == null)
+            {
                 return;
-            
+            }
+
             ProcessMoveEvent(evt, evt.localPosition);
 
             if (!active)
+            {
                 return;
-            
+            }
+
             if (!keepEventPropagation)
+            {
                 return;
-            
+            }
+
             m_MoveEvent.mousePosition = evt.originalMousePosition;
             m_MoveEvent.delta = evt.deltaPosition;
             m_MoveEvent.button = evt.button;
@@ -332,29 +338,35 @@ namespace NZCore.UI.Elements
             m_TouchMoveEvent.radius = evt.radius.x;
             m_TouchMoveEvent.radiusVariance = evt.radiusVariance.x;
 
-            using var e = evt.pointerId == PointerId.mousePointerId ? 
-                PointerMoveEvent.GetPooled(m_MoveEvent) : 
-                PointerMoveEvent.GetPooled(m_TouchMoveEvent, evt.modifiers);
+            using var e = evt.pointerId == PointerId.mousePointerId
+                ? PointerMoveEvent.GetPooled(m_MoveEvent)
+                : PointerMoveEvent.GetPooled(m_TouchMoveEvent, evt.modifiers);
             e.target = parent;
             parent.SendEvent(e);
         }
-    
-        void OnPointerUp(PointerUpEvent evt)
+
+        private void OnPointerUp(PointerUpEvent evt)
         {
             if (!CanStopManipulation(evt))
+            {
                 return;
-            
+            }
+
             ProcessUpEvent(evt, evt.localPosition, evt.pointerId);
-            
+
             if (!active)
+            {
                 return;
-            
+            }
+
             InvokePressed(evt);
             Deactivate(evt.pointerId);
 
             var parent = target?.parent;
             if (parent == null || !keepEventPropagation)
+            {
                 return;
+            }
 
             m_UpEvent.mousePosition = evt.originalMousePosition;
             m_UpEvent.delta = evt.deltaPosition;
@@ -374,24 +386,24 @@ namespace NZCore.UI.Elements
             m_TouchUpEvent.radius = evt.radius.x;
             m_TouchUpEvent.radiusVariance = evt.radiusVariance.x;
 
-            using var e = evt.pointerId == PointerId.mousePointerId ? 
-                PointerUpEvent.GetPooled(m_UpEvent) : 
-                PointerUpEvent.GetPooled(m_TouchUpEvent, evt.modifiers);
+            using var e = evt.pointerId == PointerId.mousePointerId
+                ? PointerUpEvent.GetPooled(m_UpEvent)
+                : PointerUpEvent.GetPooled(m_TouchUpEvent, evt.modifiers);
             e.target = parent;
             parent.SendEvent(e);
         }
 
-        void OnPointerCancel(PointerCancelEvent evt)
+        private void OnPointerCancel(PointerCancelEvent evt)
         {
             Deactivate(evt.pointerId);
         }
 
-        void OnPointerCaptureOut(PointerCaptureOutEvent evt)
+        private void OnPointerCaptureOut(PointerCaptureOutEvent evt)
         {
             Deactivate(evt.pointerId);
         }
 
-        void Activate(int pointerId)
+        private void Activate(int pointerId)
         {
             if (!target.HasPointerCapture(pointerId))
             {
@@ -401,7 +413,7 @@ namespace NZCore.UI.Elements
                     target.CaptureMouse();
 #endif
             }
-            
+
             //ForceActivePseudoState();
             //target.AddToClassList(Styles.activeUssClassName);
             m_PointerId = pointerId;
@@ -414,34 +426,41 @@ namespace NZCore.UI.Elements
                 m_DeferLongPress = target.schedule.Execute(OnLongPress);
                 m_DeferLongPress.ExecuteLater(longPressDuration);
             }
+
             active = true;
         }
 
-        void Deactivate(int pointerId)
+        private void Deactivate(int pointerId)
         {
             active = false;
-            
+
             if (target.HasPointerCapture(pointerId))
+            {
                 target.ReleasePointer(pointerId);
-            
+            }
+
             if (m_DeferDeactivate != null)
+            {
                 return;
-            
-           // var pseudoStates = target.GetPseudoStates();
-           // target.SetPseudoStates(pseudoStates & ~PseudoStates.Active);
+            }
+
+            // var pseudoStates = target.GetPseudoStates();
+            // target.SetPseudoStates(pseudoStates & ~PseudoStates.Active);
             //target.RemoveFromClassList(Styles.activeUssClassName);
         }
 
-        int m_PointerId;
+        private int m_PointerId;
 
-        void DeferDeactivate()
+        private void DeferDeactivate()
         {
             m_DeferDeactivate = null;
             if (!active)
+            {
                 Deactivate(m_PointerId);
+            }
         }
 
-        void OnLongPress()
+        private void OnLongPress()
         {
             m_DeferLongPress?.Pause();
             m_DeferLongPress = null;

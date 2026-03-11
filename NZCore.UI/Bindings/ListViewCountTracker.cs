@@ -16,7 +16,9 @@ namespace NZCore.UIToolkit
         protected override void OnActivated(in BindingActivationContext context)
         {
             if (context.targetElement is not ListView listView)
+            {
                 return;
+            }
 
             // Ensures the refresh will be called on the next update
             m_CachedCount[listView] = -1;
@@ -25,7 +27,9 @@ namespace NZCore.UIToolkit
         protected override void OnDeactivated(in BindingActivationContext context)
         {
             if (context.targetElement is not ListView listView)
+            {
                 return;
+            }
 
             m_CachedCount.Remove(listView);
         }
@@ -34,10 +38,14 @@ namespace NZCore.UIToolkit
         protected override BindingResult Update(in BindingContext context)
         {
             if (context.targetElement is not ListView listView)
+            {
                 return new BindingResult(BindingStatus.Failure, "'ListViewCountTracker' should only be added to a 'ListView'");
+            }
 
             if (!m_CachedCount.TryGetValue(listView, out var previousCount) || previousCount == listView.itemsSource?.Count)
+            {
                 return new BindingResult(BindingStatus.Failure, "");
+            }
 
             listView.RefreshItems();
             m_CachedCount[listView] = listView.itemsSource?.Count ?? -1;

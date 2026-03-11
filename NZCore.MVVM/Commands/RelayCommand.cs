@@ -31,9 +31,7 @@ namespace NZCore.MVVM
         /// <param name="execute">The execution logic.</param>
         /// <param name="canExecute">The execution status logic.</param>
         public RelayCommand(Action execute, Func<bool> canExecute = null)
-            : this(execute != null ? _ => execute() : null, canExecute != null ? _ => canExecute() : null)
-        {
-        }
+            : this(execute != null ? _ => execute() : null, canExecute != null ? _ => canExecute() : null) { }
 
         /// <summary>
         /// Occurs when changes occur that affect whether the command should execute.
@@ -45,10 +43,7 @@ namespace NZCore.MVVM
         /// </summary>
         /// <param name="parameter">Data used by the command.</param>
         /// <returns>True if this command can be executed; otherwise, false.</returns>
-        public bool CanExecute(object parameter)
-        {
-            return _canExecute?.Invoke(parameter) ?? true;
-        }
+        public bool CanExecute(object parameter) => _canExecute?.Invoke(parameter) ?? true;
 
         /// <summary>
         /// Executes the command.
@@ -116,7 +111,7 @@ namespace NZCore.MVVM
             // If parameter is null and T is a reference type or nullable, allow it
             if (parameter == null && (!typeof(T).IsValueType || Nullable.GetUnderlyingType(typeof(T)) != null))
             {
-                return _canExecute?.Invoke(default(T)) ?? true;
+                return _canExecute?.Invoke(default) ?? true;
             }
 
             return false;
@@ -137,8 +132,8 @@ namespace NZCore.MVVM
                 }
                 else if (parameter == null && (!typeof(T).IsValueType || Nullable.GetUnderlyingType(typeof(T)) != null))
                 {
-                    _execute(default(T));
-                    Executed?.Invoke(default(T));
+                    _execute(default);
+                    Executed?.Invoke(default);
                 }
             }
         }
