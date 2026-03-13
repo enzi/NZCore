@@ -21,5 +21,6 @@ namespace NZCore.Interfaces
         where T : unmanaged
     {
         public NativeHashMap<int, T> GetMap();
+        public void OnIndexDone() { }
     }
 }

@@ -114,6 +114,8 @@ namespace NZCore
                 Map = singleton.GetMap(),
                 BlobReference_ReadHandle = SystemAPI.GetComponentTypeHandle<TBlobReference>()
             }.Run(_query);
+
+            singleton.OnIndexDone();
         }
 
         protected override void OnStopRunning()
