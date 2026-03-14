@@ -10,17 +10,14 @@ using UnityEngine.UIElements;
 namespace NZCore.UI
 {
     [UxmlElement]
-    public partial class BindableButton : VisualElement
+    public partial class BindableButton : Button
     {
-        private bool internalClicked;
-        private readonly Clickable clickable;
+        private bool _internalClicked;
         private ICommand _command;
 
         public BindableButton()
         {
-            clickable = new Clickable(TriggerClick);
-            this.AddManipulator(clickable);
-            focusable = true;
+            clicked += TriggerClick;
         }
 
         [UxmlAttribute]
@@ -29,11 +26,11 @@ namespace NZCore.UI
         {
             get
             {
-                var tmp = internalClicked;
-                internalClicked = false;
+                var tmp = _internalClicked;
+                _internalClicked = false;
                 return tmp;
             }
-            set => internalClicked = value;
+            set => _internalClicked = value;
         }
 
         [CreateProperty]

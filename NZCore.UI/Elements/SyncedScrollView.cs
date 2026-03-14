@@ -1,24 +1,31 @@
-// <copyright project="NZCore.UI" file="SyncedListView.cs">
+// <copyright project="NZCore.UI" file="SyncedScrollView.cs">
 // Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using NZCore.MVVM;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Properties;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace NZCore.UI.Elements
 {
-    public abstract unsafe class SyncedListView<TStructData, TViewData> : ListView
+    public abstract unsafe class SyncedScrollView<TStructData, TViewData> : ScrollView
         where TStructData : unmanaged
     {
+        private static readonly BindingId makeItemProperty = (BindingId)nameof(makeItem);
+        private static readonly BindingId itemsSourceProperty = (BindingId)nameof(itemsSource);
+
         private SyncListCommand<TStructData> _onSyncList;
+        private Func<VisualElement> _makeItem;
+        private IList _itemsSource;
 
         private List<TViewData> _items;
         private NativeList<TStructData> _trackArray;
-
 
         [CreateProperty]
         public SyncListCommand<TStructData> syncList
@@ -33,11 +40,38 @@ namespace NZCore.UI.Elements
 
                 _onSyncList = value;
 
-                // Subscribe to new command
                 if (_onSyncList != null)
                 {
                     _onSyncList.SyncList += OnSyncListOnSyncList;
                 }
+            }
+        }
+
+        [CreateProperty]
+        public Func<VisualElement> makeItem
+        {
+            get => _makeItem;
+            set
+            {
+                if (value == _makeItem)
+                {
+                    return;
+                }
+
+                _makeItem = value;
+                NotifyPropertyChanged(in makeItemProperty);
+            }
+        }
+
+        [CreateProperty]
+        public IList itemsSource
+        {
+            get => _itemsSource;
+            set
+            {
+                _itemsSource = value;
+                Rebuild();
+                NotifyPropertyChanged(in itemsSourceProperty);
             }
         }
 
@@ -46,15 +80,13 @@ namespace NZCore.UI.Elements
             SyncData(obj);
         }
 
-        protected SyncedListView()
+        protected SyncedScrollView()
         {
             _items = new List<TViewData>();
             _trackArray = new NativeList<TStructData>(0, Allocator.Persistent);
 
             RegisterCallback<AttachToPanelEvent>(_ => itemsSource = _items);
             RegisterCallback<DetachFromPanelEvent>(_ => _trackArray.Dispose());
-
-            bindItem = (element, index) => element.dataSource = itemsSource[index];
         }
 
         public void SyncData(UnsafeList<TStructData> list)
@@ -62,9 +94,9 @@ namespace NZCore.UI.Elements
             if (_trackArray.Length != list.Length)
             {
                 _items.Clear();
-                foreach (var element in list)
+                foreach (var data in list)
                 {
-                    _items.Add(CreateItem(element));
+                    _items.Add(CreateItem(data));
                 }
 
                 _trackArray.CopyFrom(list);
@@ -94,11 +126,53 @@ namespace NZCore.UI.Elements
             _trackArray.CopyFrom(list);
         }
 
+        private void Rebuild()
+        {
+            contentContainer.Clear();
+
+            if (_itemsSource == null || _makeItem == null)
+            {
+                return;
+            }
+
+            foreach (var item in _itemsSource)
+            {
+                var element = _makeItem();
+                element.dataSource = item;
+                contentContainer.Add(element);
+            }
+        }
+
+        public void RefreshItems()
+        {
+            if (_itemsSource == null)
+            {
+                Debug.LogError("ItemSource is null");
+                return;
+            }
+            
+            if (contentContainer.childCount != _itemsSource.Count)
+            {
+                Rebuild();
+                return;
+            }
+
+            for (var i = 0; i < contentContainer.childCount; i++)
+            {
+                contentContainer.ElementAt(i).dataSource = _itemsSource[i];
+            }
+        }
+
+        public void RefreshItem(int index)
+        {
+            contentContainer.ElementAt(index).dataSource = _itemsSource[index];
+        }
+
         protected abstract TViewData CreateItem(TStructData data);
         protected abstract TViewData UpdateItem(TViewData current, TStructData newData);
 
         /// <summary>
-        /// Override for custom compare
+        /// Override for custom compare.
         /// </summary>
         /// <param name="current">The data in the change track array</param>
         /// <param name="newData">The list element of the SyncData parameter</param>
