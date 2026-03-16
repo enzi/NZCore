@@ -1,3 +1,7 @@
+// <copyright project="NZCore.Hybrid" file="HybridInstantiationSystem.cs" version="1.0.0">
+// Copyright © 2026 Thomas Enzenebner. All rights reserved.
+// </copyright>
+
 using AOT;
 using NZCore;
 using NZCore.AssetManagement;
@@ -128,7 +132,10 @@ namespace NZSpellCasting
                             bindToEntity != Entity.Null,
                             finishedRequest.Request.DestroyTime);
 
-                        state.EntityManager.SetComponentData(bindToEntity, finishedRequest.Result.HybridAnimator);
+                        if (finishedRequest.Result.Animator.IsValid())
+                        {
+                            state.EntityManager.SetComponentData(bindToEntity, finishedRequest.Result.HybridAnimator);
+                        }
 
                         if (SystemAPI.HasBuffer<HybridObjectBuffer>(bindToEntity))
                         {

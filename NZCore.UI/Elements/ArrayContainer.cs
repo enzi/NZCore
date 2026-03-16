@@ -1,5 +1,5 @@
 // <copyright project="NZCore.UI" file="ArrayContainer.cs">
-// Copyright © 2025 Thomas Enzenebner. All rights reserved.
+// Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 #if UNITY_6000
@@ -43,7 +43,6 @@ namespace NZCore.UI
             get => _onElementChanged;
             set
             {
-                // Unsubscribe from old command
                 if (_onElementChanged != null)
                 {
                     _onElementChanged.ElementChanged -= UpdateIndex;
@@ -51,7 +50,6 @@ namespace NZCore.UI
 
                 _onElementChanged = value;
 
-                // Subscribe to new command
                 if (_onElementChanged != null)
                 {
                     _onElementChanged.ElementChanged += UpdateIndex;
@@ -59,13 +57,16 @@ namespace NZCore.UI
             }
         }
 
+        /// <summary>
+        /// Command that notifies when a list has changed.
+        /// Bind this to your ViewModel's ListChangedCommand property.
+        /// </summary>
         [CreateProperty]
         public ListChangedCommand onListChanged
         {
             get => _onListChanged;
             set
             {
-                // Unsubscribe from old command
                 if (_onListChanged != null)
                 {
                     _onListChanged.ListChanged -= Rebuild;
@@ -73,7 +74,6 @@ namespace NZCore.UI
 
                 _onListChanged = value;
 
-                // Subscribe to new command
                 if (_onListChanged != null)
                 {
                     _onListChanged.ListChanged += Rebuild;
@@ -83,7 +83,6 @@ namespace NZCore.UI
 
         private void UpdateIndex(int index)
         {
-            Debug.Log($"UpdateIndex {index}");
             ElementAt(index).dataSource = _itemsSource[index];
         }
 

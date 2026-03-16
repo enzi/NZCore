@@ -1,5 +1,5 @@
 // <copyright project="NZCore" file="EntityRemapSystem.cs">
-// Copyright © 2025 Thomas Enzenebner. All rights reserved.
+// Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 #if NZSPELLCASTING
@@ -23,7 +23,8 @@ namespace NZCore
         [FieldOffset(8)] public int DeferredEntityIndex;
         [FieldOffset(12)] public int DeferredEntityVersion;
 
-        [FieldOffset(16)] public byte Automatic;
+        [FieldOffset(16)] public int Lifetime;
+        [FieldOffset(20)] public byte Automatic;
     }
 
 #if NZSPELLCASTING
@@ -34,6 +35,8 @@ namespace NZCore
 #endif
     public partial struct EntityRemapSystem : ISystem
     {
+        public const int RemapLifetime = 300;
+        
         public void OnCreate(ref SystemState state)
         {
             var entity = state.EntityManager.CreateEntity();
@@ -64,7 +67,20 @@ namespace NZCore
         public void OnUpdate(ref SystemState state)
         {
             var remapBuffer = SystemAPI.GetSingletonBuffer<EntityRemapBuffer>();
-            remapBuffer.Clear();
+
+            for (var i = remapBuffer.Length - 1; i >= 0; i--)
+            {
+                ref var element = ref remapBuffer.ElementAt(i);
+
+                if (element.Lifetime <= 0)
+                {
+                    remapBuffer.RemoveAtSwapBack(i);
+                }
+                else
+                {
+                    element.Lifetime -= 1;
+                }
+            }
         }
     }
 
@@ -76,7 +92,8 @@ namespace NZCore
             {
                 RemappedEntity = deferredEntity,
                 DeferredEntityIndex = deferredEntity.Index,
-                DeferredEntityVersion = deferredEntity.Version
+                DeferredEntityVersion = deferredEntity.Version,
+                Lifetime = EntityRemapSystem.RemapLifetime
             });
         }
 
@@ -90,7 +107,8 @@ namespace NZCore
             {
                 Automatic = 1,
                 RewritePtr = rewritePtr,
-                RemappedEntity = deferredEntity
+                RemappedEntity = deferredEntity,
+                Lifetime = EntityRemapSystem.RemapLifetime
             });
         }
 
@@ -102,7 +120,8 @@ namespace NZCore
                 RemappedEntity = deferredEntity,
                 DeferredEntityIndex = deferredEntity.Index,
                 DeferredEntityVersion = deferredEntity.Version,
-                Automatic = 0
+                Automatic = 0,
+                Lifetime = EntityRemapSystem.RemapLifetime
             });
         }
 

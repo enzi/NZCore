@@ -1,5 +1,5 @@
 // <copyright project="NZCore.Hybrid" file="TransformEntityMapping.cs" version="1.0.0">
-// Copyright © 2024 Thomas Enzenebner. All rights reserved.
+// Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using AOT;
@@ -154,12 +154,13 @@ namespace NZCore.Hybrid
             public void Execute(int index, TransformAccess transform)
             {
                 var entity = Entities[index].Entity;
+                
                 if (LocalToWorld_Lookup.TryGetComponentPtrRO(entity, out var localToWorld))
                 {
                     //Debug.Log($"Setting positon on {entity} to {localToWorld->Position}");
                     transform.SetPositionAndRotation(localToWorld->Position, localToWorld->Rotation);
                 }
-                else
+                else if (!LocalToWorld_Lookup.EntityExists(entity))
                 {
                     //Debug.Log($"Queuing destroying hybrid entity on {entity}");
                     EntitiesToRemove.AddNoResize(index);
