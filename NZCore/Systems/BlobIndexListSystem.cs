@@ -32,6 +32,12 @@ namespace NZCore
         protected override void OnStartRunning()
         {
             CheckedStateRef.CreateSingleton(out TIndexList singleton);
+            
+            new BlobIndexResizeListJob
+            {
+                List = singleton.GetIndexList(),
+                BlobReference_ReadHandle = SystemAPI.GetComponentTypeHandle<TBlobReference>()
+            }.Run(_query);
 
             new BlobIndexListJob
             {
@@ -46,16 +52,15 @@ namespace NZCore
         }
 
         protected override void OnUpdate() { }
-
+        
         [BurstCompile]
-        private unsafe struct BlobIndexListJob : IJobChunk
+        private unsafe struct BlobIndexResizeListJob : IJobChunk
         {
             public NativeList<TBlobReference> List;
             public ComponentTypeHandle<TBlobReference> BlobReference_ReadHandle;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                //Debug.Log($"BlobIndexJob for {typeof(TBlobReference).Name}");
                 var blobRefs = (TBlobReference*)chunk.GetRequiredComponentDataPtrRO(ref BlobReference_ReadHandle);
 
                 var highestIndex = 0;
@@ -72,7 +77,25 @@ namespace NZCore
                     }
                 }
 
-                List.Resize(highestIndex + 1, NativeArrayOptions.ClearMemory);
+                var newLength = highestIndex + 1;
+
+                if (newLength > List.Length)
+                {
+                    List.Resize(highestIndex + 1, NativeArrayOptions.ClearMemory);
+                }
+            }
+        }
+
+        [BurstCompile]
+        private unsafe struct BlobIndexListJob : IJobChunk
+        {
+            public NativeList<TBlobReference> List;
+            public ComponentTypeHandle<TBlobReference> BlobReference_ReadHandle;
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+            {
+                //Debug.Log($"BlobIndexJob for {typeof(TBlobReference).Name}");
+                var blobRefs = (TBlobReference*) chunk.GetRequiredComponentDataPtrRO(ref BlobReference_ReadHandle);
 
                 for (var i = 0; i < chunk.Count; i++)
                 {
