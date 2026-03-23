@@ -189,5 +189,16 @@ namespace NZCore.UIToolkit
 
             return Matrix4x4.TRS(resolvedStyle.translate, resolvedStyle.rotate.ToQuaternion(), s);
         }
+
+        public static void MakeFullScreen(this VisualElement element, PickingMode pickingMode = PickingMode.Ignore)
+        {
+            element.style.position = Position.Absolute;
+            element.style.left = 0;
+            element.style.top = 0;
+            element.style.right = 0;
+            element.style.bottom = 0;
+
+            element.pickingMode = pickingMode;
+        }
     }
 }

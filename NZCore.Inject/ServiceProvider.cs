@@ -205,15 +205,7 @@ namespace NZCore.Inject
                 }
 
                 var instance = Activator.CreateInstance(implementationType, parameterInstances);
-
-                foreach (var field in implementationType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-                {
-                    if (field.GetCustomAttribute<InjectAttribute>() != null)
-                    {
-                        field.SetValue(instance, Resolve(field.FieldType));
-                    }
-                }
-
+                
                 Inject(implementationType, instance);
 
                 return instance;

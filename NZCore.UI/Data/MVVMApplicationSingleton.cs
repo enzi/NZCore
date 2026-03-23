@@ -5,11 +5,10 @@
 using System;
 using NZCore.Interfaces;
 using NZCore.MVVM;
-using Unity.Entities;
 
 namespace NZCore.UIToolkit.Data
 {
-    public class MVVMApplicationSingleton : IComponentData, IInitSingleton, IDisposable
+    public class MVVMApplicationSingleton : IInitSingleton, IDisposable
     {
         public MVVMApplication App;
         public UIToolkitManager Manager;
@@ -17,9 +16,13 @@ namespace NZCore.UIToolkit.Data
         public void Init()
         {
             App = new MVVMApplication();
-            Manager = new UIToolkitManager();
 
-            App.RegisterServices(provider => { provider.RegisterSingleton(Manager); });
+            Manager = new UIToolkitManager();
+            App.RegisterServices(provider =>
+            {
+                provider.RegisterSingleton(Manager);
+                provider.RegisterSingleton<IVisualAssetStore>(new VisualAssetStore(Manager.Assets.VisualTreeAssets));
+            });
         }
 
         public void Dispose()

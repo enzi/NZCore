@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using NZCore.Hybrid;
+using NZCore.UIToolkit.Data;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.U2D;
@@ -46,21 +47,29 @@ namespace NZCore.UIToolkit
                     Debug.Log($"{asset.Key}");
                 }
             }
+            
+            var manager = UIToolkitManager.Instance;
+            var uiAssets = manager.Assets;
 
-            var uiAssets = new UIAssetsSingleton
+            foreach (var kvp in visualTreeAssets.Assets)
             {
-                VisualTreeAssets = visualTreeAssets.Assets,
-                SpriteAtlasAssets = spriteAtlas.Assets,
-                WorldInterfaceAssets = worldInterfaceAssets.Assets
-            };
+                uiAssets.VisualTreeAssets.Add(kvp.Key, kvp.Value);
+            }
+
+            foreach (var kvp in spriteAtlas.Assets)
+            {
+                uiAssets.SpriteAtlasAssets.Add(kvp.Key, kvp.Value);
+            }
+
+            foreach (var kvp in worldInterfaceAssets.Assets)
+            {
+                uiAssets.WorldInterfaceAssets.Add(kvp.Key, kvp.Value);
+            }
 
             foreach (var customAsset in CustomAssets)
             {
                 uiAssets.VisualTreeAssets.Add(customAsset.Key, customAsset.Asset);
             }
-
-            var manager = UIToolkitManager.Instance;
-            manager.Assets = uiAssets;
 
             var em = World.DefaultGameObjectInjectionWorld.EntityManager;
 

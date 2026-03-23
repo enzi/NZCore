@@ -76,6 +76,11 @@ namespace NZCore.MVVM
         private readonly Func<T, bool> _canExecute;
 
         /// <summary>
+        /// Initializes a new instance of the RelayCommand class with no execute logic (use the Executed event instead).
+        /// </summary>
+        public RelayCommand() : this(_ => { }) { }
+
+        /// <summary>
         /// Initializes a new instance of the RelayCommand class.
         /// </summary>
         /// <param name="execute">The execution logic.</param>

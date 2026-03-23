@@ -1,5 +1,5 @@
 // <copyright project="NZCore.MVVM" file="View.cs">
-// Copyright © 2025 Thomas Enzenebner. All rights reserved.
+// Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System.Collections.Generic;
@@ -21,6 +21,8 @@ namespace NZCore.MVVM
         /// The ViewModel bound to this View. Set via InitializeView().
         /// </summary>
         public ViewModel ViewModel { get; private set; }
+
+        public IVisualAssetStore VisualAssetStore;
 
         /// <summary>
         /// Sibling Views whose removal lifecycle is coupled to this View's lifecycle.
@@ -70,15 +72,31 @@ namespace NZCore.MVVM
         /// </summary>
         public virtual void InstantiateLayout() { }
 
+#if UNITY_EDITOR
         /// <summary>
         /// Loads and clones a UXML asset into this View.
         /// </summary>
-        public void InstantiateLayout(string uxmlFilePath)
+        public void InstantiateLayoutFromAssetDatabase(string uxmlFilePath)
         {
             if (!string.IsNullOrEmpty(uxmlFilePath))
             {
                 var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(uxmlFilePath);
                 visualTree?.CloneTree(this);
+            }
+        }
+#endif
+        
+        /// <summary>
+        /// Loads and clones a UXML asset into this View.
+        /// </summary>
+        public void InstantiateLayout(string assetKey)
+        {
+            if (!string.IsNullOrEmpty(assetKey))
+            {
+                if (VisualAssetStore.TryGetAsset(assetKey, out var visualTree))
+                {
+                    visualTree?.CloneTree(this);
+                }
             }
         }
 
@@ -122,22 +140,32 @@ namespace NZCore.MVVM
         protected virtual void OnCustomStyleResolved(ICustomStyle styles) { }
 
         /// <summary>
-        /// Removes this View and its dependencies from the UI hierarchy and unregisters from the ViewModel layer.
+        /// Removes this View and its dependencies from the UI hierarchy without affecting the underlying data model.
+        /// Use this for transient, non-destructive operations — e.g. canceling a drag, removing a preview element,
+        /// or undoing a temporary UI state. The model remains intact.
         /// </summary>
         public abstract void RemoveView();
 
         /// <summary>
-        /// Called after this View has been removed.
+        /// Called after this View has been removed via RemoveView().
         /// </summary>
         public virtual void OnRemovedView() { }
 
         /// <summary>
-        /// Deletes this View and its dependencies, notifying the initiating ViewModel.
+        /// Permanently deletes this View and its dependencies, propagating the deletion through the ViewModel and model layers.
+        /// Use this when the underlying data should be destroyed — e.g. a user deletes a node or wire.
+        /// <para>
+        /// The <paramref name="viewInitiator"/> identifies which ViewModel triggered the deletion.
+        /// Cascading deletes (e.g. a port deleting its connected wires) pass this parameter down so that
+        /// each dependent View can skip redundant cleanup on the initiator, preventing circular teardown.
+        /// </para>
         /// </summary>
         public abstract void DeleteView(ViewModel viewInitiator);
 
         /// <summary>
-        /// Called after this View has been deleted.
+        /// Called after this View has been deleted via DeleteView().
+        /// Override to synchronize the model layer — e.g. remove the corresponding data entry,
+        /// disconnect ports, or notify other systems that this element no longer exists.
         /// </summary>
         public virtual void OnDeleteView(ViewModel viewInitiator) { }
     }
