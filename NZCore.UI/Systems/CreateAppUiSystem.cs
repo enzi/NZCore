@@ -24,8 +24,9 @@ namespace NZCore.UIToolkit
             if (uiDoc != null && uiDoc.rootVisualElement != null)
             {
                 _app = CheckedStateRef.CreateManagedSingleton<MVVMApplicationSingleton>().App;
-                Enabled = false;
             }
+            
+            Enabled = false;
         }
     }
 }
