@@ -21,7 +21,7 @@ namespace NZCore.UIToolkit
         {
             var uiDoc = MonoBehaviour.FindAnyObjectByType<UIDocument>();
 
-            if (uiDoc.rootVisualElement != null)
+            if (uiDoc != null && uiDoc.rootVisualElement != null)
             {
                 _app = CheckedStateRef.CreateManagedSingleton<MVVMApplicationSingleton>().App;
                 Enabled = false;
