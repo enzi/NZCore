@@ -5,12 +5,11 @@
 #if UNITY_6000
 using System;
 using System.Runtime.InteropServices;
-using BovineLabs.Core.UI;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.UIElements;
 
-namespace NZCore.UIToolkit
+namespace NZCore.UI
 {
     public unsafe struct UIHelper<T, TD>
         where T : class, IViewModelBindingNotify<TD>, new()

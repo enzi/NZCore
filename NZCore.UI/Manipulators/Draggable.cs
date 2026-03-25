@@ -7,7 +7,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace NZCore.UI.Elements
+namespace NZCore.UI
 {
     /// <summary>
     /// Manipulator which monitors Press, Hold and Release events in order to drag visuals.

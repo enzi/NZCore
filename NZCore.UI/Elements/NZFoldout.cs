@@ -6,7 +6,7 @@ using System;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
-namespace NZCore.UI.Elements
+namespace NZCore.UI
 {
 #if ENABLE_UXML_SERIALIZED_DATA
     [UxmlElement]

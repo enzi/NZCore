@@ -2,11 +2,11 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-#if UNITY_6000
+#if UNITY_6000 && !NZCORE_MVVM
 using System;
 using System.Collections.Generic;
 using NZCore.Hybrid;
-using NZCore.UIToolkit.Data;
+using NZCore.UI;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.U2D;
@@ -14,6 +14,7 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
 {
+    [RequireComponent(typeof(UIToolkitManager))]
     public class LoadAddressableInterface : MonoBehaviour
     {
         public bool LoadAddressables = true;
@@ -48,8 +49,8 @@ namespace NZCore.UIToolkit
                 }
             }
             
-            var manager = UIToolkitManager.Instance;
-            var uiAssets = manager.Assets;
+
+            var uiAssets = UIToolkitManager.Instance.Assets;
 
             foreach (var kvp in visualTreeAssets.Assets)
             {

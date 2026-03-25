@@ -4,10 +4,8 @@
 
 #if UNITY_6000
 using System.Collections;
-using NZCore.MVVM;
 using NZCore.UIToolkit;
 using Unity.Properties;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace NZCore.UI

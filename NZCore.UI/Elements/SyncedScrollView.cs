@@ -5,14 +5,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using NZCore.MVVM;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Properties;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace NZCore.UI.Elements
+namespace NZCore.UI
 {
     public abstract unsafe class SyncedScrollView<TStructData, TViewData> : ScrollView
         where TStructData : unmanaged

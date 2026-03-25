@@ -10,7 +10,6 @@
         "Unity.Entities.UI.Editor",
         "NZCore",
         "NZCore.Hybrid.Data",
-        "NZCore.MVVM",
         "NZCore.Inject"
     ],
     "includePlatforms": [],
@@ -32,6 +31,11 @@
             "name": "Unity",
             "expression": "2023.3.0a1",
             "define": "ENABLE_UXML_SERIALIZED_DATA"
+        },
+        {
+            "name": "com.enzisoft.nzcore.mvvm",
+            "expression": "0",
+            "define": "NZCORE_MVVM"
         }
     ],
     "noEngineReferences": false

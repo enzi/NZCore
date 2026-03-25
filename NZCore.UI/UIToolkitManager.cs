@@ -2,17 +2,16 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-#if UNITY_6000
+#if UNITY_6000 && !NZCORE_MVVM
 using System;
 using System.Collections.Generic;
-using BovineLabs.Core.UI;
-using NZCore.MVVM;
+using NZCore.UIToolkit;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace NZCore.UIToolkit
+namespace NZCore.UI
 {
-    public class UIToolkitManager
+    public class UIToolkitManager : MonoBehaviour
     {
         public static UIToolkitManager Instance; // todo phase this out
 
@@ -30,7 +29,7 @@ namespace NZCore.UIToolkit
 
         private readonly List<OrderedElement> _sortedPanels = new();
 
-        public UIToolkitManager()
+        public void Awake()
         {
             Instance = this;
 
@@ -194,16 +193,22 @@ namespace NZCore.UIToolkit
         public void AddViewAsInterface(string uniqueKey, VisualElement view, VisualElement container)
         {
             container.Add(view);
-            _loadedPanels.Add(uniqueKey, (view, default));
-            if (view is IViewTransition t) t.AnimateEnter(view);
+            _loadedPanels.Add(uniqueKey, (view, null));
+            if (view is IViewTransition t)
+            {
+                t.AnimateEnter(view);
+            }
         }
 
         /// <summary>Add a pre-built view to the container as a sorted panel.</summary>
         public void AddViewAsPanel(string uniqueKey, VisualElement view, VisualElement container, int order)
         {
             AddAsSortablePanel(container, view, order);
-            _loadedPanels.Add(uniqueKey, (view, default));
-            if (view is IViewTransition t) t.AnimateEnter(view);
+            _loadedPanels.Add(uniqueKey, (view, null));
+            if (view is IViewTransition t)
+            {
+                t.AnimateEnter(view);
+            }
         }
 
         /// <summary>
@@ -226,7 +231,9 @@ namespace NZCore.UIToolkit
             }
 
             if (evictKey != null)
+            {
                 TryUnload(evictKey, out _);
+            }
 
             AddViewAsInterface(uniqueKey, view, container);
         }
@@ -239,43 +246,16 @@ namespace NZCore.UIToolkit
         {
             VisualElement oldView = null;
             if (TryUnload(uniqueKey, out var oldEntry))
+            {
                 oldView = oldEntry.Element;
+            }
 
             container.Add(newView);
             _loadedPanels.Add(uniqueKey, (newView, default));
 
             return oldView;
         }
-
         
-
-        internal static void SetupTransition(VisualElement ve, float durationMs)
-        {
-            ve.style.transitionProperty = new StyleList<StylePropertyName>(
-                new List<StylePropertyName> { new("opacity"), new("translate") });
-            ve.style.transitionDuration = new StyleList<TimeValue>(
-                new List<TimeValue> { new(durationMs, TimeUnit.Millisecond), new(durationMs, TimeUnit.Millisecond) });
-            ve.style.transitionTimingFunction = new StyleList<EasingFunction>(
-                new List<EasingFunction> { new(EasingMode.Ease), new(EasingMode.Ease) });
-        }
-
-        internal static Translate DirectionToTranslate(SlideDirection direction, float percent) => direction switch
-        {
-            SlideDirection.Left  => new Translate(new Length(-percent, LengthUnit.Percent), 0),
-            SlideDirection.Right => new Translate(new Length(percent, LengthUnit.Percent), 0),
-            SlideDirection.Up    => new Translate(0, new Length(-percent, LengthUnit.Percent)),
-            SlideDirection.Down  => new Translate(0, new Length(percent, LengthUnit.Percent)),
-            _                    => new Translate(0, 0),
-        };
-
-        internal static SlideDirection OppositeDirection(SlideDirection direction) => direction switch
-        {
-            SlideDirection.Left  => SlideDirection.Right,
-            SlideDirection.Right => SlideDirection.Left,
-            SlideDirection.Up    => SlideDirection.Down,
-            SlideDirection.Down  => SlideDirection.Up,
-            _                    => direction,
-        };
 
         public bool TryLoad(string uniqueKey, string assetKey, out VisualElement ve, bool visibleOnInstantiate = true, string elementName = null)
         {
@@ -371,7 +351,7 @@ namespace NZCore.UIToolkit
             {
                 Debug.LogError($"Key {assetKey} was not found in assets!");
 
-                container = (Root, default);
+                container = (Root, null);
                 return false;
             }
         }
@@ -396,17 +376,22 @@ namespace NZCore.UIToolkit
 
         public bool TryUnload(string uniqueKey, out (VisualElement Element, IViewModelBindingNotify Binding) container)
         {
-            if (_loadedPanels.TryGetValue(uniqueKey, out container))
+            if (_loadedPanels.Remove(uniqueKey, out container))
             {
-                _loadedPanels.Remove(uniqueKey);
                 if (TryFind(container.Element, out var orderedElement))
+                {
                     _sortedPanels.Remove(orderedElement);
+                }
 
                 var element = container.Element;
                 if (element is IViewTransition t)
+                {
                     t.AnimateExit(element, element.RemoveFromHierarchy);
+                }
                 else
+                {
                     element.RemoveFromHierarchy();
+                }
 
                 return true;
             }

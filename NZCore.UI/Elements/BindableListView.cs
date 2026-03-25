@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using NZCore.MVVM;
 using Unity.Properties;
 using UnityEngine.UIElements;
 

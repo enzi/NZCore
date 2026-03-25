@@ -3,13 +3,12 @@
 // </copyright>
 
 using System.Collections.Generic;
-using NZCore.MVVM;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
-namespace NZCore.UI.Elements
+namespace NZCore.UI
 {
     public abstract unsafe class SyncedListView<TStructData, TViewData> : ListView
         where TStructData : unmanaged

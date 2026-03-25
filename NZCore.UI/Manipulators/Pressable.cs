@@ -6,7 +6,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace NZCore.UI.Elements
+namespace NZCore.UI
 {
     public class Pressable : PointerManipulator
     {

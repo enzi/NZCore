@@ -2,7 +2,6 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using NZCore.MVVM;
 using Unity.Properties;
 using UnityEngine.UIElements;
 

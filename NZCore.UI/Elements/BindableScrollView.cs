@@ -4,11 +4,10 @@
 
 using System;
 using System.Collections;
-using NZCore.MVVM;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
-namespace NZCore.UI.Elements
+namespace NZCore.UI
 {
     public class BindableScrollView : ScrollView
     {

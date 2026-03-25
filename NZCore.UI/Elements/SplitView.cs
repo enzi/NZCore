@@ -4,7 +4,7 @@
 
 using UnityEngine.UIElements;
 
-namespace NZCore.UI.Elements
+namespace NZCore.UI
 {
     [UxmlElement]
     public partial class SplitView : TwoPaneSplitView { }
