@@ -14,7 +14,7 @@ namespace NZCore.Authoring
             public override void Bake(IgnoreInOpenSubSceneQueryAuthoring authoring)
             {
                 var entity = GetEntity(TransformUsageFlags.None);
-                
+
                 AddComponent(entity, new IgnoreInOpenSubSceneQuery());
             }
         }

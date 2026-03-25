@@ -74,19 +74,19 @@ namespace NZCore.AssetManagement
     public static class ScriptableObjectDatabase
     {
         [MenuItem("Tools/Rebuild SO DB")]
-        public static void Rebuild()
-        {
-        }
+        public static void Rebuild() { }
 
         public static void DeleteAsset(Object assetToBeDeleted)
         {
             var type = assetToBeDeleted.GetType();
 
             if (!TryGet(type, out var manager, out var managerObject, out var list))
+            {
                 return;
+            }
 
-            bool hasDeletion = false;
-            for (int i = list.arraySize - 1; i >= 0; i--)
+            var hasDeletion = false;
+            for (var i = list.arraySize - 1; i >= 0; i--)
             {
                 if (list.GetArrayElementAtIndex(i).objectReferenceValue == assetToBeDeleted)
                 {
@@ -105,10 +105,12 @@ namespace NZCore.AssetManagement
         public static void Update(Type type)
         {
             if (!TryGet(type, out var manager, out var managerObject, out var list))
+            {
                 return;
+            }
 
             // Cleanup null entries first
-            for (int i = list.arraySize - 1; i >= 0; i--)
+            for (var i = list.arraySize - 1; i >= 0; i--)
             {
                 if (list.GetArrayElementAtIndex(i).objectReferenceValue == null)
                 {
@@ -117,7 +119,7 @@ namespace NZCore.AssetManagement
             }
 
             var currentObjects = new List<Object>();
-            for (int i = 0; i < list.arraySize; i++)
+            for (var i = 0; i < list.arraySize; i++)
             {
                 var obj = list.GetArrayElementAtIndex(i).objectReferenceValue;
                 if (obj != null)
@@ -127,17 +129,19 @@ namespace NZCore.AssetManagement
             }
 
             var foundObjects = AssetDatabase.FindAssets($"t:{type.Name}")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Distinct()
-                .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
-                .Where(s => s.GetType() == type)
-                .ToList();
+                                            .Select(AssetDatabase.GUIDToAssetPath)
+                                            .Distinct()
+                                            .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
+                                            .Where(s => s.GetType() == type)
+                                            .ToList();
 
             var currentSet = new HashSet<Object>(currentObjects);
             var foundSet = new HashSet<Object>(foundObjects);
 
             if (currentSet.SetEquals(foundSet))
+            {
                 return;
+            }
 
             list.ClearArray();
 
@@ -172,7 +176,9 @@ namespace NZCore.AssetManagement
 
             var attribute = type.GetCustomAttributeRecursive<RegisterInScriptableObjectDatabaseAttribute>(out _);
             if (attribute == null)
+            {
                 return false;
+            }
 
             var managerGuid = AssetDatabase.FindAssets($"t:{attribute.ManagerType}");
 

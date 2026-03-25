@@ -13,7 +13,7 @@ namespace NZCore
         public static int GetHighestIndex<T>(this List<T> list)
             where T : ScriptableObjectWithAutoID
         {
-            int highestIndex = 0;
+            var highestIndex = 0;
             for (var i = 0; i < list.Count; i++)
             {
                 var element = list[i];
@@ -24,7 +24,9 @@ namespace NZCore
                 }
 
                 if (element.AutoID > highestIndex)
+                {
                     highestIndex = element.AutoID;
+                }
             }
 
             return highestIndex;

@@ -38,10 +38,11 @@ namespace NZCore
 
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal static UnsafeArrayHashMap<TKey, TValue>* Create<TAllocator>(int keyOffset, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        internal static UnsafeArrayHashMap<TKey, TValue>* Create<TAllocator>(int keyOffset, ref TAllocator allocator,
+            NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
-            UnsafeArrayHashMap<TKey, TValue>* unsafeArrayHashMap =
+            var unsafeArrayHashMap =
                 (UnsafeArrayHashMap<TKey, TValue>*)allocator.Allocate(UnsafeUtility.SizeOf<UnsafeArrayHashMap<TKey, TValue>>(), JobsUtility.CacheLineSize, 1);
 
             unsafeArrayHashMap->m_Allocator = allocator.Handle;
@@ -63,8 +64,8 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCapacity(int capacity)
         {
-            int length = capacity;
-            int bucketLength = length * 2;
+            var length = capacity;
+            var bucketLength = length * 2;
 
             keyCapacity = length;
             bucketLength = math.ceilpow2(bucketLength);
@@ -88,7 +89,7 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetArrays([NoAlias] ref NativeArray<TValue> valueArray)
         {
-            int length = valueArray.Length;
+            var length = valueArray.Length;
 
             if (length == 0)
             {
@@ -106,7 +107,7 @@ namespace NZCore
         {
             // set all to -1
             UnsafeUtility.MemSet(buckets, 0xFF, (bucketCapacityMask + 1) * 4);
-            UnsafeUtility.MemSet(next, 0xFF, (keyCapacity) * 4);
+            UnsafeUtility.MemSet(next, 0xFF, keyCapacity * 4);
 
             allocatedIndexLength = 0;
         }
@@ -114,10 +115,10 @@ namespace NZCore
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalculateBuckets()
         {
-            byte* keyArrayPtr = (values + keyOffset);
+            var keyArrayPtr = values + keyOffset;
             var size = sizeof(TValue);
 
-            for (int i = 0; i < allocatedIndexLength; i++)
+            for (var i = 0; i < allocatedIndexLength; i++)
             {
                 var bucketIndex = (*(TKey*)keyArrayPtr).GetHashCode() & bucketCapacityMask;
 
@@ -133,12 +134,12 @@ namespace NZCore
         {
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
 
-            byte* keyArrayPtr = (values + keyOffset);
+            var keyArrayPtr = values + keyOffset;
             var size = sizeof(TValue);
 
-            int* nextPtrs = next + oldLength;
+            var nextPtrs = next + oldLength;
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 var bucketIndex = (*(TKey*)keyArrayPtr).GetHashCode() & bucketCapacityMask;
 
@@ -155,19 +156,21 @@ namespace NZCore
         public void CalculateBucketsSingle(TValue* valueArray, int length)
         {
             if (length == 0)
+            {
                 return;
+            }
 
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} length: {length}");
 
             var oldLength = allocatedIndexLength;
             allocatedIndexLength += length;
 
-            byte* keyArrayPtr = ((byte*)valueArray + keyOffset);
+            var keyArrayPtr = (byte*)valueArray + keyOffset;
             var size = sizeof(TValue);
 
-            int* nextPtrs = next + oldLength;
+            var nextPtrs = next + oldLength;
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 var key = *(TKey*)keyArrayPtr;
                 var bucketIndex = key.GetHashCode() & bucketCapacityMask;
@@ -191,12 +194,12 @@ namespace NZCore
             var newLength = Interlocked.Add(ref allocatedIndexLength, length);
             var oldLength = newLength - length;
 
-            byte* keyArrayPtr = ((byte*)valueArray + keyOffset);
+            var keyArrayPtr = (byte*)valueArray + keyOffset;
             var size = sizeof(TValue);
 
             var nextPtrs = next + oldLength;
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 var bucketIndex = (*(TKey*)keyArrayPtr).GetHashCode() & bucketCapacityMask;
                 var index = oldLength + i;
@@ -208,22 +211,13 @@ namespace NZCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TKey* GetKeyArrayPtr()
-        {
-            return (TKey*)(values + keyOffset);
-        }
+        public TKey* GetKeyArrayPtr() => (TKey*)(values + keyOffset);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private TKey GetKey(int index)
-        {
-            return *(TKey*)(values + index * sizeof(TValue) + keyOffset);
-        }
+        private TKey GetKey(int index) => *(TKey*)(values + index * sizeof(TValue) + keyOffset);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private TValue GetValue(int index)
-        {
-            return *(TValue*)(values + index * sizeof(TValue));
-        }
+        private TValue GetValue(int index) => *(TValue*)(values + index * sizeof(TValue));
 
         public void SetValuePtr(byte* newPtr)
         {
@@ -242,14 +236,14 @@ namespace NZCore
             }
 
             // First find the slot based on the hash            
-            int bucket = key.GetHashCode() & bucketCapacityMask;
+            var bucket = key.GetHashCode() & bucketCapacityMask;
             it.EntryIndex = it.NextEntryIndex = buckets[bucket];
             return TryGetNextRefValue(out item, ref it);
         }
 
         public bool TryGetNextRefValue(out byte* item, ref ArrayHashMapIterator<TKey> it)
         {
-            int entryIdx = it.NextEntryIndex;
+            var entryIdx = it.NextEntryIndex;
 
             if (entryIdx < 0 || entryIdx >= keyCapacity)
             {
@@ -281,10 +275,12 @@ namespace NZCore
         public bool TryPeekFirstRefValue(TKey key)
         {
             if (allocatedIndexLength <= 0)
+            {
                 return false;
+            }
 
             // First find the slot based on the hash            
-            int bucket = key.GetHashCode() & bucketCapacityMask;
+            var bucket = key.GetHashCode() & bucketCapacityMask;
             return TryPeekNextRefValue(key, buckets[bucket]);
         }
 
@@ -311,7 +307,7 @@ namespace NZCore
         {
             for (int i = 0, count = 0, max = result.Length, capacityMask = bucketCapacityMask; i <= capacityMask && count < max; ++i)
             {
-                int bucket = buckets[i];
+                var bucket = buckets[i];
 
                 while (bucket != -1)
                 {
@@ -333,7 +329,9 @@ namespace NZCore
         public void Dispose()
         {
             if (bucketsAndNextList->IsCreated)
+            {
                 UnsafeList<int>.Destroy(bucketsAndNextList, ref m_Allocator);
+            }
         }
     }
 
@@ -356,7 +354,9 @@ namespace NZCore
         {
             //Avoids going beyond the end of the collection.
             if (!IsFirst)
+            {
                 return Map->TryGetNextRefValue(out value, ref iterator);
+            }
 
             IsFirst = false;
             return Map->TryGetFirstRefValue(Key, out value, out iterator);

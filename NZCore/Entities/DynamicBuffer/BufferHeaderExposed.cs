@@ -20,7 +20,9 @@ namespace NZCore
         public static byte* GetElementPointer(BufferHeaderExposed* header)
         {
             if (header->Pointer != null)
+            {
                 return header->Pointer;
+            }
 
             return (byte*)(header + 1);
         }
@@ -37,11 +39,13 @@ namespace NZCore
             //CheckWriteAccess();
             //CheckBounds(index);
             if (count == 0)
+            {
                 return;
+            }
             //CheckBounds(index + count - 1);
 
-            int elemSize = UnsafeUtility.SizeOf<T>();
-            byte* basePtr = GetElementPointer(bufferHeader);
+            var elemSize = UnsafeUtility.SizeOf<T>();
+            var basePtr = GetElementPointer(bufferHeader);
 
             UnsafeUtility.MemMove(basePtr + index * elemSize, basePtr + (index + count) * elemSize, (long)elemSize * (bufferHeader->Length - count - index));
 
@@ -53,11 +57,13 @@ namespace NZCore
         {
             ref var l = ref bufferHeader->Length;
             l -= 1;
-            int newLength = l;
+            var newLength = l;
             if (index == newLength)
+            {
                 return;
+            }
 
-            byte* basePtr = GetElementPointer(bufferHeader);
+            var basePtr = GetElementPointer(bufferHeader);
             UnsafeUtility.WriteArrayElement(basePtr, index, UnsafeUtility.ReadArrayElement<T>(basePtr, newLength));
         }
 
@@ -69,9 +75,11 @@ namespace NZCore
             // l -= 1;
             // int newLength = l;
             if (index == bufferHeader->Length)
+            {
                 return -1;
+            }
 
-            byte* basePtr = GetElementPointer(bufferHeader);
+            var basePtr = GetElementPointer(bufferHeader);
             UnsafeUtility.WriteArrayElement(basePtr, index, UnsafeUtility.ReadArrayElement<T>(basePtr, bufferHeader->Length));
 
             return index;
@@ -80,31 +88,32 @@ namespace NZCore
         public static void AddRange<T>(BufferHeaderExposed* bufferHeader, T* ptr, int length)
             where T : unmanaged
         {
-            int elemSize = UnsafeUtility.SizeOf<T>();
-            int oldLength = bufferHeader->Length;
+            var elemSize = UnsafeUtility.SizeOf<T>();
+            var oldLength = bufferHeader->Length;
 
             ResizeUninitialized<T>(bufferHeader, oldLength + length);
 
             var basePtr = GetElementPointer(bufferHeader);
-            UnsafeUtility.MemCpy(basePtr + ((long)oldLength * elemSize), ptr, (long)elemSize * length);
+            UnsafeUtility.MemCpy(basePtr + (long)oldLength * elemSize, ptr, (long)elemSize * length);
         }
 
         public static void ClearRange<T>(BufferHeaderExposed* bufferHeader, int length)
             where T : unmanaged
         {
-            int elemSize = UnsafeUtility.SizeOf<T>();
-            int oldLength = bufferHeader->Length;
+            var elemSize = UnsafeUtility.SizeOf<T>();
+            var oldLength = bufferHeader->Length;
 
             ResizeUninitialized<T>(bufferHeader, oldLength + length);
 
             var basePtr = GetElementPointer(bufferHeader);
-            UnsafeUtility.MemClear(basePtr + ((long)oldLength * elemSize), (long)elemSize * length);
+            UnsafeUtility.MemClear(basePtr + (long)oldLength * elemSize, (long)elemSize * length);
         }
 
         private static void ResizeUninitialized<T>(BufferHeaderExposed* bufferHeader, int length)
             where T : struct
         {
-            BufferHeader.EnsureCapacity((BufferHeader*)bufferHeader, length, UnsafeUtility.SizeOf<T>(), UnsafeUtility.AlignOf<T>(), BufferHeader.TrashMode.RetainOldData, false, 0);
+            BufferHeader.EnsureCapacity((BufferHeader*)bufferHeader, length, UnsafeUtility.SizeOf<T>(), UnsafeUtility.AlignOf<T>(),
+                BufferHeader.TrashMode.RetainOldData, false, 0);
             bufferHeader->Length = length;
         }
     }

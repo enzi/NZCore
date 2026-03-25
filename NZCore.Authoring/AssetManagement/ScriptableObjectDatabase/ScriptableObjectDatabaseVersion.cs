@@ -12,7 +12,6 @@ namespace NZCore.Authoring
     [CreateAssetMenu(menuName = "NZCore/BlobDatabaseVersion")]
     public class ScriptableObjectDatabaseVersion : ScriptableObject
     {
-        [HideInInspector]
-        public int Version;
+        [HideInInspector] public int Version;
     }
 }

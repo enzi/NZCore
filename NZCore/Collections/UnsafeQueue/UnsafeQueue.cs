@@ -14,7 +14,7 @@ using Unity.Jobs.LowLevel.Unsafe;
 
 namespace NZCore
 {
-    unsafe struct UnsafeQueueBlockHeader
+    internal unsafe struct UnsafeQueueBlockHeader
     {
         public UnsafeQueueBlockHeader* m_NextBlock;
         public int m_NumItems;
@@ -38,11 +38,9 @@ namespace NZCore
             // leads to an invalid free list potentially causing memory corruption.
             // Having multiple threads freeing data concurrently to each other while another thread is allocating
             // is no problems since there is only ever a single thread modifying global data in that case.
-            while (Interlocked.CompareExchange(ref m_AllocLock, 1, 0) != 0)
-            {
-            }
+            while (Interlocked.CompareExchange(ref m_AllocLock, 1, 0) != 0) { }
 
-            UnsafeQueueBlockHeader* checkBlock = (UnsafeQueueBlockHeader*)m_FirstBlock;
+            var checkBlock = (UnsafeQueueBlockHeader*)m_FirstBlock;
             UnsafeQueueBlockHeader* block;
 
             do
@@ -77,7 +75,7 @@ namespace NZCore
                 Interlocked.Increment(ref m_NumBlocks);
             }
 
-            UnsafeQueueBlockHeader* checkBlock = (UnsafeQueueBlockHeader*)m_FirstBlock;
+            var checkBlock = (UnsafeQueueBlockHeader*)m_FirstBlock;
             UnsafeQueueBlockHeader* nextPtr;
 
             do
@@ -107,9 +105,9 @@ namespace NZCore
                 // Allocate MaxBlocks items
                 UnsafeQueueBlockHeader* prev = null;
 
-                for (int i = 0; i < data->m_MaxBlocks; ++i)
+                for (var i = 0; i < data->m_MaxBlocks; ++i)
                 {
-                    UnsafeQueueBlockHeader* block = (UnsafeQueueBlockHeader*)Memory.Unmanaged.Allocate(UnsafeQueueBlockPoolData.m_BlockSize, 16, Allocator.Persistent);
+                    var block = (UnsafeQueueBlockHeader*)Memory.Unmanaged.Allocate(UnsafeQueueBlockPoolData.m_BlockSize, 16, Allocator.Persistent);
                     block->m_NextBlock = prev;
                     prev = block;
                 }
@@ -123,7 +121,7 @@ namespace NZCore
         }
 
         [BurstDiscard]
-        static void AppDomainOnDomainUnload()
+        private static void AppDomainOnDomainUnload()
         {
 #if !UNITY_DOTSRUNTIME
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
@@ -138,7 +136,7 @@ namespace NZCore
 
             while (data->m_FirstBlock != IntPtr.Zero)
             {
-                UnsafeQueueBlockHeader* block = (UnsafeQueueBlockHeader*)data->m_FirstBlock;
+                var block = (UnsafeQueueBlockHeader*)data->m_FirstBlock;
                 data->m_FirstBlock = (IntPtr)block->m_NextBlock;
                 Memory.Unmanaged.Free(block, Allocator.Persistent);
                 --data->m_NumBlocks;
@@ -174,7 +172,7 @@ namespace NZCore
 
         public static UnsafeQueueBlockHeader* AllocateWriteBlockMT<T>(UnsafeQueueData* data, UnsafeQueueBlockPoolData* pool, int threadIndex) where T : struct
         {
-            UnsafeQueueBlockHeader* currentWriteBlock = data->GetCurrentWriteBlockTLS(threadIndex);
+            var currentWriteBlock = data->GetCurrentWriteBlockTLS(threadIndex);
 
             if (currentWriteBlock != null
                 && currentWriteBlock->m_NumItems == data->m_MaxItems)
@@ -187,7 +185,7 @@ namespace NZCore
                 currentWriteBlock = pool->AllocateBlock();
                 currentWriteBlock->m_NextBlock = null;
                 currentWriteBlock->m_NumItems = 0;
-                UnsafeQueueBlockHeader* prevLast = (UnsafeQueueBlockHeader*)Interlocked.Exchange(ref data->m_LastBlock, (IntPtr)currentWriteBlock);
+                var prevLast = (UnsafeQueueBlockHeader*)Interlocked.Exchange(ref data->m_LastBlock, (IntPtr)currentWriteBlock);
 
                 if (prevLast == null)
                 {
@@ -215,14 +213,14 @@ namespace NZCore
                 , label
             );
 
-            data->m_CurrentWriteBlockTLS = (((byte*)data) + queueDataSize);
+            data->m_CurrentWriteBlockTLS = (byte*)data + queueDataSize;
 
             data->m_FirstBlock = IntPtr.Zero;
             data->m_LastBlock = IntPtr.Zero;
             data->m_MaxItems = (UnsafeQueueBlockPoolData.m_BlockSize - UnsafeUtility.SizeOf<UnsafeQueueBlockHeader>()) / UnsafeUtility.SizeOf<T>();
 
             data->m_CurrentRead = 0;
-            for (int threadIndex = 0; threadIndex < JobsUtility.ThreadIndexCount; ++threadIndex)
+            for (var threadIndex = 0; threadIndex < JobsUtility.ThreadIndexCount; ++threadIndex)
             {
                 data->SetCurrentWriteBlockTLS(threadIndex, null);
             }
@@ -232,11 +230,11 @@ namespace NZCore
 
         public static void DeallocateQueue(UnsafeQueueData* data, UnsafeQueueBlockPoolData* pool, AllocatorManager.AllocatorHandle allocation)
         {
-            UnsafeQueueBlockHeader* firstBlock = (UnsafeQueueBlockHeader*)data->m_FirstBlock;
+            var firstBlock = (UnsafeQueueBlockHeader*)data->m_FirstBlock;
 
             while (firstBlock != null)
             {
-                UnsafeQueueBlockHeader* next = firstBlock->m_NextBlock;
+                var next = firstBlock->m_NextBlock;
                 pool->FreeBlock(firstBlock);
                 firstBlock = next;
             }
@@ -283,10 +281,10 @@ namespace NZCore
                 return true;
             }
 
-            int count = 0;
+            var count = 0;
             var currentRead = m_Buffer->m_CurrentRead;
 
-            for (UnsafeQueueBlockHeader* block = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
+            for (var block = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
                  block != null;
                  block = block->m_NextBlock
                 )
@@ -312,9 +310,9 @@ namespace NZCore
         {
             get
             {
-                int count = 0;
+                var count = 0;
 
-                for (UnsafeQueueBlockHeader* block = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
+                for (var block = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
                      block != null;
                      block = block->m_NextBlock
                     )
@@ -328,14 +326,11 @@ namespace NZCore
 
         internal static int PersistentMemoryBlockCount
         {
-            get { return UnsafeQueueBlockPool.GetQueueBlockPool()->m_MaxBlocks; }
-            set { Interlocked.Exchange(ref UnsafeQueueBlockPool.GetQueueBlockPool()->m_MaxBlocks, value); }
+            get => UnsafeQueueBlockPool.GetQueueBlockPool()->m_MaxBlocks;
+            set => Interlocked.Exchange(ref UnsafeQueueBlockPool.GetQueueBlockPool()->m_MaxBlocks, value);
         }
 
-        internal static int MemoryBlockSize
-        {
-            get { return UnsafeQueueBlockPoolData.m_BlockSize; }
-        }
+        internal static int MemoryBlockSize => UnsafeQueueBlockPoolData.m_BlockSize;
 
         /// <summary>
         /// Returns the element at the end of this queue without removing it.
@@ -345,7 +340,7 @@ namespace NZCore
         {
             CheckReadNotEmpty();
 
-            UnsafeQueueBlockHeader* firstBlock = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
+            var firstBlock = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
             return UnsafeUtility.ReadArrayElement<T>(firstBlock + 1, m_Buffer->m_CurrentRead);
         }
 
@@ -355,7 +350,7 @@ namespace NZCore
         /// <param name="value">The value to be enqueued.</param>
         public void Enqueue(T value)
         {
-            UnsafeQueueBlockHeader* writeBlock = UnsafeQueueData.AllocateWriteBlockMT<T>(m_Buffer, m_QueuePool, 0);
+            var writeBlock = UnsafeQueueData.AllocateWriteBlockMT<T>(m_Buffer, m_QueuePool, 0);
             UnsafeUtility.WriteArrayElement(writeBlock + 1, writeBlock->m_NumItems, value);
             ++writeBlock->m_NumItems;
         }
@@ -367,7 +362,7 @@ namespace NZCore
         /// <returns>The element at the end of this queue.</returns>
         public T Dequeue()
         {
-            if (!TryDequeue(out T item))
+            if (!TryDequeue(out var item))
             {
                 ThrowEmpty();
             }
@@ -382,11 +377,11 @@ namespace NZCore
         /// <returns>True if this queue was not empty.</returns>
         public bool TryDequeue(out T item)
         {
-            UnsafeQueueBlockHeader* firstBlock = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
+            var firstBlock = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
 
             if (firstBlock == null)
             {
-                item = default(T);
+                item = default;
                 return false;
             }
 
@@ -403,7 +398,7 @@ namespace NZCore
                     m_Buffer->m_LastBlock = IntPtr.Zero;
                 }
 
-                for (int threadIndex = 0; threadIndex < JobsUtility.ThreadIndexCount; ++threadIndex)
+                for (var threadIndex = 0; threadIndex < JobsUtility.ThreadIndexCount; ++threadIndex)
                 {
                     if (m_Buffer->GetCurrentWriteBlockTLS(threadIndex) == firstBlock)
                     {
@@ -425,18 +420,18 @@ namespace NZCore
         /// enqueued, *e.g.* the earliest enqueued element is copied to index 0 of the array.</returns>
         public NativeArray<T> ToArray(AllocatorManager.AllocatorHandle allocator)
         {
-            UnsafeQueueBlockHeader* firstBlock = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
+            var firstBlock = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
             var outputArray = CollectionHelper.CreateNativeArray<T>(Count, allocator);
 
-            UnsafeQueueBlockHeader* currentBlock = firstBlock;
+            var currentBlock = firstBlock;
             var arrayPtr = (byte*)outputArray.GetUnsafePtr();
-            int size = UnsafeUtility.SizeOf<T>();
-            int dstOffset = 0;
-            int srcOffset = m_Buffer->m_CurrentRead * size;
-            int srcOffsetElements = m_Buffer->m_CurrentRead;
+            var size = UnsafeUtility.SizeOf<T>();
+            var dstOffset = 0;
+            var srcOffset = m_Buffer->m_CurrentRead * size;
+            var srcOffsetElements = m_Buffer->m_CurrentRead;
             while (currentBlock != null)
             {
-                int bytesToCopy = (currentBlock->m_NumItems - srcOffsetElements) * size;
+                var bytesToCopy = (currentBlock->m_NumItems - srcOffsetElements) * size;
                 UnsafeUtility.MemCpy(arrayPtr + dstOffset, (byte*)(currentBlock + 1) + srcOffset, bytesToCopy);
                 srcOffset = srcOffsetElements = 0;
                 dstOffset += bytesToCopy;
@@ -452,11 +447,11 @@ namespace NZCore
         /// <remarks>Does not change the capacity.</remarks>
         public void Clear()
         {
-            UnsafeQueueBlockHeader* firstBlock = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
+            var firstBlock = (UnsafeQueueBlockHeader*)m_Buffer->m_FirstBlock;
 
             while (firstBlock != null)
             {
-                UnsafeQueueBlockHeader* next = firstBlock->m_NextBlock;
+                var next = firstBlock->m_NextBlock;
                 m_QueuePool->FreeBlock(firstBlock);
                 firstBlock = next;
             }
@@ -465,7 +460,7 @@ namespace NZCore
             m_Buffer->m_LastBlock = IntPtr.Zero;
             m_Buffer->m_CurrentRead = 0;
 
-            for (int threadIndex = 0; threadIndex < JobsUtility.ThreadIndexCount; ++threadIndex)
+            for (var threadIndex = 0; threadIndex < JobsUtility.ThreadIndexCount; ++threadIndex)
             {
                 m_Buffer->SetCurrentWriteBlockTLS(threadIndex, null);
             }
@@ -545,7 +540,7 @@ namespace NZCore
             /// <param name="value">The value to be enqueued.</param>
             public void Enqueue(T value)
             {
-                UnsafeQueueBlockHeader* writeBlock = UnsafeQueueData.AllocateWriteBlockMT<T>(m_Buffer, m_QueuePool, m_ThreadIndex);
+                var writeBlock = UnsafeQueueData.AllocateWriteBlockMT<T>(m_Buffer, m_QueuePool, m_ThreadIndex);
                 UnsafeUtility.WriteArrayElement(writeBlock + 1, writeBlock->m_NumItems, value);
                 ++writeBlock->m_NumItems;
             }
@@ -553,7 +548,7 @@ namespace NZCore
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         [Conditional("UNITY_DOTS_DEBUG")]
-        void CheckReadNotEmpty()
+        private void CheckReadNotEmpty()
         {
             if (m_Buffer->m_FirstBlock == (IntPtr)0)
             {
@@ -563,7 +558,7 @@ namespace NZCore
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         [Conditional("UNITY_DOTS_DEBUG")]
-        static void ThrowEmpty()
+        private static void ThrowEmpty()
         {
             throw new InvalidOperationException("Trying to read from an empty queue.");
         }
@@ -589,7 +584,7 @@ namespace NZCore
     }
 
     [BurstCompile]
-    struct UnsafeQueueDisposeJob : IJob
+    internal struct UnsafeQueueDisposeJob : IJob
     {
         public UnsafeQueueDispose Data;
 

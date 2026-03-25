@@ -4,7 +4,5 @@
 
 namespace NZCore
 {
-    public static class ByteExtensions
-    {
-    }
+    public static class ByteExtensions { }
 }

@@ -8,24 +8,24 @@ public class Locators : MonoBehaviour
 {
     public Transform Head;
     public Vector3 HeadOffset;
-    
+
     public Transform HandLeft;
     public Vector3 HandLeftOffset;
-    
+
     public Transform HandRight;
     public Vector3 HandRightOffset;
-    
+
     public Transform Spine;
     public Vector3 SpineOffset;
-    
+
     public Transform FeetLeft;
     public Vector3 FeetLeftOffset;
     public Transform FeetRight;
     public Vector3 FeetRightOffset;
-    
+
     public Transform WeaponLeft;
     public Vector3 WeaponLeftOffset;
-    
+
     public Transform WeaponRight;
     public Vector3 WeaponRightOffset;
 
@@ -58,7 +58,7 @@ public class Locators : MonoBehaviour
                 throw new ArgumentOutOfRangeException(nameof(locatorPosition), locatorPosition, null);
         }
     }
-    
+
     public Quaternion GetLocatorRotation(LocatorPosition locatorPosition)
     {
         switch (locatorPosition)

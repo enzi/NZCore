@@ -13,9 +13,6 @@ namespace NZCore.NativeContainers.BTree
         public TKey Key;
         public TValue Pointer;
 
-        public bool Equals(BTreeEntry<TKey, TValue> other)
-        {
-            return Key.Equals(other.Key) && Pointer.Equals(other.Pointer);
-        }
+        public bool Equals(BTreeEntry<TKey, TValue> other) => Key.Equals(other.Key) && Pointer.Equals(other.Pointer);
     }
 }

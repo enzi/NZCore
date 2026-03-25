@@ -14,9 +14,9 @@ namespace NZCore
         private int currentIndex;
 
         public int CurrentIndex => currentIndex;
-        public byte* CurrentPtr => (byte*) data.Ptr + currentIndex;
+        public byte* CurrentPtr => (byte*)data.Ptr + currentIndex;
         public bool ReachedLastIndex => currentIndex >= data.Length; // >= is safeguard for corrupt savegames to prevent endless loop
-        
+
         public UnsafeByteDeserializer(UnsafeList<byte> byteList, int offset = 0)
         {
             data = byteList;
@@ -59,7 +59,7 @@ namespace NZCore
         {
             currentIndex += UnsafeUtility.SizeOf<T>();
         }
-        
+
         public void AddOffsetRange<T>(int length)
             where T : unmanaged
         {

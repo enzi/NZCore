@@ -2,7 +2,6 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using NZCore.MVVM;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
@@ -12,7 +11,7 @@ namespace NZCore.UI
     [UxmlElement]
     public partial class BindableButton : Button
     {
-        private bool internalClicked;
+        private bool _internalClicked;
         private ICommand _command;
 
         public BindableButton()
@@ -26,11 +25,11 @@ namespace NZCore.UI
         {
             get
             {
-                var tmp = internalClicked;
-                internalClicked = false;
+                var tmp = _internalClicked;
+                _internalClicked = false;
                 return tmp;
             }
-            set => internalClicked = value;
+            set => _internalClicked = value;
         }
 
         [CreateProperty]

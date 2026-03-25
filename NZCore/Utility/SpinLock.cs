@@ -20,11 +20,15 @@ namespace NZCore
             {
                 // Optimistically assume the lock is free on the first try.
                 if (Interlocked.CompareExchange(ref _lock, 1, 0) == 0)
+                {
                     return;
+                }
 
                 // Wait for lock to be released without generating cache misses.
                 while (Volatile.Read(ref _lock) == 1)
+                {
                     continue;
+                }
 
                 // Future improvement: the 'continue' instruction above could be swapped for a 'pause' intrinsic
                 // instruction when the CPU supports it, to further reduce contention by reducing load-store unit
@@ -39,12 +43,10 @@ namespace NZCore
         /// </summary>
         /// <returns><see langword="true"/> if the lock was acquired, <see langword="false"/> otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAcquire()
-        {
+        public bool TryAcquire() =>
             // First do a memory load (read) to check if lock is free in order to prevent unnecessary cache misses.
-            return Volatile.Read(ref _lock) == 0 &&
-                Interlocked.CompareExchange(ref _lock, 1, 0) == 0;
-        }
+            Volatile.Read(ref _lock) == 0 &&
+            Interlocked.CompareExchange(ref _lock, 1, 0) == 0;
 
         /// <summary>
         /// Try to acquire the lock, and spin only if <paramref name="spin"/> is <see langword="true"/>.
@@ -59,6 +61,7 @@ namespace NZCore
                 Acquire();
                 return true;
             }
+
             return TryAcquire();
         }
 

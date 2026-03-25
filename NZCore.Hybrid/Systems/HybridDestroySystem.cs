@@ -10,11 +10,12 @@ namespace NZCore.Hybrid
     public partial class HybridDestroySystem : SystemBase
     {
         private EntityQuery query;
+
         protected override void OnCreate()
         {
             query = SystemAPI.QueryBuilder()
-                .WithAll<DestroyEntity, HybridObjectBuffer>()
-                .Build();
+                             .WithAll<DestroyEntity, HybridObjectBuffer>()
+                             .Build();
         }
 
         protected override void OnUpdate()

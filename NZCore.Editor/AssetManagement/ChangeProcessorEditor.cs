@@ -36,20 +36,22 @@ namespace NZCore.Editor
         {
             this.target = target;
         }
-        
+
         public VisualElement CreateInspectorGUI(VisualElement root)
         {
             var hasChangesResult = ((ChangeProcessorAsset)target).HasChanges(GetChangeProcessorAssets(target.GetType()));
 
             if (hasChangesResult == HasChangeResult.None)
+            {
                 return root;
+            }
 
-            Button btn = new Button(Click_CodeGen)
+            var btn = new Button(Click_CodeGen)
             {
                 text = $"Update {target.GetType().Name} settings JSON {(hasChangesResult == HasChangeResult.HasChanges ? "(*)" : "")}"
             };
 
-            Button btn2 = new Button(Click_CodeGenAll)
+            var btn2 = new Button(Click_CodeGenAll)
             {
                 text = $"Update every JSON setting {(hasChangesResult == HasChangeResult.HasChanges ? "(*)" : "")}"
             };
@@ -59,36 +61,33 @@ namespace NZCore.Editor
 
             return root;
         }
-        
+
         private void Click_CodeGen()
         {
             RunDidChangeOnAssetType((ChangeProcessorAsset)target);
         }
 
-        public List<string> GetAssetPaths<T>()
-        {
-            return GetAssetPaths(typeof(T).Name);
-        }
+        public List<string> GetAssetPaths<T>() => GetAssetPaths(typeof(T).Name);
 
-        public List<string> GetAssetPaths(string targetTypeName)
-        {
-            return AssetDatabase.FindAssets($"t:{targetTypeName}")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .ToList();
-        }
+        public List<string> GetAssetPaths(string targetTypeName) =>
+            AssetDatabase.FindAssets($"t:{targetTypeName}")
+                         .Select(AssetDatabase.GUIDToAssetPath)
+                         .ToList();
 
         public List<ChangeProcessorAsset> GetChangeProcessorAssets(Type targetType)
         {
             var assetPaths = GetAssetPaths(targetType.Name);
-            
-            List<ChangeProcessorAsset> changeProcessorAssets = new List<ChangeProcessorAsset>();
 
-            foreach (string assetPath in assetPaths)
+            var changeProcessorAssets = new List<ChangeProcessorAsset>();
+
+            foreach (var assetPath in assetPaths)
             {
                 var asset = AssetDatabase.LoadAssetAtPath(assetPath, targetType);
 
                 if (asset == null || asset is not ChangeProcessorAsset)
+                {
                     continue;
+                }
 
                 changeProcessorAssets.Add((ChangeProcessorAsset)asset);
             }
@@ -103,12 +102,14 @@ namespace NZCore.Editor
 
             var assets = AssetDatabaseUtility.GetSubAssets(targetType);
 
-            List<ChangeProcessorAsset> allAssets = new List<ChangeProcessorAsset>();
+            var allAssets = new List<ChangeProcessorAsset>();
 
             foreach (var asset in assets)
             {
                 if (asset == null || asset is not ChangeProcessorAsset changeProcessorAsset)
+                {
                     continue;
+                }
 
                 allAssets.Add(changeProcessorAsset);
             }
@@ -122,12 +123,14 @@ namespace NZCore.Editor
         {
             var assets = AssetDatabaseUtility.GetSubAssets(typeof(ChangeProcessorAsset));
 
-            Dictionary<Type, List<ChangeProcessorAsset>> collector = new Dictionary<Type, List<ChangeProcessorAsset>>();
+            var collector = new Dictionary<Type, List<ChangeProcessorAsset>>();
 
             foreach (var asset in assets)
             {
                 if (asset == null || asset is not ChangeProcessorAsset changeProcessorAsset)
+                {
                     continue;
+                }
 
                 var type = asset.GetType();
 
@@ -140,7 +143,7 @@ namespace NZCore.Editor
                 list.Add(changeProcessorAsset);
             }
 
-            foreach (KeyValuePair<Type, List<ChangeProcessorAsset>> entry in collector)
+            foreach (var entry in collector)
             {
                 if (entry.Value.Count > 0)
                 {

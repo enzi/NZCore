@@ -16,10 +16,7 @@ namespace NZCore
         /// <param name="world"></param>
         /// <returns></returns>
         [ExcludeFromBurstCompatTesting("")]
-        public static Type ExecutingSystemType(this World world)
-        {
-            return world.Unmanaged.GetTypeOfSystem(world.Unmanaged.ExecutingSystem);
-        }
+        public static Type ExecutingSystemType(this World world) => world.Unmanaged.GetTypeOfSystem(world.Unmanaged.ExecutingSystem);
 
         public static bool SystemExists<T>(this WorldUnmanaged world)
         {

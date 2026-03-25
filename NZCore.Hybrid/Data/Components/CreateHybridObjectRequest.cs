@@ -17,7 +17,7 @@ namespace NZCore.Hybrid
     {
         //public NativeList<SpawnParticleData> SpawnParticlesList;
         public ParallelList<CreateHybridObjectRequest> Requests;
-        
+
         public void Init()
         {
             Requests = new ParallelList<CreateHybridObjectRequest>(0, Allocator.Persistent);
@@ -29,7 +29,7 @@ namespace NZCore.Hybrid
             Requests.Dispose();
         }
     }
-    
+
     [StructLayout(LayoutKind.Explicit)]
     public struct CreateHybridObjectRequest
     {
@@ -51,14 +51,14 @@ namespace NZCore.Hybrid
         public float3 Position;
         public float3 Offset;
     }
-    
+
     public struct HybridLocatorData
     {
         public Entity Entity;
         public LocatorPosition Locator;
         public bool AttachToParent;
     }
-    
+
     public enum LocatorPosition : byte
     {
         None,
@@ -72,7 +72,7 @@ namespace NZCore.Hybrid
         WeaponLeft,
         WeaponRight
     }
-    
+
     public enum CreateHybridSpawnMode : byte
     {
         Position,

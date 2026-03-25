@@ -17,7 +17,8 @@ namespace NZCore.NativeContainers.BTree
 
         private AllocatorManager.AllocatorHandle allocator;
 
-        internal static UnsafeBTree<TKey, TValue>* Create<TAllocator>(int degree, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        internal static UnsafeBTree<TKey, TValue>* Create<TAllocator>(int degree, ref TAllocator allocator,
+            NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
             if (degree < 2)
@@ -25,7 +26,7 @@ namespace NZCore.NativeContainers.BTree
                 throw new ArgumentException($"BTree degree must be at least 2 not {degree}");
             }
 
-            UnsafeBTree<TKey, TValue>* unsafeBTree = allocator.Allocate(default(UnsafeBTree<TKey, TValue>), 1);
+            var unsafeBTree = allocator.Allocate(default(UnsafeBTree<TKey, TValue>), 1);
 
             unsafeBTree->allocator = allocator.Handle;
             unsafeBTree->Root = new BTreeNode<TKey, TValue>(degree);

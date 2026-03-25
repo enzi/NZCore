@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using NZCore.MVVM;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
@@ -41,7 +40,7 @@ namespace NZCore.UI
                 }
             }
         }
-        
+
         [CreateProperty]
         public ListChangedCommand onListChanged
         {
@@ -63,7 +62,7 @@ namespace NZCore.UI
                 }
             }
         }
-        
+
         private void OnListChanged()
         {
             RefreshItems();

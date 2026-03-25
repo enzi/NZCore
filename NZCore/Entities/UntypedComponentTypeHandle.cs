@@ -29,15 +29,15 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private readonly int m_MinIndex;
         private readonly int m_MaxIndex;
-        internal  AtomicSafetyHandle m_Safety0;
-        internal  AtomicSafetyHandle m_Safety1;
+        internal AtomicSafetyHandle m_Safety0;
+        internal AtomicSafetyHandle m_Safety1;
         internal readonly int m_SafetyReadOnlyCount;
         internal readonly int m_SafetyReadWriteCount;
 #endif
 #pragma warning restore 0414
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-        internal UntypedComponentTypeHandle(ComponentType componentType, AtomicSafetyHandle safety0, AtomicSafetyHandle safety1, 
+        internal UntypedComponentTypeHandle(ComponentType componentType, AtomicSafetyHandle safety0, AtomicSafetyHandle safety1,
             uint globalSystemVersion)
 #else
         internal UntypedComponentTypeHandle(ComponentType componentType, uint globalSystemVersion)
@@ -58,9 +58,9 @@ namespace NZCore
             m_MaxIndex = 0;
             m_Safety0 = safety0;
             m_Safety1 = safety1;
-            int numHandles = componentType.IsBuffer ? 2 : 1;
+            var numHandles = componentType.IsBuffer ? 2 : 1;
             m_SafetyReadOnlyCount = _isReadOnly == 1 ? numHandles : 0;
-            m_SafetyReadWriteCount = _isReadOnly == 1 ? 0: numHandles;
+            m_SafetyReadWriteCount = _isReadOnly == 1 ? 0 : numHandles;
 #endif
         }
 
@@ -68,14 +68,16 @@ namespace NZCore
         {
             Update(ref *system.m_StatePtr);
         }
-        
+
         public unsafe void Update(ref SystemState state)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             m_Safety0 = state.m_DependencyManager->Safety.GetSafetyHandleForDynamicComponentTypeHandle(_typeIndex, IsReadOnly);
-            int numHandles = IsReadOnly ? m_SafetyReadOnlyCount : m_SafetyReadWriteCount;
+            var numHandles = IsReadOnly ? m_SafetyReadOnlyCount : m_SafetyReadWriteCount;
             if (numHandles > 1)
+            {
                 m_Safety1 = state.m_DependencyManager->Safety.GetBufferHandleForBufferTypeHandle(_typeIndex);
+            }
 #endif
             _globalSystemVersion = state.GlobalSystemVersion;
         }
@@ -96,7 +98,7 @@ namespace NZCore
             state.AddReaderWriter(componentType);
             return GetUntypedComponentTypeHandle(ref state, componentType);
         }
-        
+
         private static UntypedComponentTypeHandle GetUntypedComponentTypeHandle(ref SystemState state, ComponentType componentType)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -104,13 +106,15 @@ namespace NZCore
             if (!componentType.IsBuffer)
             {
                 return new UntypedComponentTypeHandle(componentType,
-                    access->DependencyManager->Safety.GetSafetyHandleForDynamicComponentTypeHandle(componentType.TypeIndex, componentType.AccessModeType == ComponentType.AccessMode.ReadOnly),
-                    default(AtomicSafetyHandle), state.GlobalSystemVersion);
+                    access->DependencyManager->Safety.GetSafetyHandleForDynamicComponentTypeHandle(componentType.TypeIndex,
+                        componentType.AccessModeType == ComponentType.AccessMode.ReadOnly),
+                    default, state.GlobalSystemVersion);
             }
             else
             {
                 return new UntypedComponentTypeHandle(componentType,
-                    access->DependencyManager->Safety.GetSafetyHandleForDynamicComponentTypeHandle(componentType.TypeIndex, componentType.AccessModeType == ComponentType.AccessMode.ReadOnly),
+                    access->DependencyManager->Safety.GetSafetyHandleForDynamicComponentTypeHandle(componentType.TypeIndex,
+                        componentType.AccessModeType == ComponentType.AccessMode.ReadOnly),
                     access->DependencyManager->Safety.GetBufferHandleForBufferTypeHandle(componentType.TypeIndex),
                     state.GlobalSystemVersion);
             }
@@ -119,15 +123,15 @@ namespace NZCore
             return new UntypedComponentTypeHandle(componentType, state.GlobalSystemVersion);
 #endif
         }
-        
-        
+
+
         public static byte* GetComponentDataRawRO(this in ArchetypeChunk chunk, ref UntypedComponentTypeHandle untypedHandle)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(untypedHandle.m_Safety0);
 #endif
 
-            byte* ptr = ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, 0,
+            var ptr = ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, 0,
                 untypedHandle._typeIndex, ref untypedHandle._lookupCache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
@@ -147,13 +151,16 @@ namespace NZCore
             AtomicSafetyHandle.CheckWriteAndThrow(untypedHandle.m_Safety0);
 #endif
 
-            byte* ptr = ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, 0,
+            var ptr = ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, 0,
                 untypedHandle._typeIndex, untypedHandle.GlobalSystemVersion, ref untypedHandle._lookupCache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
             if (Hint.Unlikely(untypedHandle.IsReadOnly))
+            {
                 throw new InvalidOperationException(
                     "Provided UntypedComponentTypeHandle is read-only; can't get a read/write pointer to component data");
+            }
+
             // Must check this after computing the pointer, to make sure the cache is up to date
             if (Hint.Unlikely(untypedHandle._lookupCache.IndexInArchetype == -1))
             {

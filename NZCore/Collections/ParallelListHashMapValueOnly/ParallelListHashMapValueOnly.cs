@@ -29,18 +29,21 @@ namespace NZCore
         public ParallelListHashMapValueOnly(int initialCapacity, int keyOffset, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
-            AllocatorManager.AllocatorHandle temp = allocator;
+            var temp = allocator;
             Initialize(initialCapacity, keyOffset, ref temp);
         }
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator) where TAllocator : unmanaged, AllocatorManager.IAllocator
+        internal void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator)
+            where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
 
             if (UnsafeUtility.IsNativeContainerType<TKey>() || UnsafeUtility.IsNativeContainerType<TValue>())
+            {
                 AtomicSafetyHandle.SetNestedContainer(m_Safety, true);
+            }
 
             CollectionHelper.SetStaticSafetyId<ParallelListHashMap<TKey, TValue>>(ref m_Safety, ref staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
@@ -49,10 +52,7 @@ namespace NZCore
             _unsafeParallelListHashMap = UnsafeParallelListHashMapValueOnly<TKey, TValue>.Create(initialCapacity, keyOffset, ref allocator);
         }
 
-        public bool ContainsKey(TKey key)
-        {
-            return _unsafeParallelListHashMap->TryPeekFirstRefValue(key);
-        }
+        public bool ContainsKey(TKey key) => _unsafeParallelListHashMap->TryPeekFirstRefValue(key);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetArrays(ParallelList<TValue> valueArray)
@@ -100,26 +100,22 @@ namespace NZCore
             UnsafeParallelListHashMapValueOnly<TKey, TValue>.Destroy(_unsafeParallelListHashMap);
         }
 
-        public UnsafeParallelListHashMapValueOnlyEnumerator<TKey, TValue> GetValuesForKey(TKey key)
-        {
-            return new UnsafeParallelListHashMapValueOnlyEnumerator<TKey, TValue>
+        public UnsafeParallelListHashMapValueOnlyEnumerator<TKey, TValue> GetValuesForKey(TKey key) =>
+            new()
             {
                 Map = _unsafeParallelListHashMap,
                 Key = key,
                 IsFirst = true
             };
-        }
 
         // helper jobs
 
-        public JobHandle ScheduleCalculateBuckets(ParallelList<TValue> values, JobHandle dependency)
-        {
-            return new CalculateBucketsJob()
+        public JobHandle ScheduleCalculateBuckets(ParallelList<TValue> values, JobHandle dependency) =>
+            new CalculateBucketsJob
             {
                 Hashmap = this,
                 Values = values
             }.Schedule(dependency);
-        }
 
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob

@@ -36,32 +36,33 @@ namespace NZCore
             ptr += UnsafeUtility.SizeOf<T>();
             return ref val;
         }
-        
-        public static unsafe byte[] GetBytes<T>(T value) 
+
+        public static unsafe byte[] GetBytes<T>(T value)
             where T : unmanaged
         {
-            byte[] result = new byte[sizeof(T)];
+            var result = new byte[sizeof(T)];
             fixed (byte* ptr = result)
             {
                 *(T*)ptr = value;
             }
+
             return result;
         }
 
         public static byte[] GetBytesFromStruct<T>(T structure)
             where T : struct
         {
-            int size = Marshal.SizeOf(structure);
-            int size2 = UnsafeUtility.SizeOf<T>();
+            var size = Marshal.SizeOf(structure);
+            var size2 = UnsafeUtility.SizeOf<T>();
 
             if (size != size2)
             {
                 throw new Exception($"The sizes are different for {typeof(T).Name} - {size} vs {size2}! Fix your struct!");
             }
 
-            byte[] arr = new byte[size];
+            var arr = new byte[size];
 
-            IntPtr ptr = IntPtr.Zero;
+            var ptr = IntPtr.Zero;
             try
             {
                 ptr = Marshal.AllocHGlobal(size);
@@ -76,9 +77,6 @@ namespace NZCore
             return arr;
         }
 
-        public static byte ToByte(this bool boolean)
-        {
-            return boolean ? (byte)1 : (byte)0;
-        }
+        public static byte ToByte(this bool boolean) => boolean ? (byte)1 : (byte)0;
     }
 }

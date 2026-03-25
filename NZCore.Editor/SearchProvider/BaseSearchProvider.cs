@@ -13,7 +13,7 @@ namespace NZCore.Editor
     public abstract class BaseSearchProvider : SearchProvider
     {
         public readonly QueryEngine<Type> m_QueryEngine = new();
-        
+
         protected BaseSearchProvider(string providerId, string displayName)
             : base(providerId, displayName)
         {
@@ -37,11 +37,11 @@ namespace NZCore.Editor
         public static void Show<T>(this T provider, Action<SearchItem> selectHandler, Action<SearchItem[]> multipleSelectHandler)
             where T : BaseSearchProvider
         {
-            var context = SearchService.CreateContext((IEnumerable<SearchProvider>) new SearchProvider[1]
+            var context = SearchService.CreateContext((IEnumerable<SearchProvider>)new SearchProvider[1]
             {
                 provider
             }, "type:", SearchFlags.Sorted | SearchFlags.Multiselect);
-            
+
             var state = new SearchViewState(context)
             {
                 title = "Type",
@@ -52,7 +52,7 @@ namespace NZCore.Editor
                         SearchViewFlags.DisableInspectorPreview |
                         SearchViewFlags.ObjectPickerAdvancedUI
             };
-            
+
             var searchViewInstance = SearchService.ShowPicker(state);
             state.selectHandler = SelectHandler;
             return;
@@ -63,14 +63,15 @@ namespace NZCore.Editor
                 {
                     var returnArray = new SearchItem[searchViewInstance.selection.Count];
                     var enumerator = searchViewInstance.selection.GetEnumerator();
-                    int index = 0;
+                    var index = 0;
                     while (enumerator.MoveNext())
                     {
                         returnArray[index] = enumerator.Current;
                         index++;
                     }
+
                     enumerator.Dispose();
-                    
+
                     multipleSelectHandler.Invoke(returnArray);
                 }
                 else

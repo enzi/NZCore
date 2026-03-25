@@ -6,7 +6,7 @@ using System;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
-namespace NZCore.UI.Elements
+namespace NZCore.UI
 {
 #if ENABLE_UXML_SERIALIZED_DATA
     [UxmlElement]
@@ -14,9 +14,9 @@ namespace NZCore.UI.Elements
     public partial class NZFoldout : VisualElement
     {
 #if ENABLE_RUNTIME_DATA_BINDINGS
-        private static readonly BindingId textProperty = (BindingId) nameof (text);
-        private static readonly BindingId toggleOnLabelClickProperty = (BindingId) nameof (toggleOnLabelClick);
-        private static readonly BindingId valueProperty = (BindingId) nameof (value);
+        private static readonly BindingId textProperty = (BindingId)nameof(text);
+        private static readonly BindingId toggleOnLabelClickProperty = (BindingId)nameof(toggleOnLabelClick);
+        private static readonly BindingId valueProperty = (BindingId)nameof(value);
 #endif
 
         private const string ussClassName = "unity-foldout";
@@ -26,29 +26,32 @@ namespace NZCore.UI.Elements
         private const int ussFoldoutMaxDepth = 4;
 
         private VisualElement content;
-        
-        private readonly Toggle m_Toggle = new Toggle();
+
+        private readonly Toggle m_Toggle = new();
         private bool m_Value;
-        
+
         public bool UseMargin;
-        
+
         [CreateProperty]
         public string text
         {
             get => m_Toggle.text;
             set
             {
-                string tmp = text;
+                var tmp = text;
                 m_Toggle.text = value;
-                
+
 #if ENABLE_RUNTIME_DATA_BINDINGS
-                if (string.CompareOrdinal(tmp, this.text) == 0)
+                if (string.CompareOrdinal(tmp, text) == 0)
+                {
                     return;
+                }
+
                 NotifyPropertyChanged(in textProperty);
 #endif
             }
         }
-        
+
 #if ENABLE_RUNTIME_DATA_BINDINGS
         [CreateProperty]
         public bool toggleOnLabelClick
@@ -57,13 +60,16 @@ namespace NZCore.UI.Elements
             set
             {
                 if (m_Toggle.toggleOnLabelClick == value)
+                {
                     return;
+                }
+
                 m_Toggle.toggleOnLabelClick = value;
                 NotifyPropertyChanged(in toggleOnLabelClickProperty);
             }
         }
 #endif
-        
+
         [CreateProperty]
         public bool value
         {
@@ -71,14 +77,16 @@ namespace NZCore.UI.Elements
             set
             {
                 if (m_Value == value)
+                {
                     return;
+                }
 
-                using ChangeEvent<bool> pooled = ChangeEvent<bool>.GetPooled(m_Value, value);
-                
+                using var pooled = ChangeEvent<bool>.GetPooled(m_Value, value);
+
                 pooled.target = this;
                 SetValueWithoutNotify(value);
                 SendEvent(pooled);
-                
+
 #if ENABLE_RUNTIME_DATA_BINDINGS
                 NotifyPropertyChanged(in valueProperty);
 #endif
@@ -90,7 +98,7 @@ namespace NZCore.UI.Elements
         {
             Init();
         }
-        
+
         public NZFoldout(bool useMargin, bool createContainer)
         {
             Init(null, useMargin, createContainer);
@@ -104,7 +112,7 @@ namespace NZCore.UI.Elements
         private void Init(VisualElement container = null, bool useMargin = true, bool createContainer = false)
         {
             UseMargin = useMargin;
-            
+
             if (container == null && createContainer)
             {
                 content = new VisualElement();
@@ -113,11 +121,11 @@ namespace NZCore.UI.Elements
             {
                 content = container;
             }
-            
+
             AddToClassList(ussClassName);
             delegatesFocus = true;
             focusable = true;
-            
+
             m_Toggle.RegisterValueChangedCallback(evt =>
             {
                 value = m_Toggle.value;
@@ -150,7 +158,7 @@ namespace NZCore.UI.Elements
             {
                 content.AddToClassList(contentUssClassName);
             }
-            
+
             SetValueWithoutNotify(m_Value);
         }
 
@@ -158,7 +166,7 @@ namespace NZCore.UI.Elements
         {
             content?.Clear();
         }
-        
+
         public void RemoveContainer()
         {
             if (content != null)
@@ -166,33 +174,45 @@ namespace NZCore.UI.Elements
                 hierarchy.Remove(content);
             }
         }
-        
+
         private void OnAttachToPanel(AttachToPanelEvent evt)
         {
-            for (int index = 0; index <= ussFoldoutMaxDepth; ++index)
+            for (var index = 0; index <= ussFoldoutMaxDepth; ++index)
+            {
                 RemoveFromClassList(ussFoldoutDepthClassName + index);
+            }
+
             RemoveFromClassList(ussFoldoutDepthClassName + "max");
-            
-            int foldoutDepth = GetFoldoutDepth(this);
+
+            var foldoutDepth = GetFoldoutDepth(this);
             if (foldoutDepth > ussFoldoutMaxDepth)
+            {
                 AddToClassList(ussFoldoutDepthClassName + "max");
+            }
             else
+            {
                 AddToClassList(ussFoldoutDepthClassName + foldoutDepth);
+            }
         }
-        
-        private static readonly Type s_FoldoutType = typeof (Foldout);
+
+        private static readonly Type s_FoldoutType = typeof(Foldout);
+
         private static int GetFoldoutDepth(VisualElement element)
         {
-            int foldoutDepth = 0;
-            if (element.parent == null) 
+            var foldoutDepth = 0;
+            if (element.parent == null)
+            {
                 return foldoutDepth;
-            
-            for (VisualElement parent = element.parent; parent != null; parent = parent.parent)
+            }
+
+            for (var parent = element.parent; parent != null; parent = parent.parent)
             {
                 if (s_FoldoutType.IsAssignableFrom(parent.GetType()))
+                {
                     ++foldoutDepth;
+                }
             }
-            
+
             return foldoutDepth;
         }
 
@@ -200,9 +220,9 @@ namespace NZCore.UI.Elements
         {
             m_Value = newValue;
             m_Toggle.SetValueWithoutNotify(m_Value);
-            
+
             toggleAction?.Invoke();
-           
+
             content.style.display = newValue ? DisplayStyle.Flex : DisplayStyle.None;
         }
 

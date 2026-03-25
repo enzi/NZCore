@@ -25,7 +25,7 @@ namespace NZCore.Hybrid
             ClipRequests.Dispose();
         }
     }
-    
+
     public struct HybridAnimatorClipRequest
     {
         public Entity Entity;

@@ -16,7 +16,7 @@ namespace NZCore
     {
         public void Bake(IBaker baker);
     }
-    
+
     public interface IConvertToBlob<TSoClass, TBlobReference, TBlobStruct> : IConvertToBlob<TBlobStruct>
         where TSoClass : ScriptableObject, IConvertToBlob<TBlobStruct>
         where TBlobStruct : unmanaged
@@ -27,7 +27,7 @@ namespace NZCore
             GenericBlobBaker.Bake<TSoClass, TBlobReference, TBlobStruct>(baker);
         }
     }
-    
+
     public interface IConvertToBlob<TSoClass, TBlobReference, TBlobStruct1, TBlobStruct2> : IConvertToBlob<TBlobStruct1, TBlobStruct2>
         where TSoClass : ScriptableObject, IConvertToBlob<TBlobStruct1, TBlobStruct2>
         where TBlobStruct1 : unmanaged
@@ -53,7 +53,7 @@ namespace NZCore
     {
         public void ToBlobData(GenericBlobBaker.ContextBase context, ref BlobBuilder builder, ref T1 blob1, ref T2 blob2);
     }
-    
+
     public static class GenericBlobBaker
     {
         public abstract class ContextBase
@@ -80,21 +80,20 @@ namespace NZCore
         }
 
         private class Context<TBlobReference> : ContextBase
-
             where TBlobReference : unmanaged, IComponentData
         {
             public override unsafe void AddObjectRef<T>(T asset, ref UnityObjectRefForBlob<T> blobField, int blobAssetReferenceIndex = 0)
             {
-                ObjectRefBuffer.Add(new UnityObjectReferencePatchBuffer()
+                ObjectRefBuffer.Add(new UnityObjectReferencePatchBuffer
                 {
                     TypeIndex = TypeManager.GetTypeIndex<TBlobReference>(),
                     BlobEntity = BlobEntity,
                     Asset = asset,
-                    BlobOffset = (byte*) UnsafeUtility.AddressOf(ref blobField) - BlobAddress[blobAssetReferenceIndex],
+                    BlobOffset = (byte*)UnsafeUtility.AddressOf(ref blobField) - BlobAddress[blobAssetReferenceIndex],
                     BlobAssetReferenceIndex = blobAssetReferenceIndex
                 });
             }
-            
+
             public override unsafe void AddEntityRef(Entity entity, ref Entity blobField, int blobAssetReferenceIndex = 0)
             {
                 EntityRefBuffer.Add(new EntityRefPatchBuffer
@@ -102,12 +101,12 @@ namespace NZCore
                     TypeIndex = TypeManager.GetTypeIndex<TBlobReference>(),
                     BlobEntity = BlobEntity,
                     EntityToPatch = entity,
-                    BlobOffset = (byte*) UnsafeUtility.AddressOf(ref blobField) - BlobAddress[blobAssetReferenceIndex],
+                    BlobOffset = (byte*)UnsafeUtility.AddressOf(ref blobField) - BlobAddress[blobAssetReferenceIndex],
                     BlobAssetReferenceIndex = blobAssetReferenceIndex
                 });
             }
         }
-        
+
         public static unsafe void Bake<TSoClass, TBlobReference, TBlobStruct>(IBaker baker)
             where TSoClass : ScriptableObject, IConvertToBlob<TBlobStruct>
             where TBlobStruct : unmanaged
@@ -115,7 +114,7 @@ namespace NZCore
         {
             var assetContainerEntity = baker.CreateAdditionalEntity(TransformUsageFlags.None);
             var assetBuffer = baker.AddBuffer<WeakReferenceAssetBuffer>(assetContainerEntity);
-            
+
             var objectRefBuffer = baker.AddBuffer<UnityObjectReferencePatchBuffer>(assetContainerEntity);
             baker.AddComponent<UnityObjectReferencePatchBufferResolved>(assetContainerEntity);
             baker.SetComponentEnabled<UnityObjectReferencePatchBufferResolved>(assetContainerEntity, false);
@@ -144,11 +143,11 @@ namespace NZCore
                 baker.DependsOn(so);
 
                 var blobReferenceEntity = baker.CreateAdditionalEntity(TransformUsageFlags.None, false, so.name + "_Blob");
-                
-                BlobBuilder blobBuilder = new BlobBuilder(Allocator.Temp);
+
+                var blobBuilder = new BlobBuilder(Allocator.Temp);
                 ref var blob = ref blobBuilder.ConstructRoot<TBlobStruct>();
-                
-                var context = new Context<TBlobReference>()
+
+                var context = new Context<TBlobReference>
                 {
                     Baker = baker,
                     AssetBuffer = assetBuffer,
@@ -156,15 +155,15 @@ namespace NZCore
                     EntityRefBuffer = entityRefBuffer,
                     BlobEntity = blobReferenceEntity,
                     AssetGuid = assetGuid,
-                    BlobAddress = new[] { (byte*) UnsafeUtility.AddressOf(ref blob) }
+                    BlobAddress = new[] { (byte*)UnsafeUtility.AddressOf(ref blob) }
                 };
-                
+
                 so.ToBlobData(context, ref blobBuilder, ref blob);
                 var blobReference = blobBuilder.CreateBlobAssetReference<TBlobStruct>(Allocator.Persistent);
 
                 baker.AddBlobAsset(ref blobReference, out _);
 
-                var blobReferenceComp = new TBlobReference()
+                var blobReferenceComp = new TBlobReference
                 {
                     guid = Guid.Parse(guidString),
                     blob = blobReference
@@ -187,7 +186,7 @@ namespace NZCore
 
             var assetContainerEntity = baker.CreateAdditionalEntity(TransformUsageFlags.None);
             var assetBuffer = baker.AddBuffer<WeakReferenceAssetBuffer>(assetContainerEntity);
-            
+
             var objectRefBuffer = baker.AddBuffer<UnityObjectReferencePatchBuffer>(assetContainerEntity);
             baker.AddComponent<UnityObjectReferencePatchBufferResolved>(assetContainerEntity);
             baker.SetComponentEnabled<UnityObjectReferencePatchBufferResolved>(assetContainerEntity, false);
@@ -216,14 +215,14 @@ namespace NZCore
                 baker.DependsOn(so);
 
                 var blobReferenceEntity = baker.CreateAdditionalEntity(TransformUsageFlags.None, false, so.name + "_Blob");
-                
-                BlobBuilder blobBuilder1 = new BlobBuilder(Allocator.Temp);
-                BlobBuilder blobBuilder2 = new BlobBuilder(Allocator.Temp);
+
+                var blobBuilder1 = new BlobBuilder(Allocator.Temp);
+                var blobBuilder2 = new BlobBuilder(Allocator.Temp);
 
                 ref var blob1 = ref blobBuilder1.ConstructRoot<TBlobStruct1>();
                 ref var blob2 = ref blobBuilder2.ConstructRoot<TBlobStruct2>();
-                
-                var context = new Context<TBlobReference>()
+
+                var context = new Context<TBlobReference>
                 {
                     Baker = baker,
                     AssetBuffer = assetBuffer,
@@ -231,7 +230,7 @@ namespace NZCore
                     EntityRefBuffer = entityRefBuffer,
                     BlobEntity = blobReferenceEntity,
                     AssetGuid = assetGuid,
-                    BlobAddress = new[] { (byte*) UnsafeUtility.AddressOf(ref blob1), (byte*) UnsafeUtility.AddressOf(ref blob2) }
+                    BlobAddress = new[] { (byte*)UnsafeUtility.AddressOf(ref blob1), (byte*)UnsafeUtility.AddressOf(ref blob2) }
                 };
 
                 so.ToBlobData(context, ref blobBuilder1, ref blob1, ref blob2);
@@ -242,7 +241,7 @@ namespace NZCore
                 baker.AddBlobAsset(ref blobReference1, out _);
                 baker.AddBlobAsset(ref blobReference2, out _);
 
-                var blobReferenceComp = new TBlobReference()
+                var blobReferenceComp = new TBlobReference
                 {
                     guid = Guid.Parse(guidString),
                     blob1 = blobReference1,

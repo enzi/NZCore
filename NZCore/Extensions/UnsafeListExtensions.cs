@@ -60,7 +60,7 @@ namespace NZCore
         {
             UnsafeUtility.MemClear(list.Ptr, list.m_capacity);
         }
-        
+
         /// <summary>
         /// Recalculate length and capacity from a <see cref="byte"/> - <see cref="UnsafeList{T}"/>
         /// which brings both length and capacity down the the appropriate size of the actual unmanaged struct T
@@ -95,28 +95,30 @@ namespace NZCore
         public static UnsafeList<T> Clone<T>(this ref UnsafeList<T> list, Allocator allocator)
             where T : unmanaged
         {
-            UnsafeList<T> result = new UnsafeList<T>(list.Length, allocator, NativeArrayOptions.UninitializedMemory);
-            UnsafeUtility.MemCpy((byte*) result.Ptr, (byte*) list.Ptr, list.Length * UnsafeUtility.SizeOf<T>());
+            var result = new UnsafeList<T>(list.Length, allocator, NativeArrayOptions.UninitializedMemory);
+            UnsafeUtility.MemCpy((byte*)result.Ptr, (byte*)list.Ptr, list.Length * UnsafeUtility.SizeOf<T>());
             return result;
         }
-        
+
         public static void Remove<T>(this ref UnsafeList<T> list, T element)
             where T : unmanaged
         {
-            for (int i = list.Length - 1; i >= 0; i--)
+            for (var i = list.Length - 1; i >= 0; i--)
             {
                 if (list[i].GetHashCode() != element.GetHashCode())
+                {
                     continue;
+                }
 
                 list.RemoveAt(i);
             }
         }
-        
+
         public static void AddToByteBuffer<TData>(this ref UnsafeList<byte> buffer, TData data)
             where TData : unmanaged
         {
-            int byteSize = UnsafeUtility.SizeOf<TData>();
-            int oldLength = buffer.Length;
+            var byteSize = UnsafeUtility.SizeOf<TData>();
+            var oldLength = buffer.Length;
             buffer.Resize(oldLength + byteSize, NativeArrayOptions.UninitializedMemory);
             var ptrToData = UnsafeUtility.AddressOf(ref data);
 

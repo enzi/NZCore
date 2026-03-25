@@ -16,14 +16,14 @@ namespace NZCore.Hybrid
         None = 0,
         ToCustom = 1
     }
-    
+
     [ChunkSerializable]
     public struct HybridAnimator : IComponentData
     {
         public PlayableGraph Graph;
         public AnimationMixerPlayable Mixer;
         public Playable RootPlayable;
-        
+
         public float Weight;
         public HybridAnimatorTransitionPhase TransitionTo;
 
@@ -36,13 +36,14 @@ namespace NZCore.Hybrid
                 Debug.LogError("Clip is null");
                 return;
             }
+
             //Debug.Log($"Change clip to {clip.Result.name}");
             Graph.Disconnect(Mixer, 1);
 
             var newClip = AnimationClipPlayable.Create(Graph, clip.Result);
             newClip.SetSpeed(speed);
             newClip.SetDuration(clip.Result.length);
-            
+
             Graph.Connect(newClip, 0, Mixer, 1);
 
             TransitionTo = HybridAnimatorTransitionPhase.ToCustom;
@@ -52,10 +53,10 @@ namespace NZCore.Hybrid
             where T : struct, IPlayable
         {
             Graph.Disconnect(Mixer, 1);
-            
+
             playable.SetSpeed(speed);
             Graph.Connect(playable, 0, Mixer, 1);
-            
+
             TransitionTo = HybridAnimatorTransitionPhase.ToCustom;
         }
 
@@ -63,7 +64,7 @@ namespace NZCore.Hybrid
         {
             TransitionTo = HybridAnimatorTransitionPhase.ToDefault;
         }
-        
+
         public void SetTime(float normalizedTime)
         {
             Mixer.SetInputWeight(1, 1.0f);
@@ -76,13 +77,13 @@ namespace NZCore.Hybrid
         {
             SetTimeRecursively(RootPlayable, time);
         }
-        
+
         public void SetTimeRecursively(Playable playable, double time)
         {
             playable.SetTime(time);
 
             // Recursively set time for all connected inputs
-            for (int i = 0; i < playable.GetInputCount(); i++)
+            for (var i = 0; i < playable.GetInputCount(); i++)
             {
                 var input = playable.GetInput(i);
                 if (input.IsValid())
@@ -91,13 +92,13 @@ namespace NZCore.Hybrid
                 }
             }
         }
-        
+
         public void SetTimeRecursivelyOutput(Playable playable, double time)
         {
             playable.SetTime(time);
 
             // Recursively set time for all connected inputs
-            for (int i = 0; i < playable.GetOutputCount(); i++)
+            for (var i = 0; i < playable.GetOutputCount(); i++)
             {
                 var output = playable.GetOutput(i);
                 if (output.IsValid())

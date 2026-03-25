@@ -5,15 +5,14 @@
 #if UNITY_6000
 using System;
 using System.Runtime.InteropServices;
-using BovineLabs.Core.UI;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.UIElements;
 
-namespace NZCore.UIToolkit
+namespace NZCore.UI
 {
     public unsafe struct UIHelper<T, TD>
-        where T : class, IViewModelBinding<TD>, new()
+        where T : class, IViewModelBindingNotify<TD>, new()
         where TD : unmanaged, IModelBinding
     {
         private readonly FixedString128Bytes _uniqueKey;
@@ -37,14 +36,13 @@ namespace NZCore.UIToolkit
 
         public ref TD Model => ref UnsafeUtility.AsRef<TD>(_data);
 
-        public VisualElement LoadInterface(string containerName = null, string elementName = null)
-        {
-            return LoadInterface(UIToolkitManager.Instance.GetRoot(containerName), elementName);
-        }
+        public VisualElement LoadInterface(string containerName = null, string elementName = null) =>
+            LoadInterface(UIToolkitManager.Instance.GetRoot(containerName), elementName);
 
         public VisualElement LoadInterface(VisualElement container, string elementName = null)
         {
-            var (ve, binding) = UIToolkitManager.Instance.AddBindableInterface<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName, _priority, _visibleOnInstantiate);
+            var (ve, binding) = UIToolkitManager.Instance.AddBindableInterface<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName,
+                _priority, _visibleOnInstantiate);
 
             _handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
             _data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
@@ -54,15 +52,30 @@ namespace NZCore.UIToolkit
             return ve;
         }
 
-        public (VisualElement ve, T viewModel) LoadPanel(string containerName = null, string elementName = null)
-        {
-            return LoadPanel(UIToolkitManager.Instance.GetRoot(containerName), elementName);
-        }
+        public (VisualElement ve, T viewModel) LoadPanel(string containerName = null, string elementName = null) =>
+            LoadPanel(UIToolkitManager.Instance.GetRoot(containerName), elementName);
 
         public (VisualElement ve, T viewModel) LoadPanel(VisualElement container, string elementName = null)
         {
-            var (ve, binding) = UIToolkitManager.Instance.AddBindablePanel<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName, _priority, _visibleOnInstantiate);
+            var (ve, binding) = UIToolkitManager.Instance.AddBindablePanel<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName, _priority,
+                _visibleOnInstantiate);
 
+            _handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
+            _data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
+
+            binding.Load();
+
+            return (ve, binding);
+        }
+        
+        public (VisualElement ve, T viewModel) LoadPanelNew(string containerName = null, string elementName = null) =>
+            LoadPanelNew(UIToolkitManager.Instance.GetRoot(containerName), elementName);
+
+        public (VisualElement ve, T viewModel) LoadPanelNew(VisualElement container, string elementName = null)
+        {
+            var (ve, binding) = UIToolkitManager.Instance.AddBindablePanel<T>(_uniqueKey.ToString(), _assetKey.ToString(), container, elementName, _priority,
+                _visibleOnInstantiate);
+            
             _handle = GCHandle.Alloc(binding.Value, GCHandleType.Pinned);
             _data = (TD*)UnsafeUtility.AddressOf(ref binding.Value);
 
@@ -73,7 +86,7 @@ namespace NZCore.UIToolkit
 
         public void Unload()
         {
-            var binding = UIToolkitManager.Instance.RemovePanel(_uniqueKey.ToString());
+            var binding = (T) UIToolkitManager.Instance.RemovePanel(_uniqueKey.ToString());
 
             if (_handle.IsAllocated)
             {

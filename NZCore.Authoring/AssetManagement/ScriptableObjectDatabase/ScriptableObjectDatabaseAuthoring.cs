@@ -20,7 +20,7 @@ namespace NZCore.Authoring
                 {
                     DependsOn(authoring.Version);
                 }
-                
+
                 foreach (var converter in ScriptableObjectDatabaseCollector.SettingConverters)
                 {
                     var instance = ScriptableObject.CreateInstance(converter);

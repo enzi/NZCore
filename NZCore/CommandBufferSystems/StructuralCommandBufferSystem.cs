@@ -24,10 +24,8 @@ namespace NZCore
             private UnsafeList<EntityCommandBuffer>* pendingBuffers;
             private AllocatorManager.AllocatorHandle allocator;
 
-            public EntityCommandBuffer CreateCommandBuffer(WorldUnmanaged world)
-            {
-                return EntityCommandBufferSystem.CreateCommandBuffer(ref *pendingBuffers, allocator, world);
-            }
+            public EntityCommandBuffer CreateCommandBuffer(WorldUnmanaged world) =>
+                EntityCommandBufferSystem.CreateCommandBuffer(ref *pendingBuffers, allocator, world);
 
             public void SetPendingBufferList(ref UnsafeList<EntityCommandBuffer> buffers)
             {

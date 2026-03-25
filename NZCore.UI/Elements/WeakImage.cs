@@ -22,7 +22,9 @@ namespace NZCore.UI
             set
             {
                 if (spriteReference.Equals(value))
+                {
                     return;
+                }
 
                 Release();
                 spriteReference = value;
@@ -52,7 +54,9 @@ namespace NZCore.UI
         private void RequestLoad()
         {
             if (!spriteReference.IsValidBurst() || isLoading)
+            {
                 return;
+            }
 
             spriteReference.LoadAsync();
             isLoading = true;
@@ -62,10 +66,14 @@ namespace NZCore.UI
         private void CheckLoadStatus()
         {
             if (!isLoading)
+            {
                 return;
+            }
 
             if (spriteReference.LoadingStatus != ObjectLoadingStatus.Completed)
+            {
                 return;
+            }
 
             isLoading = false;
             isLoaded = true;

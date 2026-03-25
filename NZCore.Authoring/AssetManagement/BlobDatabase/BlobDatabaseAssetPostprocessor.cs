@@ -17,16 +17,17 @@ namespace NZCore.Authoring
         private static bool pendingUpdate;
 
         [UsedImplicitly]
-        private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths, bool didDomainReload)
+        private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths,
+            bool didDomainReload)
         {
             if (didDomainReload)
             {
                 return;
             }
 
-            bool needsUpdate = false;
+            var needsUpdate = false;
 
-            for (int i = 0; i < deletedAssets.Length && !needsUpdate; i++)
+            for (var i = 0; i < deletedAssets.Length && !needsUpdate; i++)
             {
                 needsUpdate = deletedAssets[i].EndsWith(".asset");
             }

@@ -18,7 +18,8 @@ namespace NZCore.Editor.AssetManagement
     {
         [UsedImplicitly]
         // ReSharper disable once Unity.IncorrectMethodSignature
-        private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths, bool didDomainReload)
+        private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths,
+            bool didDomainReload)
         {
             if (didDomainReload || (importedAssets.Length == 0 && deletedAssets.Length != 0))
             {
@@ -46,14 +47,14 @@ namespace NZCore.Editor.AssetManagement
 
         public static void ProcessDefaultAutoIDs(Type assetType)
         {
-            List<DefaultAutoIDData> newDataList = new List<DefaultAutoIDData>();
+            var newDataList = new List<DefaultAutoIDData>();
 
-            List<Object> objects = AssetDatabase.FindAssets($"t:{assetType.Name}")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Distinct()
-                .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
-                .Where(s => s.GetType() == assetType)
-                .ToList();
+            var objects = AssetDatabase.FindAssets($"t:{assetType.Name}")
+                                       .Select(AssetDatabase.GUIDToAssetPath)
+                                       .Distinct()
+                                       .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
+                                       .Where(s => s.GetType() == assetType)
+                                       .ToList();
 
             foreach (var obj in objects)
             {
@@ -64,11 +65,11 @@ namespace NZCore.Editor.AssetManagement
 
                 if (defaultAutoID.Default)
                 {
-                    newDataList.Add(new DefaultAutoIDData()
+                    newDataList.Add(new DefaultAutoIDData
                     {
                         StructName = defaultAutoID.DefaultType.Name,
                         AssetType = assetType,
-                        
+
                         DefaultValue = defaultAutoID.AutoID
                     });
                 }
@@ -99,7 +100,7 @@ namespace NZCore.Editor.AssetManagement
         {
             [NonSerialized] public Type AssetType;
             public string StructName;
-            
+
             // used for codegen
             [UsedImplicitly] public int DefaultValue;
         }

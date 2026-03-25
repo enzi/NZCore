@@ -24,7 +24,7 @@ namespace NZCore
 
             if (Map.TryGetRefValue(parent, out var listPtr))
             {
-                listPtr->Add(new DestroyMapElement()
+                listPtr->Add(new DestroyMapElement
                 {
                     Entity = child,
                     DestroyMethod = destroyMethod,
@@ -34,7 +34,7 @@ namespace NZCore
             else
             {
                 var newList = new UnsafeList<DestroyMapElement>(1, Allocator.Persistent);
-                newList.Add(new DestroyMapElement()
+                newList.Add(new DestroyMapElement
                 {
                     Entity = child,
                     DestroyMethod = destroyMethod,
@@ -52,7 +52,9 @@ namespace NZCore
                 case ChildDestroyMethod.Destroy:
                 {
                     if (!state.EntityManager.HasComponent<DestroyEntity>(child))
+                    {
                         state.EntityManager.AddComponent<DestroyEntity>(child);
+                    }
 
                     state.EntityManager.SetComponentEnabled<DestroyEntity>(child, false);
 
@@ -61,7 +63,9 @@ namespace NZCore
                 case ChildDestroyMethod.Cleanup:
                 {
                     if (!state.EntityManager.HasComponent<NZCleanupEntity>(child))
+                    {
                         state.EntityManager.AddComponent<NZCleanupEntity>(child);
+                    }
 
                     state.EntityManager.SetComponentEnabled<NZCleanupEntity>(child, false);
 
@@ -80,7 +84,9 @@ namespace NZCore
             foreach (var entity in copy)
             {
                 if (entity == parent)
+                {
                     continue;
+                }
 
                 Add(ref state, parent, entity, ChildDestroyMethod.Destroy);
             }
@@ -89,13 +95,17 @@ namespace NZCore
         public void Remove(Entity parent, Entity child)
         {
             if (!Map.TryGetRefValue(parent, out var listPtr))
+            {
                 return;
+            }
 
             var startIndex = listPtr->Length - 1;
-            for (int i = startIndex; i >= 0; i--)
+            for (var i = startIndex; i >= 0; i--)
             {
                 if (listPtr->ElementAt(i).Entity == child)
+                {
                     listPtr->RemoveAtSwapBack(i);
+                }
             }
         }
 

@@ -40,16 +40,12 @@ namespace NZCore
         }
 
         public int Allocate<T>()
-            where T : unmanaged
-        {
-            return Allocate(UnsafeUtility.SizeOf<T>());
-        }
+            where T : unmanaged =>
+            Allocate(UnsafeUtility.SizeOf<T>());
 
         public int Allocate<T>(int elementCount)
-            where T : unmanaged
-        {
-            return Allocate(elementCount * UnsafeUtility.SizeOf<T>());
-        }
+            where T : unmanaged =>
+            Allocate(elementCount * UnsafeUtility.SizeOf<T>());
 
         public void Add<T>(T value)
             where T : unmanaged
@@ -59,10 +55,10 @@ namespace NZCore
 
         public void Add(byte* ptrToData, int byteSize)
         {
-            int oldLength = data.Length;
+            var oldLength = data.Length;
             data.ResizeUninitialized(oldLength + byteSize);
 
-            byte* ptr = (byte*)data.GetUnsafePtr();
+            var ptr = (byte*)data.GetUnsafePtr();
             UnsafeUtility.MemCpy(ptr + oldLength, ptrToData, byteSize);
         }
 
@@ -84,12 +80,12 @@ namespace NZCore
         {
             data.AddRangeNoResize(&value, UnsafeUtility.SizeOf<T>());
         }
-        
+
         public void AddNoResize(byte* ptrToData, int byteSize)
         {
             AddRangeNoResize(ptrToData, byteSize);
         }
-        
+
         public void AddRangeNoResize<T>(T* valuePtr, int length)
             where T : unmanaged
         {
@@ -101,7 +97,7 @@ namespace NZCore
         {
             data.AddRangeNoResize(value.GetUnsafeReadOnlyPtr(), value.Length * UnsafeUtility.SizeOf<T>());
         }
-        
+
         public void AddRangeNoResize<T>(NativeArray<T> value, int length)
             where T : unmanaged
         {
@@ -121,12 +117,12 @@ namespace NZCore
             ref var tmp = ref GetRef<T>(index);
             tmp = payload;
         }
-        
+
         public T* GetPtr<T>(int index)
             where T : unmanaged
         {
             var ptr = data.GetUnsafePtr();
-            return (T*) (ptr + index);
+            return (T*)(ptr + index);
         }
     }
 }

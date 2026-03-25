@@ -11,12 +11,8 @@ namespace NZCore.Components
     {
         public long UtcNowBinary;
 
-        public void Init()
-        {
-        }
+        public void Init() { }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
     }
 }

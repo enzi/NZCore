@@ -14,30 +14,30 @@ namespace NZCore.Hybrid
     {
         private ObjectPool<AudioSource> pool;
         private List<ActiveAudioSource> activeSources;
-        
+
         protected override void OnCreate()
         {
             activeSources = new List<ActiveAudioSource>();
             CheckedStateRef.CreateSingleton<HybridAudioSingleton>();
-            
+
             pool = new ObjectPool<AudioSource>(() =>
-            {
-                var go = new GameObject("AudioSourcePoolItem")
                 {
-                    hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor
-                };
-                return go.AddComponent<AudioSource>();
-            },
-            null,
-            null,
-            source =>
-            {
-                if (source != null)
+                    var go = new GameObject("AudioSourcePoolItem")
+                    {
+                        hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor
+                    };
+                    return go.AddComponent<AudioSource>();
+                },
+                null,
+                null,
+                source =>
                 {
-                    Object.Destroy(source.gameObject);
-                }
-            });
-            
+                    if (source != null)
+                    {
+                        Object.Destroy(source.gameObject);
+                    }
+                });
+
             RequireForUpdate<TransformEntityMappingSingleton>();
         }
 
@@ -50,16 +50,16 @@ namespace NZCore.Hybrid
         protected override void OnUpdate()
         {
             EntityManager.CompleteDependencyBeforeRW<HybridAudioSingleton>();
-            
+
             var assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
             var singleton = SystemAPI.GetSingleton<HybridAudioSingleton>();
             var enumerator = singleton.Requests.GetEnumerator();
             var mapping = SystemAPI.GetSingleton<TransformEntityMappingSingleton>();
-            
+
             while (enumerator.MoveNext())
             {
                 ref var requestList = ref enumerator.Current;
-                
+
                 for (var i = requestList.Length - 1; i >= 0; i--)
                 {
                     var request = requestList[i];
@@ -73,7 +73,7 @@ namespace NZCore.Hybrid
                     {
                         continue;
                     }
-                    
+
                     var source = pool.Get();
 
                     source.clip = request.Clip.Result;
@@ -87,14 +87,14 @@ namespace NZCore.Hybrid
 
                     source.Play();
 
-                    var activeSource = new ActiveAudioSource()
+                    var activeSource = new ActiveAudioSource
                     {
                         Source = source,
                         FollowedEntity = request.FollowEntity
                     };
-                    
+
                     activeSources.Add(activeSource);
-                    
+
                     if (request.FollowEntity != Entity.Null)
                     {
                         activeSource.Parented = mapping.AddTransform(
@@ -102,12 +102,12 @@ namespace NZCore.Hybrid
                             request.FollowEntity,
                             source.gameObject);
                     }
-                    
+
                     requestList.RemoveAt(i);
                 }
             }
 
-            for (int i = activeSources.Count - 1; i >= 0; i--)
+            for (var i = activeSources.Count - 1; i >= 0; i--)
             {
                 var source = activeSources[i];
                 if (source.Source.isPlaying)
@@ -126,7 +126,7 @@ namespace NZCore.Hybrid
                         mapping.RemoveEntity(source.FollowedEntity);
                     }
                 }
-                
+
                 pool.Release(source.Source);
                 activeSources.RemoveAt(i);
             }

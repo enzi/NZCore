@@ -1,47 +1,47 @@
 {
-    "name": "NZCore",
-    "rootNamespace": "",
-    "references": [
-        "Unity.Mathematics",
-        "Unity.Mathematics.Extensions",
-        "Unity.Burst",
-        "Unity.Collections",
-        "Unity.Entities",
-        "Unity.Entities.Hybrid",
-        "Unity.Entities.UI.Editor",
-        "Unity.Physics",
-        "Unity.NetCode",
-        "Unity.Scenes",
-        "NZSpellCasting.SystemGroups"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": true,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.physics",
-            "expression": "0",
-            "define": "DOTS_PHYSICS"
-        },
-        {
-            "name": "com.nzspellcasting",
-            "expression": "0",
-            "define": "NZSPELLCASTING"
-        },
-        {
-            "name": "com.unity.entities",
-            "expression": "1.3.2",
-            "define": "ENTITIES_1_3_2"
-        },
-        {
-            "name": "com.unity.netcode",
-            "expression": "0",
-            "define": "UNITY_NETCODE"
-        }
-    ],
-    "noEngineReferences": false
+  "name": "NZCore",
+  "rootNamespace": "",
+  "references": [
+    "Unity.Mathematics",
+    "Unity.Mathematics.Extensions",
+    "Unity.Burst",
+    "Unity.Collections",
+    "Unity.Entities",
+    "Unity.Entities.Hybrid",
+    "Unity.Entities.UI.Editor",
+    "Unity.Physics",
+    "Unity.NetCode",
+    "Unity.Scenes",
+    "NZSpellCasting.SystemGroups"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.unity.physics",
+      "expression": "0",
+      "define": "DOTS_PHYSICS"
+    },
+    {
+      "name": "com.nzspellcasting",
+      "expression": "0",
+      "define": "NZSPELLCASTING"
+    },
+    {
+      "name": "com.unity.entities",
+      "expression": "1.3.2",
+      "define": "ENTITIES_1_3_2"
+    },
+    {
+      "name": "com.unity.netcode",
+      "expression": "0",
+      "define": "UNITY_NETCODE"
+    }
+  ],
+  "noEngineReferences": false
 }

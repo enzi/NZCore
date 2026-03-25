@@ -11,7 +11,7 @@ using Unity.Entities;
 namespace NZCore
 {
     public unsafe struct CacheImpl<T, TC, TCC>
-        where TCC : unmanaged,  ICacheComponent<TC>
+        where TCC : unmanaged, ICacheComponent<TC>
         where TC : unmanaged, IEntityCache
     {
         private EntityQuery query;
@@ -63,8 +63,7 @@ namespace NZCore
         [BurstCompile]
         public struct UpdateCacheJob : IJobChunk
         {
-            [ReadOnly]
-            public EntityTypeHandle EntityHandle;
+            [ReadOnly] public EntityTypeHandle EntityHandle;
 
             public ComponentTypeHandle<TCC> CacheHandle;
 

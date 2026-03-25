@@ -17,10 +17,10 @@ namespace NZCore
                 var array1Ptr = array1.GetUnsafeReadOnlyPtr();
                 var array2Ptr = array2.GetUnsafeReadOnlyPtr();
 
-                int array1Length = array1.Length;
-                int array2Length = array2.Length;
+                var array1Length = array1.Length;
+                var array2Length = array2.Length;
 
-                NativeArray<T> merged = new NativeArray<T>(array1Length + array2Length, allocator);
+                var merged = new NativeArray<T>(array1Length + array2Length, allocator);
                 var mergedPtr = (T*)merged.GetUnsafePtr();
 
                 var size = UnsafeUtility.SizeOf<T>();
@@ -35,7 +35,7 @@ namespace NZCore
 
         public static NativeArray<T> CopySlice<T>(this NativeArray<T> array1, int count, Allocator allocator) where T : unmanaged
         {
-            NativeArray<T> slicedArray = new NativeArray<T>(count * UnsafeUtility.SizeOf<T>(), allocator);
+            var slicedArray = new NativeArray<T>(count * UnsafeUtility.SizeOf<T>(), allocator);
 
             unsafe
             {
@@ -64,24 +64,22 @@ namespace NZCore
         }
 
         public static unsafe ref T ElementAt<T>(this NativeArray<T> array, int index)
-            where T : struct
-        {
-            return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
-        }
+            where T : struct =>
+            ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
 
         public static unsafe ref readonly T ElementAtRO<T>(this NativeArray<T> array, int index)
-            where T : struct
-        {
-            return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafeReadOnlyPtr(), index);
-        }
+            where T : struct =>
+            ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafeReadOnlyPtr(), index);
 
         public static void AddArrayToBlob<T>(this NativeArray<T> array, ref BlobBuilder builder, ref BlobArray<T> blobArray)
             where T : unmanaged
         {
-            BlobBuilderArray<T> tmp2 = builder.Allocate(ref blobArray, array.Length);
+            var tmp2 = builder.Allocate(ref blobArray, array.Length);
 
-            for (int i = 0; i < array.Length; i++)
+            for (var i = 0; i < array.Length; i++)
+            {
                 tmp2[i] = array[i];
+            }
         }
     }
 }

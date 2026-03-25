@@ -1,3 +1,7 @@
+// <copyright project="NZCore.Hybrid" file="HybridInstantiationSystem.cs" version="1.0.0">
+// Copyright © 2026 Thomas Enzenebner. All rights reserved.
+// </copyright>
+
 using AOT;
 using NZCore;
 using NZCore.AssetManagement;
@@ -20,55 +24,54 @@ namespace NZSpellCasting
     {
         private TransformEntityMappingSingleton entityMapping;
         private WeakAssetLoaderSingleton assetLoader;
-        
+
         private delegate void InstantiateGameObjects(in TransformEntityMappingSingleton mapping, in NativeArray<InstantiateGameObjectsRequest> requests);
+
         private ManagedDelegate<InstantiateGameObjects> instantiateGameObjectsFunction;
         private NativeList<InstantiateGameObjectsRequest> instantiateRequests;
-        
+
         public void OnCreate(ref SystemState state)
         {
             instantiateRequests = new NativeList<InstantiateGameObjectsRequest>(0, Allocator.Persistent);
             instantiateGameObjectsFunction = new ManagedDelegate<InstantiateGameObjects>(Instantiate);
-           
+
             state.RequireForUpdate<TransformEntityMappingSingleton>();
             state.RequireForUpdate<WeakAssetLoaderSingleton>();
             state.RequireForUpdate<EntityRemapBuffer>();
         }
-        
+
         public void OnStartRunning(ref SystemState state)
         {
             entityMapping = SystemAPI.GetSingleton<TransformEntityMappingSingleton>();
             assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
         }
 
-        public void OnStopRunning(ref SystemState state)
-        {
-        }
-        
+        public void OnStopRunning(ref SystemState state) { }
+
         public void OnDestroy(ref SystemState state)
         {
             instantiateRequests.Dispose();
             instantiateGameObjectsFunction.Dispose();
         }
-        
+
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             //return;
-            
+
             state.EntityManager.CompleteDependencyBeforeRO<CreateHybridObjectRequestSingleton>();
 
             var remapBuffer = SystemAPI.GetSingletonBuffer<EntityRemapBuffer>(true).AsNativeArray();
             var createHybrids = SystemAPI.GetSingleton<CreateHybridObjectRequestSingleton>();
             var createEnumerator = createHybrids.Requests.GetEnumerator();
-            
+
             instantiateRequests.Clear();
-            
+
             while (createEnumerator.MoveNext())
             {
                 ref var list = ref createEnumerator.Current;
-        
-                for (int i = list.Length - 1; i >= 0; i--)
+
+                for (var i = list.Length - 1; i >= 0; i--)
                 {
                     var request = list[i];
 
@@ -76,19 +79,19 @@ namespace NZSpellCasting
                     {
                         list.RemoveAt(i);
                     }
-                        
+
                     if (!assetLoader.HasLoaded(request.PrefabToLoad))
                     {
                         continue;
                     }
-                        
-                    instantiateRequests.Add(new InstantiateGameObjectsRequest()
+
+                    instantiateRequests.Add(new InstantiateGameObjectsRequest
                     {
                         Request = request
                     });
-                    
+
                     assetLoader.RegisterGeneric(request.PrefabToLoad);
-                    
+
                     list.RemoveAt(i);
                 }
             }
@@ -101,7 +104,7 @@ namespace NZSpellCasting
                 {
                     if (finishedRequest.Request.DestroyTime > 0)
                     {
-                        entityMapping.TrackedGameObjects.Add(new TrackedGameObject()
+                        entityMapping.TrackedGameObjects.Add(new TrackedGameObject
                         {
                             Prefab = finishedRequest.Request.PrefabToLoad,
                             Object = finishedRequest.Result.Instance,
@@ -122,14 +125,17 @@ namespace NZSpellCasting
                     if (bindToEntity != Entity.Null)
                     {
                         entityMapping.AddTransform(
-                            finishedRequest.Result.TransformInstanceId, 
+                            finishedRequest.Result.TransformInstanceId,
                             bindToEntity,
-                            finishedRequest.Result.Instance, 
+                            finishedRequest.Result.Instance,
                             finishedRequest.Result.Animator,
-                            bindToEntity != Entity.Null, 
+                            bindToEntity != Entity.Null,
                             finishedRequest.Request.DestroyTime);
-                        
-                        state.EntityManager.SetComponentData(bindToEntity, finishedRequest.Result.HybridAnimator);
+
+                        if (finishedRequest.Result.Animator.IsValid())
+                        {
+                            state.EntityManager.SetComponentData(bindToEntity, finishedRequest.Result.HybridAnimator);
+                        }
 
                         if (SystemAPI.HasBuffer<HybridObjectBuffer>(bindToEntity))
                         {
@@ -141,7 +147,7 @@ namespace NZSpellCasting
                                 entityMapping.DestroyRequests.Add(element.GameObject);
                             }
 
-                            hybridBuffer.Add(new HybridObjectBuffer()
+                            hybridBuffer.Add(new HybridObjectBuffer
                             {
                                 GameObject = finishedRequest.Result.Instance
                             });
@@ -150,14 +156,14 @@ namespace NZSpellCasting
                 }
             }
         }
-        
+
         [MonoPInvokeCallback(typeof(InstantiateGameObjects))]
         public static void Instantiate(in TransformEntityMappingSingleton mapping, in NativeArray<InstantiateGameObjectsRequest> requests)
         {
-            for (int i = 0; i < requests.Length; i++)
+            for (var i = 0; i < requests.Length; i++)
             {
                 ref var request = ref requests.ElementAt(i);
-        
+
                 if (request.Request.PrefabToLoad.LoadingStatus != ObjectLoadingStatus.Completed)
                 {
 #if UNITY_EDITOR
@@ -172,102 +178,103 @@ namespace NZSpellCasting
                 {
                     case CreateHybridSpawnMode.Position:
                     {
-                        instance = Object.Instantiate(request.Request.PrefabToLoad.Result, 
+                        instance = Object.Instantiate(request.Request.PrefabToLoad.Result,
                             request.Request.PositionData.Position + request.Request.PositionData.Offset, Quaternion.identity);
-                        
+
                         break;
                     }
                     case CreateHybridSpawnMode.Locator:
                     {
-                       if (!mapping.TryGetTransform(request.Request.LocatorData.Entity, out Transform targetTransform))
-                       {
-                           //Debug.Log($"No transform found for {entity}");
-                           continue;
-                       }
-                        
-                       if (request.Request.LocatorData.Locator == LocatorPosition.None)
-                       {
-                           instance  = Object.Instantiate(request.Request.PrefabToLoad.Result, targetTransform.position, targetTransform.rotation);
-                       }
-                       else
-                       {
-                           var locators = targetTransform.GetComponentInChildren<Locators>();
-                           Transform parent;
-                           Vector3 offset;
-                        
-                           switch (request.Request.LocatorData.Locator)
-                           {
-                               case LocatorPosition.Head:
-                               {
-                                   parent = locators.Head;
-                                   offset = locators.HeadOffset;
-                                   break;
-                               }
-                               case LocatorPosition.HandLeft:
-                               {
-                                   parent = locators.HandLeft;
-                                   offset = locators.HandLeftOffset;
-                                   break;
-                               }
-                               case LocatorPosition.HandRight:
-                               {
-                                   parent = locators.HandRight;
-                                   offset = locators.HandRightOffset;
-                                   break;
-                               }
-                               case LocatorPosition.Spine:
-                               {
-                                   parent = locators.Spine;
-                                   offset = locators.SpineOffset;
-                                   break;
-                               }
-                               case LocatorPosition.FeetLeft:
-                               {
-                                   parent = locators.FeetLeft;
-                                   offset = locators.FeetLeftOffset;
-                                   break;
-                               }
-                               case LocatorPosition.FeetRight:
-                               {
-                                   parent = locators.FeetRight;
-                                   offset = locators.FeetRightOffset;
-                                   break;
-                               }
-                               // case HybridCasterSystem.LocatorPosition.FeetBetween:
-                               // {
-                               //     parent = locators.FeetRight;
-                               //     offset = locators.HeadOffset;
-                               //     break;
-                               // }
-                               case LocatorPosition.WeaponLeft:
-                               {
-                                   parent = locators.WeaponLeft;
-                                   offset = locators.WeaponLeftOffset;
-                                   break;
-                               }
-                               case LocatorPosition.WeaponRight:
-                               {
-                                   parent = locators.WeaponRight;
-                                   offset = locators.WeaponRightOffset;
-                                   break;
-                               }
-                               default:
-                                   throw new System.ArgumentOutOfRangeException(nameof(request.Request.LocatorData.Locator), request.Request.LocatorData.Locator, null);
-                           }
-                        
-                           if (request.Request.LocatorData.AttachToParent)
-                           {
-                               instance = Object.Instantiate(request.Request.PrefabToLoad.Result, parent);
-                               instance.transform.localPosition = offset;
-                           }
-                           else
-                           {
-                               instance = Object.Instantiate(request.Request.PrefabToLoad.Result);
-                               instance.transform.position = parent.transform.position + offset;
-                           }
-                       }
-                        
-                       break;
+                        if (!mapping.TryGetTransform(request.Request.LocatorData.Entity, out var targetTransform))
+                        {
+                            //Debug.Log($"No transform found for {entity}");
+                            continue;
+                        }
+
+                        if (request.Request.LocatorData.Locator == LocatorPosition.None)
+                        {
+                            instance = Object.Instantiate(request.Request.PrefabToLoad.Result, targetTransform.position, targetTransform.rotation);
+                        }
+                        else
+                        {
+                            var locators = targetTransform.GetComponentInChildren<Locators>();
+                            Transform parent;
+                            Vector3 offset;
+
+                            switch (request.Request.LocatorData.Locator)
+                            {
+                                case LocatorPosition.Head:
+                                {
+                                    parent = locators.Head;
+                                    offset = locators.HeadOffset;
+                                    break;
+                                }
+                                case LocatorPosition.HandLeft:
+                                {
+                                    parent = locators.HandLeft;
+                                    offset = locators.HandLeftOffset;
+                                    break;
+                                }
+                                case LocatorPosition.HandRight:
+                                {
+                                    parent = locators.HandRight;
+                                    offset = locators.HandRightOffset;
+                                    break;
+                                }
+                                case LocatorPosition.Spine:
+                                {
+                                    parent = locators.Spine;
+                                    offset = locators.SpineOffset;
+                                    break;
+                                }
+                                case LocatorPosition.FeetLeft:
+                                {
+                                    parent = locators.FeetLeft;
+                                    offset = locators.FeetLeftOffset;
+                                    break;
+                                }
+                                case LocatorPosition.FeetRight:
+                                {
+                                    parent = locators.FeetRight;
+                                    offset = locators.FeetRightOffset;
+                                    break;
+                                }
+                                // case HybridCasterSystem.LocatorPosition.FeetBetween:
+                                // {
+                                //     parent = locators.FeetRight;
+                                //     offset = locators.HeadOffset;
+                                //     break;
+                                // }
+                                case LocatorPosition.WeaponLeft:
+                                {
+                                    parent = locators.WeaponLeft;
+                                    offset = locators.WeaponLeftOffset;
+                                    break;
+                                }
+                                case LocatorPosition.WeaponRight:
+                                {
+                                    parent = locators.WeaponRight;
+                                    offset = locators.WeaponRightOffset;
+                                    break;
+                                }
+                                default:
+                                    throw new System.ArgumentOutOfRangeException(nameof(request.Request.LocatorData.Locator),
+                                        request.Request.LocatorData.Locator, null);
+                            }
+
+                            if (request.Request.LocatorData.AttachToParent)
+                            {
+                                instance = Object.Instantiate(request.Request.PrefabToLoad.Result, parent);
+                                instance.transform.localPosition = offset;
+                            }
+                            else
+                            {
+                                instance = Object.Instantiate(request.Request.PrefabToLoad.Result);
+                                instance.transform.position = parent.transform.position + offset;
+                            }
+                        }
+
+                        break;
                     }
                 }
 
@@ -275,7 +282,7 @@ namespace NZSpellCasting
                 {
                     request.Result.Instance = instance;
                     request.Result.TransformInstanceId = instance.transform.GetInstanceID();
-                    
+
                     var animator = instance.GetComponent<Animator>();
                     if (animator != null)
                     {
@@ -285,7 +292,7 @@ namespace NZSpellCasting
                 }
             }
         }
-        
+
         public struct InstantiateGameObjectsRequest
         {
             public CreateHybridObjectRequest Request;

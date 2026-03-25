@@ -35,7 +35,7 @@ namespace NZCore
             NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
-            UnsafeKeyValueArrayHashMap<TKey, TValue>* unsafeArrayHashMap = allocator.Allocate(default(UnsafeKeyValueArrayHashMap<TKey, TValue>), 1);
+            var unsafeArrayHashMap = allocator.Allocate(default(UnsafeKeyValueArrayHashMap<TKey, TValue>), 1);
 
             unsafeArrayHashMap->m_Allocator = allocator.Handle;
 
@@ -56,9 +56,14 @@ namespace NZCore
         public void SetArrays(NativeArray<TKey> keyArray, NativeArray<TValue> valueArray)
         {
             if (!keyArray.IsCreated || !valueArray.IsCreated)
+            {
                 throw new Exception("Key or values are not created!");
+            }
+
             if (keyArray.Length != valueArray.Length)
+            {
                 throw new Exception("Key and value length is not the same!");
+            }
 
             if (valueArray.Length == 0)
             {
@@ -69,8 +74,8 @@ namespace NZCore
             Keys = (TKey*)keyArray.GetUnsafeReadOnlyPtr();
             Values = (TValue*)valueArray.GetUnsafeReadOnlyPtr();
 
-            int length = valueArray.Length;
-            int bucketLength = length * 2;
+            var length = valueArray.Length;
+            var bucketLength = length * 2;
 
             keyCapacity = length;
             bucketLength = math.ceilpow2(bucketLength);
@@ -91,7 +96,7 @@ namespace NZCore
         private void Clear()
         {
             // set all to -1
-            UnsafeUtility.MemSet(next->Ptr, 0xff, (keyCapacity) * 4);
+            UnsafeUtility.MemSet(next->Ptr, 0xff, keyCapacity * 4);
             UnsafeUtility.MemSet(buckets->Ptr, 0xff, (bucketCapacityMask + 1) * 4);
 
             next->m_length = 0;
@@ -105,7 +110,7 @@ namespace NZCore
         {
             //Debug.Log($"CalculateBuckets with length {allocatedIndexLength} nextCap: {next->Capacity} bucketsCap: {buckets->Capacity}");
 
-            for (int i = 0; i < allocatedIndexLength; i++)
+            for (var i = 0; i < allocatedIndexLength; i++)
             {
                 var bucketIndex = Keys[i].GetHashCode() & bucketCapacityMask;
 
@@ -126,14 +131,14 @@ namespace NZCore
             }
 
             // First find the slot based on the hash            
-            int bucket = key.GetHashCode() & bucketCapacityMask;
+            var bucket = key.GetHashCode() & bucketCapacityMask;
             it.EntryIndex = it.NextEntryIndex = (*buckets)[bucket];
             return TryGetNextRefValue(out item, ref it);
         }
 
         public bool TryGetNextRefValue(out TValue* item, ref KeyValueArrayHashMapIterator<TKey> it)
         {
-            int entryIdx = it.NextEntryIndex;
+            var entryIdx = it.NextEntryIndex;
             it.NextEntryIndex = -1;
             it.EntryIndex = -1;
             item = null;
@@ -164,24 +169,30 @@ namespace NZCore
         public bool TryPeekFirstRefValue(TKey key)
         {
             if (allocatedIndexLength <= 0)
+            {
                 return false;
+            }
 
             // First find the slot based on the hash            
-            int bucket = key.GetHashCode() & bucketCapacityMask;
+            var bucket = key.GetHashCode() & bucketCapacityMask;
             return TryPeekNextRefValue(key, (*buckets)[bucket]);
         }
 
         public bool TryPeekNextRefValue(TKey key, int entryIdx)
         {
             if (entryIdx < 0 || entryIdx >= keyCapacity)
+            {
                 return false;
+            }
 
             while (!Keys[entryIdx].Equals(key))
             {
                 entryIdx = (*next)[entryIdx];
 
                 if (entryIdx < 0 || entryIdx >= keyCapacity)
+                {
                     return false;
+                }
             }
 
             return true;
@@ -218,7 +229,9 @@ namespace NZCore
         {
             //Avoids going beyond the end of the collection.
             if (!IsFirst)
+            {
                 return Map->TryGetNextRefValue(out value, ref iterator);
+            }
 
             IsFirst = false;
             return Map->TryGetFirstRefValue(Key, out value, out iterator);

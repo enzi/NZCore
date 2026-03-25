@@ -23,7 +23,7 @@ namespace NZCore
                                             .WithAll<UnityObjectReferencePatchBuffer>()
                                             .WithDisabled<UnityObjectReferencePatchBufferResolved>()
                                             .Build();
-            
+
             _patchEntityRefquery = SystemAPI.QueryBuilder()
                                             .WithAll<EntityRefPatchBuffer>()
                                             .WithDisabled<EntityRefPatchBufferResolved>()
@@ -40,7 +40,7 @@ namespace NZCore
                 foreach (var entity in entities)
                 {
                     var buffer = SystemAPI.GetBuffer<EntityRefPatchBuffer>(entity);
-                    
+
                     foreach (var element in buffer)
                     {
                         if (element.EntityToPatch == Entity.Null || element.TypeIndex == default || element.BlobOffset == 0)
@@ -52,7 +52,7 @@ namespace NZCore
                         var blobPtr = (byte*)(ptr + element.BlobAssetReferenceIndex)->GetUnsafePtr();
 
                         // patch the Entity reference on a blob
-                        *((Entity*)(blobPtr + element.BlobOffset)) = element.EntityToPatch;
+                        *(Entity*)(blobPtr + element.BlobOffset) = element.EntityToPatch;
                     }
 
                     state.EntityManager.SetComponentEnabled<EntityRefPatchBufferResolved>(entity, true);
@@ -79,7 +79,7 @@ namespace NZCore
 
                         // patch the instanceId so any UnityObjectRefForBlob<T> can be resolved correctly
                         var newInstanceId = element.Asset.GetInstanceId();
-                        *((int*)(blobPtr + element.BlobOffset)) = newInstanceId;
+                        *(int*)(blobPtr + element.BlobOffset) = newInstanceId;
                     }
 
                     state.EntityManager.SetComponentEnabled<UnityObjectReferencePatchBufferResolved>(entity, true);

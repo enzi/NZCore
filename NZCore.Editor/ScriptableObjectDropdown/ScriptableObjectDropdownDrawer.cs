@@ -27,31 +27,35 @@ namespace NZCore.Editor
             var baseType = property.type.Substring(6, property.type.Length - 7); // PPtr<$Schema_SpellCasterClass>
             //Debug.Log(baseType);
 
-            ScriptableObjectDropdownAttribute attr = (ScriptableObjectDropdownAttribute)attribute;
+            var attr = (ScriptableObjectDropdownAttribute)attribute;
 
-            List<ScriptableObject> data = AssetDatabaseUtility.GetSubAssets(baseType);
+            var data = AssetDatabaseUtility.GetSubAssets(baseType);
 
             var choices = new List<DropdownWrapper>
             {
                 new() { DisplayName = "None", Value = null }
             };
 
-            ScriptableObject currentSelection = (ScriptableObject)property.boxedValue;
-            int selectedIndex = 0;
+            var currentSelection = (ScriptableObject)property.boxedValue;
+            var selectedIndex = 0;
 
-            for (int i = 0; i < data.Count; i++)
+            for (var i = 0; i < data.Count; i++)
             {
                 if (data[i] is not IAutoID)
+                {
                     continue;
+                }
 
-                choices.Add(new DropdownWrapper()
+                choices.Add(new DropdownWrapper
                 {
                     DisplayName = data[i].name,
                     Value = data[i]
                 });
 
                 if (currentSelection == data[i])
+                {
                     selectedIndex = choices.Count - 1;
+                }
             }
 
             if (attr.UseFlags)
@@ -93,10 +97,7 @@ namespace NZCore.Editor
             arrow.AddToClassList("unity-base-popup-field__arrow");
             inputContainer.Add(arrow);
 
-            inputContainer.RegisterCallback<ClickEvent>(evt =>
-            {
-                evt.StopPropagation();
-            });
+            inputContainer.RegisterCallback<ClickEvent>(evt => { evt.StopPropagation(); });
 
             root.Add(inputContainer);
 
@@ -104,7 +105,7 @@ namespace NZCore.Editor
             {
                 var menu = new GenericDropdownMenu();
 
-                for (int i = 0; i < choices.Count; i++)
+                for (var i = 0; i < choices.Count; i++)
                 {
                     var choice = choices[i];
                     var isSelected = property.objectReferenceValue == choice.Value;

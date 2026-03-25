@@ -7,10 +7,8 @@ using Unity.Entities;
 namespace NZCore
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
-    public partial class NZCoreInitializationSystemGroup : ComponentSystemGroup
-    {
-    }
-    
+    public partial class NZCoreInitializationSystemGroup : ComponentSystemGroup { }
+
     // [UpdateInGroup(typeof(InitializationSystemGroup))]
     // public partial class HybridInitializationSystemGroup : ComponentSystemGroup
     // {

@@ -20,12 +20,12 @@ namespace NZCore.Editor
         {
             var root = new VisualElement();
 
-            SerializedProperty serializedGuid = property.FindPropertyRelative("serializedGuid");
+            var serializedGuid = property.FindPropertyRelative("serializedGuid");
 
             var propGuid = new PropertyField(serializedGuid);
             propGuid.BindProperty(serializedGuid);
 
-            Button btnNewGuid = new Button
+            var btnNewGuid = new Button
             {
                 text = "NEW GUID"
             };
@@ -50,10 +50,11 @@ namespace NZCore.Editor
             EditorGUI.BeginProperty(position, label, property);
 
             // Get property
-            SerializedProperty serializedGuid = property.FindPropertyRelative("serializedGuid");
+            var serializedGuid = property.FindPropertyRelative("serializedGuid");
 
             // Draw label
-            position = EditorGUI.PrefixLabel(new Rect(position.x, position.y + ySep / 2, position.width, position.height), GUIUtility.GetControlID(FocusType.Passive), label);
+            position = EditorGUI.PrefixLabel(new Rect(position.x, position.y + ySep / 2, position.width, position.height),
+                GUIUtility.GetControlID(FocusType.Passive), label);
             position.y -= ySep / 2; // Offsets position so we can draw the label for the field centered
 
             buttonSize = position.width / 3; // Update size of buttons to always fit perfeftly above the string representation field
@@ -75,17 +76,15 @@ namespace NZCore.Editor
             }
 
             // Draw fields - passs GUIContent.none to each so they are drawn without labels
-            Rect pos = new Rect(position.xMin, position.yMin + ySep, position.width, ySep - 2);
+            var pos = new Rect(position.xMin, position.yMin + ySep, position.width, ySep - 2);
             EditorGUI.PropertyField(pos, serializedGuid, GUIContent.none);
 
             // End property
             EditorGUI.EndProperty();
         }
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-        {
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label) =>
             // Field height never changes, so ySep * 2 will always return the proper hight of the field
-            return ySep * 2;
-        }
+            ySep * 2;
     }
 }

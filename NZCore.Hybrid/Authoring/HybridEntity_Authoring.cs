@@ -28,7 +28,7 @@ namespace NZCore.Hybrid
         Box,
         Circle
     }
-    
+
     public class DeferredGizmo
     {
         public Color Color;
@@ -37,7 +37,7 @@ namespace NZCore.Hybrid
         public Quaternion Rotation;
         public float3 Scale;
         public float3 Size;
-        
+
         // public float Radius;
         // public float Height;
         // public float Length;
@@ -63,7 +63,9 @@ namespace NZCore.Hybrid
             SceneView.duringSceneGui += OnSceneGUI;
 
             if (prefab == null)
+            {
                 return;
+            }
 
             var mr = prefab.GetComponentInChildren<MeshRenderer>();
 
@@ -78,7 +80,9 @@ namespace NZCore.Hybrid
                 var smr = prefab.GetComponentInChildren<SkinnedMeshRenderer>();
 
                 if (smr == null)
+                {
                     return;
+                }
 
                 mesh = smr.sharedMesh;
                 mat = smr.sharedMaterial;
@@ -98,14 +102,16 @@ namespace NZCore.Hybrid
         private void Draw(Camera drawCamera)
         {
             if (mesh == null || mat == null)
+            {
                 return;
+            }
 
             var tmpTransform = transform;
             var matrix = Matrix4x4.TRS(tmpTransform.position, tmpTransform.rotation, tmpTransform.localScale);
             Graphics.DrawMesh(mesh, matrix, mat, gameObject.layer, drawCamera);
         }
 
-        
+
 #endif
 
         public class HybridEntity_Authoring_Baker : Baker<HybridEntity_Authoring>
@@ -114,18 +120,20 @@ namespace NZCore.Hybrid
             {
                 if ((authoring.resourceType == HybridEntityResourceType.GameObject && authoring.prefab == null) ||
                     (authoring.resourceType == HybridEntityResourceType.Addressable && authoring.addressable == null))
+                {
                     return;
+                }
 
                 var entity = GetEntity(TransformUsageFlags.Dynamic | TransformUsageFlags.WorldSpace);
                 var presentationEntity = CreateAdditionalEntity(TransformUsageFlags.None, false, authoring.name + "_PresentationSpawner");
 
                 //this.AddRemoveFromLinkedEntityGroup(presentationEntity, entity);
 
-                AddComponent(presentationEntity, new RemoveFromLinkedEntityGroupCleanupSetup()
+                AddComponent(presentationEntity, new RemoveFromLinkedEntityGroupCleanupSetup
                 {
                     Parent = entity
                 });
-                
+
                 AddComponent(entity, new HybridAnimator());
                 AddComponent(entity, new AnimatorOverride());
 
@@ -133,7 +141,7 @@ namespace NZCore.Hybrid
                 {
                     if (authoring.usePooling)
                     {
-                        AddComponent(presentationEntity, new HybridSpawnPrefabFromPool()
+                        AddComponent(presentationEntity, new HybridSpawnPrefabFromPool
                         {
                             HybridEntity = entity,
                             Prefab = authoring.prefab != null ? new WeakObjectReference<GameObject>(authoring.prefab) : default,
@@ -143,7 +151,7 @@ namespace NZCore.Hybrid
                     }
                     else
                     {
-                        AddComponent(presentationEntity, new HybridSpawnPrefab()
+                        AddComponent(presentationEntity, new HybridSpawnPrefab
                         {
                             HybridEntity = entity,
                             Prefab = authoring.prefab != null ? new WeakObjectReference<GameObject>(authoring.prefab) : default,
@@ -156,7 +164,7 @@ namespace NZCore.Hybrid
                 {
                     if (authoring.usePooling)
                     {
-                        AddComponent(presentationEntity, new HybridSpawnAddressableFromPool()
+                        AddComponent(presentationEntity, new HybridSpawnAddressableFromPool
                         {
                             HybridEntity = entity,
                             AddressableHash = new Hash128(authoring.addressable.AssetGUID),
@@ -166,7 +174,7 @@ namespace NZCore.Hybrid
                     }
                     else
                     {
-                        AddComponent(presentationEntity, new HybridSpawnAddressable()
+                        AddComponent(presentationEntity, new HybridSpawnAddressable
                         {
                             HybridEntity = entity,
                             AddressableHash = new Hash128(authoring.addressable.AssetGUID),

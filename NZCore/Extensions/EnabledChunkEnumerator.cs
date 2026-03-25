@@ -103,7 +103,8 @@ namespace NZCore
                 return true;
             }
 
-            if (EnabledBitUtility.TryGetNextRange(enumerator.chunkEnabledMask, enumerator.chunkEndIndex, out enumerator.entityIndexInChunk, out enumerator.chunkEndIndex))
+            if (EnabledBitUtility.TryGetNextRange(enumerator.chunkEnabledMask, enumerator.chunkEndIndex, out enumerator.entityIndexInChunk,
+                    out enumerator.chunkEndIndex))
             {
                 nextIndex = enumerator.entityIndexInChunk;
                 return true;

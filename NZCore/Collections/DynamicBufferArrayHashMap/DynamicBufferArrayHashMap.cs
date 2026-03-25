@@ -27,13 +27,13 @@ namespace NZCore.NativeContainers
         public void SetArrays<TKeyInterpreter>(DynamicBuffer<TKey> keyArray, DynamicBuffer<TValue> valueArray, TKeyInterpreter keyInterpreter)
             where TKeyInterpreter : unmanaged, IKeyInterpreter<TKey>
         {
-            int length = keyArray.Length;
-            int bucketLength = length * 2;
+            var length = keyArray.Length;
+            var bucketLength = length * 2;
 
             var hashMapDataSize = UnsafeUtility.SizeOf<DynamicBufferArrayHashMapBaseData>();
 
             bucketLength = math.ceilpow2(bucketLength);
-            int mask = bucketLength - 1;
+            var mask = bucketLength - 1;
 
             var totalLength = CalculateDataSize(length, bucketLength, out var bucketOffset);
 
@@ -52,20 +52,21 @@ namespace NZCore.NativeContainers
             baseData->NextOffset = hashMapDataSize;
             baseData->BucketsOffset = hashMapDataSize + bucketOffset;
 
-            UnsafeUtility.MemSet(bufferPtr + baseData->NextOffset, 0xFF, (length + bucketLength) * 8); // sets everything to max, Unity uses the same method in their NativeHashMap clear
+            UnsafeUtility.MemSet(bufferPtr + baseData->NextOffset, 0xFF,
+                (length + bucketLength) * 8); // sets everything to max, Unity uses the same method in their NativeHashMap clear
 
             // calculate buckets
-            int valueIndex = 0;
+            var valueIndex = 0;
             var next = (DynamicValueIndexer*)bufferPtr + hashMapDataSize;
             var buckets = (DynamicValueIndexer*)bufferPtr + hashMapDataSize + bucketOffset;
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
-                TKey key = keyArray[i];
+                var key = keyArray[i];
                 var bucketIndex = key.GetHashCode() & mask;
 
                 next[i] = buckets[bucketIndex];
-                buckets[bucketIndex] = new DynamicValueIndexer()
+                buckets[bucketIndex] = new DynamicValueIndexer
                 {
                     Index = i,
                     ValueIndex = valueIndex
@@ -75,22 +76,18 @@ namespace NZCore.NativeContainers
             }
         }
 
-        public bool ContainsKey(TKey key)
-        {
-            return TryPeekFirstValueAtomic(AsDataReadOnly(buffer), key);
-        }
+        public bool ContainsKey(TKey key) => TryPeekFirstValueAtomic(AsDataReadOnly(buffer), key);
 
-        public DynamicBufferArrayHashMapEnumerator<TKey, TValue> GetEnumerator(TKey key)
-        {
-            return new DynamicBufferArrayHashMapEnumerator<TKey, TValue>()
+        public DynamicBufferArrayHashMapEnumerator<TKey, TValue> GetEnumerator(TKey key) =>
+            new()
             {
                 IsFirst = true,
                 Key = key,
                 Map = AsDataReadOnly(buffer)
             };
-        }
 
-        internal static bool TryGetFirstRefValue(DynamicBufferArrayHashMapBaseData* data, TKey key, out byte* item, out DynamicBufferArrayHashMapIterator<TKey> it)
+        internal static bool TryGetFirstRefValue(DynamicBufferArrayHashMapBaseData* data, TKey key, out byte* item,
+            out DynamicBufferArrayHashMapIterator<TKey> it)
         {
             it.Key = key;
 
@@ -103,7 +100,7 @@ namespace NZCore.NativeContainers
 
             // First find the slot based on the hash    
             var buckets = GetBuckets(data);
-            int bucket = key.GetHashCode() & data->BucketCapacityMask;
+            var bucket = key.GetHashCode() & data->BucketCapacityMask;
             it.EntryIndex = it.NextEntryIndex = buckets[bucket];
             return TryGetNextRefValue(data, out item, ref it);
         }
@@ -144,18 +141,22 @@ namespace NZCore.NativeContainers
         internal static bool TryPeekFirstValueAtomic(DynamicBufferArrayHashMapBaseData* data, TKey key)
         {
             if (data->AllocatedIndexLength <= 0)
+            {
                 return false;
+            }
 
             // First find the slot based on the hash
             var buckets = GetBuckets(data);
-            int bucket = key.GetHashCode() & data->BucketCapacityMask;
+            var bucket = key.GetHashCode() & data->BucketCapacityMask;
             return TryPeekNextValueAtomic(data, key, buckets[bucket]);
         }
 
         internal static bool TryPeekNextValueAtomic(DynamicBufferArrayHashMapBaseData* data, TKey key, DynamicValueIndexer entryIdx)
         {
             if (entryIdx.Index < 0 || entryIdx.Index >= data->KeyCapacity)
+            {
                 return false;
+            }
 
             var keys = (TKey*)data->KeyArray;
 
@@ -186,28 +187,17 @@ namespace NZCore.NativeContainers
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static DynamicBufferArrayHashMapBaseData* AsData(DynamicBuffer<byte> buffer)
-        {
-            return (DynamicBufferArrayHashMapBaseData*)buffer.GetUnsafePtr();
-        }
+        private static DynamicBufferArrayHashMapBaseData* AsData(DynamicBuffer<byte> buffer) => (DynamicBufferArrayHashMapBaseData*)buffer.GetUnsafePtr();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static DynamicBufferArrayHashMapBaseData* AsDataReadOnly(DynamicBuffer<byte> buffer)
-        {
-            return (DynamicBufferArrayHashMapBaseData*)buffer.GetUnsafeReadOnlyPtr();
-        }
+        private static DynamicBufferArrayHashMapBaseData* AsDataReadOnly(DynamicBuffer<byte> buffer) =>
+            (DynamicBufferArrayHashMapBaseData*)buffer.GetUnsafeReadOnlyPtr();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static DynamicValueIndexer* GetBuckets(DynamicBufferArrayHashMapBaseData* data)
-        {
-            return (DynamicValueIndexer*)((byte*)data + data->BucketsOffset);
-        }
+        private static DynamicValueIndexer* GetBuckets(DynamicBufferArrayHashMapBaseData* data) => (DynamicValueIndexer*)((byte*)data + data->BucketsOffset);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static DynamicValueIndexer* GetNexts(DynamicBufferArrayHashMapBaseData* data)
-        {
-            return (DynamicValueIndexer*)((byte*)data + data->NextOffset);
-        }
+        private static DynamicValueIndexer* GetNexts(DynamicBufferArrayHashMapBaseData* data) => (DynamicValueIndexer*)((byte*)data + data->NextOffset);
     }
 
     public unsafe struct DynamicBufferArrayHashMapEnumerator<TKey, TValue>
@@ -227,7 +217,9 @@ namespace NZCore.NativeContainers
         {
             //Avoids going beyond the end of the collection.
             if (!IsFirst)
+            {
                 return DynamicBufferArrayHashMap<TKey, TValue>.TryGetNextRefValue(Map, out value, ref iterator);
+            }
 
             IsFirst = false;
             return DynamicBufferArrayHashMap<TKey, TValue>.TryGetFirstRefValue(Map, Key, out value, out iterator);
@@ -260,18 +252,12 @@ namespace NZCore.NativeContainers
         public DynamicValueIndexer GetEntryIndex() => EntryIndex;
     }
 
-    public interface IDynamicBufferArrayHashMap
-    {
-    }
+    public interface IDynamicBufferArrayHashMap { }
 
     public static class DynamicBufferArrayHashMapExtensions
     {
         public static DynamicBufferArrayHashMap<TKey, TValue> AsArrayHashMap<TBuffer, TKey, TValue>(this DynamicBuffer<TBuffer> buffer)
-            where TBuffer : unmanaged, IDynamicBufferArrayHashMap
-            where TKey : unmanaged, IEquatable<TKey>
-            where TValue : unmanaged
-        {
-            return new DynamicBufferArrayHashMap<TKey, TValue>(buffer.Reinterpret<byte>());
-        }
+            where TBuffer : unmanaged, IDynamicBufferArrayHashMap where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged =>
+            new(buffer.Reinterpret<byte>());
     }
 }

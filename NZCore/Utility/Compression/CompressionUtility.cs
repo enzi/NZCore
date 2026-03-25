@@ -46,10 +46,8 @@ namespace NZCore.Compression
         /// <param name="dst"></param>
         /// <param name="allocator"></param>
         /// <returns></returns>
-        public static unsafe int Compress(Codec codec, in byte* src, int srcSize, out byte* dst, Allocator allocator = Allocator.Temp)
-        {
-            return Compress(codec, src, srcSize, out dst, (AllocatorManager.AllocatorHandle)allocator);
-        }
+        public static unsafe int Compress(Codec codec, in byte* src, int srcSize, out byte* dst, Allocator allocator = Allocator.Temp) =>
+            Compress(codec, src, srcSize, out dst, (AllocatorManager.AllocatorHandle)allocator);
 
         /// <summary>
         /// Compresses the passed in `src` data into newly allocated `dst` buffer. Users must free `dst` manually after calling `Compress`
@@ -62,10 +60,10 @@ namespace NZCore.Compression
         /// <returns></returns>
         private static unsafe int Compress(Codec codec, in byte* src, int srcSize, out byte* dst, AllocatorManager.AllocatorHandle allocator)
         {
-            int boundedSize = CompressUpperBound(codec, srcSize);
+            var boundedSize = CompressUpperBound(codec, srcSize);
             dst = (byte*)Memory.Unmanaged.Allocate(boundedSize, 16, allocator);
 
-            int compressedSize = 0;
+            var compressedSize = 0;
             switch (codec)
             {
                 case Codec.LZ4:
@@ -107,15 +105,15 @@ namespace NZCore.Compression
             }
         }
 
-        const string DllName = "liblz4";
+        private const string DllName = "liblz4";
 
         [DllImport(DllName, EntryPoint = "LZ4_compressBound")]
-        static extern unsafe int CompressBoundLZ4(int srcSize);
+        private static extern unsafe int CompressBoundLZ4(int srcSize);
 
         [DllImport(DllName, EntryPoint = "LZ4_compress_default")]
-        static extern unsafe int CompressLZ4(byte* src, byte* dst, int srcSize, int dstCapacity);
+        private static extern unsafe int CompressLZ4(byte* src, byte* dst, int srcSize, int dstCapacity);
 
         [DllImport(DllName, EntryPoint = "LZ4_decompress_safe")]
-        static extern unsafe int DecompressLZ4(byte* src, byte* dst, int compressedSize, int dstCapacity);
+        private static extern unsafe int DecompressLZ4(byte* src, byte* dst, int compressedSize, int dstCapacity);
     }
 }

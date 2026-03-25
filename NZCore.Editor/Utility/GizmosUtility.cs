@@ -11,11 +11,11 @@ namespace NZCore.Editor
     {
         public static void DrawWireCapsule(Vector3 point1, Vector3 point2, float radius)
         {
-            Vector3 upOffset = point2 - point1;
-            Vector3 up = upOffset.Equals(default) ? Vector3.up : upOffset.normalized;
-            Quaternion orientation = Quaternion.FromToRotation(Vector3.up, up);
-            Vector3 forward = orientation * Vector3.forward;
-            Vector3 right = orientation * Vector3.right;
+            var upOffset = point2 - point1;
+            var up = upOffset.Equals(default) ? Vector3.up : upOffset.normalized;
+            var orientation = Quaternion.FromToRotation(Vector3.up, up);
+            var forward = orientation * Vector3.forward;
+            var right = orientation * Vector3.right;
             // z axis
             Handles.DrawWireArc(point2, forward, right, 180, radius);
             Handles.DrawWireArc(point1, forward, right, -180, radius);

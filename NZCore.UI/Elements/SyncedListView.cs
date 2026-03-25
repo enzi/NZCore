@@ -3,22 +3,21 @@
 // </copyright>
 
 using System.Collections.Generic;
-using NZCore.MVVM;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
-namespace NZCore.UI.Elements
+namespace NZCore.UI
 {
     public abstract unsafe class SyncedListView<TStructData, TViewData> : ListView
         where TStructData : unmanaged
     {
         private SyncListCommand<TStructData> _onSyncList;
-        
+
         private List<TViewData> _items;
         private NativeList<TStructData> _trackArray;
-        
+
 
         [CreateProperty]
         public SyncListCommand<TStructData> syncList
@@ -53,7 +52,7 @@ namespace NZCore.UI.Elements
 
             RegisterCallback<AttachToPanelEvent>(_ => itemsSource = _items);
             RegisterCallback<DetachFromPanelEvent>(_ => _trackArray.Dispose());
-            
+
             bindItem = (element, index) => element.dataSource = itemsSource[index];
         }
 
@@ -72,12 +71,16 @@ namespace NZCore.UI.Elements
                 return;
             }
 
+            if (list.Length == 0)
+            {
+                return;
+            }
+
             var ptr1 = list.Ptr;
             var ptr2 = _trackArray.GetUnsafeReadOnlyPtr();
-            
+
             for (var i = 0; i < list.Length; i++)
             {
-                // todo what if _trackArray is smaller. it reads beyond memory
                 if (CompareElements(ref *(ptr2 + i), ref *(ptr1 + i)))
                 {
                     continue;
@@ -86,6 +89,7 @@ namespace NZCore.UI.Elements
                 _items[i] = UpdateItem(_items[i], ptr1[i]);
                 RefreshItem(i);
             }
+
             _trackArray.CopyFrom(list);
         }
 

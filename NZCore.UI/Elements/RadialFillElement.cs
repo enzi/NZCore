@@ -43,11 +43,13 @@ namespace NZCore.UI
             set
             {
                 if (EqualityComparer<float>.Default.Equals(_value, value))
+                {
                     return;
+                }
 
                 if (panel != null)
                 {
-                    using ChangeEvent<float> pooled = ChangeEvent<float>.GetPooled(_value, value);
+                    using var pooled = ChangeEvent<float>.GetPooled(_value, value);
                     pooled.target = this;
                     SetValueWithoutNotify(value);
                     SendEvent(pooled);
@@ -66,7 +68,9 @@ namespace NZCore.UI
             set
             {
                 if (icon == value)
+                {
                     return;
+                }
 
                 icon = value;
                 style.backgroundImage = new StyleBackground(icon);
@@ -97,7 +101,7 @@ namespace NZCore.UI
             {
                 overlayImagePath = value;
 #if UNITY_EDITOR
-                Texture2D tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(overlayImagePath);
+                var tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(overlayImagePath);
                 if (tex != null)
                 {
                     overlayImage.style.backgroundImage = tex;
@@ -125,9 +129,9 @@ namespace NZCore.UI
 
         public RadialFillElement()
         {
-            radialFill = new VisualElement() { name = "radial-fill", pickingMode = PickingMode.Ignore };
-            overlayImage = new VisualElement() { name = "overlay-image", pickingMode = PickingMode.Ignore };
-            radialBoundary = new VisualElement() { name = "radial-boundary", pickingMode = PickingMode.Ignore };
+            radialFill = new VisualElement { name = "radial-fill", pickingMode = PickingMode.Ignore };
+            overlayImage = new VisualElement { name = "overlay-image", pickingMode = PickingMode.Ignore };
+            radialBoundary = new VisualElement { name = "radial-boundary", pickingMode = PickingMode.Ignore };
 
             radialFill.style.flexGrow = 1;
             radialFill.Add(overlayImage);
@@ -157,8 +161,8 @@ namespace NZCore.UI
         private void OnGenerateVisualContent(MeshGenerationContext mgc)
         {
             // default draw 1 triangle
-            int triCount = 3;
-            int indiceCount = 3;
+            var triCount = 3;
+            var indiceCount = 3;
             _value = Mathf.Clamp(_value, 0, 360);
             if (_value * 360 < 240)
             {
@@ -186,12 +190,12 @@ namespace NZCore.UI
             var width = radialBoundary.layout.width;
             var height = radialBoundary.layout.height;
 
-            MeshWriteData mwd = mgc.Allocate(triCount, indiceCount);
-            Vector3 origin = new Vector3(width / 2, height / 2, 0);
+            var mwd = mgc.Allocate(triCount, indiceCount);
+            var origin = new Vector3(width / 2, height / 2, 0);
 
-            float radius = (width > height) ? width / 2 : height / 2;
-            float diameter = 4 * radius;
-            float degrees = ((_value * 360) - 90) / Mathf.Rad2Deg;
+            var radius = width > height ? width / 2 : height / 2;
+            var diameter = 4 * radius;
+            var degrees = (_value * 360 - 90) / Mathf.Rad2Deg;
 
             //First two vertex are mandatory for 1 triangle
             mwd.SetNextVertex(new Vertex { position = origin + new Vector3(0 * diameter, 0 * diameter, Vertex.nearZ), tint = FillColor });
@@ -204,47 +208,71 @@ namespace NZCore.UI
             }
 
             mwd.SetNextIndex(0);
-            mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)2 : (ushort)1);
+            mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)2 : (ushort)1);
             if (_value * 360 <= 120)
             {
-                mwd.SetNextVertex(new Vertex { position = origin + new Vector3(Mathf.Cos(degrees) * diameter * direction, Mathf.Sin(degrees) * diameter, Vertex.nearZ), tint = FillColor });
-                mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)1 : (ushort)2);
+                mwd.SetNextVertex(new Vertex
+                {
+                    position = origin + new Vector3(Mathf.Cos(degrees) * diameter * direction, Mathf.Sin(degrees) * diameter, Vertex.nearZ), tint = FillColor
+                });
+                mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)1 : (ushort)2);
             }
 
             if (_value * 360 > 120 && _value * 360 <= 240)
             {
                 mwd.SetNextVertex(
-                    new Vertex { position = origin + new Vector3(Mathf.Cos(30 / Mathf.Rad2Deg) * diameter * direction, Mathf.Sin(30 / Mathf.Rad2Deg) * diameter, Vertex.nearZ), tint = FillColor });
-                mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)1 : (ushort)2);
-                mwd.SetNextVertex(new Vertex { position = origin + new Vector3(Mathf.Cos(degrees) * diameter * direction, Mathf.Sin(degrees) * diameter, Vertex.nearZ), tint = FillColor });
+                    new Vertex
+                    {
+                        position = origin + new Vector3(Mathf.Cos(30 / Mathf.Rad2Deg) * diameter * direction, Mathf.Sin(30 / Mathf.Rad2Deg) * diameter,
+                            Vertex.nearZ),
+                        tint = FillColor
+                    });
+                mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)1 : (ushort)2);
+                mwd.SetNextVertex(new Vertex
+                {
+                    position = origin + new Vector3(Mathf.Cos(degrees) * diameter * direction, Mathf.Sin(degrees) * diameter, Vertex.nearZ), tint = FillColor
+                });
                 mwd.SetNextIndex(0);
-                mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)3 : (ushort)2);
-                mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)2 : (ushort)3);
+                mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)3 : (ushort)2);
+                mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)2 : (ushort)3);
             }
 
             if (_value * 360 > 240)
             {
                 mwd.SetNextVertex(
-                    new Vertex { position = origin + new Vector3(Mathf.Cos(30 / Mathf.Rad2Deg) * diameter * direction, Mathf.Sin(30 / Mathf.Rad2Deg) * diameter, Vertex.nearZ), tint = FillColor });
-                mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)1 : (ushort)2);
+                    new Vertex
+                    {
+                        position = origin + new Vector3(Mathf.Cos(30 / Mathf.Rad2Deg) * diameter * direction, Mathf.Sin(30 / Mathf.Rad2Deg) * diameter,
+                            Vertex.nearZ),
+                        tint = FillColor
+                    });
+                mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)1 : (ushort)2);
                 mwd.SetNextVertex(new Vertex
-                    { position = origin + new Vector3(Mathf.Cos(150 / Mathf.Rad2Deg) * diameter * direction, Mathf.Sin(150 / Mathf.Rad2Deg) * diameter, Vertex.nearZ), tint = FillColor });
+                {
+                    position = origin + new Vector3(Mathf.Cos(150 / Mathf.Rad2Deg) * diameter * direction, Mathf.Sin(150 / Mathf.Rad2Deg) * diameter,
+                        Vertex.nearZ),
+                    tint = FillColor
+                });
                 mwd.SetNextIndex(0);
-                mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)3 : (ushort)2);
-                mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)2 : (ushort)3);
+                mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)3 : (ushort)2);
+                mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)2 : (ushort)3);
 
                 if (_value * 360 >= 360)
                 {
                     mwd.SetNextIndex(0);
-                    mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)1 : (ushort)3);
-                    mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)3 : (ushort)1);
+                    mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)1 : (ushort)3);
+                    mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)3 : (ushort)1);
                 }
                 else
                 {
-                    mwd.SetNextVertex(new Vertex { position = origin + new Vector3(Mathf.Cos(degrees) * diameter * direction, Mathf.Sin(degrees) * diameter, Vertex.nearZ), tint = FillColor });
+                    mwd.SetNextVertex(new Vertex
+                    {
+                        position = origin + new Vector3(Mathf.Cos(degrees) * diameter * direction, Mathf.Sin(degrees) * diameter, Vertex.nearZ),
+                        tint = FillColor
+                    });
                     mwd.SetNextIndex(0);
-                    mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)4 : (ushort)3);
-                    mwd.SetNextIndex((FillDirection == FillDirectionType.AntiClockwise) ? (ushort)3 : (ushort)4);
+                    mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)4 : (ushort)3);
+                    mwd.SetNextIndex(FillDirection == FillDirectionType.AntiClockwise ? (ushort)3 : (ushort)4);
                 }
             }
         }

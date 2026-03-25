@@ -14,14 +14,14 @@ namespace NZCore
 {
     public static class CompilerServiceUtility
     {
-        private static readonly Type monoIOType =  Type.GetType("System.IO.MonoIO, mscorlib");
+        private static readonly Type monoIOType = Type.GetType("System.IO.MonoIO, mscorlib");
         private static readonly MethodInfo remapPathMethod = monoIOType.GetMethod("RemapPath", BindingFlags.Static | BindingFlags.Public);
-        
+
         public static void AddAdditionalFiles(string cscPath, params string[] additionalFiles)
         {
-            List<string> lines = new List<string>();
+            var lines = new List<string>();
             var randomSignature = $"#{Guid.NewGuid()}";
-            
+
             if (File.Exists(cscPath))
             {
                 var cscContent = File.ReadAllLines(cscPath);
@@ -29,7 +29,7 @@ namespace NZCore
 
                 // find #generation date (for triggering sourcegen in unity)
                 {
-                    int genLineIndex = -1;
+                    var genLineIndex = -1;
                     for (var i = 0; i < lines.Count; i++)
                     {
                         var line = lines[i];
@@ -54,7 +54,7 @@ namespace NZCore
 
                 // test for deleted references
                 {
-                    for (int i = lines.Count - 1; i >= 0; i--)
+                    for (var i = lines.Count - 1; i >= 0; i--)
                     {
                         var line = lines[i];
                         if (line.StartsWith("/additionalfile:"))
@@ -68,10 +68,10 @@ namespace NZCore
                         }
                     }
                 }
-                
+
                 // test for same files that could been left from other projects
                 {
-                    for (int i = lines.Count - 1; i >= 0; i--)
+                    for (var i = lines.Count - 1; i >= 0; i--)
                     {
                         var line = lines[i].Replace("/additionalfile:", "");
                         var filenameInFile = Path.GetFileNameWithoutExtension(line);
@@ -91,7 +91,7 @@ namespace NZCore
                 foreach (var additionalFile in additionalFiles)
                 {
                     var filename = Path.GetFileNameWithoutExtension(additionalFile);
-                    bool found = false;
+                    var found = false;
                     foreach (var line in lines)
                     {
                         //if (line.Contains($"{data.StructName}.default.json"))
@@ -114,7 +114,7 @@ namespace NZCore
                 foreach (var additionalFile in additionalFiles)
                 {
                     lines.Add($"/additionalfile:{additionalFile}");
-                }    
+                }
             }
 
             File.WriteAllLines(cscPath, lines);
@@ -152,7 +152,7 @@ namespace NZCore
 
                 return (jsonPath, csVersion);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"CSifyJson - {e.Message}");
                 return (null, null);
@@ -171,7 +171,7 @@ namespace NZCore
             var tuple = CSifyJson(assets, fileName, packagePath);
 
             FileUtility.WriteChanges(tuple.resolvedJsonPath, tuple.csVersion);
-            
+
             foreach (var cscPath in cscPaths)
             {
                 var fullCscPath = Path.GetFullPath($"Packages/{cscPath}/csc.rsp");
@@ -189,9 +189,9 @@ namespace NZCore
 
             var tmpPath = "";
             object[] parameters = { path, tmpPath };
-            bool result = (bool)remapPathMethod.Invoke(null, parameters);
+            var result = (bool)remapPathMethod.Invoke(null, parameters);
             newPath = (string)parameters[1];
-            
+
 
             return result;
         }
@@ -204,7 +204,9 @@ namespace NZCore
             {
                 var arg = args[i];
                 if (arg.Equals("-projectPath", StringComparison.InvariantCultureIgnoreCase))
+                {
                     return args[i + 1];
+                }
             }
 
             return Path.GetFullPath("Assets/..");

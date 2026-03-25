@@ -10,14 +10,13 @@ namespace NZCore
 {
     public static unsafe class UnsafeComponentLookupExtensions
     {
-        
         public static EnabledRefRW<T> GetEnableRefRWNoChangeFilter<T>(ref this UnsafeComponentLookup<T> lookup, Entity entity)
             where T : unmanaged, IComponentData, IEnableableComponent
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckWriteAndThrow(lookup.m_Safety);
 #endif
-            EntityComponentStore* ecs = lookup.m_Access->EntityComponentStore;
+            var ecs = lookup.m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, lookup.m_TypeIndex, ref lookup.m_Cache);
 
             int indexInBitField;
@@ -27,7 +26,7 @@ namespace NZCore
 
             return new EnabledRefRW<T>(MakeSafeBitRef(lookup, ptr, indexInBitField), ptrChunkDisabledCount);
         }
-        
+
         private static SafeBitRef MakeSafeBitRef<T>(in UnsafeComponentLookup<T> lookup, ulong* ptr, int offsetInBits)
             where T : unmanaged, IComponentData, IEnableableComponent
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -35,7 +34,7 @@ namespace NZCore
 #else
             => new(ptr, offsetInBits);
 #endif
-        
+
         public static void SetChangeFilter<T>(ref this UnsafeComponentLookup<T> lookup, Entity entity)
             where T : unmanaged, IComponentData
         {

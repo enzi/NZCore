@@ -37,7 +37,7 @@ namespace NZCore.Editor
         {
             var assets = AssetDatabase.FindAssets("t:AssemblyDefinitionAsset");
 
-            int missingCount = 0;
+            var missingCount = 0;
             foreach (var guid in assets)
             {
                 var filePath = AssetDatabase.GUIDToAssetPath(guid);
@@ -59,7 +59,9 @@ namespace NZCore.Editor
             }
 
             if (missingCount == 0)
+            {
                 Debug.Log("AssemblyDefinitionValidator found no problems!");
+            }
         }
     }
 }

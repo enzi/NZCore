@@ -30,8 +30,8 @@ namespace NZCore
             state.EntityManager.AddBuffer<DeferredDestroyMapBuffer>(destructionMapEntity);
 
             query = SystemAPI.QueryBuilder()
-                .WithAll<DestroyEntity>()
-                .Build();
+                             .WithAll<DestroyEntity>()
+                             .Build();
         }
 
         public void OnDestroy(ref SystemState state)
@@ -65,7 +65,9 @@ namespace NZCore
                 foreach (var entity in entities)
                 {
                     if (!destructionMap.Map.TryGetValue(entity, out var list))
+                    {
                         continue;
+                    }
 
                     foreach (var cleanup in list)
                     {
@@ -105,12 +107,12 @@ namespace NZCore
         public void OnCreate(ref SystemState state)
         {
             destroyQuery = SystemAPI.QueryBuilder()
-                .WithAll<DestroyEntity>()
-                .Build();
+                                    .WithAll<DestroyEntity>()
+                                    .Build();
 
             cleanupQuery = SystemAPI.QueryBuilder()
-                .WithAll<NZCleanupEntity>()
-                .Build();
+                                    .WithAll<NZCleanupEntity>()
+                                    .Build();
         }
 
         [BurstCompile]
@@ -134,7 +136,9 @@ namespace NZCore
                     state.EntityManager.DestroyEntity(entity);
 
                     if (!destructionMap.Map.TryGetValue(entity, out var list))
+                    {
                         continue;
+                    }
 
                     list.Dispose();
                     destructionMap.Map.Remove(entity);

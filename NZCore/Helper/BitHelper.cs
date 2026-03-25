@@ -49,19 +49,19 @@ namespace NZCore.Helper
 
             if (idx == 0)
             {
-                var bits = bitField.ULong0 & ~mask | ((ulong)-Bitwise.FromBool(value) & mask);
+                var bits = (bitField.ULong0 & ~mask) | ((ulong)-Bitwise.FromBool(value) & mask);
                 bitField.ULong0 = bits;
             }
             else
             {
-                var bits = bitField.ULong1 & ~mask | ((ulong)-Bitwise.FromBool(value) & mask);
+                var bits = (bitField.ULong1 & ~mask) | ((ulong)-Bitwise.FromBool(value) & mask);
                 bitField.ULong1 = bits;
             }
         }
 
         public static uint RoundToPowerOf2(uint value)
         {
-            Debug.Assert(value > 0 && value <= (uint.MaxValue / 2) + 1);
+            Debug.Assert(value > 0 && value <= uint.MaxValue / 2 + 1);
 
             return 1u << (32 - math.lzcnt(value - 1));
         }

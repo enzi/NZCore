@@ -13,6 +13,7 @@ namespace NZCore
     {
         private Stream stream;
         private byte[] buffer;
+
         public long Position
         {
             get => stream.Position;
@@ -32,17 +33,17 @@ namespace NZCore
 
         public void WriteBytes(void* data, int bytes)
         {
-            int remaining = bytes;
-            int bufferSize = buffer.Length;
+            var remaining = bytes;
+            var bufferSize = buffer.Length;
 
             fixed (byte* fixedBuffer = buffer)
             {
                 while (remaining != 0)
                 {
-                    int bytesToWrite = Math.Min(remaining, bufferSize);
+                    var bytesToWrite = Math.Min(remaining, bufferSize);
                     UnsafeUtility.MemCpy(fixedBuffer, data, bytesToWrite);
                     stream.Write(buffer, 0, bytesToWrite);
-                    data = (byte*) data + bytesToWrite;
+                    data = (byte*)data + bytesToWrite;
                     remaining -= bytesToWrite;
                 }
             }

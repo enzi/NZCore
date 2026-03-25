@@ -17,14 +17,14 @@ namespace NZCore
         public void OnCreate(ref SystemState state)
         {
             addedQuery = SystemAPI.QueryBuilder()
-                .WithAll<RemoveFromLinkedEntityGroupCleanupSetup>()
-                .WithNone<RemoveFromLinkedEntityGroupCleanup>()
-                .Build();
+                                  .WithAll<RemoveFromLinkedEntityGroupCleanupSetup>()
+                                  .WithNone<RemoveFromLinkedEntityGroupCleanup>()
+                                  .Build();
 
             removedQuery = SystemAPI.QueryBuilder()
-                .WithAll<RemoveFromLinkedEntityGroupCleanup>()
-                .WithNone<RemoveFromLinkedEntityGroupCleanupSetup>()
-                .Build();
+                                    .WithAll<RemoveFromLinkedEntityGroupCleanup>()
+                                    .WithNone<RemoveFromLinkedEntityGroupCleanupSetup>()
+                                    .Build();
         }
 
         public void OnUpdate(ref SystemState state)
@@ -37,7 +37,7 @@ namespace NZCore
                 {
                     var info = SystemAPI.GetComponent<RemoveFromLinkedEntityGroupCleanupSetup>(addedEntity);
 
-                    state.EntityManager.AddComponentData(addedEntity, new RemoveFromLinkedEntityGroupCleanup()
+                    state.EntityManager.AddComponentData(addedEntity, new RemoveFromLinkedEntityGroupCleanup
                     {
                         Parent = info.Parent
                     });

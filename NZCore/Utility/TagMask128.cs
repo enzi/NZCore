@@ -19,26 +19,20 @@ namespace NZCore
 
         public void Set(int tagIndex)
         {
-            int chunk = tagIndex >> 5; // divide by 32
-            int bit = tagIndex & 31; // mod 32
+            var chunk = tagIndex >> 5; // divide by 32
+            var bit = tagIndex & 31; // mod 32
             _bits[chunk] |= 1u << bit;
         }
 
         public readonly bool Has(int tagIndex)
         {
-            int chunk = tagIndex >> 5;
-            int bit = tagIndex & 31;
+            var chunk = tagIndex >> 5;
+            var bit = tagIndex & 31;
             return (_bits[chunk] & (1u << bit)) != 0;
         }
 
-        public readonly bool HasAny(in TagMask128 query)
-        {
-            return math.any((_bits & query._bits) != 0);
-        }
+        public readonly bool HasAny(in TagMask128 query) => math.any((_bits & query._bits) != 0);
 
-        public readonly bool HasAll(in TagMask128 query)
-        {
-            return math.all((_bits & query._bits) == query._bits);
-        }
+        public readonly bool HasAll(in TagMask128 query) => math.all((_bits & query._bits) == query._bits);
     }
 }

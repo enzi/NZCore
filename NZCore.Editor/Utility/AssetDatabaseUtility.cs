@@ -16,23 +16,25 @@ namespace NZCore.Editor
         public static T[] GetAssets<T>()
         {
             return AssetDatabase.FindAssets($"t:{typeof(T).Name}")
-                                            .Select(AssetDatabase.GUIDToAssetPath)
-                                            .Distinct()
-                                            .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
-                                            .Where(s => s.GetType() == typeof(T))
-                                            .Cast<T>()
-                                            .ToArray();
+                                .Select(AssetDatabase.GUIDToAssetPath)
+                                .Distinct()
+                                .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
+                                .Where(s => s.GetType() == typeof(T))
+                                .Cast<T>()
+                                .ToArray();
         }
-        
+
         public static List<ScriptableObject> GetSubAssets(this Object asset)
         {
-            List<ScriptableObject> assets = new List<ScriptableObject>();
+            var assets = new List<ScriptableObject>();
             var assetPathWithName = AssetDatabase.GetAssetPath(asset);
             var childAssets = AssetDatabase.LoadAllAssetsAtPath(assetPathWithName);
 
             if (childAssets.Length <= 1)
+            {
                 return assets;
-            
+            }
+
             foreach (var childAsset in childAssets)
             {
                 if (childAsset is ScriptableObject so)
@@ -43,13 +45,13 @@ namespace NZCore.Editor
 
             return assets;
         }
-        
+
         public static bool TryGetSubAsset<T>(this Object asset, out T result)
             where T : ScriptableObject
         {
             var assetPathWithName = AssetDatabase.GetAssetPath(asset);
             var childAssets = AssetDatabase.LoadAllAssetsAtPath(assetPathWithName);
-            
+
             foreach (var childAsset in childAssets)
             {
                 if (childAsset is not T found)
@@ -64,13 +66,13 @@ namespace NZCore.Editor
             result = null;
             return false;
         }
-        
+
         public static List<ScriptableObject> GetSubAssets(string baseType)
         {
-            List<ScriptableObject> assets = new List<ScriptableObject>();
-            List<string> assetPathList = AssetDatabase.FindAssets($"t:{baseType}")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .ToList();
+            var assets = new List<ScriptableObject>();
+            var assetPathList = AssetDatabase.FindAssets($"t:{baseType}")
+                                             .Select(AssetDatabase.GUIDToAssetPath)
+                                             .ToList();
 
             for (var i = 0; i < assetPathList.Count; i++)
             {
@@ -95,13 +97,13 @@ namespace NZCore.Editor
 
             return assets;
         }
-        
+
         public static List<ScriptableObject> GetSubAssets(Type baseType)
         {
-            List<ScriptableObject> assets = new List<ScriptableObject>();
-            List<string> assetPathList = AssetDatabase.FindAssets($"t:{baseType.Name}")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .ToList();
+            var assets = new List<ScriptableObject>();
+            var assetPathList = AssetDatabase.FindAssets($"t:{baseType.Name}")
+                                             .Select(AssetDatabase.GUIDToAssetPath)
+                                             .ToList();
 
             for (var i = 0; i < assetPathList.Count; i++)
             {
@@ -133,7 +135,7 @@ namespace NZCore.Editor
             where TAsset : ScriptableObject
             where TSubAsset : ScriptableObject
         {
-            List<TSubAsset> list = new List<TSubAsset>();
+            var list = new List<TSubAsset>();
             var assetPathWithName = AssetDatabase.GetAssetPath(asset);
             var childAssets = AssetDatabase.LoadAllAssetsAtPath(assetPathWithName);
 
@@ -141,7 +143,7 @@ namespace NZCore.Editor
             {
                 if (childAssets.TryGetSubAssetExists(filter, out var existingAsset))
                 {
-                   list.Add((TSubAsset) existingAsset);
+                    list.Add((TSubAsset)existingAsset);
                 }
             }
 
@@ -160,7 +162,7 @@ namespace NZCore.Editor
 
             foreach (var filter in nameFilter)
             {
-                string nameAndFilter = $"{asset.name}{filter}";
+                var nameAndFilter = $"{asset.name}{filter}";
                 if (childAssets.TryGetSubAssetExists(nameAndFilter, out var existingAsset))
                 {
                     var so = new SerializedObject(existingAsset);
@@ -188,7 +190,9 @@ namespace NZCore.Editor
             foreach (var childAsset in childAssets)
             {
                 if (AssetDatabase.IsSubAsset(childAsset) && childAsset.name.Contains(nameFilter))
+                {
                     return true;
+                }
             }
 
             return false;

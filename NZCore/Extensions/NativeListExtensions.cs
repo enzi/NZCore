@@ -34,7 +34,7 @@ namespace NZCore
             CheckWriteAccess(list);
 #endif
 
-            int byteSize = UnsafeUtility.SizeOf<TData>();
+            var byteSize = UnsafeUtility.SizeOf<TData>();
             var ptrToData = (byte*)UnsafeUtility.AddressOf(ref data);
 
             AddToByteList(list, ptrToData, byteSize);
@@ -42,7 +42,7 @@ namespace NZCore
 
         public static void AddToByteList(this NativeList<byte> list, byte* ptrToData, int byteSize)
         {
-            int oldLength = list.Length;
+            var oldLength = list.Length;
             list.ResizeUninitialized(oldLength + byteSize);
 
             var basePtr = (byte*)list.GetUnsafePtr();
@@ -51,13 +51,13 @@ namespace NZCore
 
         public static void AddZeroToByteList(this NativeList<byte> list, int byteSize)
         {
-            int oldLength = list.Length;
+            var oldLength = list.Length;
             list.ResizeUninitialized(oldLength + byteSize);
-            
+
             var basePtr = (byte*)list.GetUnsafePtr();
             UnsafeUtility.MemClear(basePtr + oldLength, byteSize);
         }
-        
+
         public static void AddRangeToByteList<TData>(this NativeList<byte> list, NativeArray<TData> array)
             where TData : unmanaged
         {
@@ -65,8 +65,8 @@ namespace NZCore
             CheckWriteAccess(list);
 #endif
 
-            int byteSize = UnsafeUtility.SizeOf<TData>() * array.Length;
-            var ptrToData = (byte*) array.GetUnsafeReadOnlyPtr();
+            var byteSize = UnsafeUtility.SizeOf<TData>() * array.Length;
+            var ptrToData = (byte*)array.GetUnsafeReadOnlyPtr();
 
             AddToByteList(list, ptrToData, byteSize);
         }
@@ -132,7 +132,7 @@ namespace NZCore
             listPtr->m_capacity = newCapacity;
             listPtr->m_length = math.min(listPtr->m_length, newCapacity);
         }
-        
+
         public static void ResizeExact<T>(this NativeList<T> list, int newCapacity, int alignOf)
             where T : unmanaged
         {
@@ -142,7 +142,7 @@ namespace NZCore
 
             CollectionHelper.CheckAllocator(allocator);
             T* newPointer = null;
-           
+
             var sizeOf = sizeof(T);
 
             if (newCapacity > 0)
@@ -167,19 +167,19 @@ namespace NZCore
         public static void Remove<T>(this NativeList<T> list, T element)
             where T : unmanaged
         {
-            for (int i = list.Length - 1; i >= 0; i--)
+            for (var i = list.Length - 1; i >= 0; i--)
             {
                 if (list[i].GetHashCode() != element.GetHashCode())
+                {
                     continue;
+                }
 
                 list.RemoveAt(i);
             }
         }
 
         public static ref readonly T ElementAtRO<T>(this NativeList<T> list, int index)
-            where T : unmanaged
-        {
-            return ref UnsafeUtility.ArrayElementAsRef<T>(list.GetUnsafeReadOnlyPtr(), index);
-        }
+            where T : unmanaged =>
+            ref UnsafeUtility.ArrayElementAsRef<T>(list.GetUnsafeReadOnlyPtr(), index);
     }
 }

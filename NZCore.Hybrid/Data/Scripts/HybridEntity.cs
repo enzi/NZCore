@@ -23,17 +23,17 @@ namespace NZCore.Hybrid
             var dummyClip = new AnimationClip();
             var clipPlayable = AnimationClipPlayable.Create(playableGraph, dummyClip);
             var controller = AnimatorControllerPlayable.Create(playableGraph, animator.runtimeAnimatorController);
-                
+
             playableGraph.Connect(controller, 0, mixer, 0);
             playableGraph.Connect(clipPlayable, 0, mixer, 1);
 
-            return new HybridAnimator()
+            return new HybridAnimator
             {
                 Graph = playableGraph,
                 Mixer = mixer
             };
         }
-        
+
 // #if UNITY_EDITOR
 //         public static List<DeferredGizmo> DeferredGizmos = new();
 //         private void OnDrawGizmos()

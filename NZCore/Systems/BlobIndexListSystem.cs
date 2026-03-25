@@ -22,10 +22,10 @@ namespace NZCore
         protected override void OnCreate()
         {
             _query = new EntityQueryBuilder(Allocator.Temp)
-                        .WithAll<Prefab, TBlobReference>()
-                        .WithOptions(EntityQueryOptions.IncludePrefab)
-                        .Build(ref CheckedStateRef);
-            
+                     .WithAll<Prefab, TBlobReference>()
+                     .WithOptions(EntityQueryOptions.IncludePrefab)
+                     .Build(ref CheckedStateRef);
+
             RequireForUpdate(_query);
         }
 
@@ -33,8 +33,14 @@ namespace NZCore
         protected override void OnStartRunning()
         {
             CheckedStateRef.CreateSingleton(out TIndexList singleton);
+            
+            new BlobIndexResizeListJob
+            {
+                List = singleton.GetIndexList(),
+                BlobReference_ReadHandle = SystemAPI.GetComponentTypeHandle<TBlobReference>()
+            }.Run(_query);
 
-            new BlobIndexListJob()
+            new BlobIndexListJob
             {
                 List = singleton.GetIndexList(),
                 BlobReference_ReadHandle = SystemAPI.GetComponentTypeHandle<TBlobReference>()
@@ -47,6 +53,39 @@ namespace NZCore
         }
 
         protected override void OnUpdate() { }
+        
+        [BurstCompile]
+        private unsafe struct BlobIndexResizeListJob : IJobChunk
+        {
+            public NativeList<TBlobReference> List;
+            public ComponentTypeHandle<TBlobReference> BlobReference_ReadHandle;
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+            {
+                var blobRefs = (TBlobReference*)chunk.GetRequiredComponentDataPtrRO(ref BlobReference_ReadHandle);
+
+                var highestIndex = 0;
+
+                for (var i = 0; i < chunk.Count; i++)
+                {
+                    var blobRef = blobRefs[i];
+
+                    var blobIndex = blobRef.BlobIndex;
+
+                    if (blobIndex > highestIndex)
+                    {
+                        highestIndex = blobIndex;
+                    }
+                }
+
+                var newLength = highestIndex + 1;
+
+                if (newLength > List.Length)
+                {
+                    List.Resize(highestIndex + 1, NativeArrayOptions.ClearMemory);
+                }
+            }
+        }
 
         [BurstCompile]
         private unsafe struct BlobIndexListJob : IJobChunk
@@ -57,23 +96,9 @@ namespace NZCore
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 //Debug.Log($"BlobIndexJob for {typeof(TBlobReference).Name}");
-                var blobRefs = (TBlobReference*)chunk.GetRequiredComponentDataPtrRO(ref BlobReference_ReadHandle);
+                var blobRefs = (TBlobReference*) chunk.GetRequiredComponentDataPtrRO(ref BlobReference_ReadHandle);
 
-                int highestIndex = 0;
-
-                for (int i = 0; i < chunk.Count; i++)
-                {
-                    var blobRef = blobRefs[i];
-
-                    int blobIndex = blobRef.BlobIndex;
-
-                    if (blobIndex > highestIndex)
-                        highestIndex = blobIndex;
-                }
-
-                List.Resize(highestIndex + 1, NativeArrayOptions.ClearMemory);
-
-                for (int i = 0; i < chunk.Count; i++)
+                for (var i = 0; i < chunk.Count; i++)
                 {
                     var blobRef = blobRefs[i];
 
@@ -85,6 +110,7 @@ namespace NZCore
             }
         }
     }
+
     
     [BurstCompile]
     public partial class BlobIndexMapSystem<TIndexList, TBlobReference, TBlobRoot> : SystemBase
@@ -97,10 +123,10 @@ namespace NZCore
         protected override void OnCreate()
         {
             _query = new EntityQueryBuilder(Allocator.Temp)
-                        .WithAll<Prefab, TBlobReference>()
-                        .WithOptions(EntityQueryOptions.IncludePrefab)
-                        .Build(ref CheckedStateRef);
-            
+                     .WithAll<Prefab, TBlobReference>()
+                     .WithOptions(EntityQueryOptions.IncludePrefab)
+                     .Build(ref CheckedStateRef);
+
             RequireForUpdate(_query);
         }
 
@@ -109,11 +135,13 @@ namespace NZCore
         {
             CheckedStateRef.CreateSingleton(out TIndexList singleton);
 
-            new BlobIndexMapJob()
+            new BlobIndexMapJob
             {
                 Map = singleton.GetMap(),
                 BlobReference_ReadHandle = SystemAPI.GetComponentTypeHandle<TBlobReference>()
             }.Run(_query);
+
+            singleton.OnIndexDone();
         }
 
         protected override void OnStopRunning()
@@ -134,11 +162,11 @@ namespace NZCore
                 //Debug.Log($"BlobIndexJob for {typeof(TBlobReference).Name}");
                 var blobRefs = (TBlobReference*)chunk.GetRequiredComponentDataPtrRO(ref BlobReference_ReadHandle);
 
-                for (int i = 0; i < chunk.Count; i++)
+                for (var i = 0; i < chunk.Count; i++)
                 {
                     var blobRef = blobRefs[i];
 
-                    Map.TryAdd(blobRef.BlobIndex, new TBlobReference()
+                    Map.TryAdd(blobRef.BlobIndex, new TBlobReference
                     {
                         blob = blobRef.blob
                     });

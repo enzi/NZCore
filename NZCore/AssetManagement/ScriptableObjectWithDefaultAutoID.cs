@@ -10,7 +10,8 @@ namespace NZCore.AssetManagement
 {
     public abstract class ScriptableObjectWithDefaultAutoID : ScriptableObjectWithAutoID, IDefaultAutoID
     {
-        [Tooltip("Some internal code requires a default \"Hit\" result, like Effects, Traits or Triggers. Naturally only one AttackResult can be set as default!")]
+        [Tooltip(
+            "Some internal code requires a default \"Hit\" result, like Effects, Traits or Triggers. Naturally only one AttackResult can be set as default!")]
         public bool DefaultValue;
 
         public bool Default => DefaultValue;

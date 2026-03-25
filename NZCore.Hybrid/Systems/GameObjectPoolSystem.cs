@@ -8,9 +8,7 @@ using UnityEngine;
 
 namespace NZCore.Hybrid
 {
-    public class GameObjectPoolSingleton : IComponentData
-    {
-    }
+    public class GameObjectPoolSingleton : IComponentData { }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class GameObjectPoolSystem : SystemBase
@@ -24,9 +22,7 @@ namespace NZCore.Hybrid
             Enabled = false; // this sytem has no Update
         }
 
-        protected override void OnUpdate()
-        {
-        }
+        protected override void OnUpdate() { }
 
         public GameObject Get(GameObject prefab, out bool freshInstance)
         {
@@ -56,7 +52,9 @@ namespace NZCore.Hybrid
         public void Release(GameObject pooledObject)
         {
             if (!pooledObject.TryGetComponent(out GameObjectPrefabID goPrefabId))
+            {
                 return;
+            }
 
             var prefabId = goPrefabId.prefabId;
 
@@ -78,7 +76,7 @@ namespace NZCore.Hybrid
         public void Unload()
         {
             Debug.Log("Pool Reset");
-            int i = 0;
+            var i = 0;
             foreach (var entry in Pool)
             {
                 while (entry.Value.Count > 0)

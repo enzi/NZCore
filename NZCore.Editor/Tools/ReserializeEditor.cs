@@ -15,7 +15,7 @@ namespace NZCore.Editor
         [MenuItem("Tools/NZCore/Reserialize Assets")]
         private static void Init()
         {
-            ReserializeEditor window = (ReserializeEditor)GetWindow(typeof(ReserializeEditor));
+            var window = (ReserializeEditor)GetWindow(typeof(ReserializeEditor));
             window.Show();
         }
 
@@ -27,8 +27,8 @@ namespace NZCore.Editor
             if (GUILayout.Button("Reserialize"))
             {
                 var paths = AssetDatabase.FindAssets("", new[] { path })
-                    .Select(AssetDatabase.GUIDToAssetPath)
-                    .ToArray();
+                                         .Select(AssetDatabase.GUIDToAssetPath)
+                                         .ToArray();
 
                 AssetDatabase.ForceReserializeAssets(paths, ForceReserializeAssetsOptions.ReserializeAssets);
 

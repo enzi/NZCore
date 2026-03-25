@@ -35,14 +35,12 @@ namespace NZCore
         public int Length => _unsafeParallelList->Count();
 
         public ParallelList(AllocatorManager.AllocatorHandle allocator)
-            : this(1, allocator)
-        {
-        }
+            : this(1, allocator) { }
 
         public ParallelList(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
-            AllocatorManager.AllocatorHandle temp = allocator;
+            var temp = allocator;
             Initialize(initialCapacity, ref temp);
         }
 
@@ -60,7 +58,7 @@ namespace NZCore
 
             CollectionHelper.SetStaticSafetyId<ParallelList<T>>(ref m_Safety, ref s_staticSafetyId.Data);
 
-            m_SafetyIndexHint = (allocator.Handle).AddSafetyHandle(m_Safety);
+            m_SafetyIndexHint = allocator.Handle.AddSafetyHandle(m_Safety);
 
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
@@ -69,10 +67,7 @@ namespace NZCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetChunkCount()
-        {
-            return _unsafeParallelList->GetChunkCount();
-        }
+        public int GetChunkCount() => _unsafeParallelList->GetChunkCount();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetChunkCount(int chunkCount)
@@ -80,46 +75,25 @@ namespace NZCore
             _unsafeParallelList->SetChunkCount(chunkCount);
         }
 
-        public byte* GetPerThreadListPtr()
-        {
-            return _unsafeParallelList->GetPerThreadListPtr();
-        }
+        public byte* GetPerThreadListPtr() => _unsafeParallelList->GetPerThreadListPtr();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref UnsafeList<T> GetUnsafeList(int threadIndex)
-        {
-            return ref _unsafeParallelList->GetUnsafeList(threadIndex);
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnsafeList<T>* GetUnsafeListPtr(int threadIndex)
-        {
-            return _unsafeParallelList->GetUnsafeListPtr(threadIndex);
-        }
+        public ref UnsafeList<T> GetUnsafeList(int threadIndex) => ref _unsafeParallelList->GetUnsafeList(threadIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetBlockCount(int threadIndex)
-        {
-            return _unsafeParallelList->BlockCount(threadIndex);
-        }
+        public UnsafeList<T>* GetUnsafeListPtr(int threadIndex) => _unsafeParallelList->GetUnsafeListPtr(threadIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetBlockCountToIndex(int threadIndex)
-        {
-            return _unsafeParallelList->BlockCountToIndex(threadIndex);
-        }
+        public int GetBlockCount(int threadIndex) => _unsafeParallelList->BlockCount(threadIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeArray<int> GetStartIndexArray(ref SystemState state)
-        {
-            return _unsafeParallelList->GetStartIndexArray(ref state);
-        }
+        public int GetBlockCountToIndex(int threadIndex) => _unsafeParallelList->BlockCountToIndex(threadIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetStartIndexArray(ref NativeArray<int> lengths)
-        {
-            return _unsafeParallelList->GetStartIndexArray(ref lengths);
-        }
+        public NativeArray<int> GetStartIndexArray(ref SystemState state) => _unsafeParallelList->GetStartIndexArray(ref state);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetStartIndexArray(ref NativeArray<int> lengths) => _unsafeParallelList->GetStartIndexArray(ref lengths);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
@@ -132,7 +106,9 @@ namespace NZCore
         private static void CheckInitialCapacity(int initialCapacity)
         {
             if (initialCapacity < 0)
+            {
                 throw new ArgumentOutOfRangeException(nameof(initialCapacity), "Capacity must be >= 0");
+            }
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
@@ -143,7 +119,9 @@ namespace NZCore
             // because the underlying UnsafeUtility.Malloc is expecting a int.
             // TODO: change UnsafeUtility.Malloc to accept a UIntPtr length instead to match C++ API
             if (totalSize > int.MaxValue)
+            {
                 throw new ArgumentOutOfRangeException(nameof(initialCapacity), $"Capacity * sizeof(T) cannot exceed {int.MaxValue} bytes");
+            }
         }
 
         public void Dispose()
@@ -155,36 +133,21 @@ namespace NZCore
             _unsafeParallelList = null;
         }
 
-        public ChunkReader AsChunkReader()
-        {
-            return new ChunkReader(ref this);
-        }
+        public ChunkReader AsChunkReader() => new(ref this);
 
-        public ChunkWriter AsChunkWriter()
-        {
-            return new ChunkWriter(ref this);
-        }
+        public ChunkWriter AsChunkWriter() => new(ref this);
 
-        public ThreadReader AsThreadReader()
-        {
-            return new ThreadReader(ref this);
-        }
+        public ThreadReader AsThreadReader() => new(ref this);
 
-        public ThreadWriter AsThreadWriter()
-        {
-            return new ThreadWriter(ref this);
-        }
+        public ThreadWriter AsThreadWriter() => new(ref this);
 
-        public ParallelListEnumerator GetEnumerator()
-        {
-            return new ParallelListEnumerator(this);
-        }
+        public ParallelListEnumerator GetEnumerator() => new(this);
 
         public void Report()
         {
-            for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
+            for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
             {
-                ref UnsafeList<T> parallelList = ref _unsafeParallelList->GetUnsafeList(i);
+                ref var parallelList = ref _unsafeParallelList->GetUnsafeList(i);
 
                 Debug.Log($"Thread {i} has {parallelList.Length} elements.");
             }
@@ -211,7 +174,9 @@ namespace NZCore
                 CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ChunkWriter");
 
                 if (parallelList._unsafeParallelList->CheckRangesForNull())
+                {
                     Debug.LogError($"Ranges have not been allocated. SetChunkCount(int chunkCount) before writing something."); // {Environment.StackTrace}");
+                }
 #endif
             }
 
@@ -245,10 +210,7 @@ namespace NZCore
                 chunkWriter.SetManualThreadIndex(threadIndex);
             }
 
-            public int GetThreadIndex()
-            {
-                return chunkWriter.GetThreadIndex();
-            }
+            public int GetThreadIndex() => chunkWriter.GetThreadIndex();
         }
 
         [NativeContainer]
@@ -274,22 +236,13 @@ namespace NZCore
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int BeginForEachChunk(int chunkIndex)
-            {
-                return chunkReader.BeginForEachChunk(chunkIndex);
-            }
+            public int BeginForEachChunk(int chunkIndex) => chunkReader.BeginForEachChunk(chunkIndex);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref T Read()
-            {
-                return ref chunkReader.Read();
-            }
+            public ref T Read() => ref chunkReader.Read();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public T* GetPtr()
-            {
-                return chunkReader.GetPtr();
-            }
+            public T* GetPtr() => chunkReader.GetPtr();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset(int chunkIndex)
@@ -298,10 +251,7 @@ namespace NZCore
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int GetListIndex(int chunkIndex)
-            {
-                return chunkReader.GetListIndex(chunkIndex);
-            }
+            public int GetListIndex(int chunkIndex) => chunkReader.GetListIndex(chunkIndex);
         }
 
         [NativeContainer]
@@ -343,12 +293,9 @@ namespace NZCore
             {
                 threadWriter.Write(in value);
             }
-            
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public T* WriteAndReturn(in T value)
-            {
-                return threadWriter.WriteAndReturn(in value);
-            }
+            public T* WriteAndReturn(in T value) => threadWriter.WriteAndReturn(in value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void WriteMemCpy(ref T value)
@@ -357,15 +304,9 @@ namespace NZCore
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref UnsafeList<T> GetList()
-            {
-                return ref threadWriter.GetList();
-            }
+            public ref UnsafeList<T> GetList() => ref threadWriter.GetList();
 
-            public int GetThreadIndex()
-            {
-                return threadWriter.GetThreadIndex();
-            }
+            public int GetThreadIndex() => threadWriter.GetThreadIndex();
         }
 
         [NativeContainer]
@@ -391,57 +332,41 @@ namespace NZCore
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int Begin()
-            {
-                return threadReader.Begin();
-            }
+            public int Begin() => threadReader.Begin();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int Begin(int threadIndex)
-            {
-                return threadReader.Begin(threadIndex);
-            }
+            public int Begin(int threadIndex) => threadReader.Begin(threadIndex);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref T Read()
-            {
-                return ref threadReader.Read();
-            }
+            public ref T Read() => ref threadReader.Read();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public T* GetPtr()
-            {
-                return threadReader.GetPtr();
-            }
+            public T* GetPtr() => threadReader.GetPtr();
         }
 
         // helper jobs
 
         public JobHandle CopyToArraySingle(
             ref NativeList<T> nativeList,
-            JobHandle dependency)
-        {
-            return new UnsafeParallelListToArraySingleThreaded()
+            JobHandle dependency) =>
+            new UnsafeParallelListToArraySingleThreaded
             {
                 ParallelList = _unsafeParallelList,
                 List = nativeList.m_ListData
             }.Schedule(dependency);
-        }
 
         public JobHandle CopyToArraySingleAndIndex<TKey>(
             ref NativeList<T> nativeList,
             ref ArrayHashMap<TKey, T> arrayHashMap,
             JobHandle dependency,
             ParallelListToArrayAndIndexSingleThreaded<TKey> jobParam = default)
-            where TKey : unmanaged, IEquatable<TKey>
-        {
-            return new ParallelListToArrayAndIndexSingleThreaded<TKey>()
+            where TKey : unmanaged, IEquatable<TKey> =>
+            new ParallelListToArrayAndIndexSingleThreaded<TKey>
             {
                 ParallelList = this,
                 List = nativeList,
                 ArrayHashMap = arrayHashMap
             }.Schedule(dependency);
-        }
 
         public JobHandle CopyToArraySingleAndIndex<TKey>(
             ref NativeList<T> nativeList,
@@ -449,16 +374,14 @@ namespace NZCore
             ref ArrayHashMap<TKey, T> arrayHashMap2,
             JobHandle dependency,
             ParallelListToArrayAndIndexSingleThreadedForTwoMaps<TKey> jobParam = default)
-            where TKey : unmanaged, IEquatable<TKey>
-        {
-            return new ParallelListToArrayAndIndexSingleThreadedForTwoMaps<TKey>()
+            where TKey : unmanaged, IEquatable<TKey> =>
+            new ParallelListToArrayAndIndexSingleThreadedForTwoMaps<TKey>
             {
                 ParallelList = this,
                 List = nativeList,
                 ArrayHashMap1 = arrayHashMap,
                 ArrayHashMap2 = arrayHashMap2
             }.Schedule(dependency);
-        }
 
         [BurstCompile]
         public struct ParallelListToArraySingleThreaded : IJob
@@ -469,16 +392,16 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
-                int parallelListLength = ParallelList.Length;
-                int oldListLength = List.Length;
+                var parallelListLength = ParallelList.Length;
+                var oldListLength = List.Length;
 
                 List.ResizeUninitialized(oldListLength + parallelListLength);
-                byte* dst = (byte*) (List.GetUnsafePtr() + oldListLength);
+                var dst = (byte*)(List.GetUnsafePtr() + oldListLength);
 
-                for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
+                for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
                     ref var threadList = ref ParallelList.GetUnsafeList(i);
-                    int threadByteLength = threadList.m_length * sizeof(T);
+                    var threadByteLength = threadList.m_length * sizeof(T);
 
                     UnsafeUtility.MemCpy(dst, threadList.Ptr, threadByteLength);
                     dst += threadByteLength;
@@ -497,21 +420,21 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
-                int parallelListLength = ParallelList->Length;
-                int oldListLength = List->Length;
+                var parallelListLength = ParallelList->Length;
+                var oldListLength = List->Length;
 
                 List->Resize(oldListLength + parallelListLength, NativeArrayOptions.UninitializedMemory);
-                byte* dst = (byte*) (List->Ptr + oldListLength);
+                var dst = (byte*)(List->Ptr + oldListLength);
 
-                UnsafeParallelList<T>.PerThreadList* perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList->GetPerThreadListPtr();
+                var perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList->GetPerThreadListPtr();
 
-                int threadCount = JobsUtility.ThreadIndexCount;
-                
-                for (int i = 0; i < threadCount; i++)
+                var threadCount = JobsUtility.ThreadIndexCount;
+
+                for (var i = 0; i < threadCount; i++)
                 {
                     var threadList = perThreadListPtr[i].List;
-                    int threadByteLength = threadList.m_length * sizeof(T);
-                    
+                    var threadByteLength = threadList.m_length * sizeof(T);
+
                     UnsafeUtility.MemCpy(dst, threadList.Ptr, threadByteLength);
                     dst += threadByteLength;
                 }
@@ -529,23 +452,23 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
-                int parallelListLength = ParallelList.Length;
-                int oldListLength = List.Length;
-                int newLength = oldListLength + parallelListLength;
+                var parallelListLength = ParallelList.Length;
+                var oldListLength = List.Length;
+                var newLength = oldListLength + parallelListLength;
 
                 List.ResizeUninitialized(newLength);
                 ArrayHashMap.SetCapacity(newLength);
-                byte* listPtr = (byte*)List.m_ListData->Ptr;
+                var listPtr = (byte*)List.m_ListData->Ptr;
 
                 //Debug.Log($"Copying {parallelListLength} elements");
 
                 var sizeOf = sizeof(T);
 
-                UnsafeParallelList<T>.PerThreadList* perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList.GetPerThreadListPtr();
+                var perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList.GetPerThreadListPtr();
 
-                byte* dst = listPtr + oldListLength * sizeOf;
+                var dst = listPtr + oldListLength * sizeOf;
 
-                for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
+                for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
                     //var threadList = ParallelList.GetUnsafeList(i);
                     var threadList = perThreadListPtr[i].List;
@@ -574,23 +497,23 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
-                int parallelListLength = ParallelList.Length;
-                int oldListLength = List.Length;
-                int newLength = oldListLength + parallelListLength;
+                var parallelListLength = ParallelList.Length;
+                var oldListLength = List.Length;
+                var newLength = oldListLength + parallelListLength;
 
                 List.ResizeUninitialized(newLength);
 
-                byte* listPtr = (byte*)List.m_ListData->Ptr;
+                var listPtr = (byte*)List.m_ListData->Ptr;
 
                 //Debug.Log($"Copying {parallelListLength} elements");
 
                 var sizeOf = sizeof(T);
 
-                UnsafeParallelList<T>.PerThreadList* perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList.GetPerThreadListPtr();
+                var perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList.GetPerThreadListPtr();
 
-                byte* dst = listPtr + oldListLength * sizeOf;
+                var dst = listPtr + oldListLength * sizeOf;
 
-                for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
+                for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
                     //var threadList = ParallelList.GetUnsafeList(i);
                     var threadList = perThreadListPtr[i].List;
@@ -620,13 +543,13 @@ namespace NZCore
             ref NativeList<T> list,
             JobHandle dependency)
         {
-            var prepareHandle = new PrepareParallelListCopyJob()
+            var prepareHandle = new PrepareParallelListCopyJob
             {
                 ParallelList = this,
                 List = list
             }.Schedule(dependency);
 
-            var copyHandle = new ParallelListToArrayMultiThreaded()
+            var copyHandle = new ParallelListToArrayMultiThreaded
             {
                 ParallelList = this,
                 List = list
@@ -638,14 +561,14 @@ namespace NZCore
         public JobHandle CopyToArrayParallelAndIndex<TKey>(ref NativeList<T> nativeList, ref ArrayHashMap<TKey, T> arrayHashMap, JobHandle dependency)
             where TKey : unmanaged, IEquatable<TKey>
         {
-            var prepareHandle = new PrepareParallelListCopyAndIndexJob<TKey>()
+            var prepareHandle = new PrepareParallelListCopyAndIndexJob<TKey>
             {
                 ParallelList = this,
                 List = nativeList,
                 ArrayHashMap = arrayHashMap
             }.Schedule(dependency);
 
-            var copyAndIndexHandle = new ParallelListToArrayAndIndexMultiThreaded<TKey>()
+            var copyAndIndexHandle = new ParallelListToArrayAndIndexMultiThreaded<TKey>
             {
                 ParallelList = this,
                 List = nativeList,
@@ -655,10 +578,11 @@ namespace NZCore
             return copyAndIndexHandle;
         }
 
-        public JobHandle CopyToArrayParallelAndIndex<TKey>(ref NativeList<T> nativeList, ref ArrayHashMap<TKey, T> arrayHashMap, ref ArrayHashMap<TKey, T> arrayHashMap2, JobHandle dependency)
+        public JobHandle CopyToArrayParallelAndIndex<TKey>(ref NativeList<T> nativeList, ref ArrayHashMap<TKey, T> arrayHashMap,
+            ref ArrayHashMap<TKey, T> arrayHashMap2, JobHandle dependency)
             where TKey : unmanaged, IEquatable<TKey>
         {
-            var prepareHandle = new PrepareParallelListCopyAndIndexJobForTwoMaps<TKey>()
+            var prepareHandle = new PrepareParallelListCopyAndIndexJobForTwoMaps<TKey>
             {
                 ParallelList = this,
                 List = nativeList,
@@ -666,7 +590,7 @@ namespace NZCore
                 ArrayHashMap2 = arrayHashMap2
             }.Schedule(dependency);
 
-            var copyAndIndexHandle1 = new ParallelListToArrayAndIndexMultiThreadedForTwoMaps<TKey>()
+            var copyAndIndexHandle1 = new ParallelListToArrayAndIndexMultiThreadedForTwoMaps<TKey>
             {
                 ParallelList = this,
                 List = nativeList,
@@ -686,7 +610,7 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.NoInlining)]
             public void Execute()
             {
-                int parallelListCount = ParallelList.Length;
+                var parallelListCount = ParallelList.Length;
                 List.SetCapacity(List.Length + parallelListCount);
             }
         }
@@ -703,10 +627,12 @@ namespace NZCore
             public void Execute(int index)
             {
                 var threadList = ParallelList.GetUnsafeList(index);
-                int threadListLength = threadList.Length;
+                var threadListLength = threadList.Length;
 
                 if (threadListLength == 0)
+                {
                     return;
+                }
 
                 var sizeOf = sizeof(T);
 
@@ -727,7 +653,7 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
-                int parallelListCount = ParallelList.Length;
+                var parallelListCount = ParallelList.Length;
                 List.SetCapacity(List.Length + parallelListCount);
                 //List.Clear();
                 ArrayHashMap.SetCapacity(List.Length + parallelListCount);
@@ -748,7 +674,7 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute()
             {
-                int parallelListCount = ParallelList.Length;
+                var parallelListCount = ParallelList.Length;
                 List.SetCapacity(List.Length + parallelListCount);
 
                 ArrayHashMap.SetCapacity(List.Length + parallelListCount);
@@ -775,10 +701,12 @@ namespace NZCore
             public void Execute(int index)
             {
                 var threadList = ParallelList.GetUnsafeList(index);
-                int threadListLength = threadList.Length;
+                var threadListLength = threadList.Length;
 
                 if (threadListLength == 0)
+                {
                     return;
+                }
 
                 var sizeOf = sizeof(T);
                 //void* dst = List.GetUnsafePtr() + List.m_ListData->m_length;
@@ -813,10 +741,12 @@ namespace NZCore
             public void Execute(int index)
             {
                 var threadList = ParallelList.GetUnsafeList(index);
-                int threadListLength = threadList.Length;
+                var threadListLength = threadList.Length;
 
                 if (threadListLength == 0)
+                {
                     return;
+                }
 
                 // if (!tmpList1.IsCreated)
                 // {
@@ -871,11 +801,11 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                while(currentIndex < JobsUtility.ThreadIndexCount)
+                while (currentIndex < JobsUtility.ThreadIndexCount)
                 {
                     listPtr = parallelList.GetUnsafeListPtr(currentIndex);
                     currentIndex++;
-                    
+
                     if (listPtr->Length > 0)
                     {
                         return true;

@@ -15,33 +15,55 @@ namespace NZCore.UI.Editor
 {
     public class NZAvatarPreview
     {
-        #region Reflection Access
-        private static readonly Type t_GameObjectInspectorType =  typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.GameObjectInspector");
-        private static readonly MethodInfo m_GameObjectInspector_GetRenderableCenterRecurse = t_GameObjectInspectorType.GetMethod("GetRenderableCenterRecurse", BindingFlags.Public | BindingFlags.Static);
-        private static readonly MethodInfo m_GameObjectInspector_HasRenderableParts = t_GameObjectInspectorType.GetMethod("HasRenderableParts", BindingFlags.Public | BindingFlags.Static);
-        private static readonly MethodInfo m_GameObjectInspector_GetRenderableBounds = t_GameObjectInspectorType.GetMethod("GetRenderableBounds", BindingFlags.Public | BindingFlags.Static);
-        
-        private static readonly Type t_BlendTree =  typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.Animations.BlendTree");
-        private static readonly MethodInfo m_BlendTree_GetAnimationClipsFlattened = t_BlendTree.GetMethod("GetAnimationClipsFlattened", BindingFlags.NonPublic | BindingFlags.Instance);
-        
-        private static readonly Type t_ModelImporter =  typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.ModelImporter");
-        private static readonly MethodInfo m_ModelImporter_CalculateBestFittingPreviewGameObject = t_ModelImporter.GetMethod("CalculateBestFittingPreviewGameObject", BindingFlags.NonPublic | BindingFlags.Instance);
-        
-        private static readonly Type t_AvatarPreviewSelection =  typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.AvatarPreviewSelection");
-        private static readonly MethodInfo m_AvatarPreviewSelection_GetPreview = t_AvatarPreviewSelection.GetMethod("GetPreview", BindingFlags.Public | BindingFlags.Static);
-        private static readonly MethodInfo m_AvatarPreviewSelection_SetPreview = t_AvatarPreviewSelection.GetMethod("SetPreview", BindingFlags.Public | BindingFlags.Static);
-        
-        private static readonly Type t_EditorUtility=  typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.EditorUtility");
-        private static readonly MethodInfo m_EditorUtility_InstantiateForAnimatorPreview = t_EditorUtility.GetMethod("InstantiateForAnimatorPreview", BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo m_EditorUtility_InitInstantiatedPreviewRecursive = t_EditorUtility.GetMethod("InstantiateForAnimatorPreview", BindingFlags.NonPublic | BindingFlags.Static);
-        
-        private static readonly Type t_IAnimationPreviewable =  typeof(Animator).Assembly.GetType("UnityEngine.Animations.IAnimationPreviewable");
-        private static readonly MethodInfo m_IAnimationPreviewable_OnPreviewUpdate = t_IAnimationPreviewable.GetMethod("OnPreviewUpdate", BindingFlags.Public | BindingFlags.Instance);
-        
-        private static readonly MethodInfo getComponentsMethod = typeof(GameObject).GetMethod("GetComponentsInChildren", new[] { typeof(Type) });
-        #endregion
+#region Reflection Access
 
-        #region Constants
+        private static readonly Type t_GameObjectInspectorType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.GameObjectInspector");
+
+        private static readonly MethodInfo m_GameObjectInspector_GetRenderableCenterRecurse =
+            t_GameObjectInspectorType.GetMethod("GetRenderableCenterRecurse", BindingFlags.Public | BindingFlags.Static);
+
+        private static readonly MethodInfo m_GameObjectInspector_HasRenderableParts =
+            t_GameObjectInspectorType.GetMethod("HasRenderableParts", BindingFlags.Public | BindingFlags.Static);
+
+        private static readonly MethodInfo m_GameObjectInspector_GetRenderableBounds =
+            t_GameObjectInspectorType.GetMethod("GetRenderableBounds", BindingFlags.Public | BindingFlags.Static);
+
+        private static readonly Type t_BlendTree = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.Animations.BlendTree");
+
+        private static readonly MethodInfo m_BlendTree_GetAnimationClipsFlattened =
+            t_BlendTree.GetMethod("GetAnimationClipsFlattened", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly Type t_ModelImporter = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.ModelImporter");
+
+        private static readonly MethodInfo m_ModelImporter_CalculateBestFittingPreviewGameObject =
+            t_ModelImporter.GetMethod("CalculateBestFittingPreviewGameObject", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly Type t_AvatarPreviewSelection = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.AvatarPreviewSelection");
+
+        private static readonly MethodInfo m_AvatarPreviewSelection_GetPreview =
+            t_AvatarPreviewSelection.GetMethod("GetPreview", BindingFlags.Public | BindingFlags.Static);
+
+        private static readonly MethodInfo m_AvatarPreviewSelection_SetPreview =
+            t_AvatarPreviewSelection.GetMethod("SetPreview", BindingFlags.Public | BindingFlags.Static);
+
+        private static readonly Type t_EditorUtility = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.EditorUtility");
+
+        private static readonly MethodInfo m_EditorUtility_InstantiateForAnimatorPreview =
+            t_EditorUtility.GetMethod("InstantiateForAnimatorPreview", BindingFlags.NonPublic | BindingFlags.Static);
+
+        private static readonly MethodInfo m_EditorUtility_InitInstantiatedPreviewRecursive =
+            t_EditorUtility.GetMethod("InstantiateForAnimatorPreview", BindingFlags.NonPublic | BindingFlags.Static);
+
+        private static readonly Type t_IAnimationPreviewable = typeof(Animator).Assembly.GetType("UnityEngine.Animations.IAnimationPreviewable");
+
+        private static readonly MethodInfo m_IAnimationPreviewable_OnPreviewUpdate =
+            t_IAnimationPreviewable.GetMethod("OnPreviewUpdate", BindingFlags.Public | BindingFlags.Instance);
+
+        private static readonly MethodInfo getComponentsMethod = typeof(GameObject).GetMethod("GetComponentsInChildren", new[] { typeof(Type) });
+
+#endregion
+
+#region Constants
 
         private const string kDefaultAvatarPreviewOption = "DefaultAvatarPreviewOption";
         private const string kIkPref = "AvatarpreviewShowIK";
@@ -50,43 +72,45 @@ namespace NZCore.UI.Editor
         private const string kSpeedPref = "AvatarpreviewSpeed";
         private const float kTimeControlRectHeight = 20;
 
-        #endregion
+#endregion
 
-        #region Fields
+#region Fields
 
         public int fps = 60;
 
-        private Material     m_FloorMaterial;
-        private Material     m_FloorMaterialSmall;
-        private Material     m_ShadowMaskMaterial;
-        private Material     m_ShadowPlaneMaterial;
+        private Material m_FloorMaterial;
+        private Material m_FloorMaterialSmall;
+        private Material m_ShadowMaskMaterial;
+        private Material m_ShadowPlaneMaterial;
 
-        public PreviewRenderUtility        m_PreviewUtility;
-        private GameObject                  m_PreviewInstance;
-        private GameObject                  m_ReferenceInstance;
-        private GameObject                  m_DirectionInstance;
-        private GameObject                  m_PivotInstance;
-        private GameObject                  m_RootInstance;
+        public PreviewRenderUtility m_PreviewUtility;
+        private GameObject m_PreviewInstance;
+        private GameObject m_ReferenceInstance;
+        private GameObject m_DirectionInstance;
+        private GameObject m_PivotInstance;
+
+        private GameObject m_RootInstance;
+
         //private IAnimationPreviewable[]     m_Previewables;
-        private object[]                    m_Previewables;
-        private float                       m_BoundingVolumeScale;
-        private Motion                      m_SourcePreviewMotion;
-        private Animator                    m_SourceScenePreviewAnimator;
+        private object[] m_Previewables;
+        private float m_BoundingVolumeScale;
+        private Motion m_SourcePreviewMotion;
+        private Animator m_SourceScenePreviewAnimator;
 
-        private const string                s_PreviewStr = "Preview";
-        private int                         m_PreviewHint = s_PreviewStr.GetHashCode();
+        private const string s_PreviewStr = "Preview";
+        private int m_PreviewHint = s_PreviewStr.GetHashCode();
 
-        private const string                s_PreviewSceneStr = "PreviewSene";
-        private int                         m_PreviewSceneHint = s_PreviewSceneStr.GetHashCode();
+        private const string s_PreviewSceneStr = "PreviewSene";
+        private int m_PreviewSceneHint = s_PreviewSceneStr.GetHashCode();
 
-        private Texture2D                   m_FloorTexture;
-        private Mesh                        m_FloorPlane;
+        private Texture2D m_FloorTexture;
+        private Mesh m_FloorPlane;
 
-        private bool                        m_ShowReference = false;
-        private bool                        m_IKOnFeet = false;
-        private bool                        m_ShowIKOnFeetButton = true;
-        private bool                        m_2D;
-        private bool                        m_IsValid;
+        private bool m_ShowReference = false;
+        private bool m_IKOnFeet = false;
+        private bool m_ShowIKOnFeetButton = true;
+        private bool m_2D;
+        private bool m_IsValid;
 
         private const float kFloorFadeDuration = 0.2f;
         private const float kFloorScale = 5;
@@ -101,11 +125,11 @@ namespace NZCore.UI.Editor
         private float m_PrevFloorHeight = 0;
         private float m_NextFloorHeight = 0;
 
-        public Vector2 m_PreviewDir = new Vector2(120, -20);
+        public Vector2 m_PreviewDir = new(120, -20);
         public float m_AvatarScale = 1.0f;
         public float m_ZoomFactor = 1.0f;
         public Vector3 m_PivotPositionOffset = Vector3.zero;
-        
+
         //private float m_LastNormalizedTime = -1000;
         //private float m_LastStartTime = -1000;
         //private float m_LastStopTime = -1000;
@@ -113,15 +137,12 @@ namespace NZCore.UI.Editor
 
         private static NZAvatarPreview instance;
 
-        #endregion
-        
-        #region Properties
+#endregion
 
-        public static NZAvatarPreview Instance
-        {
-            get => instance;
-        }
-        
+#region Properties
+
+        public static NZAvatarPreview Instance => instance;
+
         public OnAvatarChange OnAvatarChangeFunc
         {
             set => m_OnAvatarChangeFunc = value;
@@ -159,7 +180,9 @@ namespace NZCore.UI.Editor
             get
             {
                 if (Animator && Animator.isHuman)
+                {
                     return Animator.bodyPosition;
+                }
 
                 if (m_PreviewInstance != null)
                 {
@@ -170,7 +193,7 @@ namespace NZCore.UI.Editor
                 return Vector3.zero;
             }
         }
-        
+
         public PreviewRenderUtility PreviewUtility
         {
             get
@@ -190,19 +213,21 @@ namespace NZCore.UI.Editor
                     },
                     ambientColor = new Color(.1f, .1f, .1f, 0)
                 };
-                    
+
                 m_PreviewUtility.lights[0].intensity = kDefaultIntensity;
                 m_PreviewUtility.lights[0].transform.rotation = Quaternion.Euler(40f, 40f, 0);
                 m_PreviewUtility.lights[1].intensity = kDefaultIntensity;
-                
+
                 return m_PreviewUtility;
             }
         }
 
         public Vector3 rootPosition => m_PreviewInstance ? m_PreviewInstance.transform.position : Vector3.zero;
-        #endregion
-        
-        #region GUIStyles
+
+#endregion
+
+#region GUIStyles
+
         private class Styles
         {
             public readonly GUIContent pivot = EditorGUIUtility.TrIconContent("AvatarPivot", "Displays avatar's pivot and mass center");
@@ -214,24 +239,28 @@ namespace NZCore.UI.Editor
             public readonly GUIStyle preSlider = "preSlider";
             public readonly GUIStyle preSliderThumb = "preSliderThumb";
         }
+
         private static Styles s_Styles;
-        #endregion
-        
+
+#endregion
+
         public delegate void OnAvatarChange();
 
         private OnAvatarChange m_OnAvatarChangeFunc;
-        
+
         public NZAvatarPreview(Animator previewObjectInScene, Motion objectOnSameAsset)
         {
             instance = this;
-            
+
             InitInstance(previewObjectInScene, objectOnSameAsset);
         }
-        
+
         private void Init()
         {
             if (s_Styles == null)
+            {
                 s_Styles = new Styles();
+            }
 
             if (m_FloorPlane == null)
             {
@@ -245,7 +274,7 @@ namespace NZCore.UI.Editor
 
             if (m_FloorMaterial == null)
             {
-                Shader shader = EditorGUIUtility.LoadRequired("Previews/PreviewPlaneWithShadow.shader") as Shader;
+                var shader = EditorGUIUtility.LoadRequired("Previews/PreviewPlaneWithShadow.shader") as Shader;
                 m_FloorMaterial = new Material(shader)
                 {
                     mainTexture = m_FloorTexture,
@@ -263,7 +292,7 @@ namespace NZCore.UI.Editor
 
             if (m_ShadowMaskMaterial == null)
             {
-                Shader shader = EditorGUIUtility.LoadRequired("Previews/PreviewShadowMask.shader") as Shader;
+                var shader = EditorGUIUtility.LoadRequired("Previews/PreviewShadowMask.shader") as Shader;
                 m_ShadowMaskMaterial = new Material(shader)
                 {
                     hideFlags = HideFlags.HideAndDontSave
@@ -272,14 +301,14 @@ namespace NZCore.UI.Editor
 
             if (m_ShadowPlaneMaterial == null)
             {
-                Shader shader = EditorGUIUtility.LoadRequired("Previews/PreviewShadowPlaneClip.shader") as Shader;
+                var shader = EditorGUIUtility.LoadRequired("Previews/PreviewShadowPlaneClip.shader") as Shader;
                 m_ShadowPlaneMaterial = new Material(shader)
                 {
                     hideFlags = HideFlags.HideAndDontSave
                 };
             }
         }
-        
+
         private void InitInstance(Animator scenePreviewObject, Motion motion)
         {
             m_SourcePreviewMotion = motion;
@@ -287,13 +316,13 @@ namespace NZCore.UI.Editor
 
             if (m_PreviewInstance == null)
             {
-                GameObject go = CalculatePreviewGameObject(scenePreviewObject, motion, animationClipType);
+                var go = CalculatePreviewGameObject(scenePreviewObject, motion, animationClipType);
                 SetupBounds(go);
             }
 
             if (m_ReferenceInstance == null)
             {
-                GameObject referenceGO = (GameObject)EditorGUIUtility.Load("Avatar/dial_flat.prefab");
+                var referenceGO = (GameObject)EditorGUIUtility.Load("Avatar/dial_flat.prefab");
                 m_ReferenceInstance = (GameObject)Object.Instantiate(referenceGO, Vector3.zero, Quaternion.identity);
                 m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_ReferenceInstance });
                 PreviewUtility.AddSingleGO(m_ReferenceInstance);
@@ -301,7 +330,7 @@ namespace NZCore.UI.Editor
 
             if (m_DirectionInstance == null)
             {
-                GameObject directionGO = (GameObject)EditorGUIUtility.Load("Avatar/arrow.fbx");
+                var directionGO = (GameObject)EditorGUIUtility.Load("Avatar/arrow.fbx");
                 m_DirectionInstance = (GameObject)Object.Instantiate(directionGO, Vector3.zero, Quaternion.identity);
                 m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_DirectionInstance });
                 PreviewUtility.AddSingleGO(m_DirectionInstance);
@@ -309,7 +338,7 @@ namespace NZCore.UI.Editor
 
             if (m_PivotInstance == null)
             {
-                GameObject pivotGO = (GameObject)EditorGUIUtility.Load("Avatar/root.fbx");
+                var pivotGO = (GameObject)EditorGUIUtility.Load("Avatar/root.fbx");
                 m_PivotInstance = (GameObject)Object.Instantiate(pivotGO, Vector3.zero, Quaternion.identity);
                 m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_PivotInstance });
                 PreviewUtility.AddSingleGO(m_PivotInstance);
@@ -317,7 +346,7 @@ namespace NZCore.UI.Editor
 
             if (m_RootInstance == null)
             {
-                GameObject rootGO = (GameObject)EditorGUIUtility.Load("Avatar/root.fbx");
+                var rootGO = (GameObject)EditorGUIUtility.Load("Avatar/root.fbx");
                 m_RootInstance = (GameObject)Object.Instantiate(rootGO, Vector3.zero, Quaternion.identity);
                 m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { m_RootInstance });
                 PreviewUtility.AddSingleGO(m_RootInstance);
@@ -333,12 +362,12 @@ namespace NZCore.UI.Editor
             var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(motion)) as ModelImporter;
             if (importer && importer.bakeAxisConversion)
             {
-                m_PreviewDir += new Vector2(180,0);
+                m_PreviewDir += new Vector2(180, 0);
             }
 
             m_PivotPositionOffset = Vector3.zero;
         }
-        
+
         private void SetupBounds(GameObject go)
         {
             m_IsValid = go != null && go != GetGenericAnimationFallback();
@@ -348,32 +377,38 @@ namespace NZCore.UI.Editor
                 m_PreviewInstance = InstantiatePreviewPrefab(go);
                 PreviewUtility.AddSingleGO(m_PreviewInstance);
 
-                m_Previewables = (object[]) getComponentsMethod.Invoke(m_PreviewInstance, new object[] { t_IAnimationPreviewable });
-                var bounds = (Bounds) m_GameObjectInspector_GetRenderableBounds.Invoke(null, new object[] { m_PreviewInstance });
+                m_Previewables = (object[])getComponentsMethod.Invoke(m_PreviewInstance, new object[] { t_IAnimationPreviewable });
+                var bounds = (Bounds)m_GameObjectInspector_GetRenderableBounds.Invoke(null, new object[] { m_PreviewInstance });
 
                 m_BoundingVolumeScale = Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z));
 
 
                 if (Animator && Animator.isHuman)
+                {
                     m_AvatarScale = m_ZoomFactor = Animator.humanScale;
+                }
                 else
+                {
                     m_AvatarScale = m_ZoomFactor = m_BoundingVolumeScale / 2;
+                }
             }
         }
-        
+
         private GameObject InstantiatePreviewPrefab(GameObject original)
         {
             if (original == null)
+            {
                 throw new ArgumentException("The Prefab you want to instantiate is null.");
-            
+            }
+
             //GameObject go = EditorUtility.InstantiateRemoveAllNonAnimationComponents(original, Vector3.zero, Quaternion.identity) as GameObject;
-            GameObject go = Object.Instantiate(original);
+            var go = Object.Instantiate(original);
             go.name += "AnimatorPreview";
             go.tag = "Untagged";
             //EditorUtility.InitInstantiatedPreviewRecursive(go);
             m_EditorUtility_InitInstantiatedPreviewRecursive.Invoke(null, new object[] { go });
-            
-            Animator[] componentsInChildren = go.GetComponentsInChildren<Animator>();
+
+            var componentsInChildren = go.GetComponentsInChildren<Animator>();
             foreach (var animator in componentsInChildren)
             {
                 animator.enabled = false;
@@ -381,19 +416,19 @@ namespace NZCore.UI.Editor
                 animator.logWarnings = false;
                 animator.fireEvents = false;
             }
-            
+
             if (componentsInChildren.Length == 0)
             {
-                Animator animator = go.AddComponent<Animator>();
+                var animator = go.AddComponent<Animator>();
                 animator.enabled = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 animator.logWarnings = false;
                 animator.fireEvents = false;
             }
-            
+
             return go;
         }
-        
+
         public void OnDisable()
         {
             if (m_PreviewUtility == null)
@@ -408,8 +443,10 @@ namespace NZCore.UI.Editor
         private void SetPreviewCharacterEnabled(bool enabled, bool showReference)
         {
             if (m_PreviewInstance != null)
+            {
                 SetEnabledRecursive(m_PreviewInstance, enabled);
-            
+            }
+
             SetEnabledRecursive(m_ReferenceInstance, showReference && enabled);
             SetEnabledRecursive(m_DirectionInstance, showReference && enabled);
             SetEnabledRecursive(m_PivotInstance, showReference && enabled);
@@ -418,23 +455,29 @@ namespace NZCore.UI.Editor
 
         private static void SetEnabledRecursive(GameObject go, bool enabled)
         {
-            foreach (Renderer componentsInChild in go.GetComponentsInChildren<Renderer>())
+            foreach (var componentsInChild in go.GetComponentsInChildren<Renderer>())
+            {
                 componentsInChild.enabled = enabled;
+            }
         }
 
         private static AnimationClip GetFirstAnimationClipFromMotion(Motion motion)
         {
-            AnimationClip clip = motion as AnimationClip;
+            var clip = motion as AnimationClip;
             if (clip)
+            {
                 return clip;
-           
-            UnityEditor.Animations.BlendTree blendTree = motion as UnityEditor.Animations.BlendTree;
+            }
+
+            var blendTree = motion as UnityEditor.Animations.BlendTree;
             if (blendTree)
             {
                 //AnimationClip[] clips = blendTree.GetAnimationClipsFlattened();
-                AnimationClip[] clips = (AnimationClip[]) m_BlendTree_GetAnimationClipsFlattened.Invoke(blendTree, null);
+                var clips = (AnimationClip[])m_BlendTree_GetAnimationClipsFlattened.Invoke(blendTree, null);
                 if (clips.Length > 0)
+                {
                     return clips[0];
+                }
             }
 
             return null;
@@ -442,12 +485,15 @@ namespace NZCore.UI.Editor
 
         private static ModelImporterAnimationType GetAnimationType(GameObject go)
         {
-            Animator animator = go.GetComponent<Animator>();
+            var animator = go.GetComponent<Animator>();
             if (animator)
             {
-                Avatar avatar = animator.avatar;
+                var avatar = animator.avatar;
                 if (avatar && avatar.isHuman)
+                {
                     return ModelImporterAnimationType.Human;
+                }
+
                 return ModelImporterAnimationType.Generic;
             }
 
@@ -461,15 +507,19 @@ namespace NZCore.UI.Editor
 
         private static ModelImporterAnimationType GetAnimationType(Motion motion)
         {
-            AnimationClip clip = GetFirstAnimationClipFromMotion(motion);
+            var clip = GetFirstAnimationClipFromMotion(motion);
             if (clip)
             {
                 if (clip.legacy)
+                {
                     return ModelImporterAnimationType.Legacy;
-                
+                }
+
                 if (clip.humanMotion)
+                {
                     return ModelImporterAnimationType.Human;
-                
+                }
+
                 return ModelImporterAnimationType.Generic;
             }
 
@@ -479,53 +529,69 @@ namespace NZCore.UI.Editor
         private static bool IsValidPreviewGameObject(GameObject target, ModelImporterAnimationType requiredClipType)
         {
             if (target != null && !target.activeSelf)
+            {
                 Debug.LogWarning("Can't preview inactive object, using fallback object");
+            }
 
-            return target != null && 
+            return target != null &&
                    target.activeSelf &&
                    //GameObjectInspector.HasRenderableParts(target) &&
-                   (bool) m_GameObjectInspector_HasRenderableParts.Invoke(null, new object[] { target }) &&
-                !(requiredClipType != ModelImporterAnimationType.None && 
-                  GetAnimationType(target) != requiredClipType);
+                   (bool)m_GameObjectInspector_HasRenderableParts.Invoke(null, new object[] { target }) &&
+                   !(requiredClipType != ModelImporterAnimationType.None &&
+                     GetAnimationType(target) != requiredClipType);
         }
 
         private static GameObject FindBestFittingRenderableGameObjectFromModelAsset(Object asset, ModelImporterAnimationType animationType)
         {
             if (asset == null)
+            {
                 return null;
+            }
 
-            ModelImporter importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(asset)) as ModelImporter;
+            var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(asset)) as ModelImporter;
             if (importer == null)
+            {
                 return null;
+            }
 
             //string assetPath = importer.CalculateBestFittingPreviewGameObject();
-            string assetPath = (string)m_ModelImporter_CalculateBestFittingPreviewGameObject.Invoke(importer, null);
-            GameObject tempGO = AssetDatabase.LoadMainAssetAtPath(assetPath) as GameObject;
+            var assetPath = (string)m_ModelImporter_CalculateBestFittingPreviewGameObject.Invoke(importer, null);
+            var tempGO = AssetDatabase.LoadMainAssetAtPath(assetPath) as GameObject;
 
             // We should also check for isHumanClip matching the animationclip requiremenets...
             if (IsValidPreviewGameObject(tempGO, ModelImporterAnimationType.None))
+            {
                 return tempGO;
+            }
             else
+            {
                 return null;
+            }
         }
 
         private static GameObject CalculatePreviewGameObject(Animator selectedAnimator, Motion motion, ModelImporterAnimationType animationType)
         {
-            AnimationClip sourceClip = GetFirstAnimationClipFromMotion(motion);
+            var sourceClip = GetFirstAnimationClipFromMotion(motion);
 
             // Use selected preview
             //GameObject selected = AvatarPreviewSelection.GetPreview(animationType);
-            GameObject selected = (GameObject)m_AvatarPreviewSelection_GetPreview.Invoke(null, new object[] { animationType });
+            var selected = (GameObject)m_AvatarPreviewSelection_GetPreview.Invoke(null, new object[] { animationType });
             if (IsValidPreviewGameObject(selected, ModelImporterAnimationType.None))
+            {
                 return selected;
+            }
 
             if (selectedAnimator != null && IsValidPreviewGameObject(selectedAnimator.gameObject, animationType))
+            {
                 return selectedAnimator.gameObject;
+            }
 
             // Find the best fitting preview game object for the asset we are viewing (Handles @ convention, will pick base path for you)
             selected = FindBestFittingRenderableGameObjectFromModelAsset(sourceClip, animationType);
             if (selected != null)
+            {
                 return selected;
+            }
 
             return animationType switch
             {
@@ -535,20 +601,14 @@ namespace NZCore.UI.Editor
             };
         }
 
-        private static GameObject GetGenericAnimationFallback()
-        {
-            return (GameObject)EditorGUIUtility.Load("Avatar/DefaultGeneric.fbx");
-        }
+        private static GameObject GetGenericAnimationFallback() => (GameObject)EditorGUIUtility.Load("Avatar/DefaultGeneric.fbx");
 
-        private static GameObject GetHumanoidFallback()
-        {
-            return (GameObject)EditorGUIUtility.Load("Avatar/DefaultAvatar.fbx");
-        }
+        private static GameObject GetHumanoidFallback() => (GameObject)EditorGUIUtility.Load("Avatar/DefaultAvatar.fbx");
 
         public void ResetPreviewInstance()
         {
             Object.DestroyImmediate(m_PreviewInstance);
-            GameObject go = CalculatePreviewGameObject(m_SourceScenePreviewAnimator, m_SourcePreviewMotion, animationClipType);
+            var go = CalculatePreviewGameObject(m_SourceScenePreviewAnimator, m_SourcePreviewMotion, animationClipType);
             SetupBounds(go);
         }
 
@@ -557,23 +617,37 @@ namespace NZCore.UI.Editor
             m_OnAvatarChangeFunc();
         }
 
-        float PreviewSlider(Rect rect, float val, float snapThreshold)
+        private float PreviewSlider(Rect rect, float val, float snapThreshold)
         {
-            val = GUI.HorizontalSlider(rect, val, 0.1f, 2.0f, s_Styles.preSlider, s_Styles.preSliderThumb);//, GUILayout.MaxWidth(64));
+            val = GUI.HorizontalSlider(rect, val, 0.1f, 2.0f, s_Styles.preSlider, s_Styles.preSliderThumb); //, GUILayout.MaxWidth(64));
             if (val > 0.25f - snapThreshold && val < 0.25f + snapThreshold)
+            {
                 val = 0.25f;
+            }
             else if (val > 0.5f - snapThreshold && val < 0.5f + snapThreshold)
+            {
                 val = 0.5f;
+            }
             else if (val > 0.75f - snapThreshold && val < 0.75f + snapThreshold)
+            {
                 val = 0.75f;
+            }
             else if (val > 1.0f - snapThreshold && val < 1.0f + snapThreshold)
+            {
                 val = 1.0f;
+            }
             else if (val > 1.25f - snapThreshold && val < 1.25f + snapThreshold)
+            {
                 val = 1.25f;
+            }
             else if (val > 1.5f - snapThreshold && val < 1.5f + snapThreshold)
+            {
                 val = 1.5f;
+            }
             else if (val > 1.75f - snapThreshold && val < 1.75f + snapThreshold)
+            {
                 val = 1.75f;
+            }
 
             return val;
         }
@@ -587,7 +661,9 @@ namespace NZCore.UI.Editor
                 EditorGUI.BeginChangeCheck();
                 m_IKOnFeet = GUILayout.Toggle(m_IKOnFeet, s_Styles.ik, s_Styles.preButton);
                 if (EditorGUI.EndChangeCheck())
+                {
                     EditorPrefs.SetBool(kIkPref, m_IKOnFeet);
+                }
             }
 
             EditorGUI.BeginChangeCheck();
@@ -601,7 +677,9 @@ namespace NZCore.UI.Editor
             EditorGUI.BeginChangeCheck();
             m_ShowReference = GUILayout.Toggle(m_ShowReference, s_Styles.pivot, s_Styles.preButton);
             if (EditorGUI.EndChangeCheck())
+            {
                 EditorPrefs.SetBool(kReferencePref, m_ShowReference);
+            }
 
             // if (EditorGUILayout.DropdownButton(s_Styles.avatarIcon, FocusType.Passive, EditorStyles.toolbarDropDownRight))
             // {
@@ -621,7 +699,7 @@ namespace NZCore.UI.Editor
             Quaternion bodyRot;
             Quaternion rootRot;
             Vector3 rootPos;
-            Vector3 bodyPos = rootPosition;
+            var bodyPos = rootPosition;
             Vector3 pivotPos;
 
             if (Animator && Animator.isHuman)
@@ -654,23 +732,23 @@ namespace NZCore.UI.Editor
 
             SetupPreviewLightingAndFx(probe);
 
-            Vector3 direction = bodyRot * Vector3.forward;
+            var direction = bodyRot * Vector3.forward;
             direction[1] = 0;
-            Quaternion directionRot = Quaternion.LookRotation(direction);
-            Vector3 directionPos = rootPos;
+            var directionRot = Quaternion.LookRotation(direction);
+            var directionPos = rootPos;
 
-            Quaternion pivotRot = rootRot;
+            var pivotRot = rootRot;
 
             // Scale all Preview Objects to fit avatar size.
             PositionPreviewObjects(pivotRot, pivotPos, bodyRot, bodyPosition, directionRot, rootRot, rootPos, directionPos, m_AvatarScale);
 
-            bool dynamicFloorHeight = !is2D && Mathf.Abs(m_NextFloorHeight - m_PrevFloorHeight) > m_ZoomFactor * 0.01f;
+            var dynamicFloorHeight = !is2D && Mathf.Abs(m_NextFloorHeight - m_PrevFloorHeight) > m_ZoomFactor * 0.01f;
 
             // Calculate floor height and alpha
             float mainFloorHeight, mainFloorAlpha;
             if (dynamicFloorHeight)
             {
-                float fadeMoment = m_NextFloorHeight < m_PrevFloorHeight ? kFloorFadeDuration : (1 - kFloorFadeDuration);
+                var fadeMoment = m_NextFloorHeight < m_PrevFloorHeight ? kFloorFadeDuration : 1 - kFloorFadeDuration;
                 //mainFloorHeight = timeControl.normalizedTime < fadeMoment ? m_PrevFloorHeight : m_NextFloorHeight;
                 //mainFloorAlpha = Mathf.Clamp01(Mathf.Abs(timeControl.normalizedTime - fadeMoment) / kFloorFadeDuration);
                 mainFloorHeight = m_PrevFloorHeight;
@@ -682,13 +760,13 @@ namespace NZCore.UI.Editor
                 mainFloorAlpha = is2D ? 0.5f : 1;
             }
 
-            Quaternion floorRot = is2D ? Quaternion.Euler(-90, 0, 0) : Quaternion.identity;
-            Vector3 floorPos = m_ReferenceInstance.transform.position;
+            var floorRot = is2D ? Quaternion.Euler(-90, 0, 0) : Quaternion.identity;
+            var floorPos = m_ReferenceInstance.transform.position;
             floorPos.y = mainFloorHeight;
 
             // Render shadow map
             Matrix4x4 shadowMatrix;
-            RenderTexture shadowMap = RenderPreviewShadowmap(PreviewUtility.lights[0], m_BoundingVolumeScale / 2, bodyPosition, floorPos, out shadowMatrix);
+            var shadowMap = RenderPreviewShadowmap(PreviewUtility.lights[0], m_BoundingVolumeScale / 2, bodyPosition, floorPos, out shadowMatrix);
 
             // SRP might initialize the light settings during the first frame of rendering
             // (e.g HDRP is overriding the intensity value during 'InitDefaultHDAdditionalLightData').
@@ -698,20 +776,23 @@ namespace NZCore.UI.Editor
                 SetupPreviewLightingAndFx(probe);
             }
 
-            float tempZoomFactor = (is2D ? 1.0f : m_ZoomFactor);
+            var tempZoomFactor = is2D ? 1.0f : m_ZoomFactor;
             // Position camera
             PreviewUtility.camera.orthographic = is2D;
             if (is2D)
+            {
                 PreviewUtility.camera.orthographicSize = 2.0f * m_ZoomFactor;
+            }
+
             PreviewUtility.camera.nearClipPlane = 0.5f * tempZoomFactor;
             PreviewUtility.camera.farClipPlane = 100.0f * m_AvatarScale;
-            Quaternion camRot = Quaternion.Euler(-m_PreviewDir.y, -m_PreviewDir.x, 0);
+            var camRot = Quaternion.Euler(-m_PreviewDir.y, -m_PreviewDir.x, 0);
 
             // Add panning offset
-            Vector3 camPos = camRot * (Vector3.forward * -5.5f * tempZoomFactor) + bodyPos + m_PivotPositionOffset;
+            var camPos = camRot * (Vector3.forward * -5.5f * tempZoomFactor) + bodyPos + m_PivotPositionOffset;
             PreviewUtility.camera.transform.position = camPos;
             PreviewUtility.camera.transform.rotation = camRot;
-            
+
             SetPreviewCharacterEnabled(true, m_ShowReference);
             foreach (var previewable in m_Previewables)
             {
@@ -723,18 +804,18 @@ namespace NZCore.UI.Editor
             SetPreviewCharacterEnabled(false, false);
 
             // Texture offset - negative in order to compensate the floor movement.
-            Vector2 textureOffset = -new Vector2(floorPos.x, is2D ? floorPos.y : floorPos.z);
+            var textureOffset = -new Vector2(floorPos.x, is2D ? floorPos.y : floorPos.z);
 
             // Render main floor
             {
-                Material mat = m_FloorMaterial;
-                Matrix4x4 matrix = Matrix4x4.TRS(floorPos, floorRot, Vector3.one * kFloorScale * m_AvatarScale);
+                var mat = m_FloorMaterial;
+                var matrix = Matrix4x4.TRS(floorPos, floorRot, Vector3.one * kFloorScale * m_AvatarScale);
 
                 mat.mainTextureOffset = textureOffset * kFloorScale * 0.08f * (1.0f / m_AvatarScale);
                 mat.SetTexture("_ShadowTexture", shadowMap);
                 mat.SetMatrix("_ShadowTextureMatrix", shadowMatrix);
                 mat.SetVector("_Alphas", new Vector4(kFloorAlpha * mainFloorAlpha, kFloorShadowAlpha * mainFloorAlpha, 0, 0));
-                mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
+                mat.renderQueue = (int)RenderQueue.Background;
 
                 Graphics.DrawMesh(m_FloorPlane, matrix, mat, kDefaultLayer, PreviewUtility.camera, 0);
             }
@@ -742,18 +823,18 @@ namespace NZCore.UI.Editor
             // Render small floor
             if (dynamicFloorHeight)
             {
-                bool topIsNext = m_NextFloorHeight > m_PrevFloorHeight;
-                float floorHeight = topIsNext ? m_NextFloorHeight : m_PrevFloorHeight;
-                float otherFloorHeight = topIsNext ? m_PrevFloorHeight : m_NextFloorHeight;
-                float floorAlpha = (floorHeight == mainFloorHeight ? 1 - mainFloorAlpha : 1) * Mathf.InverseLerp(otherFloorHeight, floorHeight, rootPos.y);
+                var topIsNext = m_NextFloorHeight > m_PrevFloorHeight;
+                var floorHeight = topIsNext ? m_NextFloorHeight : m_PrevFloorHeight;
+                var otherFloorHeight = topIsNext ? m_PrevFloorHeight : m_NextFloorHeight;
+                var floorAlpha = (floorHeight == mainFloorHeight ? 1 - mainFloorAlpha : 1) * Mathf.InverseLerp(otherFloorHeight, floorHeight, rootPos.y);
                 floorPos.y = floorHeight;
 
-                Material mat = m_FloorMaterialSmall;
+                var mat = m_FloorMaterialSmall;
                 mat.mainTextureOffset = textureOffset * kFloorScaleSmall * 0.08f;
                 mat.SetTexture("_ShadowTexture", shadowMap);
                 mat.SetMatrix("_ShadowTextureMatrix", shadowMatrix);
                 mat.SetVector("_Alphas", new Vector4(kFloorAlpha * floorAlpha, 0, 0, 0));
-                Matrix4x4 matrix = Matrix4x4.TRS(floorPos, floorRot, Vector3.one * kFloorScaleSmall * m_AvatarScale);
+                var matrix = Matrix4x4.TRS(floorPos, floorRot, Vector3.one * kFloorScaleSmall * m_AvatarScale);
                 Graphics.DrawMesh(m_FloorPlane, matrix, mat, kDefaultLayer, PreviewUtility.camera, 0);
             }
 
@@ -763,7 +844,7 @@ namespace NZCore.UI.Editor
             PreviewUtility.camera.clearFlags = clearMode;
             RenderTexture.ReleaseTemporary(shadowMap);
         }
-        
+
         private RenderTexture RenderPreviewShadowmap(Light light, float scale, Vector3 center, Vector3 floorPos, out Matrix4x4 outShadowMatrix)
         {
             Assert.IsTrue(Event.current.type == EventType.Repaint);
@@ -778,15 +859,15 @@ namespace NZCore.UI.Editor
             cam.transform.position = center - light.transform.forward * (scale * 5.5f);
 
             // Clear to black
-            CameraClearFlags oldFlags = cam.clearFlags;
+            var oldFlags = cam.clearFlags;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            Color oldColor = cam.backgroundColor;
+            var oldColor = cam.backgroundColor;
             cam.backgroundColor = new Color(0, 0, 0, 0);
 
             // Create render target for shadow map
             const int kShadowSize = 256;
-            RenderTexture oldRT = cam.targetTexture;
-            RenderTexture rt = RenderTexture.GetTemporary(kShadowSize, kShadowSize, 16);
+            var oldRT = cam.targetTexture;
+            var rt = RenderTexture.GetTemporary(kShadowSize, kShadowSize, 16);
             rt.isPowerOfTwo = true;
             rt.wrapMode = TextureWrapMode.Clamp;
             rt.filterMode = FilterMode.Bilinear;
@@ -816,7 +897,7 @@ namespace NZCore.UI.Editor
             GL.MultMatrix(cam.worldToCameraMatrix);
             m_ShadowPlaneMaterial.SetPass(0);
             GL.Begin(GL.QUADS);
-            float sc = kFloorScale * scale;
+            var sc = kFloorScale * scale;
             GL.Vertex(floorPos + new Vector3(-sc, 0, -sc));
             GL.Vertex(floorPos + new Vector3(sc, 0, -sc));
             GL.Vertex(floorPos + new Vector3(sc, 0, sc));
@@ -826,7 +907,7 @@ namespace NZCore.UI.Editor
             GL.PopMatrix();
 
             // Shadowmap sampling matrix, from world space into shadowmap space
-            Matrix4x4 texMatrix = Matrix4x4.TRS(new Vector3(0.5f, 0.5f, 0.5f), Quaternion.identity,
+            var texMatrix = Matrix4x4.TRS(new Vector3(0.5f, 0.5f, 0.5f), Quaternion.identity,
                 new Vector3(0.5f, 0.5f, 0.5f));
             outShadowMatrix = texMatrix * cam.projectionMatrix * cam.worldToCameraMatrix;
 
@@ -848,7 +929,7 @@ namespace NZCore.UI.Editor
             RenderSettings.ambientLight = new Color(0.1f, 0.1f, 0.1f, 1.0f);
             RenderSettings.ambientProbe = probe;
         }
-       
+
         private void PositionPreviewObjects(Quaternion pivotRot, Vector3 pivotPos, Quaternion bodyRot, Vector3 bodyPos,
             Quaternion directionRot, Quaternion rootRot, Vector3 rootPos, Vector3 directionPos,
             float scale)
@@ -876,7 +957,7 @@ namespace NZCore.UI.Editor
 
                 // Always set last height to next height after wrapping the time.
                 //if (normalizedTime - normalizedDelta < 0 || normalizedTime - normalizedDelta >= 1)
-                    m_PrevFloorHeight = m_NextFloorHeight;
+                m_PrevFloorHeight = m_NextFloorHeight;
 
                 // Check that AvatarPreview is getting reliable info about time and deltaTime.
                 // if (m_LastNormalizedTime != -1000 && timeControl.startTime == m_LastStartTime && timeControl.stopTime == m_LastStopTime)
@@ -893,9 +974,13 @@ namespace NZCore.UI.Editor
 
                 // Alternate getting the height for next time and previous time.
                 if (m_NextTargetIsForward)
+                {
                     m_NextFloorHeight = Animator.targetPosition.y;
+                }
                 else
+                {
                     m_PrevFloorHeight = Animator.targetPosition.y;
+                }
 
                 // Flip next target time.
                 m_NextTargetIsForward = !m_NextTargetIsForward;
@@ -943,36 +1028,51 @@ namespace NZCore.UI.Editor
             // );
         }
 
-        enum PreviewPopupOptions : int
+        private enum PreviewPopupOptions : int
         {
             Auto = 0,
             DefaultModel = 1,
             Other = 2
         }
 
-        protected enum ViewTool { None, Pan, Zoom, Orbit }
+        protected enum ViewTool
+        {
+            None,
+            Pan,
+            Zoom,
+            Orbit
+        }
+
         protected ViewTool m_ViewTool = ViewTool.None;
+
         protected ViewTool viewTool
         {
             get
             {
-                Event evt = Event.current;
+                var evt = Event.current;
                 if (m_ViewTool == ViewTool.None)
                 {
-                    bool controlKeyOnMac = (evt.control && Application.platform == RuntimePlatform.OSXEditor);
+                    var controlKeyOnMac = evt.control && Application.platform == RuntimePlatform.OSXEditor;
 
                     // actionKey could be command key on mac or ctrl on windows
-                    bool actionKey = EditorGUI.actionKey;
+                    var actionKey = EditorGUI.actionKey;
 
-                    bool noModifiers = (!actionKey && !controlKeyOnMac && !evt.alt);
+                    var noModifiers = !actionKey && !controlKeyOnMac && !evt.alt;
 
                     if ((evt.button <= 0 && noModifiers) || (evt.button <= 0 && actionKey) || evt.button == 2)
+                    {
                         m_ViewTool = ViewTool.Pan;
+                    }
                     else if ((evt.button <= 0 && controlKeyOnMac) || (evt.button == 1 && evt.alt))
+                    {
                         m_ViewTool = ViewTool.Zoom;
-                    else if (evt.button <= 0 && evt.alt || evt.button == 1)
+                    }
+                    else if ((evt.button <= 0 && evt.alt) || evt.button == 1)
+                    {
                         m_ViewTool = ViewTool.Orbit;
+                    }
                 }
+
                 return m_ViewTool;
             }
         }
@@ -1017,18 +1117,20 @@ namespace NZCore.UI.Editor
         protected void HandleMouseDrag(Event evt, int id, Rect previewRect)
         {
             if (m_PreviewInstance == null)
+            {
                 return;
+            }
 
             if (GUIUtility.hotControl == id)
             {
                 switch (m_ViewTool)
                 {
-                    case ViewTool.Orbit:    DoAvatarPreviewOrbit(evt, previewRect); break;
-                    case ViewTool.Pan:      DoAvatarPreviewPan(evt); break;
+                    case ViewTool.Orbit: DoAvatarPreviewOrbit(evt, previewRect); break;
+                    case ViewTool.Pan: DoAvatarPreviewPan(evt); break;
 
                     // case 605415 invert zoom delta to match scene view zooming
-                    case ViewTool.Zoom:     DoAvatarPreviewZoom(evt, -HandleUtility.niceMouseDeltaZoom * (evt.shift ? 2.0f : 0.5f)); break;
-                    default:                Debug.Log("Enum value not handled"); break;
+                    case ViewTool.Zoom: DoAvatarPreviewZoom(evt, -HandleUtility.niceMouseDeltaZoom * (evt.shift ? 2.0f : 0.5f)); break;
+                    default: Debug.Log("Enum value not handled"); break;
                 }
             }
         }
@@ -1038,9 +1140,9 @@ namespace NZCore.UI.Editor
             switch (eventType)
             {
                 case EventType.ScrollWheel: DoAvatarPreviewZoom(evt, HandleUtility.niceMouseDeltaZoom * (evt.shift ? 2.0f : 0.5f)); break;
-                case EventType.MouseDown:   HandleMouseDown(evt, id, previewRect); break;
-                case EventType.MouseUp:     HandleMouseUp(evt, id); break;
-                case EventType.MouseDrag:   HandleMouseDrag(evt, id, previewRect); break;
+                case EventType.MouseDown: HandleMouseDown(evt, id, previewRect); break;
+                case EventType.MouseUp: HandleMouseUp(evt, id); break;
+                case EventType.MouseDrag: HandleMouseDrag(evt, id, previewRect); break;
             }
         }
 
@@ -1054,7 +1156,7 @@ namespace NZCore.UI.Editor
             else if (type == EventType.DragPerform)
             {
                 DragAndDrop.visualMode = DragAndDropVisualMode.Link;
-                GameObject newPreviewObject = DragAndDrop.objectReferences[0] as GameObject;
+                var newPreviewObject = DragAndDrop.objectReferences[0] as GameObject;
 
                 if (newPreviewObject)
                 {
@@ -1073,6 +1175,7 @@ namespace NZCore.UI.Editor
             {
                 is2D = false;
             }
+
             m_PreviewDir -= evt.delta * (evt.shift ? 3 : 1) / Mathf.Min(previewRect.width, previewRect.height) * 140.0f;
             m_PreviewDir.y = Mathf.Clamp(m_PreviewDir.y, -90, 90);
             evt.Use();
@@ -1080,12 +1183,12 @@ namespace NZCore.UI.Editor
 
         public void DoAvatarPreviewPan(Event evt)
         {
-            Camera cam = PreviewUtility.camera;
-            Vector3 screenPos = cam.WorldToScreenPoint(bodyPosition + m_PivotPositionOffset);
-            Vector3 delta = new Vector3(-evt.delta.x, evt.delta.y, 0);
+            var cam = PreviewUtility.camera;
+            var screenPos = cam.WorldToScreenPoint(bodyPosition + m_PivotPositionOffset);
+            var delta = new Vector3(-evt.delta.x, evt.delta.y, 0);
             // delta panning is scale with the zoom factor to allow fine tuning when user is zooming closely.
             screenPos += delta * Mathf.Lerp(0.25f, 2.0f, m_ZoomFactor * 0.5f);
-            Vector3 worldDelta = cam.ScreenToWorldPoint(screenPos) - (bodyPosition + m_PivotPositionOffset);
+            var worldDelta = cam.ScreenToWorldPoint(screenPos) - (bodyPosition + m_PivotPositionOffset);
             m_PivotPositionOffset += worldDelta;
             evt.Use();
         }
@@ -1113,17 +1216,18 @@ namespace NZCore.UI.Editor
 
         protected Vector3 GetCurrentMouseWorldPosition(Event evt, Rect previewRect)
         {
-            Camera cam = PreviewUtility.camera;
+            var cam = PreviewUtility.camera;
 
-            float scaleFactor = PreviewUtility.GetScaleFactor(previewRect.width, previewRect.height);
-            Vector3 mouseLocal = new Vector3((evt.mousePosition.x - previewRect.x) * scaleFactor, (previewRect.height - (evt.mousePosition.y - previewRect.y)) * scaleFactor, 0);
+            var scaleFactor = PreviewUtility.GetScaleFactor(previewRect.width, previewRect.height);
+            var mouseLocal = new Vector3((evt.mousePosition.x - previewRect.x) * scaleFactor,
+                (previewRect.height - (evt.mousePosition.y - previewRect.y)) * scaleFactor, 0);
             mouseLocal.z = Vector3.Distance(bodyPosition, cam.transform.position);
             return cam.ScreenToWorldPoint(mouseLocal);
         }
 
         public void DoAvatarPreviewZoom(Event evt, float delta)
         {
-            float zoomDelta = -delta * 0.05f;
+            var zoomDelta = -delta * 0.05f;
             m_ZoomFactor += m_ZoomFactor * zoomDelta;
 
             // zoom is clamp too 10 time closer than the original zoom
@@ -1135,23 +1239,23 @@ namespace NZCore.UI.Editor
         {
             Init();
 
-            Rect choserRect = new Rect(rect.xMax - 16, rect.yMax - 16, 16, 16);
+            var choserRect = new Rect(rect.xMax - 16, rect.yMax - 16, 16, 16);
             if (EditorGUI.DropdownButton(choserRect, GUIContent.none, FocusType.Passive, GUIStyle.none))
             {
-                GenericMenu menu = new GenericMenu();
+                var menu = new GenericMenu();
                 menu.AddItem(EditorGUIUtility.TrTextContent("Auto"), false, SetPreviewAvatarOption, PreviewPopupOptions.Auto);
                 menu.AddItem(EditorGUIUtility.TrTextContent("Unity Model"), false, SetPreviewAvatarOption, PreviewPopupOptions.DefaultModel);
                 menu.AddItem(EditorGUIUtility.TrTextContent("Other..."), false, SetPreviewAvatarOption, PreviewPopupOptions.Other);
                 menu.ShowAsContext();
             }
 
-            Rect previewRect = rect;
+            var previewRect = rect;
             previewRect.yMin += kTimeControlRectHeight;
             previewRect.height = Mathf.Max(previewRect.height, 64f);
 
-            int previewID = GUIUtility.GetControlID(m_PreviewHint, FocusType.Passive, previewRect);
-            Event evt = Event.current;
-            EventType type = evt.GetTypeForControl(previewID);
+            var previewID = GUIUtility.GetControlID(m_PreviewHint, FocusType.Passive, previewRect);
+            var evt = Event.current;
+            var type = evt.GetTypeForControl(previewID);
 
             if (type == EventType.Repaint && m_IsValid)
             {
@@ -1162,7 +1266,7 @@ namespace NZCore.UI.Editor
             AvatarTimeControlGUI(rect);
 
 
-            int previewSceneID = GUIUtility.GetControlID(m_PreviewSceneHint, FocusType.Passive);
+            var previewSceneID = GUIUtility.GetControlID(m_PreviewSceneHint, FocusType.Passive);
             type = evt.GetTypeForControl(previewSceneID);
 
             DoAvatarPreviewDrag(evt, type);
@@ -1171,7 +1275,7 @@ namespace NZCore.UI.Editor
 
             if (!m_IsValid)
             {
-                Rect warningRect = previewRect;
+                var warningRect = previewRect;
                 warningRect.yMax -= warningRect.height / 2 - 16;
                 EditorGUI.DropShadowLabel(
                     warningRect,
@@ -1180,16 +1284,18 @@ namespace NZCore.UI.Editor
 
             // Apply the current cursor
             if (evt.type == EventType.Repaint)
+            {
                 EditorGUIUtility.AddCursorRect(previewRect, currentCursor);
+            }
         }
 
         private PreviewPopupOptions option
         {
-            get => (PreviewPopupOptions) EditorPrefs.GetInt(kDefaultAvatarPreviewOption);
+            get => (PreviewPopupOptions)EditorPrefs.GetInt(kDefaultAvatarPreviewOption);
             set => EditorPrefs.SetInt(kDefaultAvatarPreviewOption, (int)value);
         }
 
-        void SetPreviewAvatarOption(object obj)
+        private void SetPreviewAvatarOption(object obj)
         {
             var newSelectedOption = (PreviewPopupOptions)obj;
 
@@ -1212,7 +1318,7 @@ namespace NZCore.UI.Editor
             }
         }
 
-        void SetPreview(GameObject gameObject)
+        private void SetPreview(GameObject gameObject)
         {
             //AvatarPreviewSelection.SetPreview(animationClipType, gameObject);
             m_AvatarPreviewSelection_SetPreview.Invoke(null, new object[] { animationClipType, gameObject });
@@ -1221,14 +1327,14 @@ namespace NZCore.UI.Editor
             InitInstance(m_SourceScenePreviewAnimator, m_SourcePreviewMotion);
 
             if (m_OnAvatarChangeFunc != null)
+            {
                 m_OnAvatarChangeFunc();
+            }
         }
 
-        int Repeat(int t, int length)
-        {
+        private int Repeat(int t, int length) =>
             // Have to do double modulo in order to work for negative numbers.
             // This is quicker than a branch to test for negative number.
-            return ((t % length) + length) % length;
-        }
+            (t % length + length) % length;
     }
 }

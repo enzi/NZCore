@@ -12,12 +12,11 @@ namespace NZCore
     {
         public static unsafe bool TryGetRefValue<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> hashMap, TKey key, out void* valuePtr)
             where TKey : unmanaged, IEquatable<TKey>
-            where TValue : unmanaged
-        {
-            return TryGetFirstRefValueAtomic<TKey, TValue>(hashMap.m_HashMapData.m_Buffer, key, out valuePtr, out var _);
-        }
-        
-        internal static unsafe bool TryGetFirstRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, TKey key, out void* valuePtr, out NativeParallelMultiHashMapIterator<TKey> it)
+            where TValue : unmanaged =>
+            TryGetFirstRefValueAtomic<TKey, TValue>(hashMap.m_HashMapData.m_Buffer, key, out valuePtr, out _);
+
+        internal static unsafe bool TryGetFirstRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, TKey key, out void* valuePtr,
+            out NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
@@ -31,17 +30,18 @@ namespace NZCore
             }
 
             // First find the slot based on the hash
-            int* buckets = (int*)data->buckets;
-            int bucket = key.GetHashCode() & data->bucketCapacityMask;
+            var buckets = (int*)data->buckets;
+            var bucket = key.GetHashCode() & data->bucketCapacityMask;
             it.EntryIndex = it.NextEntryIndex = buckets[bucket];
             return TryGetNextRefValueAtomic<TKey, TValue>(data, out valuePtr, ref it);
         }
 
-        internal static unsafe bool TryGetNextRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, out void* valuePtr, ref NativeParallelMultiHashMapIterator<TKey> it)
+        internal static unsafe bool TryGetNextRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, out void* valuePtr,
+            ref NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            int entryIdx = it.NextEntryIndex;
+            var entryIdx = it.NextEntryIndex;
             it.NextEntryIndex = -1;
             it.EntryIndex = -1;
             valuePtr = null;
@@ -50,7 +50,7 @@ namespace NZCore
                 return false;
             }
 
-            int* nextPtrs = (int*)data->next;
+            var nextPtrs = (int*)data->next;
             while (!UnsafeUtility.ReadArrayElement<TKey>(data->keys, entryIdx).Equals(it.key))
             {
                 entryIdx = nextPtrs[entryIdx];
@@ -67,15 +67,13 @@ namespace NZCore
 
             return true;
         }
-        
+
         public static unsafe bool ContainsKeyFast<TKey, TValue>(
             this NativeParallelHashMap<TKey, TValue> hashmap,
             TKey key)
             where TKey : unmanaged, IEquatable<TKey>
-            where TValue : unmanaged
-        {
-            return TryPeekFirstRefValue(hashmap.m_HashMapData.m_Buffer, key);
-        }
+            where TValue : unmanaged =>
+            TryPeekFirstRefValue(hashmap.m_HashMapData.m_Buffer, key);
 
         private static unsafe bool TryPeekFirstRefValue<TKey>(
             UnsafeParallelHashMapData* data,
@@ -88,8 +86,8 @@ namespace NZCore
             }
 
             // First find the slot based on the hash
-            int* buckets = (int*)data->buckets;
-            int bucket = key.GetHashCode() & data->bucketCapacityMask;
+            var buckets = (int*)data->buckets;
+            var bucket = key.GetHashCode() & data->bucketCapacityMask;
             return TryPeekNextValueAtomic(data, key, buckets[bucket]);
         }
 
@@ -104,7 +102,7 @@ namespace NZCore
                 return false;
             }
 
-            int* nextPtrs = (int*)data->next;
+            var nextPtrs = (int*)data->next;
             while (!UnsafeUtility.ReadArrayElement<TKey>(data->keys, entryIdx).Equals(key))
             {
                 entryIdx = nextPtrs[entryIdx];

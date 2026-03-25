@@ -12,9 +12,9 @@ namespace NZCore
     {
         public UntypedWeakReferenceId Id;
     }
-    
+
     public struct UnityObjectReferencePatchBufferResolved : IComponentData, IEnableableComponent { }
-    
+
     public struct UnityObjectReferencePatchBuffer : IBufferElementData
     {
         public TypeIndex TypeIndex;

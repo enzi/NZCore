@@ -12,10 +12,11 @@ namespace NZCore.Editor
 {
     public static class EnumCodeGenerator
     {
-        public static string GetSourceCodeForEnum<T>(this List<T> allAssets, string enumName, Type enumType, bool flagEnum = false, string defaultNone = "None", string defaultNamespace = "NZCore")
+        public static string GetSourceCodeForEnum<T>(this List<T> allAssets, string enumName, Type enumType, bool flagEnum = false, string defaultNone = "None",
+            string defaultNamespace = "NZCore")
             where T : ScriptableObject, IAutoID
         {
-            BlockWriter bw = new BlockWriter();
+            var bw = new BlockWriter();
 
             bw.AppendLine("using System;");
             bw.AppendLine();
@@ -25,7 +26,9 @@ namespace NZCore.Editor
             bw.AppendLine($"[Serializable]");
 
             if (flagEnum)
+            {
                 bw.AppendLine("[Flags]");
+            }
 
             bw.AppendLine($"public enum {enumName} : {enumType}");
             bw.BeginBlock();
@@ -47,7 +50,7 @@ namespace NZCore.Editor
                 foreach (var def in allAssets)
                 {
                     var trimmed = Regex.Replace(def.name, @" ", "");
-                    bw.AppendLine($"{trimmed} = 1 << {(def.AutoID - 1)},");
+                    bw.AppendLine($"{trimmed} = 1 << {def.AutoID - 1},");
                 }
             }
 

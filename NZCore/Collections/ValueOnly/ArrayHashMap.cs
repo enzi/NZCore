@@ -34,7 +34,7 @@ namespace NZCore
         public ArrayHashMap(int keyOffset, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
-            AllocatorManager.AllocatorHandle temp = allocator;
+            var temp = allocator;
             Initialize(keyOffset, ref temp);
         }
 
@@ -45,7 +45,9 @@ namespace NZCore
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.ToAllocator);
 
             if (UnsafeUtility.IsNativeContainerType<TKey>() || UnsafeUtility.IsNativeContainerType<TValue>())
+            {
                 AtomicSafetyHandle.SetNestedContainer(m_Safety, true);
+            }
 
             CollectionHelper.SetStaticSafetyId<ArrayHashMap<TKey, TValue>>(ref m_Safety, ref s_staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
@@ -55,10 +57,7 @@ namespace NZCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool ContainsKey(TKey key)
-        {
-            return _unsafeArrayHashMap->TryPeekFirstRefValue(key);
-        }
+        public bool ContainsKey(TKey key) => _unsafeArrayHashMap->TryPeekFirstRefValue(key);
 
         public void SetCapacity(int capacity)
         {
@@ -108,10 +107,7 @@ namespace NZCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TKey* GetKeyArrayPtr()
-        {
-            return _unsafeArrayHashMap->GetKeyArrayPtr();
-        }
+        public TKey* GetKeyArrayPtr() => _unsafeArrayHashMap->GetKeyArrayPtr();
 
         public NativeKeyValueArrays<TKey, TValue> GetKeyValueArrays(Allocator allocator)
         {
@@ -131,26 +127,22 @@ namespace NZCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ArrayHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key)
-        {
-            return new ArrayHashMapEnumerator<TKey, TValue>
+        public ArrayHashMapEnumerator<TKey, TValue> GetValuesForKey(TKey key) =>
+            new()
             {
                 Map = _unsafeArrayHashMap,
                 Key = key,
                 IsFirst = true
             };
-        }
 
         // helper jobs
 
-        public JobHandle ScheduleCalculateBuckets(ref NativeList<TValue> values, JobHandle dependency)
-        {
-            return new CalculateBucketsJob()
+        public JobHandle ScheduleCalculateBuckets(ref NativeList<TValue> values, JobHandle dependency) =>
+            new CalculateBucketsJob
             {
                 Hashmap = this,
                 Values = values
             }.Schedule(dependency);
-        }
 
         [BurstCompile(OptimizeFor = OptimizeFor.Performance)]
         public struct CalculateBucketsJob : IJob

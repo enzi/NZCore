@@ -31,10 +31,8 @@ namespace NZCore
         }
 
         public static int GetInternalCapacity<T>(this BufferTypeHandle<T> bufferHandle)
-            where T : unmanaged, IBufferElementData
-        {
-            return TypeManager.GetTypeInfo(bufferHandle.m_TypeIndex).BufferCapacity;
-        }
+            where T : unmanaged, IBufferElementData =>
+            TypeManager.GetTypeInfo(bufferHandle.m_TypeIndex).BufferCapacity;
 
         public static int GetInternalCapacity<T>(this BufferLookup<T> bufferLookup)
             where T : unmanaged, IBufferElementData
@@ -48,10 +46,12 @@ namespace NZCore
         {
             CheckWriteAccess(buffer);
 
-            for (int i = buffer.Length - 1; i >= 0; i--)
+            for (var i = buffer.Length - 1; i >= 0; i--)
             {
                 if (buffer[i].GetHashCode() != element.GetHashCode())
+                {
                     continue;
+                }
 
                 buffer.RemoveAt(i);
             }
@@ -67,9 +67,11 @@ namespace NZCore
             // l -= 1;
             // int newLength = l;
             if (index == buffer.Length)
+            {
                 return -1;
+            }
 
-            byte* basePtr = (byte*)buffer.GetUnsafePtr();
+            var basePtr = (byte*)buffer.GetUnsafePtr();
             UnsafeUtility.WriteArrayElement(basePtr, index, UnsafeUtility.ReadArrayElement<T>(basePtr, buffer.Length));
 
             return index;
@@ -80,12 +82,12 @@ namespace NZCore
         {
             CheckWriteAccess(buffer);
 
-            int elemSize = UnsafeUtility.SizeOf<T>();
-            int oldLength = buffer.Length;
+            var elemSize = UnsafeUtility.SizeOf<T>();
+            var oldLength = buffer.Length;
             buffer.ResizeUninitialized(oldLength + length);
 
             var basePtr = (byte*)buffer.GetUnsafePtr();
-            UnsafeUtility.MemCpy(basePtr + ((long)oldLength * elemSize), ptr, (long)elemSize * length);
+            UnsafeUtility.MemCpy(basePtr + (long)oldLength * elemSize, ptr, (long)elemSize * length);
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
@@ -112,11 +114,13 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             CheckWriteAccess(buffer);
             if (UnsafeUtility.SizeOf<TBuffer>() != 1)
+            {
                 throw new Exception("Usage is only designed for byte buffer!");
+            }
 #endif
 
-            int byteSize = UnsafeUtility.SizeOf<TData>();
-            int oldLength = buffer.Length;
+            var byteSize = UnsafeUtility.SizeOf<TData>();
+            var oldLength = buffer.Length;
             buffer.ResizeUninitialized(oldLength + byteSize);
             var ptrToData = UnsafeUtility.AddressOf(ref data);
 
@@ -145,14 +149,14 @@ namespace NZCore
         {
             ref var exposed = ref bufferAccessor.GetBufferAccessorHeader();
 
-            byte* basePointer = exposed.m_BasePointer;
+            var basePointer = exposed.m_BasePointer;
             var stride = exposed.m_Stride;
-            int length = exposed.m_Length;
+            var length = exposed.m_Length;
 
-            int count = 0;
-            for (int i = 0; i < length; i++)
+            var count = 0;
+            for (var i = 0; i < length; i++)
             {
-                var tmp = ((BufferHeaderExposed*)(basePointer + i * stride));
+                var tmp = (BufferHeaderExposed*)(basePointer + i * stride);
                 count += tmp->Length;
             }
 
@@ -184,7 +188,7 @@ namespace NZCore
             var safetyHandle2 = AtomicSafetyHandle.Create();
 #endif
 
-            BufferHeader* tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
+            var tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
             tmpHeader->Capacity = length;
             tmpHeader->Length = length;
             tmpHeader->Pointer = (byte*)ptr;
@@ -205,7 +209,7 @@ namespace NZCore
             var safetyHandle2 = AtomicSafetyHandle.Create();
 #endif
 
-            BufferHeader* tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
+            var tmpHeader = Memory.Unmanaged.Allocate<BufferHeader>(Allocator.Temp);
             tmpHeader->Capacity = array.Length;
             tmpHeader->Length = array.Length;
             tmpHeader->Pointer = (byte*)array.GetUnsafeReadOnlyPtr();
@@ -232,7 +236,7 @@ namespace NZCore
         {
             var elementSize = UnsafeUtility.SizeOf<T>();
             var alignOf = UnsafeUtility.AlignOf<T>();
-            
+
             ref var exposed = ref UnsafeUtility.As<DynamicBuffer<T>, DynamicBufferExposed<T>>(ref buffer);
             
 #if ENABLE_UNITY_COLLECTIONS_CHECKS

@@ -11,21 +11,21 @@ namespace NZCore.Editor
     {
         public static TProperty GetReflectedProperty<TProvider, TProperty>(TProvider provider, string propertyName)
         {
-            Type searchProviderType = typeof(TProvider);
-            PropertyInfo tableConfigProperty = searchProviderType.GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
+            var searchProviderType = typeof(TProvider);
+            var tableConfigProperty = searchProviderType.GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
 
             if (tableConfigProperty != null)
             {
-                return (TProperty) tableConfigProperty.GetValue(provider);
+                return (TProperty)tableConfigProperty.GetValue(provider);
             }
 
             throw new MissingMemberException($"{propertyName} property not found in provider class");
         }
-        
+
         public static void SetReflectedProperty<TProvider, TProperty>(TProvider provider, string propertyName, TProperty value)
         {
-            Type providerType = typeof(TProvider);
-            PropertyInfo tableConfigProperty = providerType.GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
+            var providerType = typeof(TProvider);
+            var tableConfigProperty = providerType.GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
 
             if (tableConfigProperty == null)
             {

@@ -2,10 +2,11 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-#if UNITY_6000
+#if UNITY_6000 && !NZCORE_MVVM
 using System;
 using System.Collections.Generic;
 using NZCore.Hybrid;
+using NZCore.UI;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.U2D;
@@ -13,6 +14,7 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
 {
+    [RequireComponent(typeof(UIToolkitManager))]
     public class LoadAddressableInterface : MonoBehaviour
     {
         public bool LoadAddressables = true;
@@ -21,7 +23,7 @@ namespace NZCore.UIToolkit
         private AddressablesAndHandles<VisualTreeAsset> visualTreeAssets;
         private AddressablesAndHandles<GameObject> worldInterfaceAssets;
         private AddressablesAndHandles<SpriteAtlas> spriteAtlas;
-        
+
         public List<CustomUIAsset> CustomAssets = new();
 
         public async void Start()
@@ -46,22 +48,30 @@ namespace NZCore.UIToolkit
                     Debug.Log($"{asset.Key}");
                 }
             }
-
-            var uiAssets = new UIAssetsSingleton()
-            {
-                VisualTreeAssets = visualTreeAssets.Assets,
-                SpriteAtlasAssets = spriteAtlas.Assets,
-                WorldInterfaceAssets = worldInterfaceAssets.Assets
-            };
             
+
+            var uiAssets = UIToolkitManager.Instance.Assets;
+
+            foreach (var kvp in visualTreeAssets.Assets)
+            {
+                uiAssets.VisualTreeAssets.Add(kvp.Key, kvp.Value);
+            }
+
+            foreach (var kvp in spriteAtlas.Assets)
+            {
+                uiAssets.SpriteAtlasAssets.Add(kvp.Key, kvp.Value);
+            }
+
+            foreach (var kvp in worldInterfaceAssets.Assets)
+            {
+                uiAssets.WorldInterfaceAssets.Add(kvp.Key, kvp.Value);
+            }
+
             foreach (var customAsset in CustomAssets)
             {
                 uiAssets.VisualTreeAssets.Add(customAsset.Key, customAsset.Asset);
             }
 
-            var manager = UIToolkitManager.Instance;
-            manager.Assets = uiAssets;
-            
             var em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
             var entity = em.CreateEntity();
@@ -78,7 +88,7 @@ namespace NZCore.UIToolkit
             worldInterfaceAssets?.UnloadAll();
         }
     }
-    
+
     [Serializable]
     public class CustomUIAsset
     {

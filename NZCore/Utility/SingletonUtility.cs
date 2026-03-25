@@ -18,14 +18,14 @@ namespace NZCore
             {
                 compType
             });
-            
-            T singletonData = Activator.CreateInstance<T>();
+
+            var singletonData = Activator.CreateInstance<T>();
             singletonData.Init();
             state.EntityManager.SetComponentObject(singletonEntity, compType, singletonData);
 
             return singletonData;
         }
-        
+
         public static void CreateSingleton<T>(this ref SystemState state)
             where T : unmanaged, IInitSingleton
         {
@@ -33,12 +33,12 @@ namespace NZCore
             {
                 ComponentType.ReadOnly<T>()
             });
-            
+
             T singletonData = default;
             singletonData.Init();
             state.EntityManager.SetComponentData(singletonEntity, singletonData);
         }
-        
+
         public static void CreateSingleton<T>(this ref SystemState state, out Entity singletonEntity)
             where T : unmanaged, IInitSingleton
         {
@@ -46,12 +46,12 @@ namespace NZCore
             {
                 ComponentType.ReadOnly<T>()
             });
-            
+
             T singletonData = default;
             singletonData.Init();
             state.EntityManager.SetComponentData(singletonEntity, singletonData);
         }
-        
+
         public static void CreateSingleton<T>(this ref SystemState state, out T singletonData)
             where T : unmanaged, IInitSingleton
         {
@@ -59,7 +59,7 @@ namespace NZCore
             {
                 ComponentType.ReadOnly<T>()
             });
-            
+
             singletonData = default;
             singletonData.Init();
             state.EntityManager.SetComponentData(singletonEntity, singletonData);
@@ -72,7 +72,7 @@ namespace NZCore
             {
                 ComponentType.ReadOnly<T>()
             });
-            
+
             singletonData = default;
             singletonData.Init();
             state.EntityManager.SetComponentData(singletonEntity, singletonData);

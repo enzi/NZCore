@@ -39,11 +39,9 @@ namespace NZCore
             return false;
         }
 
-        public static SharedComponentData GetSharedFilters(this EntityQuery query)
-        {
-            return UnsafeUtility.As<EntityQueryFilter.SharedComponentData, SharedComponentData>(ref query._GetImpl()->_Filter.Shared);
-        }
-        
+        public static SharedComponentData GetSharedFilters(this EntityQuery query) =>
+            UnsafeUtility.As<EntityQueryFilter.SharedComponentData, SharedComponentData>(ref query._GetImpl()->_Filter.Shared);
+
         public static DynamicBuffer<T> GetSingletonBufferNoSync<T>(this EntityQuery query, bool isReadOnly)
             where T : unmanaged, IBufferElementData
         {
