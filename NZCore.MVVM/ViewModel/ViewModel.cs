@@ -178,7 +178,11 @@ namespace NZCore.MVVM
 
         public virtual void InstantiateLayout() { }
 
-        public void InstantiateLayout(string uxmlFilePath)
+#if UNITY_EDITOR
+        /// <summary>
+        /// Loads and clones a UXML asset into this View.
+        /// </summary>
+        public void InstantiateLayoutFromAssetDatabase(string uxmlFilePath)
         {
             if (!string.IsNullOrEmpty(uxmlFilePath))
             {
@@ -186,6 +190,7 @@ namespace NZCore.MVVM
                 visualTree?.CloneTree(this);
             }
         }
+#endif
 
         /// <summary>
         /// Ensures the view has been created. If not, creates it now.
