@@ -471,7 +471,11 @@ namespace NZCore
             state.AddReaderWriter(componentType);
 
             var access = state.EntityManager.GetCheckedEntityDataAccess();
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new UntypedComponentLookup(componentType.TypeIndex, access, isReadOnly);
+#else
+            return new UntypedComponentLookup(componentType.TypeIndex, access);
+#endif
         }
     }
 }

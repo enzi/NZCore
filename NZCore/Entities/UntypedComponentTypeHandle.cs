@@ -120,7 +120,7 @@ namespace NZCore
             }
 
 #else
-            return new UntypedComponentTypeHandle(componentType, GlobalSystemVersion);
+            return new UntypedComponentTypeHandle(componentType, state.GlobalSystemVersion);
 #endif
         }
 
