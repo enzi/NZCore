@@ -10,11 +10,15 @@ namespace NZCore.UIToolkit.Data
 {
     public class MVVMApplicationSingleton : IInitSingleton, IDisposable
     {
+        public static MVVMApplicationSingleton Instance;
+        
         public MVVMApplication App;
         public UIToolkitManager Manager;
 
         public void Init()
         {
+            Instance = this;
+            
             App = new MVVMApplication();
 
             Manager = new UIToolkitManager();

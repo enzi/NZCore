@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using BovineLabs.Core.UI;
+using NZCore.MVVM;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -24,7 +25,7 @@ namespace NZCore.UIToolkit
 
         private readonly Dictionary<string, VisualElement> _registeredElements = new();
 
-        private readonly Dictionary<string, (VisualElement Element, IViewModelBinding Binding)> _loadedPanels = new();
+        private readonly Dictionary<string, (VisualElement Element, IViewModelBindingNotify Binding)> _loadedPanels = new();
         private readonly Dictionary<string, VisualElement> _loadedInterfaces = new();
 
         private readonly List<OrderedElement> _sortedPanels = new();
@@ -64,12 +65,12 @@ namespace NZCore.UIToolkit
 
         public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, string elementName = null, int order = 0,
             bool visibleOnInstantiate = true)
-            where T : class, IViewModelBinding, new() =>
+            where T : class, IViewModelBindingNotify, new() =>
             AddBindableInterface<T>(uniqueKey, assetKey, Root, elementName, order, visibleOnInstantiate);
 
         public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null,
             int order = 0, bool visibleOnInstantiate = true)
-            where T : class, IViewModelBinding, new()
+            where T : class, IViewModelBindingNotify, new()
         {
             var rootContainer = GetRoot(containerName);
 
@@ -78,7 +79,7 @@ namespace NZCore.UIToolkit
 
         public (VisualElement, T) AddBindableInterface<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null,
             int order = 0, bool visibleOnInstantiate = true)
-            where T : class, IViewModelBinding, new()
+            where T : class, IViewModelBindingNotify, new()
         {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
             {
@@ -158,12 +159,12 @@ namespace NZCore.UIToolkit
 
         public (VisualElement, T) AddBindablePanel<T>(string uniqueKey, string assetKey, string containerName = null, string elementName = null, int order = 0,
             bool visibleOnInstantiate = true)
-            where T : class, IViewModelBinding, new() =>
+            where T : class, IViewModelBindingNotify, new() =>
             AddBindablePanel<T>(uniqueKey, assetKey, GetRoot(containerName), elementName, order, visibleOnInstantiate);
 
         public (VisualElement, T) AddBindablePanel<T>(string uniqueKey, string assetKey, VisualElement rootContainer, string elementName = null, int order = 0,
             bool visibleOnInstantiate = true)
-            where T : class, IViewModelBinding, new()
+            where T : class, IViewModelBindingNotify, new()
         {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
             {
@@ -183,7 +184,98 @@ namespace NZCore.UIToolkit
             return container;
         }
 
-        public IViewModelBinding RemovePanel(string uniqueKey) => TryUnload(uniqueKey, out var panel) ? panel.Binding : null;
+        public IViewModelBindingNotify RemovePanel(string uniqueKey) => TryUnload(uniqueKey, out var panel) ? panel.Binding : null;
+
+        // ── Pre-built view management ────────────────────────────────────────────
+        // These methods accept a VisualElement that was created externally (e.g. via MVVM DI)
+        // and handle hierarchy insertion, sorting, tracking, and replacement.
+
+        /// <summary>Add a pre-built view to the container without sorting.</summary>
+        public void AddViewAsInterface(string uniqueKey, VisualElement view, VisualElement container)
+        {
+            container.Add(view);
+            _loadedPanels.Add(uniqueKey, (view, default));
+            if (view is IViewTransition t) t.AnimateEnter(view);
+        }
+
+        /// <summary>Add a pre-built view to the container as a sorted panel.</summary>
+        public void AddViewAsPanel(string uniqueKey, VisualElement view, VisualElement container, int order)
+        {
+            AddAsSortablePanel(container, view, order);
+            _loadedPanels.Add(uniqueKey, (view, default));
+            if (view is IViewTransition t) t.AnimateEnter(view);
+        }
+
+        /// <summary>
+        /// Ensures only one tracked view occupies <paramref name="container"/> at a time.
+        /// Any existing tracked view in that container is unloaded (with exit animation if it
+        /// implements <see cref="IViewTransition"/>) before the new view is added.
+        /// During a transition both views may briefly coexist.
+        /// </summary>
+        public void SetExclusiveView(string uniqueKey, VisualElement view, VisualElement container)
+        {
+            // Find and unload any tracked panel already parented to this container
+            string evictKey = null;
+            foreach (var (key, entry) in _loadedPanels)
+            {
+                if (entry.Element.parent == container)
+                {
+                    evictKey = key;
+                    break;
+                }
+            }
+
+            if (evictKey != null)
+                TryUnload(evictKey, out _);
+
+            AddViewAsInterface(uniqueKey, view, container);
+        }
+
+        /// <summary>
+        /// Remove the tracked view and immediately add the new one.
+        /// Returns the old VisualElement (already removed from hierarchy) so the caller can dispose its binding.
+        /// </summary>
+        public VisualElement ReplaceView(string uniqueKey, VisualElement newView, VisualElement container)
+        {
+            VisualElement oldView = null;
+            if (TryUnload(uniqueKey, out var oldEntry))
+                oldView = oldEntry.Element;
+
+            container.Add(newView);
+            _loadedPanels.Add(uniqueKey, (newView, default));
+
+            return oldView;
+        }
+
+        
+
+        internal static void SetupTransition(VisualElement ve, float durationMs)
+        {
+            ve.style.transitionProperty = new StyleList<StylePropertyName>(
+                new List<StylePropertyName> { new("opacity"), new("translate") });
+            ve.style.transitionDuration = new StyleList<TimeValue>(
+                new List<TimeValue> { new(durationMs, TimeUnit.Millisecond), new(durationMs, TimeUnit.Millisecond) });
+            ve.style.transitionTimingFunction = new StyleList<EasingFunction>(
+                new List<EasingFunction> { new(EasingMode.Ease), new(EasingMode.Ease) });
+        }
+
+        internal static Translate DirectionToTranslate(SlideDirection direction, float percent) => direction switch
+        {
+            SlideDirection.Left  => new Translate(new Length(-percent, LengthUnit.Percent), 0),
+            SlideDirection.Right => new Translate(new Length(percent, LengthUnit.Percent), 0),
+            SlideDirection.Up    => new Translate(0, new Length(-percent, LengthUnit.Percent)),
+            SlideDirection.Down  => new Translate(0, new Length(percent, LengthUnit.Percent)),
+            _                    => new Translate(0, 0),
+        };
+
+        internal static SlideDirection OppositeDirection(SlideDirection direction) => direction switch
+        {
+            SlideDirection.Left  => SlideDirection.Right,
+            SlideDirection.Right => SlideDirection.Left,
+            SlideDirection.Up    => SlideDirection.Down,
+            SlideDirection.Down  => SlideDirection.Up,
+            _                    => direction,
+        };
 
         public bool TryLoad(string uniqueKey, string assetKey, out VisualElement ve, bool visibleOnInstantiate = true, string elementName = null)
         {
@@ -216,7 +308,7 @@ namespace NZCore.UIToolkit
                 ve.name = elementName;
             }
 
-            _loadedPanels.Add(uniqueKey, (ve, default));
+            _loadedPanels.Add(uniqueKey, (ve, null));
 
             return ve;
         }
@@ -225,7 +317,7 @@ namespace NZCore.UIToolkit
 
         public bool TryLoad<T>(string uniqueKey, string assetKey, VisualElement rootContainer, out (VisualElement ve, T binding) container,
             bool visibleOnInstantiate = true, string elementName = null)
-            where T : class, IViewModelBinding, new()
+            where T : class, IViewModelBindingNotify, new()
         {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
             {
@@ -261,7 +353,7 @@ namespace NZCore.UIToolkit
 
         public bool TryLoad<T>(string uniqueKey, string assetKey, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true,
             string elementName = null)
-            where T : class, IViewModelBinding, new()
+            where T : class, IViewModelBindingNotify, new()
         {
             if (string.IsNullOrEmpty(assetKey)) // sometimes the UISystem doesn't want to instantiate a container
             {
@@ -286,7 +378,7 @@ namespace NZCore.UIToolkit
 
         public void Load<T>(string uniqueKey, VisualTreeAsset asset, out (VisualElement ve, T binding) container, bool visibleOnInstantiate = true,
             string elementName = null)
-            where T : class, IViewModelBinding, new()
+            where T : class, IViewModelBindingNotify, new()
         {
             var ve = asset.CloneSingleTree(visibleOnInstantiate);
             var binding = new T();
@@ -302,16 +394,19 @@ namespace NZCore.UIToolkit
             container = (ve, binding);
         }
 
-        public bool TryUnload(string uniqueKey, out (VisualElement Element, IViewModelBinding Binding) container)
+        public bool TryUnload(string uniqueKey, out (VisualElement Element, IViewModelBindingNotify Binding) container)
         {
             if (_loadedPanels.TryGetValue(uniqueKey, out container))
             {
-                container.Element.RemoveFromHierarchy();
                 _loadedPanels.Remove(uniqueKey);
                 if (TryFind(container.Element, out var orderedElement))
-                {
                     _sortedPanels.Remove(orderedElement);
-                }
+
+                var element = container.Element;
+                if (element is IViewTransition t)
+                    t.AnimateExit(element, element.RemoveFromHierarchy);
+                else
+                    element.RemoveFromHierarchy();
 
                 return true;
             }

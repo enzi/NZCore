@@ -212,7 +212,9 @@ namespace NZCore.Inject
             }
         }
 
-        private void Inject(Type implementationType, object instance)
+        public void Inject<T>(T instance) => Inject(typeof(T), instance);
+
+        public void Inject(Type implementationType, object instance)
         {
             var props = implementationType
                         .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)

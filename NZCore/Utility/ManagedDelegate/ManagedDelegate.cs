@@ -13,7 +13,7 @@ namespace NZCore
         where T : Delegate
     {
         public readonly FunctionPointer<T> Ptr;
-        private readonly GCHandle handle;
+        private readonly GCHandle _handle;
 
         public ManagedDelegate(T function)
         {
@@ -28,13 +28,13 @@ namespace NZCore
                 throw new Exception("Function is missing MonoPInvokeCallback attribute!");
             }
 #endif
-            handle = GCHandle.Alloc(function);
+            _handle = GCHandle.Alloc(function);
             Ptr = new FunctionPointer<T>(Marshal.GetFunctionPointerForDelegate(function));
         }
 
         public void Dispose()
         {
-            handle.Free();
+            _handle.Free();
         }
     }
 }

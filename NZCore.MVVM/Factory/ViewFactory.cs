@@ -4,6 +4,8 @@
 
 using System;
 using JetBrains.Annotations;
+using UnityEngine;
+using UnityEngine.UIElements;
 using IServiceProvider = NZCore.Inject.IServiceProvider;
 
 namespace NZCore.MVVM
@@ -16,10 +18,12 @@ namespace NZCore.MVVM
     public class ViewFactory : IViewFactory
     {
         private readonly IServiceProvider _container;
+        private readonly IVisualAssetStore _visualAssetStore;
 
-        public ViewFactory(IServiceProvider container)
+        public ViewFactory(IServiceProvider container, IVisualAssetStore visualAssetStore)
         {
             _container = container;
+            _visualAssetStore = visualAssetStore;
         }
 
         // ── ViewModel creation ────────────────────────────────────────────────
@@ -85,6 +89,47 @@ namespace NZCore.MVVM
         {
             var view = (TView)_container.CreateInstance(typeof(TView));
             view.InitializeView(viewModel);
+            return view;
+        }
+
+        /// <summary>
+        /// Create and also initialize the viewModel
+        /// </summary>
+        public TView CreateViewFromUxml<TView>(string uxmlKey, ViewModel viewModel)
+            where TView : View
+        {
+            var view = CreateViewFromUxml<TView>(uxmlKey);
+            if (view == null)
+                return null;
+
+            view.InitializeView(viewModel);
+            return view;
+        }
+
+        public TView CreateViewFromUxml<TView>(string uxmlKey)
+            where TView : VisualElement
+        {
+            if (!_visualAssetStore.TryGetAsset(uxmlKey, out var vta))
+            {
+                Debug.LogError($"VisualTreeAsset '{uxmlKey}' not found!");
+                return null;
+            }
+
+            var container = vta.Instantiate();
+            var view = container.Q<TView>();
+
+            if (view == null)
+            {
+                Debug.LogError($"UXML '{uxmlKey}' does not contain an element of type {typeof(TView).Name}!");
+                return null;
+            }
+
+            for (var i = 0; i < container.styleSheets.count; i++)
+            {
+                view.styleSheets.Add(container.styleSheets[i]);
+            }
+
+            _container.Inject(view);
             return view;
         }
 

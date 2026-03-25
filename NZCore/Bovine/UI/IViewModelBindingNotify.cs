@@ -4,70 +4,49 @@
 
 #if UNITY_6000
 using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using Unity.Burst;
+using NZCore.UIToolkit;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.UIElements;
 
 namespace BovineLabs.Core.UI
 {
-    public delegate void OnPropertyChangedDelegate(IntPtr target, in FixedString64Bytes property);
-
-    public interface IViewModelBindingNotify : IViewModelBinding, INotifyBindablePropertyChanged
+    public interface IViewModelBindingNotify : INotifyBindablePropertyChanged
     {
+        //void OnPropertyChanging(in FixedString64Bytes property);
         void OnPropertyChanged(in FixedString64Bytes property);
-
-        internal static class Active
-        {
-            public static readonly Dictionary<IntPtr, IViewModelBindingNotify> Objects = new();
-
-            public static FunctionPointer<OnPropertyChangedDelegate> Notify;
-
-            static Active()
-            {
-                Notify = new FunctionPointer<OnPropertyChangedDelegate>(Marshal.GetFunctionPointerForDelegate<OnPropertyChangedDelegate>(NotifyForwarding));
-            }
-
-            [AOT.MonoPInvokeCallback(typeof(OnPropertyChangedDelegate))]
-            private static void NotifyForwarding(IntPtr target, in FixedString64Bytes property)
-            {
-                if (Objects.TryGetValue(target, out var notify))
-                {
-                    notify.OnPropertyChanged(property);
-                }
-            }
-        }
     }
 
-    public interface IViewModelBindingNotify<T> : IViewModelBinding<T>, IViewModelBindingNotify
-        where T : unmanaged, IModelBindingNotify
+    public interface IViewModelBindingNotify<T> : IViewModelBindingNotify
+        where T : unmanaged
     {
+        ref T Value { get; }
+        
         public static unsafe void Load(IViewModelBindingNotify<T> viewModelBindingNotify)
         {
             var ptr = (IntPtr)UnsafeUtility.AddressOf(ref viewModelBindingNotify.Value);
-            Active.Objects[ptr] = viewModelBindingNotify;
-            viewModelBindingNotify.Value.Notify = Active.Notify;
+            BurstUIInterop.Objects[ptr] = viewModelBindingNotify;
         }
 
         public static unsafe void Unload(IViewModelBindingNotify<T> viewModelBindingNotify)
         {
             var ptr = (IntPtr)UnsafeUtility.AddressOf(ref viewModelBindingNotify.Value);
-            Active.Objects.Remove(ptr);
-            viewModelBindingNotify.Value.Notify = default;
+            BurstUIInterop.Objects.Remove(ptr);
+        }
+    }
+    
+    public static class IViewModelBindingExtensions
+    {
+        public static void Load<T>(this IViewModelBindingNotify<T> bindingObjectNotify)
+            where T : unmanaged
+        {
+            IViewModelBindingNotify<T>.Load(bindingObjectNotify);
         }
 
-        /// <inheritdoc/>
-        void IViewModelBinding.Load()
+        public static void Unload<T>(this IViewModelBindingNotify<T> bindingObjectNotify)
+            where T : unmanaged
         {
-            Load(this);
-        }
-
-        /// <inheritdoc/>
-        void IViewModelBinding.Unload()
-        {
-            Unload(this);
+            IViewModelBindingNotify<T>.Unload(bindingObjectNotify);
         }
     }
 }

@@ -13,7 +13,7 @@ using UnityEngine.UIElements;
 namespace NZCore.UIToolkit
 {
     public unsafe struct UIHelper<T, TD>
-        where T : class, IViewModelBinding<TD>, new()
+        where T : class, IViewModelBindingNotify<TD>, new()
         where TD : unmanaged, IModelBinding
     {
         private readonly FixedString128Bytes _uniqueKey;
@@ -87,7 +87,7 @@ namespace NZCore.UIToolkit
 
         public void Unload()
         {
-            var binding = UIToolkitManager.Instance.RemovePanel(_uniqueKey.ToString());
+            var binding = (T) UIToolkitManager.Instance.RemovePanel(_uniqueKey.ToString());
 
             if (_handle.IsAllocated)
             {

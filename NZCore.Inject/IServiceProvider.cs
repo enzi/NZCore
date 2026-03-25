@@ -46,6 +46,11 @@ namespace NZCore.Inject
         object CreateInstance(Type implementationType);
 
         /// <summary>
+        /// Injects [Inject]-marked fields and properties on an existing instance.
+        /// </summary>
+        void Inject<T>(T instance);
+
+        /// <summary>
         /// Creates a new scope.
         /// </summary>
         IServiceProvider CreateScope();

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using UnityEngine.UIElements;
 
 namespace NZCore.MVVM
 {
@@ -40,6 +41,22 @@ namespace NZCore.MVVM
         /// </summary>
         TView InitializeView<TView>(ViewModel viewModel)
             where TView : View;
+
+        /// <summary>
+        /// Instantiates a UXML layout, finds the View element of the specified type within it,
+        /// opies stylesheets, injects dependencies and links it to the provided ViewModel.
+        /// The View class must be declared as a custom element in the UXML.
+        /// </summary>
+        TView CreateViewFromUxml<TView>(string uxmlKey, ViewModel viewModel)
+            where TView : View;
+
+        /// <summary>
+        /// Instantiates a UXML layout, finds the View element of the specified type within it,
+        /// copies stylesheets and injects dependencies. Does not wire up a ViewModel.
+        /// The View class must be declared as a custom element in the UXML.
+        /// </summary>
+        TView CreateViewFromUxml<TView>(string uxmlKey)
+            where TView : VisualElement;
 
         // ── Convenience: paired RootView + RootViewModel creation ─────────────
 

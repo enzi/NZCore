@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using NZCore.Inject;
 using UnityEditor;
 using UnityEngine.UIElements;
 using IServiceProvider = NZCore.Inject.IServiceProvider;
@@ -22,8 +23,9 @@ namespace NZCore.MVVM
         /// </summary>
         public ViewModel ViewModel { get; private set; }
 
+        [Inject]
         public IVisualAssetStore VisualAssetStore;
-
+        
         /// <summary>
         /// Sibling Views whose removal lifecycle is coupled to this View's lifecycle.
         /// </summary>
@@ -101,8 +103,8 @@ namespace NZCore.MVVM
         }
 
         /// <summary>
-        /// Override this method to build the UI for this View.
-        /// Called once during InitializeView().
+        /// Override this method to build or init the UI for this View.
+        /// Called once during InitializeView() after InstantiateLayout().
         /// </summary>
         public abstract void CreateView();
 
