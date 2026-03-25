@@ -10,6 +10,7 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
 {
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class CreateAppUiSystem : SystemBase
     {
         private MVVMApplication _app;

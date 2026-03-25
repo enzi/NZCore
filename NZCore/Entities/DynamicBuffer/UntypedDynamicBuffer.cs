@@ -58,8 +58,8 @@ namespace NZCore
 #else
         internal UntypedDynamicBuffer(BufferHeader* header, int internalCapacity, int elementSize, int alignOf)
         {
-            m_Buffer = header;
-            m_InternalCapacity = internalCapacity;
+            _buffer = header;
+            _internalCapacity = internalCapacity;
             _alignOf = alignOf;
             ElementSize = elementSize;
         }
@@ -181,7 +181,7 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             BufferHeader.EnsureCapacity(_buffer, length, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1, m_MemoryInitPattern);
 #else
-            BufferHeader.EnsureCapacity(m_Buffer, length, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0);
+            BufferHeader.EnsureCapacity(_buffer, length, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0);
 #endif
         }
         
@@ -327,7 +327,7 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new DynamicBuffer<TU>(_buffer, m_Safety0, m_Safety1, m_IsReadOnly == 1, m_UseMemoryInitPattern == 1, m_MemoryInitPattern, _internalCapacity);
 #else
-            return new DynamicBuffer<U>(m_Buffer, m_InternalCapacity);
+            return new DynamicBuffer<TU>(_buffer, _internalCapacity);
 #endif
         }
 

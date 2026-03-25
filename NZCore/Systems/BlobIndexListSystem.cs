@@ -11,6 +11,7 @@ using NZCore.Interfaces;
 
 namespace NZCore
 {
+    [BurstCompile]
     public partial class BlobIndexListSystem<TIndexList, TBlobReference, TBlobRoot> : SystemBase
         where TIndexList : unmanaged, IInitSingleton, IDisposable, IBlobIndexList<TBlobReference>
         where TBlobReference : unmanaged, IBlobIndex, IBlobAssetReference<TBlobRoot>
@@ -85,6 +86,7 @@ namespace NZCore
         }
     }
     
+    [BurstCompile]
     public partial class BlobIndexMapSystem<TIndexList, TBlobReference, TBlobRoot> : SystemBase
         where TIndexList : unmanaged, IInitSingleton, IDisposable, IBlobIndexMap<TBlobReference>
         where TBlobReference : unmanaged, IBlobIndex, IBlobAssetReference<TBlobRoot>

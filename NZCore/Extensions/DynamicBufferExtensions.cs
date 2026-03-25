@@ -234,8 +234,13 @@ namespace NZCore
             var alignOf = UnsafeUtility.AlignOf<T>();
             
             ref var exposed = ref UnsafeUtility.As<DynamicBuffer<T>, DynamicBufferExposed<T>>(ref buffer);
+            
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new UntypedDynamicBuffer(exposed.m_Buffer, buffer.m_Safety0, default, buffer.m_IsReadOnly == 1,
                 buffer.m_useMemoryInitPattern == 1, buffer.m_memoryInitPattern, exposed.m_InternalCapacity, elementSize, alignOf);
+#else
+            return new UntypedDynamicBuffer(exposed.m_Buffer, exposed.m_InternalCapacity, elementSize, alignOf);
+#endif
         }
     }
 }
