@@ -2,7 +2,7 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-#if UNITY_6000
+#if UNITY_6000 && !NZCORE_MVVM
 using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;

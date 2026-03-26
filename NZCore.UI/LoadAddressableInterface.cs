@@ -88,12 +88,5 @@ namespace NZCore.UIToolkit
             worldInterfaceAssets?.UnloadAll();
         }
     }
-
-    [Serializable]
-    public class CustomUIAsset
-    {
-        public string Key;
-        public VisualTreeAsset Asset;
-    }
 }
 #endif

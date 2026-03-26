@@ -1,10 +1,9 @@
-// <copyright project="NZCore.UI" file="UIAssetsSingleton.cs">
+// <copyright project="NZCore.UI" file="UIAssets.cs">
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
-using Unity.Entities;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEngine.UIElements;
@@ -12,13 +11,13 @@ using UnityEngine.UIElements;
 namespace NZCore.UIToolkit
 {
     [Serializable]
-    public class UIAssetsSingleton : IComponentData
+    public class UIAssets
     {
         public Dictionary<string, VisualTreeAsset> VisualTreeAssets;
         public Dictionary<string, SpriteAtlas> SpriteAtlasAssets;
         public Dictionary<string, GameObject> WorldInterfaceAssets;
 
-        public UIAssetsSingleton()
+        public UIAssets()
         {
             VisualTreeAssets = new Dictionary<string, VisualTreeAsset>();
             SpriteAtlasAssets = new Dictionary<string, SpriteAtlas>();

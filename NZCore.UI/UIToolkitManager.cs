@@ -15,7 +15,7 @@ namespace NZCore.UI
     {
         public static UIToolkitManager Instance; // todo phase this out
 
-        public UIAssetsSingleton Assets = new();
+        public UIAssets Assets = new();
         public UIDocument UIDocument { get; private set; }
         public VisualElement Root { get; private set; }
         public VisualElement DragContainer { get; private set; }
