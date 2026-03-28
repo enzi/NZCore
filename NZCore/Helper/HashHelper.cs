@@ -3,8 +3,8 @@
 // </copyright>
 
 using System;
-using Hash128 = UnityEngine.Hash128;
 using Unity.Entities;
+using Hash128 = UnityEngine.Hash128;
 
 namespace NZCore
 {

@@ -1,6 +1,5 @@
 using System;
 using NZCore.Hybrid;
-using NZSpellCasting;
 using Unity.Mathematics;
 using UnityEngine;
 

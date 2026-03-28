@@ -3,11 +3,11 @@
 // </copyright>
 
 using System;
+using NZCore.Interfaces;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
-using NZCore.Interfaces;
 
 namespace NZCore
 {

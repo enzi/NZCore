@@ -15,17 +15,17 @@ namespace NZCore.Editor
 {
     public class TypeSearchProvider : BaseSearchProvider
     {
-        private readonly Type m_BaseType;
-        private readonly HashSet<Assembly> m_Assemblies = new();
+        private readonly Type _baseType;
+        private readonly HashSet<Assembly> _assemblies = new();
 
         public TypeSearchProvider(Type baseType)
             : base("type", "Type")
         {
-            m_BaseType = baseType;
+            _baseType = baseType;
 
-            m_QueryEngine.AddFilter("asm", o => o.Assembly.GetName().Name);
-            m_QueryEngine.AddFilter("name", o => o.Name);
-            m_QueryEngine.AddFilter("ns", o => o.Namespace);
+            QueryEngine.AddFilter("asm", o => o.Assembly.GetName().Name);
+            QueryEngine.AddFilter("name", o => o.Name);
+            QueryEngine.AddFilter("ns", o => o.Namespace);
         }
 
         protected override IEnumerable<SearchProposition> FetchPropositions(SearchContext context, SearchPropositionOptions options)
@@ -35,7 +35,7 @@ namespace NZCore.Editor
             yield return new SearchProposition(null, "Namespace", "ns:", "Filter by type namespace.", 0, TextCursorPlacement.MoveAutoComplete, null, null, null,
                 new Color());
 
-            foreach (var asm in m_Assemblies)
+            foreach (var asm in _assemblies)
             {
                 var assemblyName = asm.GetName().Name;
                 yield return new SearchProposition("Assembly", assemblyName, "asm=" + assemblyName, "Filter by assembly name.");
@@ -49,7 +49,7 @@ namespace NZCore.Editor
                 yield break;
             }
 
-            var query = m_QueryEngine.ParseQuery(context.searchQuery);
+            var query = QueryEngine.ParseQuery(context.searchQuery);
             if (!query.valid)
             {
                 yield break;
@@ -67,14 +67,14 @@ namespace NZCore.Editor
             // Ignore UI Builder types
             var builderAssembly = GetType().Assembly;
 
-            foreach (var t in TypeCache.GetTypesDerivedFrom(m_BaseType))
+            foreach (var t in TypeCache.GetTypesDerivedFrom(_baseType))
             {
                 if (t.IsGenericType || t.Assembly == builderAssembly)
                 {
                     continue;
                 }
 
-                m_Assemblies.Add(t.Assembly);
+                _assemblies.Add(t.Assembly);
                 yield return t;
             }
         }

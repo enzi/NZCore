@@ -73,19 +73,19 @@ namespace NZCore.AssetManagement
     internal class AutoIDProcessor
     {
         public readonly Type Type;
-        private readonly string filter;
-        private Dictionary<int, int> map;
+        private readonly string _filter;
+        private Dictionary<int, int> _map;
 
         public AutoIDProcessor(Type type)
         {
             Type = type;
-            filter = $"t:{type.Name}";
+            _filter = $"t:{type.Name}";
         }
 
         private Dictionary<int, int> CreateMap()
         {
             var tmpMap = new Dictionary<int, int>();
-            var assetPaths = AssetDatabase.FindAssets(filter).Select(AssetDatabase.GUIDToAssetPath).Distinct();
+            var assetPaths = AssetDatabase.FindAssets(_filter).Select(AssetDatabase.GUIDToAssetPath).Distinct();
 
             foreach (var assetPath in assetPaths)
             {
@@ -111,13 +111,13 @@ namespace NZCore.AssetManagement
 
         public void Process(Object asset)
         {
-            map ??= CreateMap();
+            _map ??= CreateMap();
 
             var autoIdAsset = (IAutoID)asset;
 
-            if (map.TryGetValue(autoIdAsset.AutoID, out var count) && (autoIdAsset.AutoID == 0 || count > 1))
+            if (_map.TryGetValue(autoIdAsset.AutoID, out var count) && (autoIdAsset.AutoID == 0 || count > 1))
             {
-                var newId = GetFirstFreeID(map);
+                var newId = GetFirstFreeID(_map);
 
                 if (newId == -1)
                 {
@@ -125,9 +125,9 @@ namespace NZCore.AssetManagement
                     return;
                 }
 
-                map[autoIdAsset.AutoID] = count - 1;
+                _map[autoIdAsset.AutoID] = count - 1;
                 autoIdAsset.AutoID = newId;
-                map[newId] = 1;
+                _map[newId] = 1;
 
                 EditorUtility.SetDirty(asset);
                 AssetDatabase.SaveAssetIfDirty(asset);

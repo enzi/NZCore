@@ -4,18 +4,20 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NZCore.Editor
 {
     [Serializable]
     public class SerializableType
     {
-        [SerializeField] private string assemblyQualifiedName;
+        [FormerlySerializedAs("assemblyQualifiedName")] [SerializeField] 
+        private string _assemblyQualifiedName;
 
         public Type Type
         {
-            get => string.IsNullOrEmpty(assemblyQualifiedName) ? null : Type.GetType(assemblyQualifiedName);
-            set => assemblyQualifiedName = value?.AssemblyQualifiedName ?? "";
+            get => string.IsNullOrEmpty(_assemblyQualifiedName) ? null : Type.GetType(_assemblyQualifiedName);
+            set => _assemblyQualifiedName = value?.AssemblyQualifiedName ?? "";
         }
     }
 }

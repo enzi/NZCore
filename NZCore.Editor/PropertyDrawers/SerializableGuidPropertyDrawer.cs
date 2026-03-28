@@ -13,8 +13,8 @@ namespace NZCore.Editor
     [CustomPropertyDrawer(typeof(SerializableGuid))]
     public class SerializableGuidPropertyDrawer : PropertyDrawer
     {
-        private readonly float ySep = 20;
-        private float buttonSize;
+        private readonly float _ySep = 20;
+        private float _buttonSize;
 
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
@@ -53,30 +53,30 @@ namespace NZCore.Editor
             var serializedGuid = property.FindPropertyRelative("serializedGuid");
 
             // Draw label
-            position = EditorGUI.PrefixLabel(new Rect(position.x, position.y + ySep / 2, position.width, position.height),
+            position = EditorGUI.PrefixLabel(new Rect(position.x, position.y + _ySep / 2, position.width, position.height),
                 GUIUtility.GetControlID(FocusType.Passive), label);
-            position.y -= ySep / 2; // Offsets position so we can draw the label for the field centered
+            position.y -= _ySep / 2; // Offsets position so we can draw the label for the field centered
 
-            buttonSize = position.width / 3; // Update size of buttons to always fit perfeftly above the string representation field
+            _buttonSize = position.width / 3; // Update size of buttons to always fit perfeftly above the string representation field
 
             // Buttons
-            if (GUI.Button(new Rect(position.xMin, position.yMin, buttonSize, ySep - 2), "New"))
+            if (GUI.Button(new Rect(position.xMin, position.yMin, _buttonSize, _ySep - 2), "New"))
             {
                 serializedGuid.stringValue = Guid.NewGuid().ToString();
             }
 
-            if (GUI.Button(new Rect(position.xMin + buttonSize, position.yMin, buttonSize, ySep - 2), "Copy"))
+            if (GUI.Button(new Rect(position.xMin + _buttonSize, position.yMin, _buttonSize, _ySep - 2), "Copy"))
             {
                 EditorGUIUtility.systemCopyBuffer = serializedGuid.stringValue;
             }
 
-            if (GUI.Button(new Rect(position.xMin + buttonSize * 2, position.yMin, buttonSize, ySep - 2), "Empty"))
+            if (GUI.Button(new Rect(position.xMin + _buttonSize * 2, position.yMin, _buttonSize, _ySep - 2), "Empty"))
             {
                 serializedGuid.stringValue = string.Empty;
             }
 
             // Draw fields - passs GUIContent.none to each so they are drawn without labels
-            var pos = new Rect(position.xMin, position.yMin + ySep, position.width, ySep - 2);
+            var pos = new Rect(position.xMin, position.yMin + _ySep, position.width, _ySep - 2);
             EditorGUI.PropertyField(pos, serializedGuid, GUIContent.none);
 
             // End property
@@ -85,6 +85,6 @@ namespace NZCore.Editor
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label) =>
             // Field height never changes, so ySep * 2 will always return the proper hight of the field
-            ySep * 2;
+            _ySep * 2;
     }
 }

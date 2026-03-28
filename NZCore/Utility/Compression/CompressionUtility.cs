@@ -6,7 +6,6 @@ using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 
-
 namespace NZCore.Compression
 {
     public enum Codec : byte

@@ -14,8 +14,8 @@ namespace NZCore
 {
     public static class CompilerServiceUtility
     {
-        private static readonly Type monoIOType = Type.GetType("System.IO.MonoIO, mscorlib");
-        private static readonly MethodInfo remapPathMethod = monoIOType.GetMethod("RemapPath", BindingFlags.Static | BindingFlags.Public);
+        private static readonly Type MonoIOType = Type.GetType("System.IO.MonoIO, mscorlib");
+        private static readonly MethodInfo RemapPathMethod = MonoIOType.GetMethod("RemapPath", BindingFlags.Static | BindingFlags.Public);
 
         public static void AddAdditionalFiles(string cscPath, params string[] additionalFiles)
         {
@@ -182,14 +182,14 @@ namespace NZCore
 
         public static bool RemapPath(string path, out string newPath)
         {
-            if (remapPathMethod == null)
+            if (RemapPathMethod == null)
             {
                 throw new Exception("RemapPathMethod is null! Reflection failed to resolve MonoIO.RemapPath!");
             }
 
             var tmpPath = "";
             object[] parameters = { path, tmpPath };
-            var result = (bool)remapPathMethod.Invoke(null, parameters);
+            var result = (bool)RemapPathMethod.Invoke(null, parameters);
             newPath = (string)parameters[1];
 
 

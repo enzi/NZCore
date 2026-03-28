@@ -2,12 +2,13 @@
 // Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-#if NZSPELLCASTING
-using NZSpellCasting;
-#endif
+
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Entities;
+#if NZSPELLCASTING
+using NZSpellCasting;
+#endif
 
 namespace NZCore
 {

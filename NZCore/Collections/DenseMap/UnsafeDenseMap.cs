@@ -4,8 +4,8 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Unity.Burst.CompilerServices;
 using NZCore.Helper;
+using Unity.Burst.CompilerServices;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;

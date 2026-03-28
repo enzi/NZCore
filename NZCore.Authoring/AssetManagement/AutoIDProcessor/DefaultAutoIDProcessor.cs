@@ -10,7 +10,6 @@ using NZCore.AssetManagement;
 using NZCore.AssetManagement.Interfaces;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace NZCore.Editor.AssetManagement
 {

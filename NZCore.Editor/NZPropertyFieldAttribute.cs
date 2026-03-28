@@ -7,10 +7,10 @@ using UnityEngine;
 
 namespace NZCore.Editor
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class)]
     public class NZPropertyFieldAttribute : PropertyAttribute
     {
-        public bool Inline;
+        public readonly bool Inline;
 
         public NZPropertyFieldAttribute(bool inline)
         {

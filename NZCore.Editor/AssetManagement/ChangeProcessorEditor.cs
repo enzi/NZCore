@@ -30,16 +30,16 @@ namespace NZCore.Editor
 
     public class ChangeProcessorEditorElement
     {
-        public Object target;
+        private readonly Object _target;
 
         public ChangeProcessorEditorElement(Object target)
         {
-            this.target = target;
+            this._target = target;
         }
 
         public VisualElement CreateInspectorGUI(VisualElement root)
         {
-            var hasChangesResult = ((ChangeProcessorAsset)target).HasChanges(GetChangeProcessorAssets(target.GetType()));
+            var hasChangesResult = ((ChangeProcessorAsset)_target).HasChanges(GetChangeProcessorAssets(_target.GetType()));
 
             if (hasChangesResult == HasChangeResult.None)
             {
@@ -48,7 +48,7 @@ namespace NZCore.Editor
 
             var btn = new Button(Click_CodeGen)
             {
-                text = $"Update {target.GetType().Name} settings JSON {(hasChangesResult == HasChangeResult.HasChanges ? "(*)" : "")}"
+                text = $"Update {_target.GetType().Name} settings JSON {(hasChangesResult == HasChangeResult.HasChanges ? "(*)" : "")}"
             };
 
             var btn2 = new Button(Click_CodeGenAll)
@@ -64,7 +64,7 @@ namespace NZCore.Editor
 
         private void Click_CodeGen()
         {
-            RunDidChangeOnAssetType((ChangeProcessorAsset)target);
+            RunDidChangeOnAssetType((ChangeProcessorAsset)_target);
         }
 
         public List<string> GetAssetPaths<T>() => GetAssetPaths(typeof(T).Name);

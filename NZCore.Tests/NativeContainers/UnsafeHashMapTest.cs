@@ -5,9 +5,7 @@
 using NUnit.Framework;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Entities;
 using Unity.PerformanceTesting;
-using NZCore;
 using UnityEngine;
 
 namespace NZCore.Tests.NativeContainers

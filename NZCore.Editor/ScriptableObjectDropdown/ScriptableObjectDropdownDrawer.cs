@@ -4,7 +4,6 @@
 
 using System.Collections.Generic;
 using NZCore.AssetManagement;
-using NZCore.UIToolkit;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -14,7 +13,7 @@ namespace NZCore.Editor
     [CustomPropertyDrawer(typeof(ScriptableObjectDropdownAttribute))]
     public class ScriptableObjectDropdownDrawer : PropertyDrawer
     {
-        private LabelWidthUpdater labelWidthUpdater;
+        //private LabelWidthUpdater labelWidthUpdater;
 
         private class DropdownWrapper
         {
@@ -101,19 +100,19 @@ namespace NZCore.Editor
 
             root.Add(inputContainer);
 
-            inputContainer.RegisterCallback<PointerDownEvent>(evt =>
+            inputContainer.RegisterCallback<PointerDownEvent>(_ =>
             {
                 var menu = new GenericDropdownMenu();
 
-                for (var i = 0; i < choices.Count; i++)
+                foreach (var choice in choices)
                 {
-                    var choice = choices[i];
                     var isSelected = property.objectReferenceValue == choice.Value;
                     var displayText = FormatDisplayString(choice);
 
+                    var choice1 = choice;
                     menu.AddItem(displayText, isSelected, () =>
                     {
-                        property.objectReferenceValue = choice.Value;
+                        property.objectReferenceValue = choice1.Value;
                         property.serializedObject.ApplyModifiedProperties();
                         textElement.text = displayText;
                     });
@@ -126,7 +125,7 @@ namespace NZCore.Editor
 #endif
             });
 
-            labelWidthUpdater = new LabelWidthUpdater(root, label);
+            //labelWidthUpdater = new LabelWidthUpdater(root, label);
 
             return root;
         }

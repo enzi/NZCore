@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -14,6 +15,7 @@ namespace NZCore.Editor
     public static class AssemblyDefinitionValidator
     {
         [Serializable]
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private class AssemblyDefinitionScheme
         {
             public string name;

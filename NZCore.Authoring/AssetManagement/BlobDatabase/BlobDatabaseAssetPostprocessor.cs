@@ -9,7 +9,7 @@ using UnityEngine;
 namespace NZCore.Authoring
 {
     /// <summary>
-    /// Handles triggering <see cref="ScriptableObjectDatabaseBaker"/> via bumping the version.
+    /// Handles triggering ScriptableObjectDatabaseBaker via bumping the version.
     /// Only happens for created/deleted assets
     /// </summary>
     public class BlobDatabaseAssetPostprocessor : AssetPostprocessor

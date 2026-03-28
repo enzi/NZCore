@@ -34,7 +34,7 @@ namespace NZCore.Editor
 
             foreach (var child in element.hierarchy.Children())
             {
-                SetPickingModeRecursive(child, pickingMode);
+                child.SetPickingModeRecursive(pickingMode);
             }
         }
 
@@ -274,49 +274,6 @@ namespace NZCore.Editor
             var meshWriteData = mgc.Allocate(vertices.Length, indices.Length);
             meshWriteData.SetAllVertices(vertices);
             meshWriteData.SetAllIndices(indices);
-        }
-
-        public static void SetLayout(this VisualElement element, Rect value)
-        {
-            if ( /*element.isLayoutManual &&*/ element.layout == value)
-            {
-                return;
-            }
-
-            var layout = element.layout;
-            VersionChangeType changeType = 0;
-            if (!Mathf.Approximately(layout.x, value.x) || !Mathf.Approximately(layout.y, value.y))
-            {
-                changeType |= VersionChangeType.Transform;
-            }
-
-            if (!Mathf.Approximately(layout.width, value.width) || !Mathf.Approximately(layout.height, value.height))
-            {
-                changeType |= VersionChangeType.Size;
-            }
-
-            //element.layout = value;
-            //this.isLayoutManual = true;
-
-            var style = element.style;
-            style.position = Position.Absolute;
-            style.marginLeft = 0.0f;
-            style.marginRight = 0.0f;
-            style.marginBottom = 0.0f;
-            style.marginTop = 0.0f;
-            style.left = value.x;
-            style.top = value.y;
-            style.right = float.NaN;
-            style.bottom = float.NaN;
-            style.width = value.width;
-            style.height = value.height;
-
-            if (changeType == 0)
-            {
-                return;
-            }
-
-            //element.IncrementVersion(changeType);
         }
     }
 }

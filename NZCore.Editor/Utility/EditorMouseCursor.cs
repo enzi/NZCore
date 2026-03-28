@@ -39,20 +39,20 @@ namespace NZCore.Editor
             SplitResizeLeftRight = 19
         }
 
-        private static PropertyInfo _defaultCursorId;
+        private static PropertyInfo defaultCursorId;
 
         private static PropertyInfo DefaultCursorId
         {
             get
             {
-                if (_defaultCursorId != null)
+                if (defaultCursorId != null)
                 {
-                    return _defaultCursorId;
+                    return defaultCursorId;
                 }
 
-                _defaultCursorId = typeof(Cursor).GetProperty("defaultCursorId", BindingFlags.NonPublic | BindingFlags.Instance);
+                defaultCursorId = typeof(Cursor).GetProperty("defaultCursorId", BindingFlags.NonPublic | BindingFlags.Instance);
 
-                return _defaultCursorId;
+                return defaultCursorId;
             }
         }
 

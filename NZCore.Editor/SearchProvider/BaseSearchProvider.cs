@@ -12,7 +12,7 @@ namespace NZCore.Editor
 {
     public abstract class BaseSearchProvider : SearchProvider
     {
-        public readonly QueryEngine<Type> m_QueryEngine = new();
+        protected readonly QueryEngine<Type> QueryEngine = new();
 
         protected BaseSearchProvider(string providerId, string displayName)
             : base(providerId, displayName)
@@ -22,7 +22,7 @@ namespace NZCore.Editor
             ReflectionUtility.SetReflectedProperty<SearchProvider, Func<SearchContext, SearchTable>>(this, "tableConfig", GetDefaultTableConfig);
             fetchColumns = FetchColumns;
 
-            m_QueryEngine.SetSearchDataCallback(GetSearchableData, StringComparison.OrdinalIgnoreCase);
+            QueryEngine.SetSearchDataCallback(GetSearchableData, StringComparison.OrdinalIgnoreCase);
         }
 
         protected abstract IEnumerable<SearchProposition> FetchPropositions(SearchContext context, SearchPropositionOptions options);
@@ -37,7 +37,7 @@ namespace NZCore.Editor
         public static void Show<T>(this T provider, Action<SearchItem> selectHandler, Action<SearchItem[]> multipleSelectHandler)
             where T : BaseSearchProvider
         {
-            var context = SearchService.CreateContext((IEnumerable<SearchProvider>)new SearchProvider[1]
+            var context = SearchService.CreateContext(new SearchProvider[]
             {
                 provider
             }, "type:", SearchFlags.Sorted | SearchFlags.Multiselect);
