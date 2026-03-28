@@ -3,7 +3,6 @@
 // </copyright>
 
 #if UNITY_6000 && !NZCORE_MVVM
-using System;
 using System.Collections.Generic;
 using NZCore.Hybrid;
 using NZCore.UI;
@@ -18,11 +17,11 @@ namespace NZCore.UIToolkit
     public class LoadAddressableInterface : MonoBehaviour
     {
         public bool LoadAddressables = true;
-        public bool printLoadedAssets;
+        public bool PrintLoadedAssets;
 
-        private AddressablesAndHandles<VisualTreeAsset> visualTreeAssets;
-        private AddressablesAndHandles<GameObject> worldInterfaceAssets;
-        private AddressablesAndHandles<SpriteAtlas> spriteAtlas;
+        private AddressablesAndHandles<VisualTreeAsset> _visualTreeAssets;
+        private AddressablesAndHandles<GameObject> _worldInterfaceAssets;
+        private AddressablesAndHandles<SpriteAtlas> _spriteAtlas;
 
         public List<CustomUIAsset> CustomAssets = new();
 
@@ -30,20 +29,20 @@ namespace NZCore.UIToolkit
         {
             if (LoadAddressables)
             {
-                visualTreeAssets = await AddressableHelper.LoadAssetsFromLabel<VisualTreeAsset>("interface");
-                worldInterfaceAssets = await AddressableHelper.LoadAssetsFromLabel<GameObject>("worldInterface");
-                spriteAtlas = await AddressableHelper.LoadAssetsFromLabel<SpriteAtlas>("spriteAtlas");
+                _visualTreeAssets = await AddressableHelper.LoadAssetsFromLabel<VisualTreeAsset>("interface");
+                _worldInterfaceAssets = await AddressableHelper.LoadAssetsFromLabel<GameObject>("worldInterface");
+                _spriteAtlas = await AddressableHelper.LoadAssetsFromLabel<SpriteAtlas>("spriteAtlas");
             }
             else
             {
-                visualTreeAssets = new AddressablesAndHandles<VisualTreeAsset>();
-                worldInterfaceAssets = new AddressablesAndHandles<GameObject>();
-                spriteAtlas = new AddressablesAndHandles<SpriteAtlas>();
+                _visualTreeAssets = new AddressablesAndHandles<VisualTreeAsset>();
+                _worldInterfaceAssets = new AddressablesAndHandles<GameObject>();
+                _spriteAtlas = new AddressablesAndHandles<SpriteAtlas>();
             }
 
-            if (printLoadedAssets)
+            if (PrintLoadedAssets)
             {
-                foreach (var asset in visualTreeAssets.Assets)
+                foreach (var asset in _visualTreeAssets.Assets)
                 {
                     Debug.Log($"{asset.Key}");
                 }
@@ -52,17 +51,17 @@ namespace NZCore.UIToolkit
 
             var uiAssets = UIToolkitManager.Instance.Assets;
 
-            foreach (var kvp in visualTreeAssets.Assets)
+            foreach (var kvp in _visualTreeAssets.Assets)
             {
                 uiAssets.VisualTreeAssets.Add(kvp.Key, kvp.Value);
             }
 
-            foreach (var kvp in spriteAtlas.Assets)
+            foreach (var kvp in _spriteAtlas.Assets)
             {
                 uiAssets.SpriteAtlasAssets.Add(kvp.Key, kvp.Value);
             }
 
-            foreach (var kvp in worldInterfaceAssets.Assets)
+            foreach (var kvp in _worldInterfaceAssets.Assets)
             {
                 uiAssets.WorldInterfaceAssets.Add(kvp.Key, kvp.Value);
             }
@@ -83,9 +82,9 @@ namespace NZCore.UIToolkit
 
         private void OnDestroy()
         {
-            visualTreeAssets?.UnloadAll();
-            spriteAtlas?.UnloadAll();
-            worldInterfaceAssets?.UnloadAll();
+            _visualTreeAssets?.UnloadAll();
+            _spriteAtlas?.UnloadAll();
+            _worldInterfaceAssets?.UnloadAll();
         }
     }
 }

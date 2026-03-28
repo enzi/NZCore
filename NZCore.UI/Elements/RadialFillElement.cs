@@ -88,8 +88,8 @@ namespace NZCore.UI
 
                 // Angle Offset determines the rotation of the radialFill VE, overlayImage will use the inverse of this
                 // rotation so the image remains upright
-                _radialFill.style.rotate = Quaternion.Euler(0, 0, _angleOffset);
-                _overlayImage.style.rotate = Quaternion.Euler(0, 0, -_angleOffset);
+                _radialFill.transform.rotation = Quaternion.Euler(0, 0, _angleOffset);
+                _overlayImage.transform.rotation = Quaternion.Euler(0, 0, -_angleOffset);
             }
         }
 

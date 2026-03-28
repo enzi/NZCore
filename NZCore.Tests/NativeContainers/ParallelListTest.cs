@@ -13,7 +13,7 @@ namespace NZCore.Tests.NativeContainers
 {
     public class ParallelListTest
     {
-        private struct PerformanceTestStruct2
+        public struct PerformanceTestStruct2
         {
             public int Data1;
             public int Data2;
