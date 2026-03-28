@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEngine.UIElements;
@@ -11,7 +12,7 @@ using UnityEngine.UIElements;
 namespace NZCore.UIToolkit
 {
     [Serializable]
-    public class UIAssets
+    public class UIAssets : IComponentData
     {
         public Dictionary<string, VisualTreeAsset> VisualTreeAssets;
         public Dictionary<string, SpriteAtlas> SpriteAtlasAssets;
