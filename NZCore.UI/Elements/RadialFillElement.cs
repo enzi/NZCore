@@ -19,15 +19,15 @@ namespace NZCore.UI
             AntiClockwise
         }
 
-        private readonly VisualElement radialFill;
-        private readonly VisualElement overlayImage;
-        private readonly VisualElement radialBoundary;
+        private readonly VisualElement _radialFill;
+        private readonly VisualElement _overlayImage;
+        private readonly VisualElement _radialBoundary;
 
         private float _value;
-        private float overlayImageScale;
-        private float angleOffset;
-        private string overlayImagePath;
-        private Sprite icon;
+        private float _overlayImageScale;
+        private float _angleOffset;
+        private string _overlayImagePath;
+        private Sprite _icon;
 
         [UxmlAttribute("fill-color")] public Color FillColor { get; set; }
 
@@ -64,47 +64,47 @@ namespace NZCore.UI
         [CreateProperty]
         public Sprite Icon
         {
-            get => icon;
+            get => _icon;
             set
             {
-                if (icon == value)
+                if (_icon == value)
                 {
                     return;
                 }
 
-                icon = value;
-                style.backgroundImage = new StyleBackground(icon);
+                _icon = value;
+                style.backgroundImage = new StyleBackground(_icon);
             }
         }
 
         [UxmlAttribute("angle-offset")]
         public float AngleOffset
         {
-            get => angleOffset;
+            get => _angleOffset;
 
             set
             {
-                angleOffset = value;
+                _angleOffset = value;
 
                 // Angle Offset determines the rotation of the radialFill VE, overlayImage will use the inverse of this
                 // rotation so the image remains upright
-                radialFill.transform.rotation = Quaternion.Euler(0, 0, angleOffset);
-                overlayImage.transform.rotation = Quaternion.Euler(0, 0, -angleOffset);
+                _radialFill.style.rotate = Quaternion.Euler(0, 0, _angleOffset);
+                _overlayImage.style.rotate = Quaternion.Euler(0, 0, -_angleOffset);
             }
         }
 
         [UxmlAttribute("overlay-image-path")]
         public string OverlayImagePath
         {
-            get => overlayImagePath;
+            get => _overlayImagePath;
             set
             {
-                overlayImagePath = value;
+                _overlayImagePath = value;
 #if UNITY_EDITOR
-                var tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(overlayImagePath);
+                var tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(_overlayImagePath);
                 if (tex != null)
                 {
-                    overlayImage.style.backgroundImage = tex;
+                    _overlayImage.style.backgroundImage = tex;
                 }
 #endif
             }
@@ -117,45 +117,45 @@ namespace NZCore.UI
         {
             get
             {
-                overlayImageScale = Mathf.Clamp(overlayImageScale, 0, 1);
-                return overlayImageScale;
+                _overlayImageScale = Mathf.Clamp(_overlayImageScale, 0, 1);
+                return _overlayImageScale;
             }
             set
             {
-                overlayImageScale = value;
-                overlayImage.style.scale = new Scale(new Vector2(overlayImageScale, overlayImageScale));
+                _overlayImageScale = value;
+                _overlayImage.style.scale = new Scale(new Vector2(_overlayImageScale, _overlayImageScale));
             }
         }
 
         public RadialFillElement()
         {
-            radialFill = new VisualElement { name = "radial-fill", pickingMode = PickingMode.Ignore };
-            overlayImage = new VisualElement { name = "overlay-image", pickingMode = PickingMode.Ignore };
-            radialBoundary = new VisualElement { name = "radial-boundary", pickingMode = PickingMode.Ignore };
+            _radialFill = new VisualElement { name = "radial-fill", pickingMode = PickingMode.Ignore };
+            _overlayImage = new VisualElement { name = "overlay-image", pickingMode = PickingMode.Ignore };
+            _radialBoundary = new VisualElement { name = "radial-boundary", pickingMode = PickingMode.Ignore };
 
-            radialFill.style.flexGrow = 1;
-            radialFill.Add(overlayImage);
-            radialFill.generateVisualContent += OnGenerateVisualContent;
+            _radialFill.style.flexGrow = 1;
+            _radialFill.Add(_overlayImage);
+            _radialFill.generateVisualContent += OnGenerateVisualContent;
 
-            overlayImage.style.flexGrow = 1;
-            overlayImage.style.backgroundImage = null;
+            _overlayImage.style.flexGrow = 1;
+            _overlayImage.style.backgroundImage = null;
 
-            radialBoundary.style.overflow = Overflow.Hidden;
-            radialBoundary.style.flexGrow = 1;
-            radialBoundary.Add(radialFill);
+            _radialBoundary.style.overflow = Overflow.Hidden;
+            _radialBoundary.style.flexGrow = 1;
+            _radialBoundary.Add(_radialFill);
 
-            Add(radialBoundary);
+            Add(_radialBoundary);
         }
 
         public void AngleUpdate(ChangeEvent<float> evt)
         {
-            radialFill?.MarkDirtyRepaint();
+            _radialFill?.MarkDirtyRepaint();
         }
 
         public void SetValueWithoutNotify(float newValue)
         {
             _value = newValue;
-            radialFill.MarkDirtyRepaint();
+            _radialFill.MarkDirtyRepaint();
         }
 
         private void OnGenerateVisualContent(MeshGenerationContext mgc)
@@ -187,8 +187,8 @@ namespace NZCore.UI
 
             // Create our MeshWriteData object, allocate the least amount of vertices and triangle indices required
 
-            var width = radialBoundary.layout.width;
-            var height = radialBoundary.layout.height;
+            var width = _radialBoundary.layout.width;
+            var height = _radialBoundary.layout.height;
 
             var mwd = mgc.Allocate(triCount, indiceCount);
             var origin = new Vector3(width / 2, height / 2, 0);

@@ -20,7 +20,7 @@ namespace NZCore.UI
         where T : unmanaged
     {
         ref T Value { get; }
-        
+
         public static unsafe void Load(IViewModelBindingNotify<T> viewModelBindingNotify)
         {
             var ptr = (IntPtr)UnsafeUtility.AddressOf(ref viewModelBindingNotify.Value);
@@ -33,8 +33,8 @@ namespace NZCore.UI
             BurstUIInterop.Objects.Remove(ptr);
         }
     }
-    
-    public static class IViewModelBindingExtensions
+
+    public static class ViewModelBindingExtensions
     {
         public static void Load<T>(this IViewModelBindingNotify<T> bindingObjectNotify)
             where T : unmanaged

@@ -8,6 +8,7 @@ using Unity.Entities.Content;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Serialization;
 using Hash128 = Unity.Entities.Hash128;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -46,46 +47,46 @@ namespace NZCore.Hybrid
     [ExecuteInEditMode]
     public class HybridEntity_Authoring : MonoBehaviour
     {
-        public HybridEntityResourceType resourceType;
-        public GameObject prefab;
-        public AssetReference addressable;
-        public bool setTransform;
-        public bool usePooling;
+        [FormerlySerializedAs("resourceType")] public HybridEntityResourceType ResourceType;
+        [FormerlySerializedAs("prefab")] public GameObject Prefab;
+        [FormerlySerializedAs("addressable")] public AssetReference Addressable;
+        [FormerlySerializedAs("setTransform")] public bool SetTransform;
+        [FormerlySerializedAs("usePooling")] public bool UsePooling;
         public bool DestroyWithEntity;
 
 #if UNITY_EDITOR
 
-        private Mesh mesh;
-        private Material mat;
+        private Mesh _mesh;
+        private Material _mat;
 
         private void OnEnable()
         {
             SceneView.duringSceneGui += OnSceneGUI;
 
-            if (prefab == null)
+            if (Prefab == null)
             {
                 return;
             }
 
-            var mr = prefab.GetComponentInChildren<MeshRenderer>();
+            var mr = Prefab.GetComponentInChildren<MeshRenderer>();
 
             if (mr != null)
             {
-                var mf = prefab.GetComponentInChildren<MeshFilter>();
-                mesh = mf.sharedMesh;
-                mat = mr.sharedMaterial;
+                var mf = Prefab.GetComponentInChildren<MeshFilter>();
+                _mesh = mf.sharedMesh;
+                _mat = mr.sharedMaterial;
             }
             else
             {
-                var smr = prefab.GetComponentInChildren<SkinnedMeshRenderer>();
+                var smr = Prefab.GetComponentInChildren<SkinnedMeshRenderer>();
 
                 if (smr == null)
                 {
                     return;
                 }
 
-                mesh = smr.sharedMesh;
-                mat = smr.sharedMaterial;
+                _mesh = smr.sharedMesh;
+                _mat = smr.sharedMaterial;
             }
         }
 
@@ -101,14 +102,14 @@ namespace NZCore.Hybrid
 
         private void Draw(Camera drawCamera)
         {
-            if (mesh == null || mat == null)
+            if (_mesh == null || _mat == null)
             {
                 return;
             }
 
             var tmpTransform = transform;
             var matrix = Matrix4x4.TRS(tmpTransform.position, tmpTransform.rotation, tmpTransform.localScale);
-            Graphics.DrawMesh(mesh, matrix, mat, gameObject.layer, drawCamera);
+            Graphics.DrawMesh(_mesh, matrix, _mat, gameObject.layer, drawCamera);
         }
 
 
@@ -118,8 +119,8 @@ namespace NZCore.Hybrid
         {
             public override void Bake(HybridEntity_Authoring authoring)
             {
-                if ((authoring.resourceType == HybridEntityResourceType.GameObject && authoring.prefab == null) ||
-                    (authoring.resourceType == HybridEntityResourceType.Addressable && authoring.addressable == null))
+                if ((authoring.ResourceType == HybridEntityResourceType.GameObject && authoring.Prefab == null) ||
+                    (authoring.ResourceType == HybridEntityResourceType.Addressable && authoring.Addressable == null))
                 {
                     return;
                 }
@@ -137,15 +138,15 @@ namespace NZCore.Hybrid
                 AddComponent(entity, new HybridAnimator());
                 AddComponent(entity, new AnimatorOverride());
 
-                if (authoring.resourceType == HybridEntityResourceType.GameObject && authoring.prefab != null)
+                if (authoring.ResourceType == HybridEntityResourceType.GameObject && authoring.Prefab != null)
                 {
-                    if (authoring.usePooling)
+                    if (authoring.UsePooling)
                     {
                         AddComponent(presentationEntity, new HybridSpawnPrefabFromPool
                         {
                             HybridEntity = entity,
-                            Prefab = authoring.prefab != null ? new WeakObjectReference<GameObject>(authoring.prefab) : default,
-                            SetTransform = authoring.setTransform.ToByte(),
+                            Prefab = authoring.Prefab != null ? new WeakObjectReference<GameObject>(authoring.Prefab) : default,
+                            SetTransform = authoring.SetTransform.ToByte(),
                             DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });
                     }
@@ -154,21 +155,21 @@ namespace NZCore.Hybrid
                         AddComponent(presentationEntity, new HybridSpawnPrefab
                         {
                             HybridEntity = entity,
-                            Prefab = authoring.prefab != null ? new WeakObjectReference<GameObject>(authoring.prefab) : default,
-                            SetTransform = authoring.setTransform.ToByte(),
+                            Prefab = authoring.Prefab != null ? new WeakObjectReference<GameObject>(authoring.Prefab) : default,
+                            SetTransform = authoring.SetTransform.ToByte(),
                             DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });
                     }
                 }
-                else if (authoring.resourceType == HybridEntityResourceType.Addressable && authoring.addressable != null)
+                else if (authoring.ResourceType == HybridEntityResourceType.Addressable && authoring.Addressable != null)
                 {
-                    if (authoring.usePooling)
+                    if (authoring.UsePooling)
                     {
                         AddComponent(presentationEntity, new HybridSpawnAddressableFromPool
                         {
                             HybridEntity = entity,
-                            AddressableHash = new Hash128(authoring.addressable.AssetGUID),
-                            SetTransform = authoring.setTransform.ToByte(),
+                            AddressableHash = new Hash128(authoring.Addressable.AssetGUID),
+                            SetTransform = authoring.SetTransform.ToByte(),
                             DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });
                     }
@@ -177,8 +178,8 @@ namespace NZCore.Hybrid
                         AddComponent(presentationEntity, new HybridSpawnAddressable
                         {
                             HybridEntity = entity,
-                            AddressableHash = new Hash128(authoring.addressable.AssetGUID),
-                            SetTransform = authoring.setTransform.ToByte(),
+                            AddressableHash = new Hash128(authoring.Addressable.AssetGUID),
+                            SetTransform = authoring.SetTransform.ToByte(),
                             DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
                         });
                     }

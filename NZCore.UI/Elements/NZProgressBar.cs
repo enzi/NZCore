@@ -34,29 +34,29 @@ namespace NZCore.UI
         private const string ProgressUssClassName = USSClassName + "__progress";
         private const string BackgroundUssClassName = USSClassName + "__background";
 
-        private readonly VisualElement background;
-        private readonly VisualElement progress;
-        private readonly VisualElement titleContainer;
+        private readonly VisualElement _background;
+        private readonly VisualElement _progress;
+        private readonly VisualElement _titleContainer;
 
-        private Label titleLeft;
-        private Label titleRight;
+        private Label _titleLeft;
+        private Label _titleRight;
 
-        private float lowValue;
-        private float highValue = 100f;
+        private float _lowValue;
+        private float _highValue = 100f;
 
         private float _value;
 
 
-        private NZProgressBarTitleStyle titleStyle;
+        private NZProgressBarTitleStyle _titleStyle;
 
         [CreateProperty]
         [UxmlAttribute("title-style")]
         public NZProgressBarTitleStyle TitleStyle
         {
-            get => titleStyle;
+            get => _titleStyle;
             set
             {
-                titleStyle = value;
+                _titleStyle = value;
                 SetupTitles();
             }
         }
@@ -65,20 +65,20 @@ namespace NZCore.UI
         [UxmlAttribute("title-left")]
         public string TitleLeft
         {
-            get => titleLeft.text;
-            set => titleLeft.text = value;
+            get => _titleLeft.text;
+            set => _titleLeft.text = value;
         }
 
         [CreateProperty]
         [UxmlAttribute("title-right")]
         public string TitleRight
         {
-            get => titleRight?.text;
+            get => _titleRight?.text;
             set
             {
-                if (titleRight != null)
+                if (_titleRight != null)
                 {
-                    titleRight.text = value;
+                    _titleRight.text = value;
                 }
             }
         }
@@ -87,10 +87,10 @@ namespace NZCore.UI
         [UxmlAttribute("low-value")]
         public float LowValue
         {
-            get => lowValue;
+            get => _lowValue;
             set
             {
-                lowValue = value;
+                _lowValue = value;
                 SetProgress(_value);
             }
         }
@@ -99,10 +99,10 @@ namespace NZCore.UI
         [UxmlAttribute("high-value")]
         public float HighValue
         {
-            get => highValue;
+            get => _highValue;
             set
             {
-                highValue = value;
+                _highValue = value;
                 SetProgress(_value);
             }
         }
@@ -145,17 +145,17 @@ namespace NZCore.UI
                 name = USSClassName
             };
 
-            background = new VisualElement { name = "background" };
-            background.AddToClassList(BackgroundUssClassName);
-            root.Add(background);
+            _background = new VisualElement { name = "background" };
+            _background.AddToClassList(BackgroundUssClassName);
+            root.Add(_background);
 
-            progress = new VisualElement { name = "progress" };
-            progress.AddToClassList(ProgressUssClassName);
-            background.Add(progress);
+            _progress = new VisualElement { name = "progress" };
+            _progress.AddToClassList(ProgressUssClassName);
+            _background.Add(_progress);
 
-            titleContainer = new VisualElement { name = "title-container" };
-            titleContainer.AddToClassList(TitleContainerUssClassName);
-            background.Add(titleContainer);
+            _titleContainer = new VisualElement { name = "title-container" };
+            _titleContainer.AddToClassList(TitleContainerUssClassName);
+            _background.Add(_titleContainer);
 
             SetupTitles();
 
@@ -166,23 +166,23 @@ namespace NZCore.UI
 
         private void SetupTitles()
         {
-            titleContainer.Clear();
+            _titleContainer.Clear();
 
             if (TitleStyle == NZProgressBarTitleStyle.Center)
             {
-                titleLeft = new Label { name = "title-center" };
-                titleLeft.AddToClassList(TitleCenterUssClassName);
-                titleContainer.Add(titleLeft);
+                _titleLeft = new Label { name = "title-center" };
+                _titleLeft.AddToClassList(TitleCenterUssClassName);
+                _titleContainer.Add(_titleLeft);
             }
             else
             {
-                titleLeft = new Label { name = "title-left" };
-                titleLeft.AddToClassList(TitleLeftUssClassName);
-                titleContainer.Add(titleLeft);
+                _titleLeft = new Label { name = "title-left" };
+                _titleLeft.AddToClassList(TitleLeftUssClassName);
+                _titleContainer.Add(_titleLeft);
 
-                titleRight = new Label { name = "title-right" };
-                titleRight.AddToClassList(TitleRightUssClassName);
-                titleContainer.Add(titleRight);
+                _titleRight = new Label { name = "title-right" };
+                _titleRight.AddToClassList(TitleRightUssClassName);
+                _titleContainer.Add(_titleRight);
             }
         }
 
@@ -203,23 +203,23 @@ namespace NZCore.UI
 
             if (right >= 0)
             {
-                progress.style.right = right;
+                _progress.style.right = right;
             }
         }
 
         private float CalculateProgressWidth(float width)
         {
-            if (background == null || progress == null)
+            if (_background == null || _progress == null)
             {
                 return 0f;
             }
 
-            if (float.IsNaN(background.layout.width))
+            if (float.IsNaN(_background.layout.width))
             {
                 return 0f;
             }
 
-            var maxWidth = background.layout.width - 2;
+            var maxWidth = _background.layout.width - 2;
             var lala = maxWidth - Mathf.Max(maxWidth * width / HighValue, MinVisibleProgress);
 
             //Debug.Log($"background width: {maxWidth} highValue: {highValue} ratio: {width} -> {lala}");

@@ -481,7 +481,6 @@ namespace NZCore
 
         public struct Enumerator
         {
-            [NativeDisableUnsafePtrRestriction] private readonly byte* _buffer;
             private readonly byte* _metadata;
             private readonly Entry* _entries;
             private readonly int _capacity;
@@ -489,7 +488,6 @@ namespace NZCore
 
             internal Enumerator(byte* buffer)
             {
-                _buffer = buffer;
                 var header = (Header*)buffer;
                 _metadata = buffer + sizeof(Header);
                 _entries = (Entry*)(buffer + header->EntriesOffset);

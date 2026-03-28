@@ -7,19 +7,24 @@ using NZCore.NativeContainers.DenseMap;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 using Unity.Jobs;
 using Unity.PerformanceTesting;
 
 namespace NZCore.Tests.NativeContainers
 {
-    
-
-    public unsafe class DynamicHashMapTest : ECSTestsFixture
+    public unsafe class DynamicHashMapTest : EcsTestsFixture
     {
-        private struct TestHashMapBuffer : IDynamicHashMap { public byte Value; }
+        private struct TestHashMapBuffer : IDynamicHashMap
+        {
+            public byte Value;
+        }
 
-        private struct SecondHashMapBuffer : IDynamicHashMap { public byte Value; }
-        
+        private struct SecondHashMapBuffer : IDynamicHashMap
+        {
+            public byte Value;
+        }
+
         private const int WarmupCount = 10;
         private const int MeasureCount = 100;
 
@@ -98,10 +103,7 @@ namespace NZCore.Tests.NativeContainers
                         map.TryAdd(i, i);
                     }
                 })
-                .CleanUp(() =>
-                {
-                    Assert.AreEqual(count, foundCount);
-                })
+                .CleanUp(() => { Assert.AreEqual(count, foundCount); })
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
                 .Run();
@@ -162,8 +164,8 @@ namespace NZCore.Tests.NativeContainers
         public void Test_DynamicHashMap_LookupJob(int count)
         {
             var archetype = Manager.CreateArchetype(typeof(TestHashMapBuffer));
-            var entity = Manager.CreateEntity(archetype);
-            var foundCount = new NativeReference<int>(Allocator.TempJob);
+            Entity entity = default;
+            NativeReference<int> foundCount = default;
 
             Measure
                 .Method(() =>
@@ -182,6 +184,8 @@ namespace NZCore.Tests.NativeContainers
                 })
                 .SetUp(() =>
                 {
+                    entity = Manager.CreateEntity(archetype);
+                    foundCount = new NativeReference<int>(Allocator.Persistent);
                     var buffer = Manager.GetBuffer<TestHashMapBuffer>(entity);
                     DynamicHashMap<TestHashMapBuffer, int, int>.Initialize(buffer, (int)(count * 1.5f));
                     var map = buffer.AsHashMap<TestHashMapBuffer, int, int>();
@@ -194,13 +198,12 @@ namespace NZCore.Tests.NativeContainers
                 .CleanUp(() =>
                 {
                     Assert.AreEqual(count, foundCount.Value);
+                    foundCount.Dispose();
+                    Manager.DestroyEntity(entity);
                 })
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
                 .Run();
-
-            foundCount.Dispose();
-            Manager.DestroyEntity(entity);
         }
 
         // Comparison tests against UnsafeHashMap
@@ -220,10 +223,7 @@ namespace NZCore.Tests.NativeContainers
                         map->Add(i, i);
                     }
                 })
-                .SetUp(() =>
-                {
-                    map = UnsafeCreateHelper.CreateHashMap<int, int>((int)(count * 1.5f), Allocator.Persistent);
-                })
+                .SetUp(() => { map = UnsafeCreateHelper.CreateHashMap<int, int>((int)(count * 1.5f), Allocator.Persistent); })
                 .CleanUp(() =>
                 {
                     Assert.AreEqual(count, map->Count);
@@ -232,6 +232,7 @@ namespace NZCore.Tests.NativeContainers
                         Assert.IsTrue(map->TryGetValue(i, out var val));
                         Assert.AreEqual(i, val);
                     }
+
                     map->Dispose();
                 })
                 .WarmupCount(WarmupCount)
@@ -293,10 +294,7 @@ namespace NZCore.Tests.NativeContainers
                         map->Emplace(i, i);
                     }
                 })
-                .SetUp(() =>
-                {
-                    map = UnsafeDenseMap<int, int>.Create((uint)(count * 1.5f), 0.9, Allocator.Persistent);
-                })
+                .SetUp(() => { map = UnsafeDenseMap<int, int>.Create((uint)(count * 1.5f), 0.9, Allocator.Persistent); })
                 .CleanUp(() =>
                 {
                     Assert.AreEqual(count, map->Count);
@@ -305,6 +303,7 @@ namespace NZCore.Tests.NativeContainers
                         Assert.IsTrue(map->Get(i, out var val));
                         Assert.AreEqual(i, val);
                     }
+
                     map->Dispose();
                 })
                 .WarmupCount(WarmupCount)
@@ -511,8 +510,8 @@ namespace NZCore.Tests.NativeContainers
             }
 
             Assert.AreEqual(3, enumCount);
-            Assert.AreEqual(6, keySum);   // 1 + 2 + 3
-            Assert.AreEqual(600, sum);    // 100 + 200 + 300
+            Assert.AreEqual(6, keySum); // 1 + 2 + 3
+            Assert.AreEqual(600, sum); // 100 + 200 + 300
 
             Manager.DestroyEntity(entity);
         }
@@ -520,8 +519,7 @@ namespace NZCore.Tests.NativeContainers
         [BurstCompile]
         private struct DynamicHashMapInsertJob : IJob
         {
-            [NativeDisableUnsafePtrRestriction]
-            public byte* BufferPtr;
+            [NativeDisableUnsafePtrRestriction] public byte* BufferPtr;
             public int BufferLength;
             public int Count;
 
@@ -539,8 +537,7 @@ namespace NZCore.Tests.NativeContainers
         [BurstCompile]
         private struct DynamicHashMapLookupJob : IJob
         {
-            [NativeDisableUnsafePtrRestriction]
-            public byte* BufferPtr;
+            [NativeDisableUnsafePtrRestriction] public byte* BufferPtr;
             public int BufferLength;
             public int Count;
             public NativeReference<int> FoundCount;
@@ -555,6 +552,7 @@ namespace NZCore.Tests.NativeContainers
                     if (map.TryGetValue(i, out var val) && val == i)
                         found++;
                 }
+
                 FoundCount.Value = found;
             }
         }

@@ -6,24 +6,23 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Hash128 = Unity.Entities.Hash128;
 
 namespace NZCore.Hybrid
 {
     public struct LoadAddressableLabel : IComponentData
     {
-        public FixedString512Bytes label;
+        public FixedString512Bytes Label;
     }
 
     [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
     public partial class LoadAddressablesSystem : SystemBase
     {
-        public Dictionary<Hash128, AddressableAndHandle<GameObject>> addressables;
+        public Dictionary<Hash128, AddressableAndHandle<GameObject>> Addressables;
 
         protected override void OnCreate()
         {
-            addressables = new Dictionary<Hash128, AddressableAndHandle<GameObject>>();
+            Addressables = new Dictionary<Hash128, AddressableAndHandle<GameObject>>();
         }
 
         protected override void OnUpdate() { }
@@ -35,26 +34,25 @@ namespace NZCore.Hybrid
 
         public bool RequestLoad(Hash128 key, out GameObject prefab)
         {
-            if (addressables.ContainsKey(key))
+            if (Addressables.TryGetValue(key, out var element))
             {
-                var tmp = addressables[key];
-                if (tmp.Handle.IsDone)
+                if (element.Handle.IsDone)
                 {
-                    if (tmp.Asset == null)
+                    if (element.Asset == null)
                     {
-                        tmp.Asset = tmp.Handle.Result;
+                        element.Asset = element.Handle.Result;
                     }
 
-                    prefab = tmp.Asset;
+                    prefab = element.Asset;
                     return true;
                 }
             }
             else
             {
                 //Debug.Log($"Loading Addressable {key.ToString()}");
-                var handle = Addressables.LoadAssetAsync<GameObject>(key.ToString());
+                var handle = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<GameObject>(key.ToString());
 
-                addressables.Add(key, new AddressableAndHandle<GameObject>
+                Addressables.Add(key, new AddressableAndHandle<GameObject>
                 {
                     Handle = handle
                 });
@@ -66,12 +64,12 @@ namespace NZCore.Hybrid
 
         public void UnloadAddressables()
         {
-            foreach (var pair in addressables)
+            foreach (var pair in Addressables)
             {
                 pair.Value.Unload();
             }
 
-            addressables.Clear();
+            Addressables.Clear();
         }
     }
 }

@@ -13,12 +13,12 @@ namespace NZCore.Hybrid
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class GameObjectPoolSystem : SystemBase
     {
-        private Dictionary<int, Stack<GameObject>> Pool;
+        private Dictionary<int, Stack<GameObject>> _pool;
 
 
         protected override void OnCreate()
         {
-            Pool = new Dictionary<int, Stack<GameObject>>();
+            _pool = new Dictionary<int, Stack<GameObject>>();
             Enabled = false; // this sytem has no Update
         }
 
@@ -28,7 +28,7 @@ namespace NZCore.Hybrid
         {
             var key = prefab.GetInstanceID();
 
-            if (Pool.TryGetValue(key, out var poolableObjects) && poolableObjects.Count > 0)
+            if (_pool.TryGetValue(key, out var poolableObjects) && poolableObjects.Count > 0)
             {
                 var poolableObj = poolableObjects.Pop();
 
@@ -42,7 +42,7 @@ namespace NZCore.Hybrid
             var inst = Object.Instantiate(prefab);
 
             var prefabId = inst.AddComponent<GameObjectPrefabID>();
-            prefabId.prefabId = key;
+            prefabId.PrefabId = key;
 
             freshInstance = true;
 
@@ -56,11 +56,11 @@ namespace NZCore.Hybrid
                 return;
             }
 
-            var prefabId = goPrefabId.prefabId;
+            var prefabId = goPrefabId.PrefabId;
 
             pooledObject.SetActive(false);
 
-            if (Pool.TryGetValue(prefabId, out var poolableObjects))
+            if (_pool.TryGetValue(prefabId, out var poolableObjects))
             {
                 poolableObjects.Push(pooledObject);
                 pooledObject.gameObject.SetActive(false);
@@ -69,7 +69,7 @@ namespace NZCore.Hybrid
             {
                 var stack = new Stack<GameObject>();
                 stack.Push(pooledObject);
-                Pool.Add(prefabId, stack);
+                _pool.Add(prefabId, stack);
             }
         }
 
@@ -77,7 +77,7 @@ namespace NZCore.Hybrid
         {
             Debug.Log("Pool Reset");
             var i = 0;
-            foreach (var entry in Pool)
+            foreach (var entry in _pool)
             {
                 while (entry.Value.Count > 0)
                 {
@@ -97,7 +97,7 @@ namespace NZCore.Hybrid
 
             Debug.Log($"Pool reset count: {i}");
 
-            Pool.Clear();
+            _pool.Clear();
         }
     }
 }

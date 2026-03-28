@@ -17,32 +17,32 @@ namespace NZCore.Hybrid
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial struct TransformEntityMappingSystem : ISystem
     {
-        private TransformEntityMappingSingleton mapping;
+        private TransformEntityMappingSingleton _mapping;
 
-        private NativeList<int> entitiesToRemove;
-        private NativeList<DelayedDestroyRequest> delayedDestroyRequests;
+        private NativeList<int> _entitiesToRemove;
+        private NativeList<DelayedDestroyRequest> _delayedDestroyRequests;
 
         private delegate void DestroyGameObjects(in NativeArray<UnityObjectRef<GameObject>> requests);
 
-        private ManagedDelegate<DestroyGameObjects> destroyGameObjectsFunction;
+        private ManagedDelegate<DestroyGameObjects> _destroyGameObjectsFunction;
 
         public void OnCreate(ref SystemState state)
         {
-            state.CreateSingleton(out mapping);
+            state.CreateSingleton(out _mapping);
             state.CreateSingleton<CreateHybridObjectRequestSingleton>();
 
-            entitiesToRemove = new NativeList<int>(0, Allocator.Persistent);
-            delayedDestroyRequests = new NativeList<DelayedDestroyRequest>(0, Allocator.Persistent);
+            _entitiesToRemove = new NativeList<int>(0, Allocator.Persistent);
+            _delayedDestroyRequests = new NativeList<DelayedDestroyRequest>(0, Allocator.Persistent);
 
-            destroyGameObjectsFunction = new ManagedDelegate<DestroyGameObjects>(Destroy);
+            _destroyGameObjectsFunction = new ManagedDelegate<DestroyGameObjects>(Destroy);
         }
 
         public void OnDestroy(ref SystemState state)
         {
-            entitiesToRemove.Dispose();
-            delayedDestroyRequests.Dispose();
-            mapping.Dispose();
-            destroyGameObjectsFunction.Dispose();
+            _entitiesToRemove.Dispose();
+            _delayedDestroyRequests.Dispose();
+            _mapping.Dispose();
+            _destroyGameObjectsFunction.Dispose();
 
             state.DisposeSingleton<CreateHybridObjectRequestSingleton>();
         }
@@ -54,35 +54,35 @@ namespace NZCore.Hybrid
             var deltaTime = SystemAPI.Time.DeltaTime;
             var assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
 
-            for (var i = mapping.TrackedGameObjects.Length - 1; i >= 0; i--)
+            for (var i = _mapping.TrackedGameObjects.Length - 1; i >= 0; i--)
             {
-                ref var tracked = ref mapping.TrackedGameObjects.ElementAt(i);
+                ref var tracked = ref _mapping.TrackedGameObjects.ElementAt(i);
 
                 tracked.DestroyTime -= deltaTime;
 
                 if (tracked.DestroyTime <= 0)
                 {
-                    mapping.DestroyRequests.Add(tracked.Object);
+                    _mapping.DestroyRequests.Add(tracked.Object);
                     assetLoader.UnregisterGeneric(tracked.Prefab);
 
-                    mapping.TrackedGameObjects.RemoveAt(i);
+                    _mapping.TrackedGameObjects.RemoveAt(i);
                 }
             }
 
-            foreach (var index in entitiesToRemove)
+            foreach (var index in _entitiesToRemove)
             {
-                if (index >= mapping.EntitiesList.Length)
+                if (index >= _mapping.EntitiesList.Length)
                 {
                     continue;
                 }
 
-                var trackedEntity = mapping.EntitiesList[index];
+                var trackedEntity = _mapping.EntitiesList[index];
 
                 if (trackedEntity.DestroyHybridWithEntity == 1)
                 {
                     if (trackedEntity.DestroyDelay > 0)
                     {
-                        delayedDestroyRequests.Add(new DelayedDestroyRequest
+                        _delayedDestroyRequests.Add(new DelayedDestroyRequest
                         {
                             Entity = trackedEntity.Entity,
                             Object = trackedEntity.Instance,
@@ -94,54 +94,54 @@ namespace NZCore.Hybrid
                         //Debug.Log($"TransformEntityMapping - Destroying {tmpTransform.gameObject.name}");
 
                         assetLoader.UnregisterEntity(trackedEntity.Entity);
-                        mapping.DestroyRequests.Add(trackedEntity.Instance);
+                        _mapping.DestroyRequests.Add(trackedEntity.Instance);
                     }
                 }
 
-                mapping.RemoveEntity(index, trackedEntity.Entity);
+                _mapping.RemoveEntity(index, trackedEntity.Entity);
             }
 
-            for (var i = delayedDestroyRequests.Length - 1; i >= 0; i--)
+            for (var i = _delayedDestroyRequests.Length - 1; i >= 0; i--)
             {
-                ref var delayedDestroyRequest = ref delayedDestroyRequests.ElementAt(i);
+                ref var delayedDestroyRequest = ref _delayedDestroyRequests.ElementAt(i);
 
                 delayedDestroyRequest.Time -= deltaTime;
 
                 if (delayedDestroyRequest.Time <= 0)
                 {
                     assetLoader.UnregisterEntity(delayedDestroyRequest.Entity);
-                    mapping.DestroyRequests.Add(delayedDestroyRequest.Object);
-                    delayedDestroyRequests.RemoveAt(i);
+                    _mapping.DestroyRequests.Add(delayedDestroyRequest.Object);
+                    _delayedDestroyRequests.RemoveAt(i);
                 }
             }
 
-            if (mapping.DestroyRequests.Length > 0)
+            if (_mapping.DestroyRequests.Length > 0)
             {
-                destroyGameObjectsFunction.Ptr.Invoke(mapping.DestroyRequests.AsArray());
+                _destroyGameObjectsFunction.Ptr.Invoke(_mapping.DestroyRequests.AsArray());
 
-                mapping.DestroyRequests.Clear();
+                _mapping.DestroyRequests.Clear();
             }
 
-            entitiesToRemove.Clear();
+            _entitiesToRemove.Clear();
 
-            if (mapping.EntitiesList.Capacity > entitiesToRemove.Capacity)
+            if (_mapping.EntitiesList.Capacity > _entitiesToRemove.Capacity)
             {
-                entitiesToRemove.Capacity = mapping.EntitiesList.Capacity;
+                _entitiesToRemove.Capacity = _mapping.EntitiesList.Capacity;
             }
 
             state.Dependency = new SyncPositionToEntityJob
             {
-                Entities = mapping.EntitiesList.AsArray(),
-                EntitiesToRemove = entitiesToRemove, // use normal NativeList because the job is scheduled only
+                Entities = _mapping.EntitiesList.AsArray(),
+                EntitiesToRemove = _entitiesToRemove, // use normal NativeList because the job is scheduled only
                 LocalToWorld_Lookup = SystemAPI.GetComponentLookup<LocalToWorld>(true)
-            }.Schedule(mapping.TransformArray, state.Dependency);
+            }.Schedule(_mapping.TransformArray, state.Dependency);
         }
 
         public void Unload()
         {
-            mapping.Clear();
-            entitiesToRemove.Clear();
-            delayedDestroyRequests.Clear();
+            _mapping.Clear();
+            _entitiesToRemove.Clear();
+            _delayedDestroyRequests.Clear();
         }
 
         [BurstCompile]
@@ -154,7 +154,7 @@ namespace NZCore.Hybrid
             public void Execute(int index, TransformAccess transform)
             {
                 var entity = Entities[index].Entity;
-                
+
                 if (LocalToWorld_Lookup.TryGetComponentPtrRO(entity, out var localToWorld))
                 {
                     //Debug.Log($"Setting positon on {entity} to {localToWorld->Position}");

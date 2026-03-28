@@ -11,21 +11,21 @@ namespace NZCore.UI.Editor
     [UxmlElement]
     public partial class InspectorView : VisualElement
     {
-        private UnityEditor.Editor editor;
+        private UnityEditor.Editor _editor;
 
         public void UpdateSelection(ScriptableObject obj)
         {
             Clear();
 
-            if (editor != null)
+            if (_editor != null)
             {
-                Object.DestroyImmediate(editor);
+                Object.DestroyImmediate(_editor);
             }
 
-            editor = UnityEditor.Editor.CreateEditor(obj);
+            _editor = UnityEditor.Editor.CreateEditor(obj);
 
-            var inspector = editor.CreateInspectorGUI();
-            inspector.Bind(editor.serializedObject);
+            var inspector = _editor.CreateInspectorGUI();
+            inspector.Bind(_editor.serializedObject);
 
             Add(inspector);
         }

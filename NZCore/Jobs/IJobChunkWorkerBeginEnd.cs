@@ -264,7 +264,7 @@ namespace NZCore.Jobs
                 QueryHasEnableableComponents = queryData->HasEnableableComponents != 0 ? 1 : 0
             };
             JobChunkWorkerProducer<T>.Initialize();
-            var reflectionData = JobChunkWorkerProducer<T>.reflectionData.Data;
+            var reflectionData = JobChunkWorkerProducer<T>.ReflectionData.Data;
             CollectionHelper.CheckReflectionDataCorrect<T>(reflectionData);
 
             var scheduleParams = new JobsUtility.JobScheduleParameters(
@@ -290,14 +290,14 @@ namespace NZCore.Jobs
         internal struct JobChunkWorkerProducer<T>
             where T : struct, IJobChunkWorkerBeginEnd
         {
-            internal static readonly SharedStatic<IntPtr> reflectionData = SharedStatic<IntPtr>.GetOrCreate<JobChunkWorkerProducer<T>>();
+            internal static readonly SharedStatic<IntPtr> ReflectionData = SharedStatic<IntPtr>.GetOrCreate<JobChunkWorkerProducer<T>>();
 
             [BurstDiscard]
             internal static void Initialize()
             {
-                if (reflectionData.Data == IntPtr.Zero)
+                if (ReflectionData.Data == IntPtr.Zero)
                 {
-                    reflectionData.Data = JobsUtility.CreateJobReflectionData(typeof(JobChunkWorkerWrapper<T>), typeof(T), (ExecuteJobFunction)Execute);
+                    ReflectionData.Data = JobsUtility.CreateJobReflectionData(typeof(JobChunkWorkerWrapper<T>), typeof(T), (ExecuteJobFunction)Execute);
                 }
             }
 
@@ -398,7 +398,7 @@ namespace NZCore.Jobs
                         var chunkIndex = beginChunkIndex - 1;
 
                         v128 chunkEnabledMask = default;
-                        while (chunkCacheIterator.MoveNextChunk(ref chunkIndex, out var chunk, out var chunkEntityCount,
+                        while (chunkCacheIterator.MoveNextChunk(ref chunkIndex, out var chunk, out _,
                                    out var useEnabledMask, ref chunkEnabledMask))
                         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS

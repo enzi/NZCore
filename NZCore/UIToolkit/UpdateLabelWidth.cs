@@ -27,21 +27,21 @@ namespace NZCore.UIToolkit
         private static readonly CustomStyleProperty<float> LabelBaseMinWidthProperty = new("--unity-property-field-label-base-min-width");
         private static readonly CustomStyleProperty<float> LabelExtraContextWidthProperty = new("--unity-base-field-extra-context-width");
 
-        private readonly VisualElement root;
-        private readonly VisualElement label;
+        private readonly VisualElement _root;
+        private readonly VisualElement _label;
 
-        private VisualElement cachedContextWidthElement;
-        private VisualElement cachedInspectorElement;
+        private VisualElement _cachedContextWidthElement;
+        private VisualElement _cachedInspectorElement;
 
-        private float labelWidthRatio;
-        private float labelExtraPadding;
-        private float labelBaseMinWidth;
-        private float labelExtraContextWidth;
+        private float _labelWidthRatio;
+        private float _labelExtraPadding;
+        private float _labelBaseMinWidth;
+        private float _labelExtraContextWidth;
 
         public LabelWidthUpdater(VisualElement root, VisualElement label, bool addBaseClasses = true)
         {
-            this.root = root;
-            this.label = label;
+            this._root = root;
+            this._label = label;
 
             if (addBaseClasses)
             {
@@ -67,68 +67,68 @@ namespace NZCore.UIToolkit
                 return;
             }
 
-            cachedInspectorElement = null;
-            cachedContextWidthElement = null;
+            _cachedInspectorElement = null;
+            _cachedContextWidthElement = null;
 
-            var currentElement = label.parent;
+            var currentElement = _label.parent;
             while (currentElement != null)
             {
                 if (currentElement.ClassListContains("unity-inspector-element"))
                 {
-                    cachedInspectorElement = currentElement;
+                    _cachedInspectorElement = currentElement;
                 }
 
                 if (currentElement.ClassListContains("unity-inspector-main-container"))
                 {
-                    cachedContextWidthElement = currentElement;
+                    _cachedContextWidthElement = currentElement;
                     break;
                 }
 
                 currentElement = currentElement.parent;
             }
 
-            if (cachedInspectorElement == null)
+            if (_cachedInspectorElement == null)
             {
-                root.RemoveFromClassList(InspectorFieldUssClassName);
+                _root.RemoveFromClassList(InspectorFieldUssClassName);
                 return;
             }
 
             // These default values are based of IMGUI
-            labelWidthRatio = 0.45f;
+            _labelWidthRatio = 0.45f;
 
             // Those values are 40 and 120 in IMGUI, but they already take in account the fields margin. We readjust them
             // because the uitk margin is being taken in account later.
-            labelExtraPadding = 37.0f;
-            labelBaseMinWidth = 123.0f;
+            _labelExtraPadding = 37.0f;
+            _labelBaseMinWidth = 123.0f;
 
             // The inspector panel has a 1px border we need to consider as part of the context width.
-            labelExtraContextWidth = 1.0f;
+            _labelExtraContextWidth = 1.0f;
 
-            root.RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
-            root.AddToClassList(InspectorFieldUssClassName);
-            root.RegisterCallback<GeometryChangedEvent>(OnInspectorFieldGeometryChanged);
+            _root.RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
+            _root.AddToClassList(InspectorFieldUssClassName);
+            _root.RegisterCallback<GeometryChangedEvent>(OnInspectorFieldGeometryChanged);
         }
 
         private void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
         {
             if (evt.customStyle.TryGetValue(LabelWidthRatioProperty, out var tmpLabelWidthRatio))
             {
-                labelWidthRatio = tmpLabelWidthRatio;
+                _labelWidthRatio = tmpLabelWidthRatio;
             }
 
             if (evt.customStyle.TryGetValue(LabelExtraPaddingProperty, out var tmpLabelExtraPadding))
             {
-                labelExtraPadding = tmpLabelExtraPadding;
+                _labelExtraPadding = tmpLabelExtraPadding;
             }
 
             if (evt.customStyle.TryGetValue(LabelBaseMinWidthProperty, out var tmpLabelBaseMinWidth))
             {
-                labelBaseMinWidth = tmpLabelBaseMinWidth;
+                _labelBaseMinWidth = tmpLabelBaseMinWidth;
             }
 
             if (evt.customStyle.TryGetValue(LabelExtraContextWidthProperty, out var tmpLabelExtraContextWidth))
             {
-                labelExtraContextWidth = tmpLabelExtraContextWidth;
+                _labelExtraContextWidth = tmpLabelExtraContextWidth;
             }
 
             AlignLabel();
@@ -141,7 +141,7 @@ namespace NZCore.UIToolkit
 
         private void AlignLabel()
         {
-            if (!root.ClassListContains(AlignedFieldUssClassName) || cachedInspectorElement == null)
+            if (!_root.ClassListContains(AlignedFieldUssClassName) || _cachedInspectorElement == null)
             {
                 return;
             }
@@ -149,22 +149,22 @@ namespace NZCore.UIToolkit
             // Not all visual input controls have the same padding so we can't base our total padding on
             // that information.  Instead we add a flat value to totalPadding to best match the hard coded
             // calculation in IMGUI
-            var totalPadding = labelExtraPadding;
-            var spacing = root.worldBound.x - cachedInspectorElement.worldBound.x - cachedInspectorElement.resolvedStyle.paddingLeft;
+            var totalPadding = _labelExtraPadding;
+            var spacing = _root.worldBound.x - _cachedInspectorElement.worldBound.x - _cachedInspectorElement.resolvedStyle.paddingLeft;
 
             totalPadding += spacing;
-            totalPadding += root.resolvedStyle.paddingLeft;
+            totalPadding += _root.resolvedStyle.paddingLeft;
 
-            var minWidth = labelBaseMinWidth - spacing - root.resolvedStyle.paddingLeft;
-            var contextWidthElement = cachedContextWidthElement ?? cachedInspectorElement;
+            var minWidth = _labelBaseMinWidth - spacing - _root.resolvedStyle.paddingLeft;
+            var contextWidthElement = _cachedContextWidthElement ?? _cachedInspectorElement;
 
-            label.style.minWidth = Mathf.Max(minWidth, 0);
+            _label.style.minWidth = Mathf.Max(minWidth, 0);
 
             // Formula to follow IMGUI label width settings
-            var newWidth = (contextWidthElement.resolvedStyle.width + labelExtraContextWidth) * labelWidthRatio - totalPadding;
-            if (Mathf.Abs(label.resolvedStyle.width - newWidth) > Epsilon)
+            var newWidth = (contextWidthElement.resolvedStyle.width + _labelExtraContextWidth) * _labelWidthRatio - totalPadding;
+            if (Mathf.Abs(_label.resolvedStyle.width - newWidth) > Epsilon)
             {
-                label.style.width = Mathf.Max(0f, newWidth);
+                _label.style.width = Mathf.Max(0f, newWidth);
             }
         }
     }

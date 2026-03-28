@@ -39,7 +39,7 @@ namespace NZCore
             SceneSystem.UnloadScene(entityManager.World.Unmanaged, sceneEntity, unloadParams);
         }
 
-        public static bool TryGetSceneEntity(ref SystemState state, Hash128 sceneGUID, out Entity sceneEntity)
+        public static bool TryGetSceneEntity(ref SystemState state, Hash128 sceneGuid, out Entity sceneEntity)
         {
             var query = new EntityQueryBuilder(Allocator.Temp)
                         .WithAll<SceneReference>()
@@ -50,7 +50,7 @@ namespace NZCore
 
             foreach (var entity in entities)
             {
-                if (state.EntityManager.GetComponentData<SceneReference>(entity).SceneGUID != sceneGUID)
+                if (state.EntityManager.GetComponentData<SceneReference>(entity).SceneGUID != sceneGuid)
                 {
                     continue;
                 }

@@ -19,8 +19,7 @@ namespace NZCore
         private readonly BufferHeader* _buffer;
 
         private readonly int _internalCapacity;
-
-        public readonly int ElementSize;
+        private readonly int _elementSize;
         private readonly int _alignOf;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -29,9 +28,9 @@ namespace NZCore
         internal int m_SafetyReadOnlyCount;
         internal int m_SafetyReadWriteCount;
 
-        internal byte m_IsReadOnly;
-        internal byte m_UseMemoryInitPattern;
-        internal byte m_MemoryInitPattern;
+        private readonly byte m_IsReadOnly;
+        private readonly byte m_UseMemoryInitPattern;
+        private readonly byte m_MemoryInitPattern;
 #endif
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -48,7 +47,7 @@ namespace NZCore
             m_UseMemoryInitPattern = (byte)(useMemoryInitPattern ? 1 : 0);
             m_MemoryInitPattern = memoryInitPattern;
             _alignOf = alignOf;
-            ElementSize = elementSize;
+            _elementSize = elementSize;
 
             //AtomicSafetyHandle.SetNestedContainer(m_Safety0, true);
             //AtomicSafetyHandle.SetNestedContainer(m_Safety1, true);
@@ -91,7 +90,7 @@ namespace NZCore
 #endif
                 CheckWriteAccessAndInvalidateArrayAliases();
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                BufferHeader.SetCapacity(_buffer, value, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1,
+                BufferHeader.SetCapacity(_buffer, value, _elementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1,
                     m_MemoryInitPattern, _internalCapacity);
 #else
                 BufferHeader.SetCapacity(_buffer, value, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0, _internalCapacity);
@@ -146,14 +145,14 @@ namespace NZCore
             {
                 CheckReadAccess();
                 CheckBounds(index);
-                return BufferHeader.GetElementPointer(_buffer) + index * ElementSize;
+                return BufferHeader.GetElementPointer(_buffer) + index * _elementSize;
             }
             set
             {
                 CheckWriteAccess();
                 CheckBounds(index);
-                var ptr = BufferHeader.GetElementPointer(_buffer) + index * ElementSize;
-                UnsafeUtility.MemCpy(ptr, value, ElementSize);
+                var ptr = BufferHeader.GetElementPointer(_buffer) + index * _elementSize;
+                UnsafeUtility.MemCpy(ptr, value, _elementSize);
             }
         }
 
@@ -173,7 +172,7 @@ namespace NZCore
             {
                 var num = length - oldLength;
                 var ptr = BufferHeader.GetElementPointer(_buffer);
-                UnsafeUtility.MemClear(ptr + oldLength * ElementSize, num * ElementSize);
+                UnsafeUtility.MemClear(ptr + oldLength * _elementSize, num * _elementSize);
             }
         }
 
@@ -181,7 +180,7 @@ namespace NZCore
         {
             CheckWriteAccessAndInvalidateArrayAliases();
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            BufferHeader.EnsureCapacity(_buffer, length, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1,
+            BufferHeader.EnsureCapacity(_buffer, length, _elementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1,
                 m_MemoryInitPattern);
 #else
             BufferHeader.EnsureCapacity(_buffer, length, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0);
@@ -218,11 +217,11 @@ namespace NZCore
             }
             else
             {
-                newPtr = (byte*)Memory.Unmanaged.Allocate((long)ElementSize * length, _alignOf, Allocator.Persistent);
+                newPtr = (byte*)Memory.Unmanaged.Allocate((long)_elementSize * length, _alignOf, Allocator.Persistent);
                 isInternal = false;
             }
 
-            UnsafeUtility.MemCpy(newPtr, oldPtr, (long)ElementSize * length);
+            UnsafeUtility.MemCpy(newPtr, oldPtr, (long)_elementSize * length);
 
             _buffer->Capacity = Math.Max(length, _internalCapacity);
             _buffer->Pointer = isInternal ? null : newPtr;
@@ -246,7 +245,7 @@ namespace NZCore
             ResizeUninitialized(length + 1);
             CheckBounds(index); //CheckBounds after ResizeUninitialized since index == length is allowed
             var basePtr = BufferHeader.GetElementPointer(_buffer);
-            UnsafeUtility.MemMove(basePtr + (index + 1) * ElementSize, basePtr + index * ElementSize, (long)ElementSize * (length - index));
+            UnsafeUtility.MemMove(basePtr + (index + 1) * _elementSize, basePtr + index * _elementSize, (long)_elementSize * (length - index));
             this[index] = elem;
         }
 
@@ -257,7 +256,7 @@ namespace NZCore
             ResizeUninitialized(oldLength + count);
 
             var basePtr = BufferHeader.GetElementPointer(_buffer);
-            UnsafeUtility.MemCpy(basePtr + (long)oldLength * ElementSize, elements, (long)ElementSize * count);
+            UnsafeUtility.MemCpy(basePtr + (long)oldLength * _elementSize, elements, (long)_elementSize * count);
         }
 
         public void RemoveRange(int index, int count)
@@ -273,7 +272,7 @@ namespace NZCore
 
             var basePtr = BufferHeader.GetElementPointer(_buffer);
 
-            UnsafeUtility.MemMove(basePtr + index * ElementSize, basePtr + (index + count) * ElementSize, (long)ElementSize * (Length - count - index));
+            UnsafeUtility.MemMove(basePtr + index * _elementSize, basePtr + (index + count) * _elementSize, (long)_elementSize * (Length - count - index));
 
             _buffer->Length -= count;
         }
@@ -292,9 +291,9 @@ namespace NZCore
             ref var l = ref _buffer->Length;
             var basePtr = BufferHeader.GetElementPointer(_buffer);
             var copyFrom = math.max(l - count, index + count);
-            void* dst = basePtr + index * ElementSize;
-            void* src = basePtr + copyFrom * ElementSize;
-            UnsafeUtility.MemMove(dst, src, (l - copyFrom) * ElementSize);
+            void* dst = basePtr + index * _elementSize;
+            void* src = basePtr + copyFrom * _elementSize;
+            UnsafeUtility.MemMove(dst, src, (l - copyFrom) * _elementSize);
             l -= count;
         }
 

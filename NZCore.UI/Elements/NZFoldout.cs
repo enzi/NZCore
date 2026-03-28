@@ -14,81 +14,81 @@ namespace NZCore.UI
     public partial class NZFoldout : VisualElement
     {
 #if ENABLE_RUNTIME_DATA_BINDINGS
-        private static readonly BindingId textProperty = (BindingId)nameof(text);
-        private static readonly BindingId toggleOnLabelClickProperty = (BindingId)nameof(toggleOnLabelClick);
-        private static readonly BindingId valueProperty = (BindingId)nameof(value);
+        private static readonly BindingId TextProperty = (BindingId)nameof(Text);
+        private static readonly BindingId ToggleOnLabelClickProperty = (BindingId)nameof(ToggleOnLabelClick);
+        private static readonly BindingId ValueProperty = (BindingId)nameof(Value);
 #endif
 
-        private const string ussClassName = "unity-foldout";
-        private static readonly string toggleUssClassName = Foldout.ussClassName + "__toggle";
-        private static readonly string contentUssClassName = Foldout.ussClassName + "__content";
-        private static readonly string ussFoldoutDepthClassName = Foldout.ussClassName + "--depth-";
-        private const int ussFoldoutMaxDepth = 4;
+        private const string USSClassName = "unity-foldout";
+        private static readonly string ToggleUssClassName = Foldout.ussClassName + "__toggle";
+        private static readonly string ContentUssClassName = Foldout.ussClassName + "__content";
+        private static readonly string USSFoldoutDepthClassName = Foldout.ussClassName + "--depth-";
+        private const int USSFoldoutMaxDepth = 4;
 
-        private VisualElement content;
+        private VisualElement _content;
 
-        private readonly Toggle m_Toggle = new();
-        private bool m_Value;
+        private readonly Toggle _mToggle = new();
+        private bool _mValue;
 
         public bool UseMargin;
 
         [CreateProperty]
-        public string text
+        public string Text
         {
-            get => m_Toggle.text;
+            get => _mToggle.text;
             set
             {
-                var tmp = text;
-                m_Toggle.text = value;
+                var tmp = Text;
+                _mToggle.text = value;
 
 #if ENABLE_RUNTIME_DATA_BINDINGS
-                if (string.CompareOrdinal(tmp, text) == 0)
+                if (string.CompareOrdinal(tmp, Text) == 0)
                 {
                     return;
                 }
 
-                NotifyPropertyChanged(in textProperty);
+                NotifyPropertyChanged(in TextProperty);
 #endif
             }
         }
 
 #if ENABLE_RUNTIME_DATA_BINDINGS
         [CreateProperty]
-        public bool toggleOnLabelClick
+        public bool ToggleOnLabelClick
         {
-            get => m_Toggle.toggleOnLabelClick;
+            get => _mToggle.toggleOnLabelClick;
             set
             {
-                if (m_Toggle.toggleOnLabelClick == value)
+                if (_mToggle.toggleOnLabelClick == value)
                 {
                     return;
                 }
 
-                m_Toggle.toggleOnLabelClick = value;
-                NotifyPropertyChanged(in toggleOnLabelClickProperty);
+                _mToggle.toggleOnLabelClick = value;
+                NotifyPropertyChanged(in ToggleOnLabelClickProperty);
             }
         }
 #endif
 
         [CreateProperty]
-        public bool value
+        public bool Value
         {
-            get => m_Value;
+            get => _mValue;
             set
             {
-                if (m_Value == value)
+                if (_mValue == value)
                 {
                     return;
                 }
 
-                using var pooled = ChangeEvent<bool>.GetPooled(m_Value, value);
+                using var pooled = ChangeEvent<bool>.GetPooled(_mValue, value);
 
                 pooled.target = this;
                 SetValueWithoutNotify(value);
                 SendEvent(pooled);
 
 #if ENABLE_RUNTIME_DATA_BINDINGS
-                NotifyPropertyChanged(in valueProperty);
+                NotifyPropertyChanged(in ValueProperty);
 #endif
             }
         }
@@ -115,33 +115,33 @@ namespace NZCore.UI
 
             if (container == null && createContainer)
             {
-                content = new VisualElement();
+                _content = new VisualElement();
             }
             else
             {
-                content = container;
+                _content = container;
             }
 
-            AddToClassList(ussClassName);
+            AddToClassList(USSClassName);
             delegatesFocus = true;
             focusable = true;
 
-            m_Toggle.RegisterValueChangedCallback(evt =>
+            _mToggle.RegisterValueChangedCallback(evt =>
             {
-                value = m_Toggle.value;
+                Value = _mToggle.value;
                 evt.StopPropagation();
             });
-            m_Toggle.AddToClassList(toggleUssClassName);
-            hierarchy.Add(m_Toggle);
+            _mToggle.AddToClassList(ToggleUssClassName);
+            hierarchy.Add(_mToggle);
 
-            if (content != null)
+            if (_content != null)
             {
                 if (useMargin)
                 {
-                    content.AddToClassList(contentUssClassName);
+                    _content.AddToClassList(ContentUssClassName);
                 }
 
-                hierarchy.Add(content);
+                hierarchy.Add(_content);
                 SetValueWithoutNotify(false);
             }
 
@@ -152,50 +152,50 @@ namespace NZCore.UI
         {
             RemoveContainer();
 
-            content = newContainer;
+            _content = newContainer;
 
             if (UseMargin)
             {
-                content.AddToClassList(contentUssClassName);
+                _content.AddToClassList(ContentUssClassName);
             }
 
-            SetValueWithoutNotify(m_Value);
+            SetValueWithoutNotify(_mValue);
         }
 
         public void ClearContainerContent()
         {
-            content?.Clear();
+            _content?.Clear();
         }
 
         public void RemoveContainer()
         {
-            if (content != null)
+            if (_content != null)
             {
-                hierarchy.Remove(content);
+                hierarchy.Remove(_content);
             }
         }
 
         private void OnAttachToPanel(AttachToPanelEvent evt)
         {
-            for (var index = 0; index <= ussFoldoutMaxDepth; ++index)
+            for (var index = 0; index <= USSFoldoutMaxDepth; ++index)
             {
-                RemoveFromClassList(ussFoldoutDepthClassName + index);
+                RemoveFromClassList(USSFoldoutDepthClassName + index);
             }
 
-            RemoveFromClassList(ussFoldoutDepthClassName + "max");
+            RemoveFromClassList(USSFoldoutDepthClassName + "max");
 
             var foldoutDepth = GetFoldoutDepth(this);
-            if (foldoutDepth > ussFoldoutMaxDepth)
+            if (foldoutDepth > USSFoldoutMaxDepth)
             {
-                AddToClassList(ussFoldoutDepthClassName + "max");
+                AddToClassList(USSFoldoutDepthClassName + "max");
             }
             else
             {
-                AddToClassList(ussFoldoutDepthClassName + foldoutDepth);
+                AddToClassList(USSFoldoutDepthClassName + foldoutDepth);
             }
         }
 
-        private static readonly Type s_FoldoutType = typeof(Foldout);
+        private static readonly Type SFoldoutType = typeof(Foldout);
 
         private static int GetFoldoutDepth(VisualElement element)
         {
@@ -207,7 +207,7 @@ namespace NZCore.UI
 
             for (var parent = element.parent; parent != null; parent = parent.parent)
             {
-                if (s_FoldoutType.IsAssignableFrom(parent.GetType()))
+                if (SFoldoutType.IsAssignableFrom(parent.GetType()))
                 {
                     ++foldoutDepth;
                 }
@@ -218,19 +218,19 @@ namespace NZCore.UI
 
         private void SetValueWithoutNotify(bool newValue)
         {
-            m_Value = newValue;
-            m_Toggle.SetValueWithoutNotify(m_Value);
+            _mValue = newValue;
+            _mToggle.SetValueWithoutNotify(_mValue);
 
-            toggleAction?.Invoke();
+            _toggleAction?.Invoke();
 
-            content.style.display = newValue ? DisplayStyle.Flex : DisplayStyle.None;
+            _content.style.display = newValue ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
-        private Action toggleAction;
+        private Action _toggleAction;
 
         public void SetAction(Action action)
         {
-            toggleAction = action;
+            _toggleAction = action;
         }
     }
 }

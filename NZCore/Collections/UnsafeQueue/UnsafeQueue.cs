@@ -170,7 +170,7 @@ namespace NZCore
             *data = currentWriteBlock;
         }
 
-        public static UnsafeQueueBlockHeader* AllocateWriteBlockMT<T>(UnsafeQueueData* data, UnsafeQueueBlockPoolData* pool, int threadIndex) where T : struct
+        public static UnsafeQueueBlockHeader* AllocateWriteBlockMT(UnsafeQueueData* data, UnsafeQueueBlockPoolData* pool, int threadIndex)
         {
             var currentWriteBlock = data->GetCurrentWriteBlockTLS(threadIndex);
 
@@ -350,7 +350,7 @@ namespace NZCore
         /// <param name="value">The value to be enqueued.</param>
         public void Enqueue(T value)
         {
-            var writeBlock = UnsafeQueueData.AllocateWriteBlockMT<T>(m_Buffer, m_QueuePool, 0);
+            var writeBlock = UnsafeQueueData.AllocateWriteBlockMT(m_Buffer, m_QueuePool, 0);
             UnsafeUtility.WriteArrayElement(writeBlock + 1, writeBlock->m_NumItems, value);
             ++writeBlock->m_NumItems;
         }
@@ -540,7 +540,7 @@ namespace NZCore
             /// <param name="value">The value to be enqueued.</param>
             public void Enqueue(T value)
             {
-                var writeBlock = UnsafeQueueData.AllocateWriteBlockMT<T>(m_Buffer, m_QueuePool, m_ThreadIndex);
+                var writeBlock = UnsafeQueueData.AllocateWriteBlockMT(m_Buffer, m_QueuePool, m_ThreadIndex);
                 UnsafeUtility.WriteArrayElement(writeBlock + 1, writeBlock->m_NumItems, value);
                 ++writeBlock->m_NumItems;
             }

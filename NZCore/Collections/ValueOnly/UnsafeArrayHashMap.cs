@@ -342,24 +342,24 @@ namespace NZCore
         public bool IsFirst;
         public TKey Key;
         public UnsafeArrayHashMap<TKey, TValue>* Map;
-        private ArrayHashMapIterator<TKey> iterator;
+        private ArrayHashMapIterator<TKey> _iterator;
 
-        private byte* value;
+        private byte* _value;
 
-        public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(value);
-        public TValue* CurrentPtr => (TValue*)value;
-        public int CurrentIndex => iterator.EntryIndex;
+        public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(_value);
+        public TValue* CurrentPtr => (TValue*)_value;
+        public int CurrentIndex => _iterator.EntryIndex;
 
         public bool MoveNext()
         {
             //Avoids going beyond the end of the collection.
             if (!IsFirst)
             {
-                return Map->TryGetNextRefValue(out value, ref iterator);
+                return Map->TryGetNextRefValue(out _value, ref _iterator);
             }
 
             IsFirst = false;
-            return Map->TryGetFirstRefValue(Key, out value, out iterator);
+            return Map->TryGetFirstRefValue(Key, out _value, out _iterator);
         }
     }
 

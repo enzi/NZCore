@@ -13,18 +13,18 @@ namespace NZCore
     /// <summary>
     /// Copied from the Entities package and slightly modified to enable default world creation and fixing a call to an internal method via reflection.
     /// </summary>
-    public abstract class ECSTestsFixture
+    public abstract class EcsTestsFixture
     {
         public bool CreateDefaultWorld;
 
-        private bool jobsDebuggerWasEnabled;
-        private PlayerLoopSystem previousPlayerLoop;
+        private bool _jobsDebuggerWasEnabled;
+        private PlayerLoopSystem _previousPlayerLoop;
 #nullable enable
-        private World? previousWorld;
-        private World? world;
+        private World? _previousWorld;
+        private World? _world;
 #nullable disable
 
-        protected World World => world!;
+        protected World World => _world!;
         protected WorldUnmanaged WorldUnmanaged => World!.Unmanaged;
         protected EntityManager Manager { get; private set; }
         protected EntityManager.EntityManagerDebug ManagerDebug { get; private set; }
@@ -33,11 +33,11 @@ namespace NZCore
         public virtual void Setup()
         {
             // unit tests preserve the current player loop to restore later, and start from a blank slate.
-            previousPlayerLoop = PlayerLoop.GetCurrentPlayerLoop();
+            _previousPlayerLoop = PlayerLoop.GetCurrentPlayerLoop();
             PlayerLoop.SetPlayerLoop(PlayerLoop.GetDefaultPlayerLoop());
 
-            previousWorld = World.DefaultGameObjectInjectionWorld;
-            world = World.DefaultGameObjectInjectionWorld =
+            _previousWorld = World.DefaultGameObjectInjectionWorld;
+            _world = World.DefaultGameObjectInjectionWorld =
                 CreateDefaultWorld ? DefaultWorldInitialization.Initialize("Default Test World") : new World("Empty Test World");
             World.UpdateAllocatorEnableBlockFree = true;
             Manager = World.EntityManager;
@@ -45,7 +45,7 @@ namespace NZCore
 
             // Many ECS tests will only pass if the Jobs Debugger enabled;
             // force it enabled for all tests, and restore the original value at teardown.
-            jobsDebuggerWasEnabled = JobsUtility.JobDebuggerEnabled;
+            _jobsDebuggerWasEnabled = JobsUtility.JobDebuggerEnabled;
             JobsUtility.JobDebuggerEnabled = true;
 
 #if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !DISABLE_ENTITIES_JOURNALING
@@ -66,11 +66,11 @@ namespace NZCore
 
             ManagerDebug.CheckInternalConsistency();
             World.Dispose();
-            World.DefaultGameObjectInjectionWorld = previousWorld!;
+            World.DefaultGameObjectInjectionWorld = _previousWorld!;
 
-            JobsUtility.JobDebuggerEnabled = jobsDebuggerWasEnabled;
+            JobsUtility.JobDebuggerEnabled = _jobsDebuggerWasEnabled;
 
-            PlayerLoop.SetPlayerLoop(previousPlayerLoop);
+            PlayerLoop.SetPlayerLoop(_previousPlayerLoop);
         }
 
         // calls JobUtility.ClearSystemIds() (internal method)

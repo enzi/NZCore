@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UIToolkit
 {
-    /// <summary>Slide + fade transition — slides in from <see cref="EnterFrom"/> on enter,
+    /// <summary>Slide + fade transition — slides in from <see cref="SlideDirection"/> on enter,
     /// slides out in the opposite direction on exit.</summary>
     public class SlideTransition : IViewTransition
     {
@@ -50,7 +50,7 @@ namespace NZCore.UIToolkit
             element.style.translate = new StyleTranslate(DirectionToTranslate(OppositeDirection(_enterFrom), _slideLength));
             element.RegisterCallback<TransitionEndEvent>(_ => onComplete());
         }
-        
+
         private static void SetupTransition(VisualElement ve, float durationMs)
         {
             ve.style.transitionProperty = new StyleList<StylePropertyName>(new List<StylePropertyName> { new("opacity"), new("translate") });

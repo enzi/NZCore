@@ -12,22 +12,22 @@ namespace NZCore.UI
     [UxmlElement]
     public partial class WeakImage : VisualElement
     {
-        private WeakObjectReference<Sprite> spriteReference;
-        private bool isLoading;
-        private bool isLoaded;
+        private WeakObjectReference<Sprite> _spriteReference;
+        private bool _isLoading;
+        private bool _isLoaded;
 
         public WeakObjectReference<Sprite> SpriteReference
         {
-            get => spriteReference;
+            get => _spriteReference;
             set
             {
-                if (spriteReference.Equals(value))
+                if (_spriteReference.Equals(value))
                 {
                     return;
                 }
 
                 Release();
-                spriteReference = value;
+                _spriteReference = value;
                 RequestLoad();
             }
         }
@@ -40,7 +40,7 @@ namespace NZCore.UI
 
         private void OnAttachToPanel(AttachToPanelEvent evt)
         {
-            if (spriteReference.IsValidBurst() && !isLoaded)
+            if (_spriteReference.IsValidBurst() && !_isLoaded)
             {
                 RequestLoad();
             }
@@ -53,32 +53,32 @@ namespace NZCore.UI
 
         private void RequestLoad()
         {
-            if (!spriteReference.IsValidBurst() || isLoading)
+            if (!_spriteReference.IsValidBurst() || _isLoading)
             {
                 return;
             }
 
-            spriteReference.LoadAsync();
-            isLoading = true;
+            _spriteReference.LoadAsync();
+            _isLoading = true;
             schedule.Execute(CheckLoadStatus).Every(16);
         }
 
         private void CheckLoadStatus()
         {
-            if (!isLoading)
+            if (!_isLoading)
             {
                 return;
             }
 
-            if (spriteReference.LoadingStatus != ObjectLoadingStatus.Completed)
+            if (_spriteReference.LoadingStatus != ObjectLoadingStatus.Completed)
             {
                 return;
             }
 
-            isLoading = false;
-            isLoaded = true;
+            _isLoading = false;
+            _isLoaded = true;
 
-            var sprite = spriteReference.Result;
+            var sprite = _spriteReference.Result;
             if (sprite != null)
             {
                 style.backgroundImage = new StyleBackground(sprite);
@@ -87,13 +87,13 @@ namespace NZCore.UI
 
         private void Release()
         {
-            if (isLoaded && spriteReference.IsValidBurst())
+            if (_isLoaded && _spriteReference.IsValidBurst())
             {
-                RuntimeContentManager.ReleaseObjectAsync(spriteReference.GetInternalId());
+                RuntimeContentManager.ReleaseObjectAsync(_spriteReference.GetInternalId());
             }
 
-            isLoading = false;
-            isLoaded = false;
+            _isLoading = false;
+            _isLoaded = false;
             style.backgroundImage = StyleKeyword.None;
         }
     }

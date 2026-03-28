@@ -9,23 +9,23 @@ namespace NZCore.Hybrid
 {
     public partial class HybridDestroySystem : SystemBase
     {
-        private EntityQuery query;
+        private EntityQuery _query;
 
         protected override void OnCreate()
         {
-            query = SystemAPI.QueryBuilder()
-                             .WithAll<DestroyEntity, HybridObjectBuffer>()
-                             .Build();
+            _query = SystemAPI.QueryBuilder()
+                              .WithAll<DestroyEntity, HybridObjectBuffer>()
+                              .Build();
         }
 
         protected override void OnUpdate()
         {
-            if (query.IsEmpty)
+            if (_query.IsEmpty)
             {
                 return;
             }
 
-            var entities = query.ToEntityArray(CheckedStateRef.WorldUpdateAllocator);
+            var entities = _query.ToEntityArray(CheckedStateRef.WorldUpdateAllocator);
 
             foreach (var entity in entities)
             {

@@ -11,7 +11,7 @@ namespace NZCore.UIToolkit
     [UxmlObject]
     public partial class ListViewCountTracker : CustomBinding
     {
-        private readonly Dictionary<ListView, int> m_CachedCount = new();
+        private readonly Dictionary<ListView, int> _cachedCount = new();
 
         protected override void OnActivated(in BindingActivationContext context)
         {
@@ -21,7 +21,7 @@ namespace NZCore.UIToolkit
             }
 
             // Ensures the refresh will be called on the next update
-            m_CachedCount[listView] = -1;
+            _cachedCount[listView] = -1;
         }
 
         protected override void OnDeactivated(in BindingActivationContext context)
@@ -31,7 +31,7 @@ namespace NZCore.UIToolkit
                 return;
             }
 
-            m_CachedCount.Remove(listView);
+            _cachedCount.Remove(listView);
         }
 
         // todo consider OnDataSourceChanged
@@ -42,13 +42,13 @@ namespace NZCore.UIToolkit
                 return new BindingResult(BindingStatus.Failure, "'ListViewCountTracker' should only be added to a 'ListView'");
             }
 
-            if (!m_CachedCount.TryGetValue(listView, out var previousCount) || previousCount == listView.itemsSource?.Count)
+            if (!_cachedCount.TryGetValue(listView, out var previousCount) || previousCount == listView.itemsSource?.Count)
             {
                 return new BindingResult(BindingStatus.Failure, "");
             }
 
             listView.RefreshItems();
-            m_CachedCount[listView] = listView.itemsSource?.Count ?? -1;
+            _cachedCount[listView] = listView.itemsSource?.Count ?? -1;
 
             return new BindingResult(BindingStatus.Success);
         }

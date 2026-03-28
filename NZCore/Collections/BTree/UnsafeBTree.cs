@@ -15,7 +15,7 @@ namespace NZCore.NativeContainers.BTree
         public int Degree;
         public int Height;
 
-        private AllocatorManager.AllocatorHandle allocator;
+        private AllocatorManager.AllocatorHandle _allocator;
 
         internal static UnsafeBTree<TKey, TValue>* Create<TAllocator>(int degree, ref TAllocator allocator,
             NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
@@ -28,7 +28,7 @@ namespace NZCore.NativeContainers.BTree
 
             var unsafeBTree = allocator.Allocate(default(UnsafeBTree<TKey, TValue>), 1);
 
-            unsafeBTree->allocator = allocator.Handle;
+            unsafeBTree->_allocator = allocator.Handle;
             unsafeBTree->Root = new BTreeNode<TKey, TValue>(degree);
             unsafeBTree->Degree = degree;
             unsafeBTree->Height = 1;
@@ -57,7 +57,7 @@ namespace NZCore.NativeContainers.BTree
 
         public static void Destroy(UnsafeBTree<TKey, TValue>* hashMap)
         {
-            var allocator = hashMap->allocator;
+            var allocator = hashMap->_allocator;
             hashMap->Dispose();
             AllocatorManager.Free(allocator, hashMap);
         }

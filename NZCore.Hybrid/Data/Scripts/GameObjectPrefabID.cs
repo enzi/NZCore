@@ -3,11 +3,12 @@
 // </copyright>
 
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NZCore.Hybrid
 {
     public class GameObjectPrefabID : MonoBehaviour
     {
-        public int prefabId;
+        public int PrefabId;
     }
 }

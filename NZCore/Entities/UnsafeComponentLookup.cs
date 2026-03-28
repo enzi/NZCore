@@ -89,7 +89,6 @@ namespace NZCore
         /// </summary>
         /// <param name="entity">The referenced entity.</param>
         /// <returns>True if the entity exists, regardless of whether this entity has the given component.</returns>
-        /// <seealso cref="TryGetComponent(Unity.Entities.Entity,out T,out bool)"/>
         public bool EntityExists(Entity entity)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -626,8 +625,7 @@ namespace NZCore
 
             var ecs = m_Access->EntityComponentStore;
             ecs->AssertEntityHasComponent(entity, m_TypeIndex, ref m_Cache);
-            int indexInBitField;
-            var ptr = ecs->GetEnabledRawRO(entity, m_TypeIndex, ref m_Cache, out indexInBitField, out var ptrChunkDisabledCount);
+            var ptr = ecs->GetEnabledRawRO(entity, m_TypeIndex, ref m_Cache, out var indexInBitField, out _);
             return new EnabledRefRO<T2>(MakeSafeBitRef(ptr, indexInBitField));
         }
 

@@ -76,21 +76,21 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray8 : IBitArray<BitArray8>
     {
-        [SerializeField] private byte data;
+        [SerializeField] private byte _data;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 8u;
 
         /// <summary>True if all bits are 0.</summary>
-        public bool AllFalse => data == 0u;
+        public bool AllFalse => _data == 0u;
 
         /// <summary>True if all bits are 1.</summary>
-        public bool AllTrue => data == byte.MaxValue;
+        public bool AllTrue => _data == byte.MaxValue;
 
-        public byte Value => data;
+        public byte Value => _data;
 
         /// <summary>Returns the bit array in a human-readable form.</summary>
-        public string HumanizedData => $"{{{Convert.ToString(data, 2)}, " + Capacity + "}}}".Replace(' ', '0');
+        public string HumanizedData => $"{{{Convert.ToString(_data, 2)}, " + Capacity + "}}}".Replace(' ', '0');
 
         /// <summary>
         /// Returns the state of the bit at a specific index.
@@ -99,8 +99,8 @@ namespace NZCore
         /// <value>State of the bit at the provided index.</value>
         public bool this[uint index]
         {
-            get => BitArrayUtilities.Get8(index, data);
-            set => BitArrayUtilities.Set8(index, ref data, value);
+            get => BitArrayUtilities.Get8(index, _data);
+            set => BitArrayUtilities.Set8(index, ref _data, value);
         }
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace NZCore
         /// <param name="initValue">Initialization value.</param>
         public BitArray8(byte initValue)
         {
-            data = initValue;
+            _data = initValue;
         }
 
 
@@ -118,7 +118,7 @@ namespace NZCore
         /// </summary>
         /// <param name="a">Bit array with which to do the operation.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray8 operator ~(BitArray8 a) => new((byte)~a.data);
+        public static BitArray8 operator ~(BitArray8 a) => new((byte)~a._data);
 
         /// <summary>
         /// Bit-wise Or operator
@@ -126,7 +126,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray8 operator |(BitArray8 a, BitArray8 b) => new((byte)(a.data | b.data));
+        public static BitArray8 operator |(BitArray8 a, BitArray8 b) => new((byte)(a._data | b._data));
 
         /// <summary>
         /// Bit-wise And operator
@@ -134,7 +134,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray8 operator &(BitArray8 a, BitArray8 b) => new((byte)(a.data & b.data));
+        public static BitArray8 operator &(BitArray8 a, BitArray8 b) => new((byte)(a._data & b._data));
 
         /// <summary>
         /// Bit-wise And
@@ -160,7 +160,7 @@ namespace NZCore
         /// 
         /// </summary>
         /// <returns></returns>
-        public int CountBits() => math.countbits((ulong)data);
+        public int CountBits() => math.countbits((ulong)_data);
 
         /// <summary>
         /// Equality operator.
@@ -168,7 +168,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if both bit arrays are equals.</returns>
-        public static bool operator ==(BitArray8 a, BitArray8 b) => a.data == b.data;
+        public static bool operator ==(BitArray8 a, BitArray8 b) => a._data == b._data;
 
         /// <summary>
         /// Inequality operator.
@@ -176,27 +176,27 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if the bit arrays are not equals.</returns>
-        public static bool operator !=(BitArray8 a, BitArray8 b) => a.data != b.data;
+        public static bool operator !=(BitArray8 a, BitArray8 b) => a._data != b._data;
 
         /// <summary>
         /// Equality operator.
         /// </summary>
         /// <param name="obj">Bit array to compare to.</param>
         /// <returns>True if the provided bit array is equal to this.</returns>
-        public override bool Equals(object obj) => obj is BitArray8 ba8 && ba8.data == data;
+        public override bool Equals(object obj) => obj is BitArray8 ba8 && ba8._data == _data;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public readonly bool Equals(BitArray8 other) => data == other.data;
+        public readonly bool Equals(BitArray8 other) => _data == other._data;
 
         /// <summary>
         /// Get the hashcode of the bit array.
         /// </summary>
         /// <returns>Hashcode of the bit array.</returns>
-        public override int GetHashCode() => 1768953197 + data.GetHashCode();
+        public override int GetHashCode() => 1768953197 + _data.GetHashCode();
     }
 
     /// <summary>
@@ -206,22 +206,22 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray16 : IBitArray<BitArray16>
     {
-        [SerializeField] private ushort data;
+        [SerializeField] private ushort _data;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 16u;
 
         /// <summary>True if all bits are 0.</summary>
-        public bool AllFalse => data == 0u;
+        public bool AllFalse => _data == 0u;
 
         /// <summary>True if all bits are 1.</summary>
-        public bool AllTrue => data == ushort.MaxValue;
+        public bool AllTrue => _data == ushort.MaxValue;
 
-        public ushort Value => data;
+        public ushort Value => _data;
 
         /// <summary>Returns the bit array in a human-readable form.</summary>
         public string HumanizedData => System.Text.RegularExpressions.Regex
-                                             .Replace($"{{{Convert.ToString(data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
+                                             .Replace($"{{{Convert.ToString(_data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
 
         /// <summary>
         /// Returns the state of the bit at a specific index.
@@ -230,8 +230,8 @@ namespace NZCore
         /// <value>State of the bit at the provided index.</value>
         public bool this[uint index]
         {
-            get => BitArrayUtilities.Get16(index, data);
-            set => BitArrayUtilities.Set16(index, ref data, value);
+            get => BitArrayUtilities.Get16(index, _data);
+            set => BitArrayUtilities.Set16(index, ref _data, value);
         }
 
         /// <summary>
@@ -240,7 +240,7 @@ namespace NZCore
         /// <param name="initValue">Initialization value.</param>
         public BitArray16(ushort initValue)
         {
-            data = initValue;
+            _data = initValue;
         }
 
         /// <summary>
@@ -248,7 +248,7 @@ namespace NZCore
         /// </summary>
         /// <param name="a">Bit array with which to do the operation.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray16 operator ~(BitArray16 a) => new((ushort)~a.data);
+        public static BitArray16 operator ~(BitArray16 a) => new((ushort)~a._data);
 
         /// <summary>
         /// Bit-wise Or operator
@@ -256,7 +256,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray16 operator |(BitArray16 a, BitArray16 b) => new((ushort)(a.data | b.data));
+        public static BitArray16 operator |(BitArray16 a, BitArray16 b) => new((ushort)(a._data | b._data));
 
         /// <summary>
         /// Bit-wise And operator
@@ -264,7 +264,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray16 operator &(BitArray16 a, BitArray16 b) => new((ushort)(a.data & b.data));
+        public static BitArray16 operator &(BitArray16 a, BitArray16 b) => new((ushort)(a._data & b._data));
 
         /// <summary>
         /// Bit-wise And
@@ -290,7 +290,7 @@ namespace NZCore
         /// 
         /// </summary>
         /// <returns></returns>
-        public int CountBits() => math.countbits((ulong)data);
+        public int CountBits() => math.countbits((ulong)_data);
 
         /// <summary>
         /// Equality operator.
@@ -298,7 +298,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if both bit arrays are equals.</returns>
-        public static bool operator ==(BitArray16 a, BitArray16 b) => a.data == b.data;
+        public static bool operator ==(BitArray16 a, BitArray16 b) => a._data == b._data;
 
         /// <summary>
         /// Inequality operator.
@@ -306,27 +306,27 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if the bit arrays are not equals.</returns>
-        public static bool operator !=(BitArray16 a, BitArray16 b) => a.data != b.data;
+        public static bool operator !=(BitArray16 a, BitArray16 b) => a._data != b._data;
 
         /// <summary>
         /// Equality operator.
         /// </summary>
         /// <param name="obj">Bit array to compare to.</param>
         /// <returns>True if the provided bit array is equal to this.</returns>
-        public override bool Equals(object obj) => obj is BitArray16 ba16 && ba16.data == data;
+        public override bool Equals(object obj) => obj is BitArray16 ba16 && ba16._data == _data;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public readonly bool Equals(BitArray16 other) => data == other.data;
+        public readonly bool Equals(BitArray16 other) => _data == other._data;
 
         /// <summary>
         /// Get the hashcode of the bit array.
         /// </summary>
         /// <returns>Hashcode of the bit array.</returns>
-        public override int GetHashCode() => 1768953197 + data.GetHashCode();
+        public override int GetHashCode() => 1768953197 + _data.GetHashCode();
     }
 
     /// <summary>
@@ -336,22 +336,22 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray32 : IBitArray<BitArray32>
     {
-        [SerializeField] private uint data;
+        [SerializeField] private uint _data;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 32u;
 
         /// <summary>True if all bits are 0.</summary>
-        public bool AllFalse => data == 0u;
+        public bool AllFalse => _data == 0u;
 
         /// <summary>True if all bits are 1.</summary>
-        public bool AllTrue => data == uint.MaxValue;
+        public bool AllTrue => _data == uint.MaxValue;
 
-        public uint Value => data;
+        public uint Value => _data;
 
         /// <summary>Returns the bit array in a human-readable form.</summary>
         public string HumanizedData => System.Text.RegularExpressions.Regex
-                                             .Replace($"{{{Convert.ToString(data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
+                                             .Replace($"{{{Convert.ToString(_data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
 
         /// <summary>
         /// Returns the state of the bit at a specific index.
@@ -360,8 +360,8 @@ namespace NZCore
         /// <value>State of the bit at the provided index.</value>
         public bool this[uint index]
         {
-            get => BitArrayUtilities.Get32(index, data);
-            set => BitArrayUtilities.Set32(index, ref data, value);
+            get => BitArrayUtilities.Get32(index, _data);
+            set => BitArrayUtilities.Set32(index, ref _data, value);
         }
 
         /// <summary>
@@ -370,7 +370,7 @@ namespace NZCore
         /// <param name="initValue">Initialization value.</param>
         public BitArray32(uint initValue)
         {
-            data = initValue;
+            _data = initValue;
         }
 
         /// <summary>
@@ -398,7 +398,7 @@ namespace NZCore
         /// </summary>
         /// <param name="a">Bit array with which to do the operation.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray32 operator ~(BitArray32 a) => new(~a.data);
+        public static BitArray32 operator ~(BitArray32 a) => new(~a._data);
 
         /// <summary>
         /// Bit-wise Or operator
@@ -406,7 +406,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray32 operator |(BitArray32 a, BitArray32 b) => new(a.data | b.data);
+        public static BitArray32 operator |(BitArray32 a, BitArray32 b) => new(a._data | b._data);
 
         /// <summary>
         /// Bit-wise And operator
@@ -414,7 +414,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray32 operator &(BitArray32 a, BitArray32 b) => new(a.data & b.data);
+        public static BitArray32 operator &(BitArray32 a, BitArray32 b) => new(a._data & b._data);
 
         /// <summary>
         /// Equality operator.
@@ -422,7 +422,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if both bit arrays are equals.</returns>
-        public static bool operator ==(BitArray32 a, BitArray32 b) => a.data == b.data;
+        public static bool operator ==(BitArray32 a, BitArray32 b) => a._data == b._data;
 
         /// <summary>
         /// Inequality operator.
@@ -430,33 +430,33 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if the bit arrays are not equals.</returns>
-        public static bool operator !=(BitArray32 a, BitArray32 b) => a.data != b.data;
+        public static bool operator !=(BitArray32 a, BitArray32 b) => a._data != b._data;
 
         /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
-        public int CountBits() => math.countbits((uint)data);
+        public int CountBits() => math.countbits((uint)_data);
 
         /// <summary>
         /// Equality operator.
         /// </summary>
         /// <param name="obj">Bit array to compare to.</param>
         /// <returns>True if the provided bit array is equal to this.</returns>
-        public override bool Equals(object obj) => obj is BitArray32 ba32 && ba32.data == data;
+        public override bool Equals(object obj) => obj is BitArray32 ba32 && ba32._data == _data;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public readonly bool Equals(BitArray32 other) => data == other.data;
+        public readonly bool Equals(BitArray32 other) => _data == other._data;
 
         /// <summary>
         /// Get the hashcode of the bit array.
         /// </summary>
         /// <returns>Hashcode of the bit array.</returns>
-        public override int GetHashCode() => 1768953197 + data.GetHashCode();
+        public override int GetHashCode() => 1768953197 + _data.GetHashCode();
     }
 
     /// <summary>
@@ -466,22 +466,22 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray64 : IBitArray<BitArray64>
     {
-        [SerializeField] private ulong data;
+        [SerializeField] private ulong _data;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 64u;
 
         /// <summary>True if all bits are 0.</summary>
-        public bool AllFalse => data == 0uL;
+        public bool AllFalse => _data == 0uL;
 
         /// <summary>True if all bits are 1.</summary>
-        public bool AllTrue => data == ulong.MaxValue;
+        public bool AllTrue => _data == ulong.MaxValue;
 
-        public ulong Value => data;
+        public ulong Value => _data;
 
         /// <summary>Returns the bit array in a human-readable form.</summary>
         public string HumanizedData => System.Text.RegularExpressions.Regex
-                                             .Replace($"{{{Convert.ToString((long)data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.")
+                                             .Replace($"{{{Convert.ToString((long)_data, 2)}, {Capacity}}}".Replace(' ', '0'), ".{8}", "$0.")
                                              .TrimEnd('.');
 
         /// <summary>
@@ -491,8 +491,8 @@ namespace NZCore
         /// <value>State of the bit at the provided index.</value>
         public bool this[uint index]
         {
-            get => BitArrayUtilities.Get64(index, data);
-            set => BitArrayUtilities.Set64(index, ref data, value);
+            get => BitArrayUtilities.Get64(index, _data);
+            set => BitArrayUtilities.Set64(index, ref _data, value);
         }
 
         /// <summary>
@@ -501,7 +501,7 @@ namespace NZCore
         /// <param name="initValue">Initialization value.</param>
         public BitArray64(ulong initValue)
         {
-            data = initValue;
+            _data = initValue;
         }
 
         /// <summary>
@@ -509,7 +509,7 @@ namespace NZCore
         /// </summary>
         /// <param name="a">Bit array with which to do the operation.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray64 operator ~(BitArray64 a) => new(~a.data);
+        public static BitArray64 operator ~(BitArray64 a) => new(~a._data);
 
         /// <summary>
         /// Bit-wise Or operator
@@ -517,7 +517,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray64 operator |(BitArray64 a, BitArray64 b) => new(a.data | b.data);
+        public static BitArray64 operator |(BitArray64 a, BitArray64 b) => new(a._data | b._data);
 
         /// <summary>
         /// Bit-wise And operator
@@ -525,7 +525,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray64 operator &(BitArray64 a, BitArray64 b) => new(a.data & b.data);
+        public static BitArray64 operator &(BitArray64 a, BitArray64 b) => new(a._data & b._data);
 
         /// <summary>
         /// Bit-wise And
@@ -547,7 +547,7 @@ namespace NZCore
         /// <returns>The resulting bit array.</returns>
         public BitArray64 BitNot() => ~this;
 
-        public int CountBits() => math.countbits(data);
+        public int CountBits() => math.countbits(_data);
 
         /// <summary>
         /// Equality operator.
@@ -555,7 +555,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if both bit arrays are equals.</returns>
-        public static bool operator ==(BitArray64 a, BitArray64 b) => a.data == b.data;
+        public static bool operator ==(BitArray64 a, BitArray64 b) => a._data == b._data;
 
         /// <summary>
         /// Inequality operator.
@@ -563,22 +563,22 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if the bit arrays are not equals.</returns>
-        public static bool operator !=(BitArray64 a, BitArray64 b) => a.data != b.data;
+        public static bool operator !=(BitArray64 a, BitArray64 b) => a._data != b._data;
 
         /// <summary>
         /// Equality operator.
         /// </summary>
         /// <param name="obj">Bit array to compare to.</param>
         /// <returns>True if the provided bit array is equal to this.</returns>
-        public override bool Equals(object obj) => obj is BitArray64 ba64 && ba64.data == data;
+        public override bool Equals(object obj) => obj is BitArray64 ba64 && ba64._data == _data;
 
-        public readonly bool Equals(BitArray64 other) => data == other.data;
+        public readonly bool Equals(BitArray64 other) => _data == other._data;
 
         /// <summary>
         /// Get the hashcode of the bit array.
         /// </summary>
         /// <returns>Hashcode of the bit array.</returns>
-        public override int GetHashCode() => 1768953197 + data.GetHashCode();
+        public override int GetHashCode() => 1768953197 + _data.GetHashCode();
     }
 
     /// <summary>
@@ -588,25 +588,25 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray128 : IBitArray<BitArray128>
     {
-        [SerializeField] private ulong data1;
-        [SerializeField] private ulong data2;
+        [SerializeField] private ulong _data1;
+        [SerializeField] private ulong _data2;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 128u;
 
         /// <summary>True if all bits are 0.</summary>
-        public bool AllFalse => data1 == 0uL && data2 == 0uL;
+        public bool AllFalse => _data1 == 0uL && _data2 == 0uL;
 
         /// <summary>True if all bits are 1.</summary>
-        public bool AllTrue => data1 == ulong.MaxValue && data2 == ulong.MaxValue;
+        public bool AllTrue => _data1 == ulong.MaxValue && _data2 == ulong.MaxValue;
 
-        public ulong Value1 => data1;
-        public ulong Value2 => data2;
+        public ulong Value1 => _data1;
+        public ulong Value2 => _data2;
 
         /// <summary>Returns the bit array in a human-readable form.</summary>
         public string HumanizedData =>
-            System.Text.RegularExpressions.Regex.Replace($"{{{Convert.ToString((long)data2, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.")
-            + System.Text.RegularExpressions.Regex.Replace($"{{{Convert.ToString((long)data1, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
+            System.Text.RegularExpressions.Regex.Replace($"{{{Convert.ToString((long)_data2, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.")
+            + System.Text.RegularExpressions.Regex.Replace($"{{{Convert.ToString((long)_data1, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
 
         /// <summary>
         /// Returns the state of the bit at a specific index.
@@ -616,18 +616,18 @@ namespace NZCore
         public bool this[uint index]
         {
             get => index < 64u
-                ? (data1 & (1uL << (int)index)) != 0uL
-                : (data2 & (1uL << (int)(index - 64u))) != 0uL;
+                ? (_data1 & (1uL << (int)index)) != 0uL
+                : (_data2 & (1uL << (int)(index - 64u))) != 0uL;
 
             set
             {
                 if (index < 64u)
                 {
-                    data1 = value ? data1 | (1uL << (int)index) : data1 & ~(1uL << (int)index);
+                    _data1 = value ? _data1 | (1uL << (int)index) : _data1 & ~(1uL << (int)index);
                 }
                 else
                 {
-                    data2 = value ? data2 | (1uL << (int)(index - 64u)) : data2 & ~(1uL << (int)(index - 64u));
+                    _data2 = value ? _data2 | (1uL << (int)(index - 64u)) : _data2 & ~(1uL << (int)(index - 64u));
                 }
             }
         }
@@ -639,8 +639,8 @@ namespace NZCore
         /// <param name="initValue2">Initialization value 2.</param>
         public BitArray128(ulong initValue1, ulong initValue2)
         {
-            data1 = initValue1;
-            data2 = initValue2;
+            _data1 = initValue1;
+            _data2 = initValue2;
         }
 
         /// <summary>
@@ -648,7 +648,7 @@ namespace NZCore
         /// </summary>
         /// <param name="a">First bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray128 operator ~(BitArray128 a) => new(~a.data1, ~a.data2);
+        public static BitArray128 operator ~(BitArray128 a) => new(~a._data1, ~a._data2);
 
         /// <summary>
         /// Bit-wise Or operator
@@ -656,7 +656,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray128 operator |(BitArray128 a, BitArray128 b) => new(a.data1 | b.data1, a.data2 | b.data2);
+        public static BitArray128 operator |(BitArray128 a, BitArray128 b) => new(a._data1 | b._data1, a._data2 | b._data2);
 
         /// <summary>
         /// Bit-wise And operator
@@ -664,7 +664,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray128 operator &(BitArray128 a, BitArray128 b) => new(a.data1 & b.data1, a.data2 & b.data2);
+        public static BitArray128 operator &(BitArray128 a, BitArray128 b) => new(a._data1 & b._data1, a._data2 & b._data2);
 
         /// <summary>
         /// Bit-wise And
@@ -686,7 +686,7 @@ namespace NZCore
         /// <returns>The resulting bit array.</returns>
         public BitArray128 BitNot() => ~this;
 
-        public int CountBits() => math.countbits(data1) + math.countbits(data2);
+        public int CountBits() => math.countbits(_data1) + math.countbits(_data2);
 
         /// <summary>
         /// Equality operator.
@@ -694,7 +694,7 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if both bit arrays are equals.</returns>
-        public static bool operator ==(BitArray128 a, BitArray128 b) => a.data1 == b.data1 && a.data2 == b.data2;
+        public static bool operator ==(BitArray128 a, BitArray128 b) => a._data1 == b._data1 && a._data2 == b._data2;
 
         /// <summary>
         /// Inequality operator.
@@ -702,16 +702,16 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if the bit arrays are not equals.</returns>
-        public static bool operator !=(BitArray128 a, BitArray128 b) => a.data1 != b.data1 || a.data2 != b.data2;
+        public static bool operator !=(BitArray128 a, BitArray128 b) => a._data1 != b._data1 || a._data2 != b._data2;
 
         /// <summary>
         /// Equality operator.
         /// </summary>
         /// <param name="obj">Bit array to compare to.</param>
         /// <returns>True if the provided bit array is equal to this.</returns>
-        public override bool Equals(object obj) => obj is BitArray128 ba128 && data1.Equals(ba128.data1) && data2.Equals(ba128.data2);
+        public override bool Equals(object obj) => obj is BitArray128 ba128 && _data1.Equals(ba128._data1) && _data2.Equals(ba128._data2);
 
-        public readonly bool Equals(BitArray128 other) => data1 == other.data1 && data2 == other.data2;
+        public readonly bool Equals(BitArray128 other) => _data1 == other._data1 && _data2 == other._data2;
 
         /// <summary>
         /// Get the hashcode of the bit array.
@@ -720,8 +720,8 @@ namespace NZCore
         public override int GetHashCode()
         {
             var hashCode = 1755735569;
-            hashCode = hashCode * -1521134295 + data1.GetHashCode();
-            hashCode = hashCode * -1521134295 + data2.GetHashCode();
+            hashCode = hashCode * -1521134295 + _data1.GetHashCode();
+            hashCode = hashCode * -1521134295 + _data2.GetHashCode();
             return hashCode;
         }
     }
@@ -733,31 +733,31 @@ namespace NZCore
     [System.Diagnostics.DebuggerDisplay("{this.GetType().Name} {HumanizedData}")]
     public struct BitArray256 : IBitArray<BitArray256>
     {
-        [SerializeField] private ulong data1;
-        [SerializeField] private ulong data2;
-        [SerializeField] private ulong data3;
-        [SerializeField] private ulong data4;
+        [SerializeField] private ulong _data1;
+        [SerializeField] private ulong _data2;
+        [SerializeField] private ulong _data3;
+        [SerializeField] private ulong _data4;
 
         /// <summary>Number of elements in the bit array.</summary>
         public uint Capacity => 256u;
 
         /// <summary>True if all bits are 0.</summary>
-        public bool AllFalse => data1 == 0uL && data2 == 0uL && data3 == 0uL && data4 == 0uL;
+        public bool AllFalse => _data1 == 0uL && _data2 == 0uL && _data3 == 0uL && _data4 == 0uL;
 
         /// <summary>True if all bits are 1.</summary>
-        public bool AllTrue => data1 == ulong.MaxValue && data2 == ulong.MaxValue && data3 == ulong.MaxValue && data4 == ulong.MaxValue;
+        public bool AllTrue => _data1 == ulong.MaxValue && _data2 == ulong.MaxValue && _data3 == ulong.MaxValue && _data4 == ulong.MaxValue;
 
-        public ulong Value1 => data1;
-        public ulong Value2 => data2;
-        public ulong Value3 => data3;
-        public ulong Value4 => data4;
+        public ulong Value1 => _data1;
+        public ulong Value2 => _data2;
+        public ulong Value3 => _data3;
+        public ulong Value4 => _data4;
 
         /// <summary>Returns the bit array in a human-readable form.</summary>
         public string HumanizedData =>
-            System.Text.RegularExpressions.Regex.Replace($"{Convert.ToString((long)data4, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.")
-            + System.Text.RegularExpressions.Regex.Replace($"{Convert.ToString((long)data3, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.")
-            + System.Text.RegularExpressions.Regex.Replace($"{Convert.ToString((long)data2, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.")
-            + System.Text.RegularExpressions.Regex.Replace($"{Convert.ToString((long)data1, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
+            System.Text.RegularExpressions.Regex.Replace($"{Convert.ToString((long)_data4, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.")
+            + System.Text.RegularExpressions.Regex.Replace($"{Convert.ToString((long)_data3, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.")
+            + System.Text.RegularExpressions.Regex.Replace($"{Convert.ToString((long)_data2, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.")
+            + System.Text.RegularExpressions.Regex.Replace($"{Convert.ToString((long)_data1, 2)}, {64u}}}".Replace(' ', '0'), ".{8}", "$0.").TrimEnd('.');
 
         /// <summary>
         /// Returns the state of the bit at a specific index.
@@ -766,8 +766,8 @@ namespace NZCore
         /// <value>State of the bit at the provided index.</value>
         public bool this[uint index]
         {
-            get => BitArrayUtilities.Get256(index, data1, data2, data3, data4);
-            set => BitArrayUtilities.Set256(index, ref data1, ref data2, ref data3, ref data4, value);
+            get => BitArrayUtilities.Get256(index, _data1, _data2, _data3, _data4);
+            set => BitArrayUtilities.Set256(index, ref _data1, ref _data2, ref _data3, ref _data4, value);
         }
 
         /// <summary>
@@ -779,10 +779,10 @@ namespace NZCore
         /// <param name="initValue4">Initialization value 4.</param>
         public BitArray256(ulong initValue1, ulong initValue2, ulong initValue3, ulong initValue4)
         {
-            data1 = initValue1;
-            data2 = initValue2;
-            data3 = initValue3;
-            data4 = initValue4;
+            _data1 = initValue1;
+            _data2 = initValue2;
+            _data3 = initValue3;
+            _data4 = initValue4;
         }
 
         /// <summary>
@@ -790,7 +790,7 @@ namespace NZCore
         /// </summary>
         /// <param name="a">Bit array with which to do the operation.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray256 operator ~(BitArray256 a) => new(~a.data1, ~a.data2, ~a.data3, ~a.data4);
+        public static BitArray256 operator ~(BitArray256 a) => new(~a._data1, ~a._data2, ~a._data3, ~a._data4);
 
         /// <summary>
         /// Bit-wise Or operator
@@ -798,7 +798,8 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray256 operator |(BitArray256 a, BitArray256 b) => new(a.data1 | b.data1, a.data2 | b.data2, a.data3 | b.data3, a.data4 | b.data4);
+        public static BitArray256 operator |(BitArray256 a, BitArray256 b) =>
+            new(a._data1 | b._data1, a._data2 | b._data2, a._data3 | b._data3, a._data4 | b._data4);
 
         /// <summary>
         /// Bit-wise And operator
@@ -806,7 +807,8 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>The resulting bit array.</returns>
-        public static BitArray256 operator &(BitArray256 a, BitArray256 b) => new(a.data1 & b.data1, a.data2 & b.data2, a.data3 & b.data3, a.data4 & b.data4);
+        public static BitArray256 operator &(BitArray256 a, BitArray256 b) =>
+            new(a._data1 & b._data1, a._data2 & b._data2, a._data3 & b._data3, a._data4 & b._data4);
 
         /// <summary>
         /// Bit-wise And
@@ -828,7 +830,7 @@ namespace NZCore
         /// <returns>The resulting bit array.</returns>
         public BitArray256 BitNot() => ~this;
 
-        public int CountBits() => math.countbits(data1) + math.countbits(data2) + math.countbits(data3) + math.countbits(data4);
+        public int CountBits() => math.countbits(_data1) + math.countbits(_data2) + math.countbits(_data3) + math.countbits(_data4);
 
         /// <summary>
         /// Equality operator.
@@ -836,7 +838,8 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if both bit arrays are equals.</returns>
-        public static bool operator ==(BitArray256 a, BitArray256 b) => a.data1 == b.data1 && a.data2 == b.data2 && a.data3 == b.data3 && a.data4 == b.data4;
+        public static bool operator ==(BitArray256 a, BitArray256 b) =>
+            a._data1 == b._data1 && a._data2 == b._data2 && a._data3 == b._data3 && a._data4 == b._data4;
 
         /// <summary>
         /// Inequality operator.
@@ -844,7 +847,8 @@ namespace NZCore
         /// <param name="a">First bit array.</param>
         /// <param name="b">Second bit array.</param>
         /// <returns>True if the bit arrays are not equals.</returns>
-        public static bool operator !=(BitArray256 a, BitArray256 b) => a.data1 != b.data1 || a.data2 != b.data2 || a.data3 != b.data3 || a.data4 != b.data4;
+        public static bool operator !=(BitArray256 a, BitArray256 b) =>
+            a._data1 != b._data1 || a._data2 != b._data2 || a._data3 != b._data3 || a._data4 != b._data4;
 
         /// <summary>
         /// Equality operator.
@@ -853,12 +857,12 @@ namespace NZCore
         /// <returns>True if the provided bit array is equal to this.</returns>
         public override bool Equals(object obj)
             => obj is BitArray256 ba256
-               && data1.Equals(ba256.data1)
-               && data2.Equals(ba256.data2)
-               && data3.Equals(ba256.data3)
-               && data4.Equals(ba256.data4);
+               && _data1.Equals(ba256._data1)
+               && _data2.Equals(ba256._data2)
+               && _data3.Equals(ba256._data3)
+               && _data4.Equals(ba256._data4);
 
-        public readonly bool Equals(BitArray256 other) => data1 == other.data1 && data2 == other.data2 && data3 == other.data3 && data4 == other.data4;
+        public readonly bool Equals(BitArray256 other) => _data1 == other._data1 && _data2 == other._data2 && _data3 == other._data3 && _data4 == other._data4;
 
         /// <summary>
         /// Get the hashcode of the bit array.
@@ -867,10 +871,10 @@ namespace NZCore
         public override int GetHashCode()
         {
             var hashCode = 1870826326;
-            hashCode = hashCode * -1521134295 + data1.GetHashCode();
-            hashCode = hashCode * -1521134295 + data2.GetHashCode();
-            hashCode = hashCode * -1521134295 + data3.GetHashCode();
-            hashCode = hashCode * -1521134295 + data4.GetHashCode();
+            hashCode = hashCode * -1521134295 + _data1.GetHashCode();
+            hashCode = hashCode * -1521134295 + _data2.GetHashCode();
+            hashCode = hashCode * -1521134295 + _data3.GetHashCode();
+            hashCode = hashCode * -1521134295 + _data4.GetHashCode();
             return hashCode;
         }
     }

@@ -9,33 +9,33 @@ namespace NZCore
 {
     public unsafe struct ByteSerializer
     {
-        private NativeList<byte> data;
+        private NativeList<byte> _data;
 
-        public NativeList<byte> Data => data;
-        public int Length => data.Length;
+        public NativeList<byte> Data => _data;
+        public int Length => _data.Length;
 
         public ByteSerializer(NativeList<byte> existingList)
         {
-            data = existingList;
+            _data = existingList;
         }
 
         public ByteSerializer(int capacity, Allocator allocator)
         {
-            data = new NativeList<byte>(capacity, allocator);
+            _data = new NativeList<byte>(capacity, allocator);
         }
 
         public void AddCapacity(int capacity)
         {
-            if (data.Length + capacity > data.Capacity)
+            if (_data.Length + capacity > _data.Capacity)
             {
-                data.Capacity = data.Length + capacity;
+                _data.Capacity = _data.Length + capacity;
             }
         }
 
         public int Allocate(int byteAmount)
         {
-            var tmpIndex = data.Length;
-            data.ResizeUninitialized(data.Length + byteAmount);
+            var tmpIndex = _data.Length;
+            _data.ResizeUninitialized(_data.Length + byteAmount);
             return tmpIndex;
         }
 
@@ -55,30 +55,30 @@ namespace NZCore
 
         public void Add(byte* ptrToData, int byteSize)
         {
-            var oldLength = data.Length;
-            data.ResizeUninitialized(oldLength + byteSize);
+            var oldLength = _data.Length;
+            _data.ResizeUninitialized(oldLength + byteSize);
 
-            var ptr = (byte*)data.GetUnsafePtr();
+            var ptr = (byte*)_data.GetUnsafePtr();
             UnsafeUtility.MemCpy(ptr + oldLength, ptrToData, byteSize);
         }
 
         public void AddRange<T>(NativeArray<T> value)
             where T : unmanaged
         {
-            data.AddRange(value.GetUnsafeReadOnlyPtr(), value.Length * UnsafeUtility.SizeOf<T>());
+            _data.AddRange(value.GetUnsafeReadOnlyPtr(), value.Length * UnsafeUtility.SizeOf<T>());
         }
 
         public void AddRange<T>(T* valuePtr, int elementCount)
             where T : unmanaged
         {
-            data.AddRange(valuePtr, elementCount * UnsafeUtility.SizeOf<T>());
+            _data.AddRange(valuePtr, elementCount * UnsafeUtility.SizeOf<T>());
         }
 
         // no resize methods
         public void AddNoResize<T>(T value)
             where T : unmanaged
         {
-            data.AddRangeNoResize(&value, UnsafeUtility.SizeOf<T>());
+            _data.AddRangeNoResize(&value, UnsafeUtility.SizeOf<T>());
         }
 
         public void AddNoResize(byte* ptrToData, int byteSize)
@@ -89,25 +89,25 @@ namespace NZCore
         public void AddRangeNoResize<T>(T* valuePtr, int length)
             where T : unmanaged
         {
-            data.AddRangeNoResize(valuePtr, length * UnsafeUtility.SizeOf<T>());
+            _data.AddRangeNoResize(valuePtr, length * UnsafeUtility.SizeOf<T>());
         }
 
         public void AddRangeNoResize<T>(NativeArray<T> value)
             where T : unmanaged
         {
-            data.AddRangeNoResize(value.GetUnsafeReadOnlyPtr(), value.Length * UnsafeUtility.SizeOf<T>());
+            _data.AddRangeNoResize(value.GetUnsafeReadOnlyPtr(), value.Length * UnsafeUtility.SizeOf<T>());
         }
 
         public void AddRangeNoResize<T>(NativeArray<T> value, int length)
             where T : unmanaged
         {
-            data.AddRangeNoResize(value.GetUnsafeReadOnlyPtr(), length * UnsafeUtility.SizeOf<T>());
+            _data.AddRangeNoResize(value.GetUnsafeReadOnlyPtr(), length * UnsafeUtility.SizeOf<T>());
         }
 
         public ref T GetRef<T>(int index)
             where T : unmanaged
         {
-            var ptr = data.GetUnsafePtr();
+            var ptr = _data.GetUnsafePtr();
             return ref *(T*)(ptr + index);
         }
 
@@ -121,7 +121,7 @@ namespace NZCore
         public T* GetPtr<T>(int index)
             where T : unmanaged
         {
-            var ptr = data.GetUnsafePtr();
+            var ptr = _data.GetUnsafePtr();
             return (T*)(ptr + index);
         }
     }

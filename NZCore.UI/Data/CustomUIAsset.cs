@@ -5,7 +5,7 @@
 using System;
 using UnityEngine.UIElements;
 
-namespace NZCore.UIToolkit.Data
+namespace NZCore.UI
 {
     [Serializable]
     public class CustomUIAsset

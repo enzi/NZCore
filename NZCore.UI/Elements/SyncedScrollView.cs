@@ -13,12 +13,15 @@ using UnityEngine.UIElements;
 
 namespace NZCore.UI
 {
-    public abstract unsafe class SyncedScrollView<TStructData, TViewData> : ScrollView
+    public abstract unsafe class SyncedScrollViewBase : ScrollView
+    {
+        protected static readonly BindingId MakeItemBinding = (BindingId)"makeItem";
+        protected static readonly BindingId ItemsSourceBinding = (BindingId)"itemsSource";
+    }
+
+    public abstract unsafe class SyncedScrollView<TStructData, TViewData> : SyncedScrollViewBase
         where TStructData : unmanaged
     {
-        private static readonly BindingId makeItemProperty = (BindingId)nameof(makeItem);
-        private static readonly BindingId itemsSourceProperty = (BindingId)nameof(itemsSource);
-
         private SyncListCommand<TStructData> _onSyncList;
         private Func<VisualElement> _makeItem;
         private IList _itemsSource;
@@ -58,7 +61,7 @@ namespace NZCore.UI
                 }
 
                 _makeItem = value;
-                NotifyPropertyChanged(in makeItemProperty);
+                NotifyPropertyChanged(in MakeItemBinding);
             }
         }
 
@@ -70,7 +73,7 @@ namespace NZCore.UI
             {
                 _itemsSource = value;
                 Rebuild();
-                NotifyPropertyChanged(in itemsSourceProperty);
+                NotifyPropertyChanged(in ItemsSourceBinding);
             }
         }
 
@@ -149,7 +152,7 @@ namespace NZCore.UI
                 Debug.LogError("ItemSource is null");
                 return;
             }
-            
+
             if (contentContainer.childCount != _itemsSource.Count)
             {
                 Rebuild();

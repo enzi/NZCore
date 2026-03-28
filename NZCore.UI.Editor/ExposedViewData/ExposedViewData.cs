@@ -10,31 +10,31 @@ namespace NZCore.UI.Editor.ExposedViewData
 {
     public static class ExposedViewData
     {
-        private static readonly Type t_VisualElement = typeof(VisualElement);
+        private static readonly Type VisualElementType = typeof(VisualElement);
 
-        private static readonly MethodInfo m_GetOrCreateViewData = t_VisualElement.GetMethod("GetOrCreateViewData",
+        private static readonly MethodInfo GetOrCreateViewDataMethod = VisualElementType.GetMethod("GetOrCreateViewData",
             BindingFlags.NonPublic | BindingFlags.Instance, null,
             new[] { typeof(object), typeof(string) }, null);
 
-        private static readonly MethodInfo m_SaveViewData = t_VisualElement.GetMethod("SaveViewData", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly MethodInfo SaveViewDataMethod = VisualElementType.GetMethod("SaveViewData", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public static T GetOrCreateViewData<T>(VisualElement ve, string key, T data = null)
             where T : class, new()
         {
-            if (m_GetOrCreateViewData == null)
+            if (GetOrCreateViewDataMethod == null)
             {
                 return null;
             }
 
-            var genericMethod = m_GetOrCreateViewData.MakeGenericMethod(typeof(T));
+            var genericMethod = GetOrCreateViewDataMethod.MakeGenericMethod(typeof(T));
             return (T)genericMethod.Invoke(ve, new object[] { data, key });
         }
 
         public static void SaveViewData(VisualElement ve)
         {
-            if (m_SaveViewData != null)
+            if (SaveViewDataMethod != null)
             {
-                m_SaveViewData.Invoke(ve, null);
+                SaveViewDataMethod.Invoke(ve, null);
             }
         }
     }

@@ -14,7 +14,7 @@ namespace NZCore.UIToolkit
     public partial class ActionBinding : CustomBinding, IDataSourceProvider
     {
         // Caching the delegate used for cleanup purposes.
-        private readonly Dictionary<VisualElement, Action> cachedDelegates = new();
+        private readonly Dictionary<VisualElement, Action> _cachedDelegates = new();
 
         public object dataSource => null;
 
@@ -34,10 +34,10 @@ namespace NZCore.UIToolkit
                 return;
             }
 
-            if (cachedDelegates.TryGetValue(button, out var action))
+            if (_cachedDelegates.TryGetValue(button, out var action))
             {
                 button.clicked -= action;
-                cachedDelegates.Remove(button);
+                _cachedDelegates.Remove(button);
             }
 
             // Extract the `Action` from the hierarchy and register it.
@@ -61,7 +61,7 @@ namespace NZCore.UIToolkit
             }
 
             button.clicked += action;
-            cachedDelegates.Add(button, action);
+            _cachedDelegates.Add(button, action);
         }
     }
 }

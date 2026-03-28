@@ -13,22 +13,22 @@ namespace NZCore.UI
         /// <summary>
         /// The event invoked when the element is pressed.
         /// </summary>
-        public event Action clicked;
+        public event Action Clicked;
 
         /// <summary>
         /// The event invoked when the element is pressed.
         /// </summary>
-        public event Action<EventBase> clickedWithEventInfo;
+        public event Action<EventBase> ClickedWithEventInfo;
 
         /// <summary>
         /// The event invoked when the element is pressed for a long time.
         /// </summary>
-        public event Action longClicked;
+        public event Action LongClicked;
 
         /// <summary>
         /// Check if the element is currently pressed.
         /// </summary>
-        public bool active { get; private set; }
+        public bool Active { get; private set; }
 
         /// <summary>
         /// The duration of a long press in milliseconds.
@@ -39,34 +39,34 @@ namespace NZCore.UI
         /// Using a negative value will disable long press.
         /// </remarks>
         /// </summary>
-        public int longPressDuration { get; set; } = -1;
+        public int LongPressDuration { get; set; } = -1;
 
         /// <summary>
         /// When true, the event propagation will not be stopped when the element is pressed.
         /// </summary>
-        public bool keepEventPropagation { get; set; } = true;
+        public bool KeepEventPropagation { get; set; } = true;
 
-        private Event m_MoveEvent;
+        private Event _mMoveEvent;
 
-        private Touch m_TouchMoveEvent;
+        private Touch _mTouchMoveEvent;
 
-        private Event m_UpEvent;
+        private Event _mUpEvent;
 
-        private Touch m_TouchUpEvent;
+        private Touch _mTouchUpEvent;
 
-        private IVisualElementScheduledItem m_DeferDeactivate;
+        private IVisualElementScheduledItem _mDeferDeactivate;
 
-        private IVisualElementScheduledItem m_DeferLongPress;
+        private IVisualElementScheduledItem _mDeferLongPress;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         public Pressable()
         {
-            m_MoveEvent = new Event { type = EventType.MouseMove };
-            m_TouchMoveEvent = new Touch { phase = TouchPhase.Moved };
-            m_UpEvent = new Event { type = EventType.MouseUp };
-            m_TouchUpEvent = new Touch { phase = TouchPhase.Ended };
+            _mMoveEvent = new Event { type = EventType.MouseMove };
+            _mTouchMoveEvent = new Touch { phase = TouchPhase.Moved };
+            _mUpEvent = new Event { type = EventType.MouseUp };
+            _mTouchUpEvent = new Touch { phase = TouchPhase.Ended };
 
             activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
             activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Alt });
@@ -80,7 +80,7 @@ namespace NZCore.UI
         public Pressable(Action handler)
             : this()
         {
-            clicked += handler;
+            Clicked += handler;
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace NZCore.UI
         public Pressable(Action<EventBase> handler)
             : this()
         {
-            clickedWithEventInfo += handler;
+            ClickedWithEventInfo += handler;
         }
 
         /// <summary>
@@ -101,8 +101,8 @@ namespace NZCore.UI
 
         private void Invoke(EventBase evt)
         {
-            clicked?.Invoke();
-            clickedWithEventInfo?.Invoke(evt);
+            Clicked?.Invoke();
+            ClickedWithEventInfo?.Invoke(evt);
             PostProcessDisabledState();
         }
 
@@ -111,7 +111,7 @@ namespace NZCore.UI
         /// </summary>
         public void InvokeLongPressed()
         {
-            longClicked?.Invoke();
+            LongClicked?.Invoke();
             PostProcessDisabledState();
         }
 
@@ -120,15 +120,15 @@ namespace NZCore.UI
             if (!target.enabledInHierarchy)
             {
                 // the element is no more enabled, remove the active and hovered states
-                Deactivate(m_PointerId);
+                Deactivate(_mPointerId);
                 //RemoveHoverState();
             }
         }
 
-        /// <summary>
-        /// Simulate a single click on the target element.
-        /// </summary>
-        /// <param name="evt">The base event to use to invoke the click.</param>
+        // /// <summary>
+        // /// Simulate a single click on the target element.
+        // /// </summary>
+        // /// <param name="evt">The base event to use to invoke the click.</param>
         // internal void SimulateSingleClickInternal(EventBase evt)
         // {
         //     if (target != null)
@@ -147,9 +147,9 @@ namespace NZCore.UI
         //     InvokePressed(evt);
         // }
 
-        /// <summary>
-        /// Force the active pseudo state on the target element.
-        /// </summary>
+        // /// <summary>
+        // /// Force the active pseudo state on the target element.
+        // /// </summary>
         // public void ForceActivePseudoState()
         // {
         //     if (target != null)
@@ -284,7 +284,7 @@ namespace NZCore.UI
 
         private void OnMouseDown(MouseDownEvent evt)
         {
-            if (active)
+            if (Active)
             {
                 if (!target.HasMouseCapture())
                 {
@@ -310,37 +310,37 @@ namespace NZCore.UI
 
             ProcessMoveEvent(evt, evt.localPosition);
 
-            if (!active)
+            if (!Active)
             {
                 return;
             }
 
-            if (!keepEventPropagation)
+            if (!KeepEventPropagation)
             {
                 return;
             }
 
-            m_MoveEvent.mousePosition = evt.originalMousePosition;
-            m_MoveEvent.delta = evt.deltaPosition;
-            m_MoveEvent.button = evt.button;
-            m_MoveEvent.modifiers = evt.modifiers;
-            m_MoveEvent.pressure = evt.pressure;
-            m_MoveEvent.clickCount = evt.clickCount;
+            _mMoveEvent.mousePosition = evt.originalMousePosition;
+            _mMoveEvent.delta = evt.deltaPosition;
+            _mMoveEvent.button = evt.button;
+            _mMoveEvent.modifiers = evt.modifiers;
+            _mMoveEvent.pressure = evt.pressure;
+            _mMoveEvent.clickCount = evt.clickCount;
 
-            m_TouchMoveEvent.fingerId = evt.pointerId - PointerId.touchPointerIdBase;
-            m_TouchMoveEvent.position = evt.position;
-            m_TouchMoveEvent.deltaPosition = evt.deltaPosition;
-            m_TouchMoveEvent.deltaTime = evt.deltaTime;
-            m_TouchMoveEvent.tapCount = evt.clickCount;
-            m_TouchMoveEvent.pressure = evt.pressure;
-            m_TouchMoveEvent.azimuthAngle = evt.azimuthAngle;
-            m_TouchMoveEvent.altitudeAngle = evt.altitudeAngle;
-            m_TouchMoveEvent.radius = evt.radius.x;
-            m_TouchMoveEvent.radiusVariance = evt.radiusVariance.x;
+            _mTouchMoveEvent.fingerId = evt.pointerId - PointerId.touchPointerIdBase;
+            _mTouchMoveEvent.position = evt.position;
+            _mTouchMoveEvent.deltaPosition = evt.deltaPosition;
+            _mTouchMoveEvent.deltaTime = evt.deltaTime;
+            _mTouchMoveEvent.tapCount = evt.clickCount;
+            _mTouchMoveEvent.pressure = evt.pressure;
+            _mTouchMoveEvent.azimuthAngle = evt.azimuthAngle;
+            _mTouchMoveEvent.altitudeAngle = evt.altitudeAngle;
+            _mTouchMoveEvent.radius = evt.radius.x;
+            _mTouchMoveEvent.radiusVariance = evt.radiusVariance.x;
 
             using var e = evt.pointerId == PointerId.mousePointerId
-                ? PointerMoveEvent.GetPooled(m_MoveEvent)
-                : PointerMoveEvent.GetPooled(m_TouchMoveEvent, evt.modifiers);
+                ? PointerMoveEvent.GetPooled(_mMoveEvent)
+                : PointerMoveEvent.GetPooled(_mTouchMoveEvent, evt.modifiers);
             e.target = parent;
             parent.SendEvent(e);
         }
@@ -354,7 +354,7 @@ namespace NZCore.UI
 
             ProcessUpEvent(evt, evt.localPosition, evt.pointerId);
 
-            if (!active)
+            if (!Active)
             {
                 return;
             }
@@ -363,32 +363,32 @@ namespace NZCore.UI
             Deactivate(evt.pointerId);
 
             var parent = target?.parent;
-            if (parent == null || !keepEventPropagation)
+            if (parent == null || !KeepEventPropagation)
             {
                 return;
             }
 
-            m_UpEvent.mousePosition = evt.originalMousePosition;
-            m_UpEvent.delta = evt.deltaPosition;
-            m_UpEvent.button = evt.button;
-            m_UpEvent.modifiers = evt.modifiers;
-            m_UpEvent.pressure = evt.pressure;
-            m_UpEvent.clickCount = evt.clickCount;
+            _mUpEvent.mousePosition = evt.originalMousePosition;
+            _mUpEvent.delta = evt.deltaPosition;
+            _mUpEvent.button = evt.button;
+            _mUpEvent.modifiers = evt.modifiers;
+            _mUpEvent.pressure = evt.pressure;
+            _mUpEvent.clickCount = evt.clickCount;
 
-            m_TouchUpEvent.fingerId = evt.pointerId - PointerId.touchPointerIdBase;
-            m_TouchUpEvent.position = evt.position;
-            m_TouchUpEvent.deltaPosition = evt.deltaPosition;
-            m_TouchUpEvent.deltaTime = evt.deltaTime;
-            m_TouchUpEvent.tapCount = evt.clickCount;
-            m_TouchUpEvent.pressure = evt.pressure;
-            m_TouchUpEvent.azimuthAngle = evt.azimuthAngle;
-            m_TouchUpEvent.altitudeAngle = evt.altitudeAngle;
-            m_TouchUpEvent.radius = evt.radius.x;
-            m_TouchUpEvent.radiusVariance = evt.radiusVariance.x;
+            _mTouchUpEvent.fingerId = evt.pointerId - PointerId.touchPointerIdBase;
+            _mTouchUpEvent.position = evt.position;
+            _mTouchUpEvent.deltaPosition = evt.deltaPosition;
+            _mTouchUpEvent.deltaTime = evt.deltaTime;
+            _mTouchUpEvent.tapCount = evt.clickCount;
+            _mTouchUpEvent.pressure = evt.pressure;
+            _mTouchUpEvent.azimuthAngle = evt.azimuthAngle;
+            _mTouchUpEvent.altitudeAngle = evt.altitudeAngle;
+            _mTouchUpEvent.radius = evt.radius.x;
+            _mTouchUpEvent.radiusVariance = evt.radiusVariance.x;
 
             using var e = evt.pointerId == PointerId.mousePointerId
-                ? PointerUpEvent.GetPooled(m_UpEvent)
-                : PointerUpEvent.GetPooled(m_TouchUpEvent, evt.modifiers);
+                ? PointerUpEvent.GetPooled(_mUpEvent)
+                : PointerUpEvent.GetPooled(_mTouchUpEvent, evt.modifiers);
             e.target = parent;
             parent.SendEvent(e);
         }
@@ -416,30 +416,30 @@ namespace NZCore.UI
 
             //ForceActivePseudoState();
             //target.AddToClassList(Styles.activeUssClassName);
-            m_PointerId = pointerId;
-            m_DeferDeactivate = target.schedule.Execute(DeferDeactivate);
-            m_DeferDeactivate.ExecuteLater(50L);
-            m_DeferLongPress?.Pause();
-            m_DeferLongPress = null;
-            if (longPressDuration > 0)
+            _mPointerId = pointerId;
+            _mDeferDeactivate = target.schedule.Execute(DeferDeactivate);
+            _mDeferDeactivate.ExecuteLater(50L);
+            _mDeferLongPress?.Pause();
+            _mDeferLongPress = null;
+            if (LongPressDuration > 0)
             {
-                m_DeferLongPress = target.schedule.Execute(OnLongPress);
-                m_DeferLongPress.ExecuteLater(longPressDuration);
+                _mDeferLongPress = target.schedule.Execute(OnLongPress);
+                _mDeferLongPress.ExecuteLater(LongPressDuration);
             }
 
-            active = true;
+            Active = true;
         }
 
         private void Deactivate(int pointerId)
         {
-            active = false;
+            Active = false;
 
             if (target.HasPointerCapture(pointerId))
             {
                 target.ReleasePointer(pointerId);
             }
 
-            if (m_DeferDeactivate != null)
+            if (_mDeferDeactivate != null)
             {
                 return;
             }
@@ -449,25 +449,25 @@ namespace NZCore.UI
             //target.RemoveFromClassList(Styles.activeUssClassName);
         }
 
-        private int m_PointerId;
+        private int _mPointerId;
 
         private void DeferDeactivate()
         {
-            m_DeferDeactivate = null;
-            if (!active)
+            _mDeferDeactivate = null;
+            if (!Active)
             {
-                Deactivate(m_PointerId);
+                Deactivate(_mPointerId);
             }
         }
 
         private void OnLongPress()
         {
-            m_DeferLongPress?.Pause();
-            m_DeferLongPress = null;
-            if (active)
+            _mDeferLongPress?.Pause();
+            _mDeferLongPress = null;
+            if (Active)
             {
                 InvokeLongPressed();
-                Deactivate(m_PointerId);
+                Deactivate(_mPointerId);
             }
         }
     }

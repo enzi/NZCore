@@ -41,7 +41,7 @@ namespace NZCore.Compression
         /// </summary>
         /// <param name="codec"></param>
         /// <param name="src"></param>
-        /// <param name="size"></param>
+        /// <param name="srcSize"></param>
         /// <param name="dst"></param>
         /// <param name="allocator"></param>
         /// <returns></returns>
@@ -53,7 +53,7 @@ namespace NZCore.Compression
         /// </summary>
         /// <param name="codec"></param>
         /// <param name="src"></param>
-        /// <param name="size"></param>
+        /// <param name="srcSize"></param>
         /// <param name="dst"></param>
         /// <param name="allocator"></param>
         /// <returns></returns>
@@ -62,7 +62,7 @@ namespace NZCore.Compression
             var boundedSize = CompressUpperBound(codec, srcSize);
             dst = (byte*)Memory.Unmanaged.Allocate(boundedSize, 16, allocator);
 
-            var compressedSize = 0;
+            int compressedSize;
             switch (codec)
             {
                 case Codec.LZ4:
@@ -107,7 +107,7 @@ namespace NZCore.Compression
         private const string DllName = "liblz4";
 
         [DllImport(DllName, EntryPoint = "LZ4_compressBound")]
-        private static extern unsafe int CompressBoundLZ4(int srcSize);
+        private static extern int CompressBoundLZ4(int srcSize);
 
         [DllImport(DllName, EntryPoint = "LZ4_compress_default")]
         private static extern unsafe int CompressLZ4(byte* src, byte* dst, int srcSize, int dstCapacity);

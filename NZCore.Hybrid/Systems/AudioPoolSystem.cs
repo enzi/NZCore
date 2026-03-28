@@ -12,15 +12,15 @@ namespace NZCore.Hybrid
 {
     public partial class AudioPoolSystem : SystemBase
     {
-        private ObjectPool<AudioSource> pool;
-        private List<ActiveAudioSource> activeSources;
+        private ObjectPool<AudioSource> _pool;
+        private List<ActiveAudioSource> _activeSources;
 
         protected override void OnCreate()
         {
-            activeSources = new List<ActiveAudioSource>();
+            _activeSources = new List<ActiveAudioSource>();
             CheckedStateRef.CreateSingleton<HybridAudioSingleton>();
 
-            pool = new ObjectPool<AudioSource>(() =>
+            _pool = new ObjectPool<AudioSource>(() =>
                 {
                     var go = new GameObject("AudioSourcePoolItem")
                     {
@@ -44,7 +44,7 @@ namespace NZCore.Hybrid
         protected override void OnDestroy()
         {
             CheckedStateRef.DisposeSingleton<HybridAudioSingleton>();
-            pool.Dispose();
+            _pool.Dispose();
         }
 
         protected override void OnUpdate()
@@ -74,7 +74,7 @@ namespace NZCore.Hybrid
                         continue;
                     }
 
-                    var source = pool.Get();
+                    var source = _pool.Get();
 
                     source.clip = request.Clip.Result;
                     source.volume = request.Volume;
@@ -93,7 +93,7 @@ namespace NZCore.Hybrid
                         FollowedEntity = request.FollowEntity
                     };
 
-                    activeSources.Add(activeSource);
+                    _activeSources.Add(activeSource);
 
                     if (request.FollowEntity != Entity.Null)
                     {
@@ -107,9 +107,9 @@ namespace NZCore.Hybrid
                 }
             }
 
-            for (var i = activeSources.Count - 1; i >= 0; i--)
+            for (var i = _activeSources.Count - 1; i >= 0; i--)
             {
-                var source = activeSources[i];
+                var source = _activeSources[i];
                 if (source.Source.isPlaying)
                 {
                     continue;
@@ -127,8 +127,8 @@ namespace NZCore.Hybrid
                     }
                 }
 
-                pool.Release(source.Source);
-                activeSources.RemoveAt(i);
+                _pool.Release(source.Source);
+                _activeSources.RemoveAt(i);
             }
         }
 

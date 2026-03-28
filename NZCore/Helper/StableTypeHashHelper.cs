@@ -19,7 +19,7 @@ namespace NZCore.Helper
      * */
     public static class StableTypeHashHelper
     {
-        private const ulong kFNV1A64OffsetBasis = 14695981039346656037;
+        private const ulong Fnv1A64OffsetBasis = 14695981039346656037;
 
         public static ulong GetFixedHash(Type type)
         {
@@ -59,7 +59,7 @@ namespace NZCore.Helper
                 }
 
                 var fieldType = field.FieldType;
-                ulong fieldTypeHash = 0;
+                ulong fieldTypeHash;
 
                 // Managed components can have circular definitions, so when looking at managed fields only hash
                 // the name and field index, but do not cache the result -- we still want the hash for managed fields
@@ -145,7 +145,7 @@ namespace NZCore.Helper
                 }
 
                 var fieldType = field.FieldType;
-                ulong fieldTypeHash = 0;
+                ulong fieldTypeHash;
 
                 // Managed components can have circular definitions, so when looking at managed fields only hash
                 // the name and field index, but do not cache the result -- we still want the hash for managed fields
@@ -224,14 +224,14 @@ namespace NZCore.Helper
 
         private static ulong HashNamespace(Type type)
         {
-            var hash = kFNV1A64OffsetBasis;
+            var hash = Fnv1A64OffsetBasis;
 
             // System.Reflection and Cecil don't report namespaces the same way so do an alternative:
             // Find the namespace of an un-nested parent type, then hash each of the nested children names
             if (type.IsNested)
             {
                 hash = TypeHash.CombineFNV1A64(hash, HashNamespace(type.DeclaringType));
-                hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.DeclaringType.Name));
+                hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.DeclaringType?.Name));
             }
             else if (!string.IsNullOrEmpty(type.Namespace))
             {
@@ -243,16 +243,16 @@ namespace NZCore.Helper
 
         private static ulong HashNamespaceVerbose(Type type)
         {
-            var hash = kFNV1A64OffsetBasis;
+            var hash = Fnv1A64OffsetBasis;
 
             // System.Reflection and Cecil don't report namespaces the same way so do an alternative:
             // Find the namespace of an un-nested parent type, then hash each of the nested children names
             if (type.IsNested)
             {
                 hash = TypeHash.CombineFNV1A64(hash, HashNamespaceVerbose(type.DeclaringType));
-                Debug.Log($"HashNamespace {type.DeclaringType.Name} - {hash}");
-                hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.DeclaringType.Name));
-                Debug.Log($"HashNamespace {type.DeclaringType.Name} - {hash}");
+                Debug.Log($"HashNamespace {type.DeclaringType?.Name} - {hash}");
+                hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.DeclaringType?.Name));
+                Debug.Log($"HashNamespace {type.DeclaringType?.Name} - {hash}");
             }
             else if (!string.IsNullOrEmpty(type.Namespace))
             {

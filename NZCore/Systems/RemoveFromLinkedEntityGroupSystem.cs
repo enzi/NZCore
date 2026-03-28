@@ -11,27 +11,27 @@ namespace NZCore
     [UpdateInGroup(typeof(NZDestroySystemGroup))]
     public partial struct RemoveFromLinkedEntityGroupSystem : ISystem
     {
-        private EntityQuery addedQuery;
-        private EntityQuery removedQuery;
+        private EntityQuery _addedQuery;
+        private EntityQuery _removedQuery;
 
         public void OnCreate(ref SystemState state)
         {
-            addedQuery = SystemAPI.QueryBuilder()
-                                  .WithAll<RemoveFromLinkedEntityGroupCleanupSetup>()
-                                  .WithNone<RemoveFromLinkedEntityGroupCleanup>()
-                                  .Build();
+            _addedQuery = SystemAPI.QueryBuilder()
+                                   .WithAll<RemoveFromLinkedEntityGroupCleanupSetup>()
+                                   .WithNone<RemoveFromLinkedEntityGroupCleanup>()
+                                   .Build();
 
-            removedQuery = SystemAPI.QueryBuilder()
-                                    .WithAll<RemoveFromLinkedEntityGroupCleanup>()
-                                    .WithNone<RemoveFromLinkedEntityGroupCleanupSetup>()
-                                    .Build();
+            _removedQuery = SystemAPI.QueryBuilder()
+                                     .WithAll<RemoveFromLinkedEntityGroupCleanup>()
+                                     .WithNone<RemoveFromLinkedEntityGroupCleanupSetup>()
+                                     .Build();
         }
 
         public void OnUpdate(ref SystemState state)
         {
-            if (!addedQuery.IsEmpty)
+            if (!_addedQuery.IsEmpty)
             {
-                var addedEntities = addedQuery.ToEntityArray(Allocator.Temp);
+                var addedEntities = _addedQuery.ToEntityArray(Allocator.Temp);
 
                 foreach (var addedEntity in addedEntities)
                 {
@@ -43,13 +43,13 @@ namespace NZCore
                     });
                 }
 
-                state.EntityManager.RemoveComponent<RemoveFromLinkedEntityGroupCleanupSetup>(addedQuery);
+                state.EntityManager.RemoveComponent<RemoveFromLinkedEntityGroupCleanupSetup>(_addedQuery);
             }
 
-            if (!removedQuery.IsEmpty)
+            if (!_removedQuery.IsEmpty)
             {
                 var destructionMap = SystemAPI.GetSingleton<DestructionMap>();
-                var removedEntities = removedQuery.ToEntityArray(Allocator.Temp);
+                var removedEntities = _removedQuery.ToEntityArray(Allocator.Temp);
 
                 foreach (var removedEntity in removedEntities)
                 {
@@ -65,7 +65,7 @@ namespace NZCore
                     destructionMap.Remove(cleanupData.Parent, removedEntity);
                 }
 
-                state.EntityManager.RemoveComponent<RemoveFromLinkedEntityGroupCleanup>(removedQuery);
+                state.EntityManager.RemoveComponent<RemoveFromLinkedEntityGroupCleanup>(_removedQuery);
             }
         }
     }

@@ -25,15 +25,15 @@ namespace NZCore
         private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<KeyValueArrayHashMap<TKey, TKeyInterpreter>>();
 #endif
 
-        public KeyDynamicValueArrayHashMap(int initialCapacity, int keyOffset, AllocatorManager.AllocatorHandle allocator)
+        public KeyDynamicValueArrayHashMap(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
             var temp = allocator;
-            Initialize(initialCapacity, keyOffset, ref temp);
+            Initialize(initialCapacity, ref temp);
         }
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        private void Initialize<TAllocator>(int initialCapacity, int keyOffset, ref TAllocator allocator)
+        private void Initialize<TAllocator>(int initialCapacity, ref TAllocator allocator)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS

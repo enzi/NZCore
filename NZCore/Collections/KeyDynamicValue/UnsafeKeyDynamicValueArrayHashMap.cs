@@ -236,10 +236,10 @@ namespace NZCore
         public TKey Key;
         public bool IsFirst;
 
-        private KeyDynamicValueArrayHashMapIterator<TKey> iterator;
-        private byte* value;
+        private KeyDynamicValueArrayHashMapIterator<TKey> _iterator;
+        private byte* _value;
 
-        public byte* Current => value;
+        public byte* Current => _value;
         //public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(value);
 
         public bool MoveNext()
@@ -247,11 +247,11 @@ namespace NZCore
             //Avoids going beyond the end of the collection.
             if (!IsFirst)
             {
-                return Map->TryGetNextRefValue(out value, ref iterator);
+                return Map->TryGetNextRefValue(out _value, ref _iterator);
             }
 
             IsFirst = false;
-            return Map->TryGetFirstRefValue(Key, out value, out iterator);
+            return Map->TryGetFirstRefValue(Key, out _value, out _iterator);
         }
     }
 

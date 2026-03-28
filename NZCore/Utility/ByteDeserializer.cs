@@ -10,76 +10,76 @@ namespace NZCore
 {
     public unsafe struct ByteDeserializer : IDisposable
     {
-        [ReadOnly] private NativeArray<byte> data;
-        private int currentIndex;
+        [ReadOnly] private NativeArray<byte> _data;
+        private int _currentIndex;
 
-        public int CurrentIndex => currentIndex;
-        public byte* CurrentPtr => (byte*)data.GetUnsafeReadOnlyPtr() + currentIndex;
-        public bool ReachedLastIndex => currentIndex >= data.Length; // >= is safeguard for corrupt savegames to prevent endless loop
-        public int DataLength => data.Length;
+        public int CurrentIndex => _currentIndex;
+        public byte* CurrentPtr => (byte*)_data.GetUnsafeReadOnlyPtr() + _currentIndex;
+        public bool ReachedLastIndex => _currentIndex >= _data.Length; // >= is safeguard for corrupt savegames to prevent endless loop
+        public int DataLength => _data.Length;
 
         public ByteDeserializer(NativeArray<byte> byteArray, int offset = 0)
         {
-            data = byteArray;
-            currentIndex = offset;
+            _data = byteArray;
+            _currentIndex = offset;
         }
 
         public ref T Read<T>()
             where T : unmanaged
         {
-            var ptr = (byte*)data.GetUnsafeReadOnlyPtr();
-            ref var element = ref *(T*)(ptr + currentIndex);
-            currentIndex += UnsafeUtility.SizeOf<T>();
+            var ptr = (byte*)_data.GetUnsafeReadOnlyPtr();
+            ref var element = ref *(T*)(ptr + _currentIndex);
+            _currentIndex += UnsafeUtility.SizeOf<T>();
             return ref element;
         }
 
         public T* ReadRange<T>(int length)
             where T : unmanaged
         {
-            var ptr = (byte*)data.GetUnsafeReadOnlyPtr();
-            var ptrToData = (T*)(ptr + currentIndex);
-            currentIndex += length * UnsafeUtility.SizeOf<T>();
+            var ptr = (byte*)_data.GetUnsafeReadOnlyPtr();
+            var ptrToData = (T*)(ptr + _currentIndex);
+            _currentIndex += length * UnsafeUtility.SizeOf<T>();
             return ptrToData;
         }
 
         public ref T Peek<T>()
             where T : unmanaged
         {
-            var ptr = (byte*)data.GetUnsafeReadOnlyPtr();
-            ref var element = ref *(T*)(ptr + currentIndex);
+            var ptr = (byte*)_data.GetUnsafeReadOnlyPtr();
+            ref var element = ref *(T*)(ptr + _currentIndex);
             return ref element;
         }
 
         public void AddOffset(int offset)
         {
-            currentIndex += offset;
+            _currentIndex += offset;
         }
 
         public void AddOffset<T>()
             where T : unmanaged
         {
-            currentIndex += UnsafeUtility.SizeOf<T>();
+            _currentIndex += UnsafeUtility.SizeOf<T>();
         }
 
         public void AddOffsetRange<T>(int length)
             where T : unmanaged
         {
-            currentIndex += UnsafeUtility.SizeOf<T>() * length;
+            _currentIndex += UnsafeUtility.SizeOf<T>() * length;
         }
 
         public void SetOffset(int offset)
         {
-            currentIndex = offset;
+            _currentIndex = offset;
         }
 
         public void Reset()
         {
-            currentIndex = 0;
+            _currentIndex = 0;
         }
 
         public void Dispose()
         {
-            data.Dispose();
+            _data.Dispose();
         }
     }
 }

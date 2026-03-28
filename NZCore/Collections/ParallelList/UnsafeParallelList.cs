@@ -19,7 +19,7 @@ namespace NZCore
     {
         // this is set to 64 bytes so any write to length doesn't invalidate cache lines from other threads
         // also known as false sharing
-        public const int PER_THREAD_LIST_SIZE = JobsUtility.CacheLineSize;
+        public const int PerThreadListSize = JobsUtility.CacheLineSize;
 
         [NativeDisableUnsafePtrRestriction] private UnsafeParallelListHeader* header;
         [NativeDisableUnsafePtrRestriction] private byte* perThreadLists;
@@ -40,7 +40,7 @@ namespace NZCore
 
             //Debug.Log($"parallelList alignOf: {UnsafeUtility.AlignOf<PerThreadList>()}");
             var maxThreadCount = JobsUtility.ThreadIndexCount;
-            var perThreadListSize = PER_THREAD_LIST_SIZE * maxThreadCount;
+            var perThreadListSize = PerThreadListSize * maxThreadCount;
             unsafeParallelList->perThreadLists = (byte*)UnsafeUtility.Malloc(perThreadListSize, 64, allocator.ToAllocator);
 
             for (var i = 0; i < maxThreadCount; i++)
@@ -65,7 +65,7 @@ namespace NZCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref PerThreadList GetPerThreadList(int index) => ref UnsafeUtility.AsRef<PerThreadList>(perThreadLists + index * PER_THREAD_LIST_SIZE);
+        private ref PerThreadList GetPerThreadList(int index) => ref UnsafeUtility.AsRef<PerThreadList>(perThreadLists + index * PerThreadListSize);
 
         public byte* GetPerThreadListPtr() => perThreadLists;
 
@@ -128,7 +128,7 @@ namespace NZCore
             var result = 0;
             for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
             {
-                var list = *(UnsafeList<T>*)(perThreadLists + i * PER_THREAD_LIST_SIZE);
+                var list = *(UnsafeList<T>*)(perThreadLists + i * PerThreadListSize);
                 result += list.m_length;
             }
 
@@ -139,7 +139,7 @@ namespace NZCore
         public ref UnsafeList<T> GetUnsafeList(int threadId) => ref GetPerThreadList(threadId).List;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnsafeList<T>* GetUnsafeListPtr(int listIndex) => (UnsafeList<T>*)(perThreadLists + listIndex * PER_THREAD_LIST_SIZE);
+        public UnsafeList<T>* GetUnsafeListPtr(int listIndex) => (UnsafeList<T>*)(perThreadLists + listIndex * PerThreadListSize);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte* GetUnsafePtr(int threadId) => (byte*)GetPerThreadList(threadId).List.Ptr;
@@ -249,11 +249,11 @@ namespace NZCore
         {
             public UnsafeList<T> List; // 24 bytes
 
-            public ulong padding1; // 8 bytes
-            public ulong padding2;
-            public ulong padding3;
-            public ulong padding4;
-            public ulong padding5;
+            public ulong Padding1; // 8 bytes
+            public ulong Padding2;
+            public ulong Padding3;
+            public ulong Padding4;
+            public ulong Padding5;
         }
 
         private struct UnsafeParallelListHeader
@@ -270,112 +270,112 @@ namespace NZCore
 
         public struct ChunkWriter
         {
-            [NativeDisableUnsafePtrRestriction] private readonly byte* perThreadListsPtr;
-            [NativeDisableUnsafePtrRestriction] private UnsafeList<T>* list;
-            [NativeDisableUnsafePtrRestriction] private readonly UnsafeParallelListRange* ranges;
+            [NativeDisableUnsafePtrRestriction] private readonly byte* _perThreadListsPtr;
+            [NativeDisableUnsafePtrRestriction] private UnsafeList<T>* _list;
+            [NativeDisableUnsafePtrRestriction] private readonly UnsafeParallelListRange* _ranges;
 
-            [NativeSetThreadIndex] private int threadIndex;
+            [NativeSetThreadIndex] private int _threadIndex;
 
-            private int chunkIndex;
-            private int startIndex;
+            private int _chunkIndex;
+            private int _startIndex;
 
             internal ChunkWriter(ref UnsafeParallelList<T> stream)
             {
-                perThreadListsPtr = stream.perThreadLists;
-                ranges = stream.ranges;
+                _perThreadListsPtr = stream.perThreadLists;
+                _ranges = stream.ranges;
 
-                chunkIndex = int.MinValue;
-                threadIndex = 0;
-                startIndex = 0;
-                list = default;
+                _chunkIndex = int.MinValue;
+                _threadIndex = 0;
+                _startIndex = 0;
+                _list = default;
             }
 
             public void BeginForEachChunk(int newChunkIndex)
             {
-                chunkIndex = newChunkIndex;
+                _chunkIndex = newChunkIndex;
 
-                list = (UnsafeList<T>*)(perThreadListsPtr + threadIndex * PER_THREAD_LIST_SIZE);
-                startIndex = list->m_length;
+                _list = (UnsafeList<T>*)(_perThreadListsPtr + _threadIndex * PerThreadListSize);
+                _startIndex = _list->m_length;
             }
 
             public void Write(in T value)
             {
-                list->Add(in value);
+                _list->Add(in value);
             }
 
             public void WriteMemCpy(ref T value)
             {
-                var idx = list->m_length;
+                var idx = _list->m_length;
 
-                if (list->m_length + 1 > list->Capacity)
+                if (_list->m_length + 1 > _list->Capacity)
                 {
-                    list->Resize(idx + 1);
+                    _list->Resize(idx + 1);
                 }
                 else
                 {
-                    list->m_length += 1;
+                    _list->m_length += 1;
                 }
 
-                UnsafeUtility.MemCpy(list->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
+                UnsafeUtility.MemCpy(_list->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
             }
 
             public void EndForEachChunk()
             {
-                ranges[chunkIndex] = new UnsafeParallelListRange
+                _ranges[_chunkIndex] = new UnsafeParallelListRange
                 {
-                    ElementCount = list->m_length - startIndex,
-                    StartIndex = startIndex,
-                    ListIndex = threadIndex
+                    ElementCount = _list->m_length - _startIndex,
+                    StartIndex = _startIndex,
+                    ListIndex = _threadIndex
                 };
             }
 
             public void SetManualThreadIndex(int newThreadIndex)
             {
-                threadIndex = newThreadIndex;
+                _threadIndex = newThreadIndex;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int GetThreadIndex() => threadIndex;
+            public int GetThreadIndex() => _threadIndex;
         }
 
         public struct ChunkReader
         {
-            [NativeDisableUnsafePtrRestriction] private readonly byte* perThreadListsPtr;
-            [NativeDisableUnsafePtrRestriction] private readonly UnsafeParallelListRange* ranges;
-            [NativeDisableUnsafePtrRestriction] private byte* ptr;
+            [NativeDisableUnsafePtrRestriction] private readonly byte* _perThreadListsPtr;
+            [NativeDisableUnsafePtrRestriction] private readonly UnsafeParallelListRange* _ranges;
+            [NativeDisableUnsafePtrRestriction] private byte* _ptr;
 
-            private readonly int size;
-            private int currentIndex;
+            private readonly int _size;
+            private int _currentIndex;
 
             internal ChunkReader(ref UnsafeParallelList<T> stream)
             {
-                perThreadListsPtr = stream.perThreadLists;
-                ranges = stream.ranges;
+                _perThreadListsPtr = stream.perThreadLists;
+                _ranges = stream.ranges;
 
-                size = UnsafeUtility.SizeOf<T>();
-                currentIndex = 0;
-                ptr = null;
+                _size = UnsafeUtility.SizeOf<T>();
+                _currentIndex = 0;
+                _ptr = null;
             }
 
             public int BeginForEachChunk(int chunkIndex)
             {
-                if (ranges == null)
+                if (_ranges == null)
                 {
                     return 0;
                 }
 
-                var range = ranges[chunkIndex];
+                var range = _ranges[chunkIndex];
                 var remainingItemCount = range.ElementCount;
 
                 if (remainingItemCount > 0)
                 {
-                    ptr = (byte*)((UnsafeList<T>*)(perThreadListsPtr + chunkIndex * PER_THREAD_LIST_SIZE))->Ptr;
-                    currentIndex = ranges[chunkIndex].StartIndex;
+                    _ptr = (byte*)((UnsafeList<T>*)(_perThreadListsPtr + chunkIndex * PerThreadListSize))->Ptr;
+                    _currentIndex = _ranges[chunkIndex].StartIndex;
                 }
                 else
                 {
-                    ptr = null;
-                    currentIndex = 0;
+                    _ptr = null;
+                    _currentIndex = 0;
                 }
 
                 return remainingItemCount;
@@ -383,148 +383,148 @@ namespace NZCore
 
             public ref T Read()
             {
-                ref var returnValue = ref UnsafeUtility.AsRef<T>(ptr + currentIndex * size);
-                currentIndex++;
+                ref var returnValue = ref UnsafeUtility.AsRef<T>(_ptr + _currentIndex * _size);
+                _currentIndex++;
                 return ref returnValue;
             }
 
-            public T* GetPtr() => (T*)ptr;
+            public T* GetPtr() => (T*)_ptr;
 
             public void Reset(int chunkIndex)
             {
-                var range = ranges[chunkIndex];
-                currentIndex = range.ElementCount > 0 ? ranges[chunkIndex].StartIndex : 0;
+                var range = _ranges[chunkIndex];
+                _currentIndex = range.ElementCount > 0 ? _ranges[chunkIndex].StartIndex : 0;
             }
 
             public int GetListIndex(int chunkIndex)
             {
-                var range = ranges[chunkIndex];
+                var range = _ranges[chunkIndex];
                 return range.ListIndex;
             }
         }
 
         public struct ThreadWriter
         {
-            [NativeDisableUnsafePtrRestriction] private readonly byte* perThreadListsPtr;
-            [NativeDisableUnsafePtrRestriction] private UnsafeList<T>* list;
+            [NativeDisableUnsafePtrRestriction] private readonly byte* _perThreadListsPtr;
+            [NativeDisableUnsafePtrRestriction] private UnsafeList<T>* _list;
 
-            [NativeSetThreadIndex] private int threadIndex;
+            [NativeSetThreadIndex] private int _threadIndex;
 
             internal ThreadWriter(ref UnsafeParallelList<T> stream)
             {
-                perThreadListsPtr = stream.perThreadLists;
+                _perThreadListsPtr = stream.perThreadLists;
 
-                threadIndex = 0;
-                list = null;
+                _threadIndex = 0;
+                _list = null;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Begin()
             {
-                list = (UnsafeList<T>*)(perThreadListsPtr + threadIndex * PER_THREAD_LIST_SIZE);
+                _list = (UnsafeList<T>*)(_perThreadListsPtr + _threadIndex * PerThreadListSize);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Begin(int newThreadIndex)
             {
-                threadIndex = newThreadIndex;
-                list = (UnsafeList<T>*)(perThreadListsPtr + newThreadIndex * PER_THREAD_LIST_SIZE);
+                _threadIndex = newThreadIndex;
+                _list = (UnsafeList<T>*)(_perThreadListsPtr + newThreadIndex * PerThreadListSize);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Write(in T value)
             {
-                list->Add(in value);
+                _list->Add(in value);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public T* WriteAndReturn(in T value)
             {
-                var idx = list->m_length;
-                if (list->m_length + 1 > list->Capacity)
+                var idx = _list->m_length;
+                if (_list->m_length + 1 > _list->Capacity)
                 {
-                    list->Resize(idx + 1);
+                    _list->Resize(idx + 1);
                 }
                 else
                 {
-                    list->m_length += 1;
+                    _list->m_length += 1;
                 }
 
-                list->Ptr[idx] = value;
-                return list->Ptr + idx;
+                _list->Ptr[idx] = value;
+                return _list->Ptr + idx;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void WriteMemCpy(ref T value)
             {
-                var idx = list->m_length;
+                var idx = _list->m_length;
 
-                if (list->m_length + 1 > list->Capacity)
+                if (_list->m_length + 1 > _list->Capacity)
                 {
-                    list->Resize(idx + 1);
+                    _list->Resize(idx + 1);
                 }
                 else
                 {
-                    list->m_length += 1;
+                    _list->m_length += 1;
                 }
 
-                UnsafeUtility.MemCpy(list->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
+                UnsafeUtility.MemCpy(_list->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref UnsafeList<T> GetList() => ref *list;
+            public ref UnsafeList<T> GetList() => ref *_list;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int GetThreadIndex() => threadIndex;
+            public int GetThreadIndex() => _threadIndex;
         }
 
         public struct ThreadReader
         {
-            [NativeDisableUnsafePtrRestriction] private readonly byte* perThreadListsPtr;
-            [NativeDisableUnsafePtrRestriction] private T* ptr;
+            [NativeDisableUnsafePtrRestriction] private readonly byte* _perThreadListsPtr;
+            [NativeDisableUnsafePtrRestriction] private T* _ptr;
 
-            [NativeSetThreadIndex] private int threadIndex;
+            [NativeSetThreadIndex] private int _threadIndex;
 
-            private int currentIndex;
+            private int _currentIndex;
 
             internal ThreadReader(ref UnsafeParallelList<T> stream)
             {
-                perThreadListsPtr = stream.perThreadLists;
+                _perThreadListsPtr = stream.perThreadLists;
 
-                threadIndex = 0;
-                currentIndex = 0;
-                ptr = null;
+                _threadIndex = 0;
+                _currentIndex = 0;
+                _ptr = null;
             }
 
             public int Begin()
             {
-                var list = (UnsafeList<T>*)(perThreadListsPtr + threadIndex * PER_THREAD_LIST_SIZE);
-                ptr = list->Ptr;
+                var list = (UnsafeList<T>*)(_perThreadListsPtr + _threadIndex * PerThreadListSize);
+                _ptr = list->Ptr;
 
-                currentIndex = 0;
+                _currentIndex = 0;
 
                 return list->Length;
             }
 
             public int Begin(int newThreadIndex)
             {
-                var list = (UnsafeList<T>*)(perThreadListsPtr + newThreadIndex * PER_THREAD_LIST_SIZE);
-                ptr = list->Ptr;
+                var list = (UnsafeList<T>*)(_perThreadListsPtr + newThreadIndex * PerThreadListSize);
+                _ptr = list->Ptr;
 
-                currentIndex = 0;
-                threadIndex = newThreadIndex;
+                _currentIndex = 0;
+                _threadIndex = newThreadIndex;
 
                 return list->Length;
             }
 
             public ref T Read()
             {
-                ref var returnValue = ref UnsafeUtility.AsRef<T>(ptr + currentIndex);
-                currentIndex++;
+                ref var returnValue = ref UnsafeUtility.AsRef<T>(_ptr + _currentIndex);
+                _currentIndex++;
                 return ref returnValue;
             }
 
-            public T* GetPtr() => ptr;
+            public T* GetPtr() => _ptr;
         }
     }
 }

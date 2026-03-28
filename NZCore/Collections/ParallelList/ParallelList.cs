@@ -157,20 +157,20 @@ namespace NZCore
         [NativeContainerIsAtomicWriteOnly]
         public struct ChunkWriter
         {
-            private UnsafeParallelList<T>.ChunkWriter chunkWriter;
+            private UnsafeParallelList<T>.ChunkWriter _chunkWriter;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             private readonly AtomicSafetyHandle m_Safety;
-            private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ChunkWriter>();
+            private static readonly SharedStatic<int> StaticSafetyId = SharedStatic<int>.GetOrCreate<ChunkWriter>();
 #endif
 
             internal ChunkWriter(ref ParallelList<T> parallelList)
             {
-                chunkWriter = parallelList._unsafeParallelList->AsChunkWriter();
+                _chunkWriter = parallelList._unsafeParallelList->AsChunkWriter();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 m_Safety = parallelList.m_Safety;
-                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ChunkWriter");
+                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref StaticSafetyId.Data, "NZCore.ChunkWriter");
 
                 if (parallelList._unsafeParallelList->CheckRangesForNull())
                 {
@@ -182,34 +182,34 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void BeginForEachChunk(int chunkIndex)
             {
-                chunkWriter.BeginForEachChunk(chunkIndex);
+                _chunkWriter.BeginForEachChunk(chunkIndex);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Write(in T value)
             {
-                chunkWriter.Write(in value);
+                _chunkWriter.Write(in value);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void WriteMemCpy(ref T value)
             {
-                chunkWriter.WriteMemCpy(ref value);
+                _chunkWriter.WriteMemCpy(ref value);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void EndForEachChunk()
             {
-                chunkWriter.EndForEachChunk();
+                _chunkWriter.EndForEachChunk();
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void SetManualThreadIndex(int threadIndex)
             {
-                chunkWriter.SetManualThreadIndex(threadIndex);
+                _chunkWriter.SetManualThreadIndex(threadIndex);
             }
 
-            public int GetThreadIndex() => chunkWriter.GetThreadIndex();
+            public int GetThreadIndex() => _chunkWriter.GetThreadIndex();
         }
 
         [NativeContainer]
@@ -217,40 +217,40 @@ namespace NZCore
         [GenerateTestsForBurstCompatibility]
         public struct ChunkReader
         {
-            private UnsafeParallelList<T>.ChunkReader chunkReader;
+            private UnsafeParallelList<T>.ChunkReader _chunkReader;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             private AtomicSafetyHandle m_Safety;
-            private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ChunkReader>();
+            private static readonly SharedStatic<int> StaticSafetyId = SharedStatic<int>.GetOrCreate<ChunkReader>();
 #endif
 
             internal ChunkReader(ref ParallelList<T> stream)
             {
-                chunkReader = stream._unsafeParallelList->AsChunkReader();
+                _chunkReader = stream._unsafeParallelList->AsChunkReader();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 m_Safety = stream.m_Safety;
-                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ChunkReader");
+                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref StaticSafetyId.Data, "NZCore.ChunkReader");
 #endif
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int BeginForEachChunk(int chunkIndex) => chunkReader.BeginForEachChunk(chunkIndex);
+            public int BeginForEachChunk(int chunkIndex) => _chunkReader.BeginForEachChunk(chunkIndex);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref T Read() => ref chunkReader.Read();
+            public ref T Read() => ref _chunkReader.Read();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public T* GetPtr() => chunkReader.GetPtr();
+            public T* GetPtr() => _chunkReader.GetPtr();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset(int chunkIndex)
             {
-                chunkReader.Reset(chunkIndex);
+                _chunkReader.Reset(chunkIndex);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int GetListIndex(int chunkIndex) => chunkReader.GetListIndex(chunkIndex);
+            public int GetListIndex(int chunkIndex) => _chunkReader.GetListIndex(chunkIndex);
         }
 
         [NativeContainer]
@@ -258,54 +258,54 @@ namespace NZCore
         [NativeContainerIsAtomicWriteOnly]
         public struct ThreadWriter
         {
-            private UnsafeParallelList<T>.ThreadWriter threadWriter;
+            private UnsafeParallelList<T>.ThreadWriter _threadWriter;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             private AtomicSafetyHandle m_Safety;
-            private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ThreadWriter>();
+            private static readonly SharedStatic<int> StaticSafetyId = SharedStatic<int>.GetOrCreate<ThreadWriter>();
 #endif
 
             internal ThreadWriter(ref ParallelList<T> parallelList)
             {
-                threadWriter = parallelList._unsafeParallelList->AsThreadWriter();
+                _threadWriter = parallelList._unsafeParallelList->AsThreadWriter();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 m_Safety = parallelList.m_Safety;
-                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ThreadWriter");
+                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref StaticSafetyId.Data, "NZCore.ThreadWriter");
 #endif
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Begin()
             {
-                threadWriter.Begin();
+                _threadWriter.Begin();
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Begin(int threadIndex)
             {
-                threadWriter.Begin(threadIndex);
+                _threadWriter.Begin(threadIndex);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Write(in T value)
             {
-                threadWriter.Write(in value);
+                _threadWriter.Write(in value);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public T* WriteAndReturn(in T value) => threadWriter.WriteAndReturn(in value);
+            public T* WriteAndReturn(in T value) => _threadWriter.WriteAndReturn(in value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void WriteMemCpy(ref T value)
             {
-                threadWriter.WriteMemCpy(ref value);
+                _threadWriter.WriteMemCpy(ref value);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref UnsafeList<T> GetList() => ref threadWriter.GetList();
+            public ref UnsafeList<T> GetList() => ref _threadWriter.GetList();
 
-            public int GetThreadIndex() => threadWriter.GetThreadIndex();
+            public int GetThreadIndex() => _threadWriter.GetThreadIndex();
         }
 
         [NativeContainer]
@@ -313,34 +313,34 @@ namespace NZCore
         [GenerateTestsForBurstCompatibility]
         public struct ThreadReader
         {
-            private UnsafeParallelList<T>.ThreadReader threadReader;
+            private UnsafeParallelList<T>.ThreadReader _threadReader;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             private AtomicSafetyHandle m_Safety;
-            private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ThreadReader>();
+            private static readonly SharedStatic<int> StaticSafetyId = SharedStatic<int>.GetOrCreate<ThreadReader>();
 #endif
 
             internal ThreadReader(ref ParallelList<T> stream)
             {
-                threadReader = stream._unsafeParallelList->AsThreadReader();
+                _threadReader = stream._unsafeParallelList->AsThreadReader();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 m_Safety = stream.m_Safety;
-                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ThreadReader");
+                CollectionHelper.SetStaticSafetyId(ref m_Safety, ref StaticSafetyId.Data, "NZCore.ThreadReader");
 #endif
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int Begin() => threadReader.Begin();
+            public int Begin() => _threadReader.Begin();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int Begin(int threadIndex) => threadReader.Begin(threadIndex);
+            public int Begin(int threadIndex) => _threadReader.Begin(threadIndex);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref T Read() => ref threadReader.Read();
+            public ref T Read() => ref _threadReader.Read();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public T* GetPtr() => threadReader.GetPtr();
+            public T* GetPtr() => _threadReader.GetPtr();
         }
 
         // helper jobs
@@ -734,7 +734,7 @@ namespace NZCore
             public ArrayHashMap<TKey, T> ArrayHashMap2;
 
             [NativeDisableContainerSafetyRestriction]
-            private NativeList<T> tmpList1;
+            private NativeList<T> _tmpList1;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Execute(int index)
@@ -784,28 +784,28 @@ namespace NZCore
         [BurstCompile]
         public struct ParallelListEnumerator
         {
-            private ParallelList<T> parallelList;
-            private int currentIndex;
+            private ParallelList<T> _parallelList;
+            private int _currentIndex;
 
-            private UnsafeList<T>* listPtr;
-            public ref UnsafeList<T> Current => ref *listPtr;
+            private UnsafeList<T>* _listPtr;
+            public ref UnsafeList<T> Current => ref *_listPtr;
 
             public ParallelListEnumerator(ParallelList<T> list)
             {
-                parallelList = list;
-                currentIndex = 0;
-                listPtr = null;
+                _parallelList = list;
+                _currentIndex = 0;
+                _listPtr = null;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                while (currentIndex < JobsUtility.ThreadIndexCount)
+                while (_currentIndex < JobsUtility.ThreadIndexCount)
                 {
-                    listPtr = parallelList.GetUnsafeListPtr(currentIndex);
-                    currentIndex++;
+                    _listPtr = _parallelList.GetUnsafeListPtr(_currentIndex);
+                    _currentIndex++;
 
-                    if (listPtr->Length > 0)
+                    if (_listPtr->Length > 0)
                     {
                         return true;
                     }

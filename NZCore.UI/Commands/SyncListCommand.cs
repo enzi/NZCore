@@ -8,7 +8,7 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace NZCore.UI
 {
     /// <summary>
-    /// A command designed for triggering a sync in <see cref="SyncedListView"/>
+    /// A command designed for triggering a sync in "SyncedListView"
     /// </summary>
     public class SyncListCommand<T> : ICommand
         where T : unmanaged

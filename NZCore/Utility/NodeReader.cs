@@ -10,55 +10,55 @@ namespace NZCore
 {
     public unsafe ref struct NodeReader
     {
-        private readonly byte* ptr;
-        private readonly int bufferLength;
-        private int offset;
+        private readonly byte* _ptr;
+        private readonly int _bufferLength;
+        private int _offset;
 
-        public byte* CurrentPtr => ptr + offset;
-        public int Offset => offset;
-        public bool CanRead => offset < bufferLength;
+        public byte* CurrentPtr => _ptr + _offset;
+        public int Offset => _offset;
+        public bool CanRead => _offset < _bufferLength;
 
         public NodeReader(byte* ptr, int bufferLength)
         {
-            this.ptr = ptr;
-            this.bufferLength = bufferLength;
-            offset = 0;
+            _ptr = ptr;
+            _bufferLength = bufferLength;
+            _offset = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T ReadFromNode<T>()
             where T : unmanaged
         {
-            ref var node = ref UnsafeUtility.AsRef<T>(ptr + offset);
-            offset += UnsafeUtility.SizeOf<T>();
+            ref var node = ref UnsafeUtility.AsRef<T>(_ptr + _offset);
+            _offset += UnsafeUtility.SizeOf<T>();
             return ref node;
         }
 
         public T* ReadRange<T>(int length)
             where T : unmanaged
         {
-            var tmp = ptr + offset;
-            offset += length * UnsafeUtility.SizeOf<T>();
+            var tmp = _ptr + _offset;
+            _offset += length * UnsafeUtility.SizeOf<T>();
             return (T*)tmp;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOffset(int newOffset)
         {
-            offset += newOffset;
+            _offset += newOffset;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOffset<T>()
             where T : unmanaged
         {
-            offset += UnsafeUtility.SizeOf<T>();
+            _offset += UnsafeUtility.SizeOf<T>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetOffset(int newOffset)
         {
-            offset = newOffset;
+            _offset = newOffset;
         }
     }
 

@@ -12,7 +12,7 @@ namespace NZCore.UI
     /// <summary>
     /// A command that supports dependency injection for its execution logic.
     /// </summary>
-    public class DICommand : ICommand
+    public class InjectCommand : ICommand
     {
         private readonly IServiceProvider _container;
         private readonly Func<IServiceProvider, object, bool> _canExecute;
@@ -24,7 +24,7 @@ namespace NZCore.UI
         /// <param name="container">The Service Provider for resolving dependencies.</param>
         /// <param name="execute">The execution logic that receives the container and parameter.</param>
         /// <param name="canExecute">The execution status logic that receives the container and parameter.</param>
-        public DICommand(IServiceProvider container, Action<IServiceProvider, object> execute,
+        public InjectCommand(IServiceProvider container, Action<IServiceProvider, object> execute,
             Func<IServiceProvider, object, bool> canExecute = null)
         {
             _container = container ?? throw new ArgumentNullException(nameof(container));
@@ -38,7 +38,7 @@ namespace NZCore.UI
         /// <param name="container">The DI container for resolving dependencies.</param>
         /// <param name="execute">The execution logic that receives the container.</param>
         /// <param name="canExecute">The execution status logic that receives the container.</param>
-        public DICommand(IServiceProvider container, Action<IServiceProvider> execute,
+        public InjectCommand(IServiceProvider container, Action<IServiceProvider> execute,
             Func<IServiceProvider, bool> canExecute = null)
             : this(container,
                 execute != null ? (c, _) => execute(c) : null,
@@ -80,7 +80,7 @@ namespace NZCore.UI
     /// <summary>
     /// An asynchronous command that supports dependency injection for its execution logic.
     /// </summary>
-    public class AsyncDICommand : ICommand
+    public class AsyncInjectCommand : ICommand
     {
         private readonly IServiceProvider _container;
         private readonly Func<IServiceProvider, object, Task> _execute;
@@ -93,7 +93,7 @@ namespace NZCore.UI
         /// <param name="container">The DI container for resolving dependencies.</param>
         /// <param name="execute">The asynchronous execution logic that receives the container and parameter.</param>
         /// <param name="canExecute">The execution status logic that receives the container and parameter.</param>
-        public AsyncDICommand(IServiceProvider container, Func<IServiceProvider, object, Task> execute,
+        public AsyncInjectCommand(IServiceProvider container, Func<IServiceProvider, object, Task> execute,
             Func<IServiceProvider, object, bool> canExecute = null)
         {
             _container = container ?? throw new ArgumentNullException(nameof(container));
@@ -107,7 +107,7 @@ namespace NZCore.UI
         /// <param name="container">The DI container for resolving dependencies.</param>
         /// <param name="execute">The asynchronous execution logic that receives the container.</param>
         /// <param name="canExecute">The execution status logic that receives the container.</param>
-        public AsyncDICommand(IServiceProvider container, Func<IServiceProvider, Task> execute,
+        public AsyncInjectCommand(IServiceProvider container, Func<IServiceProvider, Task> execute,
             Func<IServiceProvider, bool> canExecute = null)
             : this(container,
                 execute != null ? (c, _) => execute(c) : null,

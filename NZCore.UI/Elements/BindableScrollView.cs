@@ -11,8 +11,8 @@ namespace NZCore.UI
 {
     public class BindableScrollView : ScrollView
     {
-        private static readonly BindingId makeItemProperty = (BindingId)nameof(makeItem);
-        private static readonly BindingId itemsSourceProperty = (BindingId)nameof(itemsSource);
+        private static readonly BindingId MakeItemProperty = (BindingId)nameof(makeItem);
+        private static readonly BindingId ItemsSourceProperty = (BindingId)nameof(itemsSource);
 
         private Func<VisualElement> _makeItem;
         private IList _itemsSource;
@@ -31,7 +31,7 @@ namespace NZCore.UI
                 }
 
                 _makeItem = value;
-                NotifyPropertyChanged(in makeItemProperty);
+                NotifyPropertyChanged(in MakeItemProperty);
             }
         }
 
@@ -43,7 +43,7 @@ namespace NZCore.UI
             {
                 _itemsSource = value;
                 Rebuild();
-                NotifyPropertyChanged(in itemsSourceProperty);
+                NotifyPropertyChanged(in ItemsSourceProperty);
             }
         }
 

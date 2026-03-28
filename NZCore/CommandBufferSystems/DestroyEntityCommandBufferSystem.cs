@@ -20,25 +20,25 @@ namespace NZCore
 
         public unsafe struct Singleton : IComponentData, IECBSingleton
         {
-            private UnsafeList<EntityCommandBuffer>* pendingBuffers;
-            private AllocatorManager.AllocatorHandle allocator;
+            private UnsafeList<EntityCommandBuffer>* _pendingBuffers;
+            private AllocatorManager.AllocatorHandle _allocator;
 
             public EntityCommandBuffer CreateCommandBuffer(WorldUnmanaged world) =>
-                EntityCommandBufferSystem.CreateCommandBuffer(ref *pendingBuffers, allocator, world);
+                EntityCommandBufferSystem.CreateCommandBuffer(ref *_pendingBuffers, _allocator, world);
 
             public void SetPendingBufferList(ref UnsafeList<EntityCommandBuffer> buffers)
             {
-                pendingBuffers = (UnsafeList<EntityCommandBuffer>*)UnsafeUtility.AddressOf(ref buffers);
+                _pendingBuffers = (UnsafeList<EntityCommandBuffer>*)UnsafeUtility.AddressOf(ref buffers);
             }
 
             public void SetAllocator(Allocator allocatorIn)
             {
-                allocator = allocatorIn;
+                _allocator = allocatorIn;
             }
 
             public void SetAllocator(AllocatorManager.AllocatorHandle allocatorIn)
             {
-                allocator = allocatorIn;
+                _allocator = allocatorIn;
             }
         }
     }

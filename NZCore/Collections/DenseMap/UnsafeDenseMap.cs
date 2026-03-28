@@ -26,10 +26,10 @@ namespace NZCore.NativeContainers.DenseMap
         where TValue : unmanaged
     {
         public int Count { get; private set; }
-        public uint Size => arrayLength;
+        public uint Size => _arrayLength;
 
-        private const sbyte _tombstone = -126;
-        private const uint _goldenRatio = 0x9E3779B9; //2654435769;
+        private const sbyte Tombstone = -126;
+        private const uint GoldenRatio = 0x9E3779B9; //2654435769;
 
 
         private uint _length;
@@ -40,7 +40,7 @@ namespace NZCore.NativeContainers.DenseMap
 
         [NativeDisableUnsafePtrRestriction] private Entry* _entries;
         [NativeDisableUnsafePtrRestriction] private sbyte* _metadata;
-        private uint arrayLength;
+        private uint _arrayLength;
 
         internal AllocatorManager.AllocatorHandle Allocator;
 
@@ -75,9 +75,9 @@ namespace NZCore.NativeContainers.DenseMap
             _shift = 32;
             _shift = (byte)(_shift - math.log2(_length));
 
-            arrayLength = _length + 16;
+            _arrayLength = _length + 16;
 
-            var memBlockSize = arrayLength * UnsafeUtility.SizeOf<Entry>() + arrayLength;
+            var memBlockSize = _arrayLength * UnsafeUtility.SizeOf<Entry>() + _arrayLength;
 
             var block = (byte*)Memory.Unmanaged.Allocate(memBlockSize, JobsUtility.CacheLineSize, allocator.ToAllocator);
 
@@ -85,9 +85,9 @@ namespace NZCore.NativeContainers.DenseMap
             //_metadata = (sbyte*) Memory.Unmanaged.Allocate(arrayLength, JobsUtility.CacheLineSize, allocator.ToAllocator);
 
             _entries = (Entry*)block;
-            _metadata = (sbyte*)(block + arrayLength * UnsafeUtility.SizeOf<Entry>());
+            _metadata = (sbyte*)(block + _arrayLength * UnsafeUtility.SizeOf<Entry>());
 
-            for (var i = 0; i < arrayLength; i++)
+            for (var i = 0; i < _arrayLength; i++)
             {
                 _metadata[i] = UnsafeDenseMap.EmptyBucket;
             }
@@ -123,7 +123,7 @@ namespace NZCore.NativeContainers.DenseMap
             var h2 = H2(hashcode);
             //var target = new v128(UnsafeUtility.As<uint, sbyte>(ref h2));
             var target = X86.Sse2.set1_epi8(UnsafeUtility.As<uint, sbyte>(ref h2));
-            var index = (_goldenRatio * hashcode) >> _shift;
+            var index = (GoldenRatio * hashcode) >> _shift;
             uint jumpDistance = 0;
 
             while (true)
@@ -193,7 +193,7 @@ namespace NZCore.NativeContainers.DenseMap
             var h2 = H2(hashcode);
             //var target = new v128(UnsafeUtility.As<uint, sbyte>(ref h2));
             var target = X86.Sse2.set1_epi8(UnsafeUtility.As<uint, sbyte>(ref h2));
-            var index = (_goldenRatio * hashcode) >> _shift;
+            var index = (GoldenRatio * hashcode) >> _shift;
             uint jumpDistance = 0;
 
             while (true)
@@ -247,7 +247,7 @@ namespace NZCore.NativeContainers.DenseMap
 
             var oldEntries = _entries;
             var oldMetaData = _metadata;
-            var oldSize = arrayLength;
+            var oldSize = _arrayLength;
 
             var newSize = UnsafeUtility.As<uint, int>(ref _length) + 16;
 
@@ -260,9 +260,9 @@ namespace NZCore.NativeContainers.DenseMap
             //_metadata = (sbyte*) Memory.Unmanaged.Allocate(arrayLength, JobsUtility.CacheLineSize, allocator.ToAllocator);
 
             _entries = (Entry*)block;
-            _metadata = (sbyte*)(block + arrayLength * UnsafeUtility.SizeOf<Entry>());
+            _metadata = (sbyte*)(block + _arrayLength * UnsafeUtility.SizeOf<Entry>());
 
-            arrayLength = (uint)newSize;
+            _arrayLength = (uint)newSize;
 
             for (var i = 0; i < newSize; i++)
             {
@@ -280,7 +280,7 @@ namespace NZCore.NativeContainers.DenseMap
                 var entry = *(oldEntries + i);
 
                 var hashcode = (uint)entry.Key.GetHashCode();
-                var index = (_goldenRatio * hashcode) >> _shift;
+                var index = (GoldenRatio * hashcode) >> _shift;
                 uint jumpDistance = 0;
 
                 while (true)

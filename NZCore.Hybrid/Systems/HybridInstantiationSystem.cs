@@ -22,18 +22,18 @@ namespace NZSpellCasting
     [UpdateAfter(typeof(EntityRemapSystem))]
     public partial struct HybridInstantiationSystem : ISystem, ISystemStartStop
     {
-        private TransformEntityMappingSingleton entityMapping;
-        private WeakAssetLoaderSingleton assetLoader;
+        private TransformEntityMappingSingleton _entityMapping;
+        private WeakAssetLoaderSingleton _assetLoader;
 
         private delegate void InstantiateGameObjects(in TransformEntityMappingSingleton mapping, in NativeArray<InstantiateGameObjectsRequest> requests);
 
-        private ManagedDelegate<InstantiateGameObjects> instantiateGameObjectsFunction;
-        private NativeList<InstantiateGameObjectsRequest> instantiateRequests;
+        private ManagedDelegate<InstantiateGameObjects> _instantiateGameObjectsFunction;
+        private NativeList<InstantiateGameObjectsRequest> _instantiateRequests;
 
         public void OnCreate(ref SystemState state)
         {
-            instantiateRequests = new NativeList<InstantiateGameObjectsRequest>(0, Allocator.Persistent);
-            instantiateGameObjectsFunction = new ManagedDelegate<InstantiateGameObjects>(Instantiate);
+            _instantiateRequests = new NativeList<InstantiateGameObjectsRequest>(0, Allocator.Persistent);
+            _instantiateGameObjectsFunction = new ManagedDelegate<InstantiateGameObjects>(Instantiate);
 
             state.RequireForUpdate<TransformEntityMappingSingleton>();
             state.RequireForUpdate<WeakAssetLoaderSingleton>();
@@ -42,16 +42,16 @@ namespace NZSpellCasting
 
         public void OnStartRunning(ref SystemState state)
         {
-            entityMapping = SystemAPI.GetSingleton<TransformEntityMappingSingleton>();
-            assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
+            _entityMapping = SystemAPI.GetSingleton<TransformEntityMappingSingleton>();
+            _assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
         }
 
         public void OnStopRunning(ref SystemState state) { }
 
         public void OnDestroy(ref SystemState state)
         {
-            instantiateRequests.Dispose();
-            instantiateGameObjectsFunction.Dispose();
+            _instantiateRequests.Dispose();
+            _instantiateGameObjectsFunction.Dispose();
         }
 
         [BurstCompile]
@@ -65,7 +65,7 @@ namespace NZSpellCasting
             var createHybrids = SystemAPI.GetSingleton<CreateHybridObjectRequestSingleton>();
             var createEnumerator = createHybrids.Requests.GetEnumerator();
 
-            instantiateRequests.Clear();
+            _instantiateRequests.Clear();
 
             while (createEnumerator.MoveNext())
             {
@@ -75,36 +75,36 @@ namespace NZSpellCasting
                 {
                     var request = list[i];
 
-                    if (!assetLoader.Load(request.PrefabToLoad))
+                    if (!_assetLoader.Load(request.PrefabToLoad))
                     {
                         list.RemoveAt(i);
                     }
 
-                    if (!assetLoader.HasLoaded(request.PrefabToLoad))
+                    if (!_assetLoader.HasLoaded(request.PrefabToLoad))
                     {
                         continue;
                     }
 
-                    instantiateRequests.Add(new InstantiateGameObjectsRequest
+                    _instantiateRequests.Add(new InstantiateGameObjectsRequest
                     {
                         Request = request
                     });
 
-                    assetLoader.RegisterGeneric(request.PrefabToLoad);
+                    _assetLoader.RegisterGeneric(request.PrefabToLoad);
 
                     list.RemoveAt(i);
                 }
             }
 
-            if (instantiateRequests.Length > 0)
+            if (_instantiateRequests.Length > 0)
             {
-                instantiateGameObjectsFunction.Ptr.Invoke(entityMapping, instantiateRequests.AsArray());
+                _instantiateGameObjectsFunction.Ptr.Invoke(_entityMapping, _instantiateRequests.AsArray());
 
-                foreach (var finishedRequest in instantiateRequests)
+                foreach (var finishedRequest in _instantiateRequests)
                 {
                     if (finishedRequest.Request.DestroyTime > 0)
                     {
-                        entityMapping.TrackedGameObjects.Add(new TrackedGameObject
+                        _entityMapping.TrackedGameObjects.Add(new TrackedGameObject
                         {
                             Prefab = finishedRequest.Request.PrefabToLoad,
                             Object = finishedRequest.Result.Instance,
@@ -124,7 +124,7 @@ namespace NZSpellCasting
 
                     if (bindToEntity != Entity.Null)
                     {
-                        entityMapping.AddTransform(
+                        _entityMapping.AddTransform(
                             finishedRequest.Result.TransformInstanceId,
                             bindToEntity,
                             finishedRequest.Result.Instance,
@@ -144,7 +144,7 @@ namespace NZSpellCasting
                             // destroy all previous elements
                             foreach (var element in hybridBuffer)
                             {
-                                entityMapping.DestroyRequests.Add(element.GameObject);
+                                _entityMapping.DestroyRequests.Add(element.GameObject);
                             }
 
                             hybridBuffer.Add(new HybridObjectBuffer

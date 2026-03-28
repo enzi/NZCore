@@ -176,11 +176,11 @@ namespace NZCore
         where TValue : unmanaged
     {
 #if !NET_DOTS
-        private ArrayHashMap<TKey, TValue> target;
+        private ArrayHashMap<TKey, TValue> _target;
 
         public ArrayHashMapDebuggerTypeProxy(ArrayHashMap<TKey, TValue> target)
         {
-            this.target = target;
+            this._target = target;
         }
 
         public List<Pair<TKey, TValue>> Items
@@ -189,7 +189,7 @@ namespace NZCore
             {
                 var result = new List<Pair<TKey, TValue>>();
 
-                using var kva = target.GetKeyValueArrays(Allocator.Temp);
+                using var kva = _target.GetKeyValueArrays(Allocator.Temp);
                 for (var i = 0; i < kva.Length; ++i)
                 {
                     result.Add(new Pair<TKey, TValue>(kva.Keys[i], kva.Values[i]));

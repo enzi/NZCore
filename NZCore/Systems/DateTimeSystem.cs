@@ -11,9 +11,9 @@ namespace NZCore
     [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
     public partial class DateTimeSystem : SystemBase
     {
-        private const int UPDATE_INTERVAL = 1; // in seconds
+        private const int UpdateInterval = 1; // in seconds
 
-        private double lastElapsed;
+        private double _lastElapsed;
 
         protected override void OnCreate()
         {
@@ -35,9 +35,9 @@ namespace NZCore
             var currentElapsed = SystemAPI.Time.ElapsedTime;
 
             // only update very second
-            if (currentElapsed > lastElapsed + UPDATE_INTERVAL)
+            if (currentElapsed > _lastElapsed + UpdateInterval)
             {
-                lastElapsed = currentElapsed;
+                _lastElapsed = currentElapsed;
 
                 SystemAPI.SetSingleton(new DateTimeSingleton
                 {

@@ -9,46 +9,46 @@ namespace NZCore.Editor
     public class BlockWriter
     {
         public readonly StringBuilder StringBuilder;
-        private int indentLevel;
+        private int _indentLevel;
 
         private const string Indent = "\t";
 
         public BlockWriter(int indent = 0)
         {
             StringBuilder = new StringBuilder();
-            indentLevel = indent;
+            _indentLevel = indent;
         }
 
         public BlockWriter(StringBuilder stringBuilder, int indent = 0)
         {
             StringBuilder = stringBuilder;
-            indentLevel = indent;
+            _indentLevel = indent;
         }
 
         public void BeginBlock()
         {
             WriteIndent();
             StringBuilder.Append("{\n");
-            indentLevel++;
+            _indentLevel++;
         }
 
         public void BeginBlock(string text)
         {
             WriteIndent();
             StringBuilder.Append($"{{{text}\n");
-            indentLevel++;
+            _indentLevel++;
         }
 
         public void EndBlock()
         {
-            indentLevel--;
+            _indentLevel--;
             WriteIndent();
             StringBuilder.Append("}\n");
         }
 
         public void EndBlock(string text)
         {
-            indentLevel--;
+            _indentLevel--;
             WriteIndent();
             StringBuilder.Append($"}}{text}\n");
         }
@@ -92,7 +92,7 @@ namespace NZCore.Editor
 
         public void WriteIndent()
         {
-            WriteIndent(indentLevel);
+            WriteIndent(_indentLevel);
         }
 
         public void WriteIndent(int indentAmount)

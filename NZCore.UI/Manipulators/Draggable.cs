@@ -14,9 +14,8 @@ namespace NZCore.UI
     /// </summary>
     public class Draggable : Pressable
     {
-        private static readonly PropertyInfo k_IsHandledByDraggable =
-            typeof(PointerMoveEvent).GetProperty("isHandledByDraggable",
-                BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly PropertyInfo IsHandledByDraggablePropertyInfo = typeof(PointerMoveEvent)
+            .GetProperty("isHandledByDraggable", BindingFlags.Instance | BindingFlags.NonPublic);
 
         /// <summary>
         /// The direction of the drag.
@@ -40,15 +39,15 @@ namespace NZCore.UI
             Free = Horizontal | Vertical
         }
 
-        private readonly Action<Draggable> m_DownHandler;
+        private readonly Action<Draggable> _downHandler;
 
-        private readonly Action<Draggable> m_DragHandler;
+        private readonly Action<Draggable> _dragHandler;
 
-        private readonly Action<Draggable> m_UpHandler;
+        private readonly Action<Draggable> _upHandler;
 
-        private bool m_IsDown;
+        private bool _isDown;
 
-        private Vector2 m_LastPos = Vector2.zero;
+        private Vector2 _lastPos = Vector2.zero;
 
         /// <summary>
         /// Construct a Draggable manipulator.
@@ -60,60 +59,60 @@ namespace NZCore.UI
         public Draggable(Action clickHandler, Action<Draggable> dragHandler, Action<Draggable> upHandler, Action<Draggable> downHandler = null)
             : base(clickHandler)
         {
-            m_DragHandler = dragHandler;
-            m_UpHandler = upHandler;
-            m_DownHandler = downHandler;
+            _dragHandler = dragHandler;
+            _upHandler = upHandler;
+            _downHandler = downHandler;
 
-            longPressDuration = -1;
-            keepEventPropagation = false;
+            LongPressDuration = -1;
+            KeepEventPropagation = false;
         }
 
         /// <summary>
         /// The direction of the drag.
         /// </summary>
-        public DragDirection dragDirection { get; set; } = DragDirection.Free;
+        public DragDirection CurrentDragDirection { get; set; } = DragDirection.Free;
 
         /// <summary>
         /// The delta position between the last frame and the current one.
         /// </summary>
-        public Vector2 deltaPos { get; internal set; } = Vector2.zero;
+        public Vector2 DeltaPos { get; internal set; } = Vector2.zero;
 
         /// <summary>
         /// The delta position between the start of the drag and the current frame.
         /// </summary>
-        public Vector2 deltaStartPos { get; internal set; } = Vector2.zero;
+        public Vector2 DeltaStartPos { get; internal set; } = Vector2.zero;
 
         /// <summary>
         /// The local position received from the imGui native event.
         /// </summary>
-        public Vector2 localPosition { get; internal set; }
+        public Vector2 LocalPosition { get; internal set; }
 
         /// <summary>
         /// The world position received from the imGui native event.
         /// </summary>
-        public Vector2 position { get; internal set; }
+        public Vector2 Position { get; internal set; }
 
         /// <summary>
         /// The start position of the drag, based on the world position received from the imGui native event.
         /// </summary>
-        public Vector2 startPosition { get; internal set; }
+        public Vector2 StartPosition { get; internal set; }
 
         /// <summary>
         /// Has the pointer moved since the last <see cref="PointerDownEvent"/>.
         /// </summary>
-        public bool hasMoved { get; internal set; }
+        public bool HasMoved { get; internal set; }
 
         /// <summary>
         /// The threshold in pixels to start the drag operation.
         /// </summary>
-        public float threshold { get; set; } = 4.0f;
+        public float Threshold { get; set; } = 4.0f;
 
         /// <summary>
         /// Cancel the drag operation.
         /// </summary>
         public void Cancel()
         {
-            if (active)
+            if (Active)
             {
                 target?.Blur();
             }
@@ -127,16 +126,16 @@ namespace NZCore.UI
         /// <param name="pointerId"> The pointer id of the pointer.</param>
         protected override void ProcessDownEvent(EventBase evt, Vector2 localPosition, int pointerId)
         {
-            deltaPos = Vector2.zero;
-            deltaStartPos = Vector2.zero;
-            this.localPosition = localPosition;
-            position = evt is PointerDownEvent e ? e.position : ((MouseDownEvent)evt).mousePosition;
-            m_LastPos = position;
-            m_IsDown = true;
-            hasMoved = false;
-            startPosition = position;
+            DeltaPos = Vector2.zero;
+            DeltaStartPos = Vector2.zero;
+            this.LocalPosition = localPosition;
+            Position = evt is PointerDownEvent e ? e.position : ((MouseDownEvent)evt).mousePosition;
+            _lastPos = Position;
+            _isDown = true;
+            HasMoved = false;
+            StartPosition = Position;
 
-            m_DownHandler?.Invoke(this);
+            _downHandler?.Invoke(this);
             base.ProcessDownEvent(evt, localPosition, pointerId);
         }
 
@@ -148,13 +147,13 @@ namespace NZCore.UI
         /// <param name="pointerId"> The pointer id of the pointer.</param>
         protected override void ProcessUpEvent(EventBase evt, Vector2 localPosition, int pointerId)
         {
-            m_IsDown = false;
-            deltaPos = Vector2.zero;
-            deltaStartPos = Vector2.zero;
-            this.localPosition = localPosition;
-            position = evt is PointerUpEvent e ? e.position : ((MouseUpEvent)evt).mousePosition;
+            _isDown = false;
+            DeltaPos = Vector2.zero;
+            DeltaStartPos = Vector2.zero;
+            this.LocalPosition = localPosition;
+            Position = evt is PointerUpEvent e ? e.position : ((MouseUpEvent)evt).mousePosition;
 
-            m_UpHandler?.Invoke(this);
+            _upHandler?.Invoke(this);
             base.ProcessUpEvent(evt, localPosition, pointerId);
         }
 
@@ -166,27 +165,27 @@ namespace NZCore.UI
         /// <param name="localPosition"> The local position of the pointer.</param>
         protected override void ProcessMoveEvent(EventBase evt, Vector2 localPosition)
         {
-            if (m_IsDown)
+            if (_isDown)
             {
-                this.localPosition = localPosition;
-                position = evt is PointerMoveEvent e ? e.position : ((MouseMoveEvent)evt).mousePosition;
-                deltaPos = position - m_LastPos;
-                deltaStartPos = position - startPosition;
-                m_LastPos = position;
+                this.LocalPosition = localPosition;
+                Position = evt is PointerMoveEvent e ? e.position : ((MouseMoveEvent)evt).mousePosition;
+                DeltaPos = Position - _lastPos;
+                DeltaStartPos = Position - StartPosition;
+                _lastPos = Position;
 
                 var canDrag =
-                    hasMoved ||
+                    HasMoved ||
                     (evt is PointerMoveEvent pme && pme.pointerId == PointerId.mousePointerId) ||
                     evt is MouseMoveEvent ||
                     IsDraggingInDirection();
 
-                if (canDrag || !hasMoved)
+                if (canDrag || !HasMoved)
                 {
                     if (evt is PointerMoveEvent pointerMoveEvent)
                     {
                         if (pointerMoveEvent.pointerId != PointerId.mousePointerId)
                         {
-                            k_IsHandledByDraggable.SetValue(evt, true);
+                            IsHandledByDraggablePropertyInfo.SetValue(evt, true);
                             //pointerMoveEvent.SetIsHandledByDraggable(true);
                         }
                     }
@@ -194,8 +193,8 @@ namespace NZCore.UI
 
                 if (canDrag)
                 {
-                    m_DragHandler?.Invoke(this);
-                    hasMoved = true;
+                    _dragHandler?.Invoke(this);
+                    HasMoved = true;
                 }
             }
 
@@ -204,27 +203,27 @@ namespace NZCore.UI
 
         private bool IsDraggingInDirection()
         {
-            var r = dragDirection switch
+            var r = CurrentDragDirection switch
             {
-                DragDirection.Horizontal => Mathf.Abs(deltaStartPos.x) >= threshold,
-                DragDirection.Vertical => Mathf.Abs(deltaStartPos.y) >= threshold,
-                DragDirection.Free => deltaStartPos.magnitude >= threshold,
+                DragDirection.Horizontal => Mathf.Abs(DeltaStartPos.x) >= Threshold,
+                DragDirection.Vertical => Mathf.Abs(DeltaStartPos.y) >= Threshold,
+                DragDirection.Free => DeltaStartPos.magnitude >= Threshold,
                 _ => false
             };
 
             if (!r)
             {
-                var isCrossDirection = dragDirection switch
+                var isCrossDirection = CurrentDragDirection switch
                 {
-                    DragDirection.Horizontal => Mathf.Abs(deltaStartPos.y) >= threshold,
-                    DragDirection.Vertical => Mathf.Abs(deltaStartPos.x) >= threshold,
+                    DragDirection.Horizontal => Mathf.Abs(DeltaStartPos.y) >= Threshold,
+                    DragDirection.Vertical => Mathf.Abs(DeltaStartPos.x) >= Threshold,
                     _ => false
                 };
 
                 // if we are dragging in a cross direction, we cancel the drag
                 if (isCrossDirection)
                 {
-                    m_IsDown = false;
+                    _isDown = false;
                 }
             }
 

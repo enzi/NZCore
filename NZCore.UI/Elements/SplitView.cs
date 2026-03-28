@@ -11,13 +11,13 @@ namespace NZCore.UI
 
     public static class SplitViewExtensions
     {
-        private const string draglineAnchorIdentifier = "unity-dragline-anchor";
+        private const string DraglineAnchorIdentifier = "unity-dragline-anchor";
 
         public static void LinkSplitViews(params SplitView[] splitViews)
         {
             foreach (var splitView in splitViews)
             {
-                var anchor = splitView.Q<VisualElement>(draglineAnchorIdentifier);
+                var anchor = splitView.Q<VisualElement>(DraglineAnchorIdentifier);
 
                 anchor.RegisterCallback(new EventCallback<PointerMoveEvent>(evt =>
                 {
@@ -48,7 +48,7 @@ namespace NZCore.UI
 
                 splitView.fixedPane.style.width = new StyleLength(newPos);
 
-                var anchor = splitView.Q<VisualElement>(draglineAnchorIdentifier);
+                var anchor = splitView.Q<VisualElement>(DraglineAnchorIdentifier);
                 if (anchor == null)
                 {
                     continue;

@@ -6,59 +6,59 @@ using System;
 
 namespace NZCore.Helper
 {
-    public struct NZIDGenerator
+    public struct NzidGenerator
     {
-        private long currentTick;
-        private long lastTime;
-        private int sequence;
+        private long _currentTick;
+        private long _lastTime;
+        private int _sequence;
 
-        private readonly long generatorId;
+        private readonly long _generatorId;
 
-        private readonly long maskTime;
-        private readonly long maskGenerator;
-        private readonly long maskSequence;
+        private readonly long _maskTime;
+        private readonly long _maskGenerator;
+        private readonly long _maskSequence;
 
-        private readonly int bitShiftTime;
-        private readonly int bitShiftGenerator;
+        private readonly int _bitShiftTime;
+        private readonly int _bitShiftGenerator;
 
-        public NZIDGenerator(int generatorId, DateTime epoch, byte timeBits = 41, byte generatorBits = 10, byte sequenceBits = 16)
+        public NzidGenerator(int generatorId, DateTime epoch, byte timeBits = 41, byte generatorBits = 10, byte sequenceBits = 16)
         {
-            currentTick = DateTime.UtcNow.Ticks;
+            _currentTick = DateTime.UtcNow.Ticks;
 
-            lastTime = -1;
-            sequence = 0;
-            this.generatorId = generatorId;
+            _lastTime = -1;
+            _sequence = 0;
+            _generatorId = generatorId;
 
-            maskTime = (1L << timeBits) - 1;
-            maskGenerator = (1L << generatorBits) - 1;
-            maskSequence = (1L << sequenceBits) - 1;
+            _maskTime = (1L << timeBits) - 1;
+            _maskGenerator = (1L << generatorBits) - 1;
+            _maskSequence = (1L << sequenceBits) - 1;
 
-            bitShiftTime = generatorBits + sequenceBits;
-            bitShiftGenerator = sequenceBits;
+            _bitShiftTime = generatorBits + sequenceBits;
+            _bitShiftGenerator = sequenceBits;
         }
 
         public void Update()
         {
-            currentTick = DateTime.UtcNow.Ticks;
+            _currentTick = DateTime.UtcNow.Ticks;
         }
 
         public long Create()
         {
             while (true)
             {
-                currentTick = DateTime.UtcNow.Ticks;
+                _currentTick = DateTime.UtcNow.Ticks;
 
-                var timestamp = currentTick & maskTime;
+                var timestamp = _currentTick & _maskTime;
 
-                if (timestamp < lastTime || currentTick < 0)
+                if (timestamp < _lastTime || _currentTick < 0)
                 {
                     //exception = new InvalidSystemClockException($"Clock moved backwards or wrapped around. Refusing to generate id for {_lastgen - timestamp} ticks");
                     return -1;
                 }
 
-                if (timestamp == lastTime)
+                if (timestamp == _lastTime)
                 {
-                    if (sequence >= maskSequence)
+                    if (_sequence >= _maskSequence)
                     {
                         //var localTick = currentTick;
 
@@ -74,19 +74,19 @@ namespace NZCore.Helper
                         //     break;
                         // }
 
-                        currentTick = DateTime.UtcNow.Ticks;
+                        _currentTick = DateTime.UtcNow.Ticks;
                         continue;
                     }
 
-                    sequence++;
+                    _sequence++;
                 }
                 else
                 {
-                    sequence = 0;
-                    lastTime = timestamp;
+                    _sequence = 0;
+                    _lastTime = timestamp;
                 }
 
-                return (timestamp << bitShiftTime) | (generatorId << bitShiftGenerator) | (long)sequence;
+                return (timestamp << _bitShiftTime) | (_generatorId << _bitShiftGenerator) | (long)_sequence;
             }
         }
     }

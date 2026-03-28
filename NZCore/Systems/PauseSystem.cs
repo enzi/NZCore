@@ -31,38 +31,38 @@ namespace NZCore
 
     public class PauseRateManager : IRateManager
     {
-        private EntityQuery query;
-        private bool isPresentation;
+        private EntityQuery _query;
+        private readonly bool _isPresentation;
 
-        private bool isPaused;
-        private bool hasUpdated;
-        private double pauseTime;
+        private bool _isPaused;
+        private bool _hasUpdated;
+        private double _pauseTime;
 
         public float Timestep { get; set; }
 
         public PauseRateManager(ComponentSystemGroup group, bool isPresentation)
         {
-            query = new EntityQueryBuilder(Allocator.Temp)
-                    .WithAll<PauseGame>()
-                    .WithOptions(EntityQueryOptions.IncludeSystems)
-                    .Build(group);
+            _query = new EntityQueryBuilder(Allocator.Temp)
+                     .WithAll<PauseGame>()
+                     .WithOptions(EntityQueryOptions.IncludeSystems)
+                     .Build(group);
 
-            this.isPresentation = isPresentation;
+            _isPresentation = isPresentation;
         }
 
         public bool ShouldGroupUpdate(ComponentSystemGroup group)
         {
-            if (hasUpdated)
+            if (_hasUpdated)
             {
-                hasUpdated = false;
+                _hasUpdated = false;
                 return false;
             }
 
-            var pauses = query.ToComponentDataArray<PauseGame>(group.WorldUpdateAllocator);
+            var pauses = _query.ToComponentDataArray<PauseGame>(group.WorldUpdateAllocator);
 
             var shouldPause = false;
 
-            if (isPresentation)
+            if (_isPresentation)
             {
                 foreach (var pauseGame in pauses)
                 {
@@ -78,24 +78,24 @@ namespace NZCore
                 shouldPause = pauses.Length > 0;
             }
 
-            if (shouldPause && !isPaused)
+            if (shouldPause && !_isPaused)
             {
-                isPaused = true;
-                pauseTime = group.World.Time.ElapsedTime;
+                _isPaused = true;
+                _pauseTime = group.World.Time.ElapsedTime;
             }
-            else if (!shouldPause && isPaused)
+            else if (!shouldPause && _isPaused)
             {
-                isPaused = false;
+                _isPaused = false;
             }
 
-            if (isPaused)
+            if (_isPaused)
             {
-                group.World.Time = new TimeData(pauseTime, group.World.Time.DeltaTime);
+                group.World.Time = new TimeData(_pauseTime, group.World.Time.DeltaTime);
                 Timestep = 0;
                 return false;
             }
 
-            hasUpdated = true;
+            _hasUpdated = true;
             Timestep = group.World.Time.DeltaTime;
 
             return true;

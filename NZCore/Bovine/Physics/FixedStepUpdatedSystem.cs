@@ -16,7 +16,7 @@ namespace NZCore.Physics
         internal bool FixedStepUpdatedThisFrame;
     }
 
-    
+
     [UpdateInGroup(typeof(PhysicsInitializeGroup))]
     public partial struct FixedStepUpdatedSystem : ISystem
     {
@@ -36,19 +36,19 @@ namespace NZCore.Physics
             });
         }
     }
-    
+
     [UpdateAfter(typeof(FixedStepSimulationSystemGroup))]
     [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
     [CreateAfter(typeof(BuildPhysicsWorld))]
     public unsafe partial class AlwaysUpdatePhysicsWorldSystem : SystemBase
     {
-        private SystemHandle buildPhysicsWorld;
-        private SystemState* buildPhysicsWorldSystemState;
+        private SystemHandle _buildPhysicsWorld;
+        private SystemState* _buildPhysicsWorldSystemState;
 
         protected override void OnCreate()
         {
-            buildPhysicsWorld = World.GetExistingSystem<BuildPhysicsWorld>();
-            buildPhysicsWorldSystemState = World.Unmanaged.ResolveSystemStateChecked(buildPhysicsWorld);
+            _buildPhysicsWorld = World.GetExistingSystem<BuildPhysicsWorld>();
+            _buildPhysicsWorldSystemState = World.Unmanaged.ResolveSystemStateChecked(_buildPhysicsWorld);
 
             CheckedStateRef.AddSystemWriteDependency(TypeManager.GetTypeIndex<PhysicsWorldSingleton>());
         }
@@ -63,9 +63,9 @@ namespace NZCore.Physics
                 return;
             }
 
-            buildPhysicsWorld.Update(World.Unmanaged);
+            _buildPhysicsWorld.Update(World.Unmanaged);
 
-            var physicsDependency = buildPhysicsWorldSystemState->GetInternalDependency();
+            var physicsDependency = _buildPhysicsWorldSystemState->GetInternalDependency();
             Dependency = JobHandle.CombineDependencies(this.Dependency, physicsDependency);
         }
     }

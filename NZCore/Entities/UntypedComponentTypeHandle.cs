@@ -14,11 +14,11 @@ namespace NZCore
     [NativeContainerSupportsMinMaxWriteRestriction]
     public struct UntypedComponentTypeHandle
     {
-        internal LookupCache _lookupCache;
-        internal readonly TypeIndex _typeIndex;
-        internal uint _globalSystemVersion;
-        internal readonly byte _isReadOnly;
-        internal readonly byte _isZeroSized;
+        internal LookupCache LookupCache;
+        public readonly TypeIndex TypeIndex;
+        private uint _globalSystemVersion;
+        private readonly byte _isReadOnly;
+        private readonly byte _isZeroSized;
 
         public readonly uint GlobalSystemVersion => _globalSystemVersion;
         public readonly bool IsReadOnly => _isReadOnly == 1;
@@ -31,8 +31,8 @@ namespace NZCore
         private readonly int m_MaxIndex;
         internal AtomicSafetyHandle m_Safety0;
         internal AtomicSafetyHandle m_Safety1;
-        internal readonly int m_SafetyReadOnlyCount;
-        internal readonly int m_SafetyReadWriteCount;
+        private readonly int m_SafetyReadOnlyCount;
+        private readonly int m_SafetyReadWriteCount;
 #endif
 #pragma warning restore 0414
 
@@ -47,11 +47,11 @@ namespace NZCore
             var typeInfo = TypeManager.GetTypeInfo(typeIndex);
 
             m_Length = 1;
-            _typeIndex = typeIndex;
+            TypeIndex = typeIndex;
             _isZeroSized = typeInfo.IsZeroSized ? (byte)1u : (byte)0u;
             _globalSystemVersion = globalSystemVersion;
             _isReadOnly = componentType.AccessModeType == ComponentType.AccessMode.ReadOnly ? (byte)1u : (byte)0u;
-            _lookupCache = new LookupCache();
+            LookupCache = new LookupCache();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             m_MinIndex = 0;
@@ -72,11 +72,11 @@ namespace NZCore
         public unsafe void Update(ref SystemState state)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            m_Safety0 = state.m_DependencyManager->Safety.GetSafetyHandleForDynamicComponentTypeHandle(_typeIndex, IsReadOnly);
+            m_Safety0 = state.m_DependencyManager->Safety.GetSafetyHandleForDynamicComponentTypeHandle(TypeIndex, IsReadOnly);
             var numHandles = IsReadOnly ? m_SafetyReadOnlyCount : m_SafetyReadWriteCount;
             if (numHandles > 1)
             {
-                m_Safety1 = state.m_DependencyManager->Safety.GetBufferHandleForBufferTypeHandle(_typeIndex);
+                m_Safety1 = state.m_DependencyManager->Safety.GetBufferHandleForBufferTypeHandle(TypeIndex);
             }
 #endif
             _globalSystemVersion = state.GlobalSystemVersion;
@@ -85,7 +85,7 @@ namespace NZCore
         public FixedString512Bytes ToFixedString()
         {
             var fs = new FixedString128Bytes((FixedString32Bytes)"UntypedComponentTypeHandle[");
-            fs.Append(TypeManager.GetTypeNameFixed(_typeIndex));
+            fs.Append(TypeManager.GetTypeNameFixed(TypeIndex));
             fs.Append(']');
             return fs;
         }
@@ -132,13 +132,13 @@ namespace NZCore
 #endif
 
             var ptr = ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, 0,
-                untypedHandle._typeIndex, ref untypedHandle._lookupCache);
+                untypedHandle.TypeIndex, ref untypedHandle.LookupCache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
             // Must check this after computing the pointer, to make sure the cache is up to date
-            if (Hint.Unlikely(untypedHandle._lookupCache.IndexInArchetype == -1))
+            if (Hint.Unlikely(untypedHandle.LookupCache.IndexInArchetype == -1))
             {
-                var typeName = untypedHandle._typeIndex.ToFixedString();
+                var typeName = untypedHandle.TypeIndex.ToFixedString();
                 throw new ArgumentException($"Required component {typeName} not found in archetype.");
             }
 #endif
@@ -152,7 +152,7 @@ namespace NZCore
 #endif
 
             var ptr = ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, 0,
-                untypedHandle._typeIndex, untypedHandle.GlobalSystemVersion, ref untypedHandle._lookupCache);
+                untypedHandle.TypeIndex, untypedHandle.GlobalSystemVersion, ref untypedHandle.LookupCache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
             if (Hint.Unlikely(untypedHandle.IsReadOnly))
@@ -162,9 +162,9 @@ namespace NZCore
             }
 
             // Must check this after computing the pointer, to make sure the cache is up to date
-            if (Hint.Unlikely(untypedHandle._lookupCache.IndexInArchetype == -1))
+            if (Hint.Unlikely(untypedHandle.LookupCache.IndexInArchetype == -1))
             {
-                var typeName = untypedHandle._typeIndex.ToFixedString();
+                var typeName = untypedHandle.TypeIndex.ToFixedString();
                 throw new ArgumentException($"Required component {typeName} not found in archetype.");
             }
 #endif

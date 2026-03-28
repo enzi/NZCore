@@ -4,50 +4,52 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NZCore
 {
     [Serializable]
     public struct SerializableGuid : ISerializationCallbackReceiver
     {
-        private Guid internalGuid;
+        private Guid _internalGuid;
 
-        [SerializeField] private string serializedGuid;
+        [FormerlySerializedAs("serializedGuid")] [SerializeField]
+        private string _serializedGuid;
 
         public SerializableGuid(Guid internalGuid)
         {
-            this.internalGuid = internalGuid;
-            serializedGuid = null;
+            this._internalGuid = internalGuid;
+            _serializedGuid = null;
         }
 
-        public override bool Equals(object obj) => obj is SerializableGuid guid && internalGuid.Equals(guid.internalGuid);
+        public override bool Equals(object obj) => obj is SerializableGuid guid && _internalGuid.Equals(guid._internalGuid);
 
-        public override int GetHashCode() => -1324198676 + internalGuid.GetHashCode();
+        public override int GetHashCode() => -1324198676 + _internalGuid.GetHashCode();
 
         public void OnAfterDeserialize()
         {
             try
             {
-                internalGuid = Guid.Parse(serializedGuid);
+                _internalGuid = Guid.Parse(_serializedGuid);
             }
             catch
             {
-                internalGuid = Guid.Empty;
-                Debug.LogWarning($"Attempted to parse invalid GUID string '{serializedGuid}'. GUID will set to System.Guid.Empty");
+                _internalGuid = Guid.Empty;
+                Debug.LogWarning($"Attempted to parse invalid GUID string '{_serializedGuid}'. GUID will set to System.Guid.Empty");
             }
         }
 
         public void OnBeforeSerialize()
         {
-            serializedGuid = internalGuid.ToString();
+            _serializedGuid = _internalGuid.ToString();
         }
 
-        public override string ToString() => internalGuid.ToString();
+        public override string ToString() => _internalGuid.ToString();
 
-        public static bool operator ==(SerializableGuid a, SerializableGuid b) => a.internalGuid == b.internalGuid;
-        public static bool operator !=(SerializableGuid a, SerializableGuid b) => a.internalGuid != b.internalGuid;
+        public static bool operator ==(SerializableGuid a, SerializableGuid b) => a._internalGuid == b._internalGuid;
+        public static bool operator !=(SerializableGuid a, SerializableGuid b) => a._internalGuid != b._internalGuid;
         public static implicit operator SerializableGuid(Guid guid) => new(guid);
-        public static implicit operator Guid(SerializableGuid serializable) => serializable.internalGuid;
+        public static implicit operator Guid(SerializableGuid serializable) => serializable._internalGuid;
         public static implicit operator SerializableGuid(string serializedGuid) => new(Guid.Parse(serializedGuid));
         public static implicit operator string(SerializableGuid serializedGuid) => serializedGuid.ToString();
     }

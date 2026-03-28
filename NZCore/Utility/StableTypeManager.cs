@@ -24,7 +24,7 @@ namespace NZCore
         private static UnsafeHashMap<StableTypeIndex, ulong> stableHashMap;
 
 #if UNITY_EDITOR
-        public static Dictionary<string, ulong> typeNameMap;
+        public static Dictionary<string, ulong> TypeNameMap;
 
         [InitializeOnLoadMethod]
 #endif
@@ -44,7 +44,7 @@ namespace NZCore
             stableHashMap = new UnsafeHashMap<StableTypeIndex, ulong>(1024, Allocator.Persistent);
 
 #if UNITY_EDITOR
-            typeNameMap = new Dictionary<string, ulong>();
+            TypeNameMap = new Dictionary<string, ulong>();
 #endif
 
             BuildMap();
@@ -118,7 +118,7 @@ namespace NZCore
                     stableTypeMap.Remove(hash);
                 }
 #if UNITY_EDITOR
-                typeNameMap[typeInfo.Type.Name] = hash;
+                TypeNameMap[typeInfo.Type.Name] = hash;
 #endif
                 stableTypeMap.Add(hash, new StableTypeIndex { Value = typeInfo.TypeIndex.Value });
                 stableHashMap.Add(new StableTypeIndex { Value = typeInfo.TypeIndex.Value }, hash);

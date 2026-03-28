@@ -28,31 +28,31 @@ namespace NZCore.AssetManagement
             public float UnloadTime;
         }
 
-        private float unloadTime;
+        private float _unloadTime;
 
-        private NativeHashMap<Hash128, AssetDependency> assetDependencyMap;
-        private NativeParallelMultiHashMap<Entity, UntypedWeakReferenceId> entityToAssetsMap;
+        private NativeHashMap<Hash128, AssetDependency> _assetDependencyMap;
+        private NativeParallelMultiHashMap<Entity, UntypedWeakReferenceId> _entityToAssetsMap;
 
-        private NativeHashSet<Hash128> requestedAssets;
-        private NativeList<UntypedWeakReferenceId> loadRequests;
-        private NativeList<AssetUnloadRequest> unloadRequests;
+        private NativeHashSet<Hash128> _requestedAssets;
+        private NativeList<UntypedWeakReferenceId> _loadRequests;
+        private NativeList<AssetUnloadRequest> _unloadRequests;
 
         internal void Init(float timeToUnload)
         {
-            unloadTime = timeToUnload;
+            _unloadTime = timeToUnload;
 
-            assetDependencyMap = new NativeHashMap<Hash128, AssetDependency>(0, Allocator.Persistent);
-            requestedAssets = new NativeHashSet<Hash128>(0, Allocator.Persistent);
-            entityToAssetsMap = new NativeParallelMultiHashMap<Entity, UntypedWeakReferenceId>(0, Allocator.Persistent);
-            loadRequests = new NativeList<UntypedWeakReferenceId>(0, Allocator.Persistent);
-            unloadRequests = new NativeList<AssetUnloadRequest>(0, Allocator.Persistent);
+            _assetDependencyMap = new NativeHashMap<Hash128, AssetDependency>(0, Allocator.Persistent);
+            _requestedAssets = new NativeHashSet<Hash128>(0, Allocator.Persistent);
+            _entityToAssetsMap = new NativeParallelMultiHashMap<Entity, UntypedWeakReferenceId>(0, Allocator.Persistent);
+            _loadRequests = new NativeList<UntypedWeakReferenceId>(0, Allocator.Persistent);
+            _unloadRequests = new NativeList<AssetUnloadRequest>(0, Allocator.Persistent);
         }
 
         internal void Dispose()
         {
             //Debug.Log("WeakAssetLoaderSingleton Dispose!");
             // ReSharper disable once NotDisposedResource
-            var enumerator = assetDependencyMap.GetEnumerator();
+            var enumerator = _assetDependencyMap.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 var tmp = enumerator.Current;
@@ -62,18 +62,18 @@ namespace NZCore.AssetManagement
 
             // todo: cancel loadAsyncs in flight?
 
-            assetDependencyMap.Dispose();
-            requestedAssets.Dispose();
-            entityToAssetsMap.Dispose();
-            loadRequests.Dispose();
-            unloadRequests.Dispose();
+            _assetDependencyMap.Dispose();
+            _requestedAssets.Dispose();
+            _entityToAssetsMap.Dispose();
+            _loadRequests.Dispose();
+            _unloadRequests.Dispose();
         }
 
         internal void Update(float deltaTime)
         {
-            for (var i = loadRequests.Length - 1; i >= 0; i--)
+            for (var i = _loadRequests.Length - 1; i >= 0; i--)
             {
-                ref var req = ref loadRequests.ElementAt(i);
+                ref var req = ref _loadRequests.ElementAt(i);
                 var loadStatus = RuntimeContentManager.GetObjectLoadingStatus(req);
                 var hash = req.GlobalId.AssetGUID;
 
@@ -90,29 +90,29 @@ namespace NZCore.AssetManagement
                         };
 
                         //Debug.Log($"Adding {hash} to asset dependency map!");
-                        assetDependencyMap.Add(hash, assetDependency);
-                        loadRequests.RemoveAt(i);
+                        _assetDependencyMap.Add(hash, assetDependency);
+                        _loadRequests.RemoveAt(i);
                         break;
                     case ObjectLoadingStatus.Error:
-                        requestedAssets.Remove(hash);
-                        loadRequests.RemoveAt(i);
+                        _requestedAssets.Remove(hash);
+                        _loadRequests.RemoveAt(i);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
             }
 
-            for (var i = unloadRequests.Length - 1; i >= 0; i--)
+            for (var i = _unloadRequests.Length - 1; i >= 0; i--)
             {
-                ref var req = ref unloadRequests.ElementAt(i);
+                ref var req = ref _unloadRequests.ElementAt(i);
 
                 var hash = req.UntypedAssetId.GlobalId.AssetGUID;
 
-                if (assetDependencyMap.TryGetValue(hash, out var assetDependency) && assetDependency.DependencyCount > 0)
+                if (_assetDependencyMap.TryGetValue(hash, out var assetDependency) && assetDependency.DependencyCount > 0)
                 {
                     //Debug.Log($"Canceled unload request for {hash}");
                     // cancel request, another entity depends on it
-                    unloadRequests.RemoveAt(i);
+                    _unloadRequests.RemoveAt(i);
                     continue;
                 }
 
@@ -123,12 +123,12 @@ namespace NZCore.AssetManagement
                 {
                     //Debug.Log($"Unloading {hash} with time {req.UnloadTime}");
 
-                    requestedAssets.Remove(hash);
-                    assetDependencyMap.Remove(hash);
+                    _requestedAssets.Remove(hash);
+                    _assetDependencyMap.Remove(hash);
 
                     RuntimeContentManager.ReleaseObjectAsync(req.UntypedAssetId);
 
-                    unloadRequests.RemoveAt(i);
+                    _unloadRequests.RemoveAt(i);
                 }
             }
         }
@@ -146,7 +146,7 @@ namespace NZCore.AssetManagement
 
             var hash = untypedWeakReference.GlobalId.AssetGUID;
 
-            if (requestedAssets.Contains(hash))
+            if (_requestedAssets.Contains(hash))
             {
                 return true;
             }
@@ -154,8 +154,8 @@ namespace NZCore.AssetManagement
             //Debug.Log($"Loading {hash}");
             RuntimeContentManager.LoadObjectAsync(untypedWeakReference);
 
-            requestedAssets.Add(hash);
-            loadRequests.Add(untypedWeakReference);
+            _requestedAssets.Add(hash);
+            _loadRequests.Add(untypedWeakReference);
 
             return true;
         }
@@ -174,22 +174,22 @@ namespace NZCore.AssetManagement
 
             var hash = weakRef.Id.GlobalId.AssetGUID;
 
-            if (requestedAssets.Contains(hash))
+            if (_requestedAssets.Contains(hash))
             {
                 return true;
             }
 
             //Debug.Log($"Loading {hash}");
             weakRef.LoadAsync();
-            requestedAssets.Add(hash);
-            loadRequests.Add(weakRef.Id);
+            _requestedAssets.Add(hash);
+            _loadRequests.Add(weakRef.Id);
 
             return true;
         }
 
         public bool HasLoaded(UntypedWeakReferenceId untypedWeakReference) =>
             //Debug.Log($"TryGetResult returning {hash} prefab. {weakRef.LoadingStatus}/{weakRef.IsReferenceValid}/{weakRef.Result}");
-            assetDependencyMap.ContainsKey(untypedWeakReference.GlobalId.AssetGUID);
+            _assetDependencyMap.ContainsKey(untypedWeakReference.GlobalId.AssetGUID);
 
         /// <summary>
         /// After a Load has been called, call this method to get the actual asset object
@@ -198,7 +198,7 @@ namespace NZCore.AssetManagement
         public bool HasLoaded<T>(WeakObjectReference<T> weakRef)
             where T : Object =>
             //Debug.Log($"TryGetResult returning {hash} prefab. {weakRef.LoadingStatus}/{weakRef.IsReferenceValid}/{weakRef.Result}");
-            assetDependencyMap.ContainsKey(weakRef.Id.GlobalId.AssetGUID);
+            _assetDependencyMap.ContainsKey(weakRef.Id.GlobalId.AssetGUID);
 
         /// <summary>
         /// After TryGetResult was successful, the entity should be registered as a dependency
@@ -209,10 +209,10 @@ namespace NZCore.AssetManagement
         {
             var hash = weakRef.Id.GlobalId.AssetGUID;
 
-            if (assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
+            if (_assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
             {
                 assetDependencyPtr->DependencyCount++;
-                entityToAssetsMap.Add(entity, weakRef.Id);
+                _entityToAssetsMap.Add(entity, weakRef.Id);
                 //Debug.Log($"RegisterEntity {entity} - new dep count: {assetDependencyPtr->DependencyCount}");
             }
             else
@@ -230,7 +230,7 @@ namespace NZCore.AssetManagement
         {
             var hash = weakRef.Id.GlobalId.AssetGUID;
 
-            if (!assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
+            if (!_assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
             {
                 Debug.LogError($"{hash} has never been loaded!");
                 return;
@@ -242,32 +242,32 @@ namespace NZCore.AssetManagement
             if (assetDependencyPtr->DependencyCount == 0)
             {
                 //Debug.Log($"UnregisterEntity new unload request for {hash}");
-                unloadRequests.Add(new AssetUnloadRequest
+                _unloadRequests.Add(new AssetUnloadRequest
                 {
                     UntypedAssetId = weakRef.Id,
-                    UnloadTime = unloadTime
+                    UnloadTime = _unloadTime
                 });
             }
 
-            if (!entityToAssetsMap.TryGetFirstValue(entity, out var val, out var it))
+            if (!_entityToAssetsMap.TryGetFirstValue(entity, out var val, out var it))
             {
                 return;
             }
 
             if (val == weakRef.Id)
             {
-                entityToAssetsMap.Remove(it);
+                _entityToAssetsMap.Remove(it);
             }
             else
             {
-                while (entityToAssetsMap.TryGetNextValue(out val, ref it))
+                while (_entityToAssetsMap.TryGetNextValue(out val, ref it))
                 {
                     if (val != weakRef.Id)
                     {
                         continue;
                     }
 
-                    entityToAssetsMap.Remove(it);
+                    _entityToAssetsMap.Remove(it);
                     break;
                 }
             }
@@ -279,14 +279,14 @@ namespace NZCore.AssetManagement
         /// </summary>
         public unsafe void UnregisterEntity(Entity entity)
         {
-            var enumerator = entityToAssetsMap.GetValuesForKey(entity);
+            var enumerator = _entityToAssetsMap.GetValuesForKey(entity);
 
             while (enumerator.MoveNext())
             {
                 var untypedRef = enumerator.Current;
                 var hash = untypedRef.GlobalId.AssetGUID;
 
-                if (!assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
+                if (!_assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
                 {
                     Debug.Log($"UnregisterEntity {entity} - {hash} not found!");
                     continue;
@@ -299,15 +299,15 @@ namespace NZCore.AssetManagement
                 if (assetDependencyPtr->DependencyCount == 0)
                 {
                     //Debug.Log($"UnregisterEntity new unload request for {hash}");
-                    unloadRequests.Add(new AssetUnloadRequest
+                    _unloadRequests.Add(new AssetUnloadRequest
                     {
                         UntypedAssetId = untypedRef,
-                        UnloadTime = unloadTime
+                        UnloadTime = _unloadTime
                     });
                 }
             }
 
-            entityToAssetsMap.Remove(entity);
+            _entityToAssetsMap.Remove(entity);
         }
 
         public unsafe void RegisterGeneric<T>(WeakObjectReference<T> weakRef)
@@ -315,7 +315,7 @@ namespace NZCore.AssetManagement
         {
             var hash = weakRef.Id.GlobalId.AssetGUID;
 
-            if (assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
+            if (_assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
             {
                 assetDependencyPtr->DependencyCount++;
                 //Debug.Log($"RegisterGeneric new dep count: {assetDependencyPtr->DependencyCount}");
@@ -331,7 +331,7 @@ namespace NZCore.AssetManagement
         {
             var hash = weakRef.Id.GlobalId.AssetGUID;
 
-            if (!assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
+            if (!_assetDependencyMap.TryGetRefValue(hash, out var assetDependencyPtr))
             {
                 Debug.LogError($"{hash} has never been loaded!");
                 return;
@@ -342,10 +342,10 @@ namespace NZCore.AssetManagement
             if (assetDependencyPtr->DependencyCount == 0)
             {
                 //Debug.Log($"UnregisterGeneric new unload request for {hash}");
-                unloadRequests.Add(new AssetUnloadRequest
+                _unloadRequests.Add(new AssetUnloadRequest
                 {
                     UntypedAssetId = weakRef.Id,
-                    UnloadTime = unloadTime
+                    UnloadTime = _unloadTime
                 });
             }
         }
@@ -354,27 +354,27 @@ namespace NZCore.AssetManagement
     [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
     public partial struct WeakAssetLoaderSystem : ISystem
     {
-        private WeakAssetLoaderSingleton singleton;
+        private WeakAssetLoaderSingleton _singleton;
 
         public void OnCreate(ref SystemState state)
         {
-            singleton = new WeakAssetLoaderSingleton();
-            singleton.Init(5.0f);
+            _singleton = new WeakAssetLoaderSingleton();
+            _singleton.Init(5.0f);
 
             var ent = state.EntityManager.CreateEntity();
-            state.EntityManager.AddComponentData(ent, singleton);
+            state.EntityManager.AddComponentData(ent, _singleton);
         }
 
         public void OnDestroy(ref SystemState state)
         {
-            singleton.Dispose();
+            _singleton.Dispose();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var deltaTime = SystemAPI.Time.DeltaTime;
-            singleton.Update(deltaTime);
+            _singleton.Update(deltaTime);
         }
     }
 }

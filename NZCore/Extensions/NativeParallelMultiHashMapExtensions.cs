@@ -223,40 +223,40 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            private readonly NativeParallelMultiHashMap<TKey, TValue> hashmap;
-            private NativeParallelMultiHashMapIterator<TKey> iterator;
-            private byte* value;
-            private bool isFirst;
+            private readonly NativeParallelMultiHashMap<TKey, TValue> _hashmap;
+            private NativeParallelMultiHashMapIterator<TKey> _iterator;
+            private byte* _value;
+            private bool _isFirst;
 
             public RefEnumerator(NativeParallelMultiHashMap<TKey, TValue> hashmap, TKey key)
             {
-                isFirst = true;
-                this.hashmap = hashmap;
-                iterator = new NativeParallelMultiHashMapIterator<TKey>
+                _isFirst = true;
+                _hashmap = hashmap;
+                _iterator = new NativeParallelMultiHashMapIterator<TKey>
                 {
                     key = key,
                     EntryIndex = -1,
                     NextEntryIndex = -1
                 };
 
-                value = null;
+                _value = null;
             }
 
             public void Dispose() { }
 
             public bool MoveNext()
             {
-                if (isFirst)
+                if (_isFirst)
                 {
-                    isFirst = false;
-                    return TryGetFirstRefValue<TKey, TValue>(hashmap.m_MultiHashMapData.m_Buffer, out value, ref iterator);
+                    _isFirst = false;
+                    return TryGetFirstRefValue<TKey, TValue>(_hashmap.m_MultiHashMapData.m_Buffer, out _value, ref _iterator);
                 }
 
-                return TryGetNextRefValue<TKey, TValue>(hashmap.m_MultiHashMapData.m_Buffer, out value, ref iterator);
+                return TryGetNextRefValue<TKey, TValue>(_hashmap.m_MultiHashMapData.m_Buffer, out _value, ref _iterator);
             }
 
-            public void Reset() => isFirst = true;
-            public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(value);
+            public void Reset() => _isFirst = true;
+            public ref TValue Current => ref UnsafeUtility.AsRef<TValue>(_value);
         }
 
         private static unsafe bool TryGetFirstRefValue<TKey, TValue>(UnsafeParallelHashMapData* data, out byte* itemPtr,

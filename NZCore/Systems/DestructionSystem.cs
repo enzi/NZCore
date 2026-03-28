@@ -11,39 +11,39 @@ namespace NZCore
     [UpdateInGroup(typeof(NZDestroySystemGroup), OrderFirst = true)]
     public partial struct PreDestructionSystem : ISystem
     {
-        private EntityQuery query;
+        private EntityQuery _query;
 
-        private DestructionMap destructionMap;
+        private DestructionMap _destructionMap;
 
-        private Entity destructionMapEntity;
-        private NativeList<Entity> keysToRemove;
+        private Entity _destructionMapEntity;
+        private NativeList<Entity> _keysToRemove;
 
         public void OnCreate(ref SystemState state)
         {
-            keysToRemove = new NativeList<Entity>(0, Allocator.Persistent);
-            destructionMapEntity = state.EntityManager.CreateEntity();
+            _keysToRemove = new NativeList<Entity>(0, Allocator.Persistent);
+            _destructionMapEntity = state.EntityManager.CreateEntity();
 
-            destructionMap = new DestructionMap();
-            destructionMap.Allocate();
+            _destructionMap = new DestructionMap();
+            _destructionMap.Allocate();
 
-            state.EntityManager.AddComponentData(destructionMapEntity, destructionMap);
-            state.EntityManager.AddBuffer<DeferredDestroyMapBuffer>(destructionMapEntity);
+            state.EntityManager.AddComponentData(_destructionMapEntity, _destructionMap);
+            state.EntityManager.AddBuffer<DeferredDestroyMapBuffer>(_destructionMapEntity);
 
-            query = SystemAPI.QueryBuilder()
-                             .WithAll<DestroyEntity>()
-                             .Build();
+            _query = SystemAPI.QueryBuilder()
+                              .WithAll<DestroyEntity>()
+                              .Build();
         }
 
         public void OnDestroy(ref SystemState state)
         {
-            destructionMap.Dispose();
-            keysToRemove.Dispose();
+            _destructionMap.Dispose();
+            _keysToRemove.Dispose();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var deferredBuffer = SystemAPI.GetBuffer<DeferredDestroyMapBuffer>(destructionMapEntity);
+            var deferredBuffer = SystemAPI.GetBuffer<DeferredDestroyMapBuffer>(_destructionMapEntity);
 
             if (deferredBuffer.Length > 0)
             {
@@ -51,20 +51,20 @@ namespace NZCore
 
                 foreach (var deferredElement in deferredArray)
                 {
-                    destructionMap.Add(deferredElement.Parent, deferredElement.Child, deferredElement.DestroyMethod, deferredElement.Payload);
+                    _destructionMap.Add(deferredElement.Parent, deferredElement.Child, deferredElement.DestroyMethod, deferredElement.Payload);
                 }
 
                 deferredBuffer.Clear();
             }
 
-            if (!query.IsEmpty)
+            if (!_query.IsEmpty)
             {
                 // maybe jobify this one day and test if main thread is faster than parallel scheduling a job 
-                var entities = query.ToEntityArray(Allocator.Temp);
+                var entities = _query.ToEntityArray(Allocator.Temp);
 
                 foreach (var entity in entities)
                 {
-                    if (!destructionMap.Map.TryGetValue(entity, out var list))
+                    if (!_destructionMap.Map.TryGetValue(entity, out var list))
                     {
                         continue;
                     }
@@ -91,7 +91,7 @@ namespace NZCore
                         }
                     }
 
-                    keysToRemove.Add(entity);
+                    _keysToRemove.Add(entity);
                 }
             }
         }
@@ -101,34 +101,34 @@ namespace NZCore
     [CreateAfter(typeof(PreDestructionSystem))]
     public partial struct DestructionSystem : ISystem
     {
-        private EntityQuery destroyQuery;
-        private EntityQuery cleanupQuery;
+        private EntityQuery _destroyQuery;
+        private EntityQuery _cleanupQuery;
 
         public void OnCreate(ref SystemState state)
         {
-            destroyQuery = SystemAPI.QueryBuilder()
-                                    .WithAll<DestroyEntity>()
-                                    .Build();
+            _destroyQuery = SystemAPI.QueryBuilder()
+                                     .WithAll<DestroyEntity>()
+                                     .Build();
 
-            cleanupQuery = SystemAPI.QueryBuilder()
-                                    .WithAll<NZCleanupEntity>()
-                                    .Build();
+            _cleanupQuery = SystemAPI.QueryBuilder()
+                                     .WithAll<NZCleanupEntity>()
+                                     .Build();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            if (!cleanupQuery.IsEmpty)
+            if (!_cleanupQuery.IsEmpty)
             {
                 //Debug.Log("Running cleanupQuery");
-                state.EntityManager.SetComponentEnabled<NZCleanupEntity>(cleanupQuery, false);
+                state.EntityManager.SetComponentEnabled<NZCleanupEntity>(_cleanupQuery, false);
             }
 
-            if (!destroyQuery.IsEmpty)
+            if (!_destroyQuery.IsEmpty)
             {
                 var destructionMap = SystemAPI.GetSingleton<DestructionMap>();
 
-                var entities = destroyQuery.ToEntityArray(Allocator.Temp);
+                var entities = _destroyQuery.ToEntityArray(Allocator.Temp);
 
                 foreach (var entity in entities)
                 {

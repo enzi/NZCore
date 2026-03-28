@@ -128,25 +128,24 @@ namespace NZCore
 
     public struct FixedPointLong24 : IFixedPoint<FixedPointLong24>
     {
-        private long Value;
-
-        public const int Precision = 24;
+        private long _value;
+        private const int Precision = 24;
 
         public FixedPointLong24(int value)
         {
-            Value = value << Precision;
+            _value = value << Precision;
         }
 
-        public double GetDouble() => Value * 5.960464477539062e-08;
+        public double GetDouble() => _value * 5.960464477539062e-08;
 
-        public float GetFloat() => Value;
+        public float GetFloat() => _value;
 
         public static FixedPointLong24 Unnormalize(double val)
         {
             var tmp = (long)(val / 5.960464477539062e-08);
             return new FixedPointLong24
             {
-                Value = tmp
+                _value = tmp
             };
         }
     }

@@ -16,11 +16,11 @@ namespace NZCore.NativeContainers
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
-        private DynamicBuffer<byte> buffer;
+        private DynamicBuffer<byte> _buffer;
 
         public DynamicBufferArrayHashMap(DynamicBuffer<byte> buffer)
         {
-            this.buffer = buffer;
+            this._buffer = buffer;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -37,9 +37,9 @@ namespace NZCore.NativeContainers
 
             var totalLength = CalculateDataSize(length, bucketLength, out var bucketOffset);
 
-            buffer.ResizeUninitialized(hashMapDataSize + totalLength);
+            _buffer.ResizeUninitialized(hashMapDataSize + totalLength);
 
-            var bufferPtr = (byte*)buffer.GetUnsafePtr();
+            var bufferPtr = (byte*)_buffer.GetUnsafePtr();
             var baseData = (DynamicBufferArrayHashMapBaseData*)bufferPtr;
 
             baseData->KeyArray = (byte*)keyArray.GetUnsafeReadOnlyPtr();
@@ -76,14 +76,14 @@ namespace NZCore.NativeContainers
             }
         }
 
-        public bool ContainsKey(TKey key) => TryPeekFirstValueAtomic(AsDataReadOnly(buffer), key);
+        public bool ContainsKey(TKey key) => TryPeekFirstValueAtomic(AsDataReadOnly(_buffer), key);
 
         public DynamicBufferArrayHashMapEnumerator<TKey, TValue> GetEnumerator(TKey key) =>
             new()
             {
                 IsFirst = true,
                 Key = key,
-                Map = AsDataReadOnly(buffer)
+                Map = AsDataReadOnly(_buffer)
             };
 
         internal static bool TryGetFirstRefValue(DynamicBufferArrayHashMapBaseData* data, TKey key, out byte* item,
@@ -208,21 +208,21 @@ namespace NZCore.NativeContainers
         public TKey Key;
         public bool IsFirst;
 
-        private DynamicBufferArrayHashMapIterator<TKey> iterator;
-        private byte* value;
+        private DynamicBufferArrayHashMapIterator<TKey> _iterator;
+        private byte* _value;
 
-        public byte* Current => value;
+        public byte* Current => _value;
 
         public bool MoveNext()
         {
             //Avoids going beyond the end of the collection.
             if (!IsFirst)
             {
-                return DynamicBufferArrayHashMap<TKey, TValue>.TryGetNextRefValue(Map, out value, ref iterator);
+                return DynamicBufferArrayHashMap<TKey, TValue>.TryGetNextRefValue(Map, out _value, ref _iterator);
             }
 
             IsFirst = false;
-            return DynamicBufferArrayHashMap<TKey, TValue>.TryGetFirstRefValue(Map, Key, out value, out iterator);
+            return DynamicBufferArrayHashMap<TKey, TValue>.TryGetFirstRefValue(Map, Key, out _value, out _iterator);
         }
     }
 
