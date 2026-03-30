@@ -158,19 +158,27 @@ namespace NZCore
                     BlobAddress = new[] { (byte*)UnsafeUtility.AddressOf(ref blob) }
                 };
 
-                so.ToBlobData(context, ref blobBuilder, ref blob);
-                var blobReference = blobBuilder.CreateBlobAssetReference<TBlobStruct>(Allocator.Persistent);
-
-                baker.AddBlobAsset(ref blobReference, out _);
-
-                var blobReferenceComp = new TBlobReference
+                try
                 {
-                    guid = Guid.Parse(guidString),
-                    blob = blobReference
-                };
+                    so.ToBlobData(context, ref blobBuilder, ref blob);
+                    var blobReference = blobBuilder.CreateBlobAssetReference<TBlobStruct>(Allocator.Persistent);
 
-                baker.AddComponent<Prefab>(blobReferenceEntity);
-                baker.AddComponent(blobReferenceEntity, blobReferenceComp);
+
+                    baker.AddBlobAsset(ref blobReference, out _);
+
+                    var blobReferenceComp = new TBlobReference
+                    {
+                        guid = Guid.Parse(guidString),
+                        blob = blobReference
+                    };
+
+                    baker.AddComponent<Prefab>(blobReferenceEntity);
+                    baker.AddComponent(blobReferenceEntity, blobReferenceComp);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"{e.Message}", so);
+                }
             }
         }
 
