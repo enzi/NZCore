@@ -59,7 +59,7 @@ namespace NZCore
             _buffer = header;
             _internalCapacity = internalCapacity;
             _alignOf = alignOf;
-            ElementSize = elementSize;
+            _elementSize = elementSize;
         }
 #endif
 
@@ -93,7 +93,7 @@ namespace NZCore
                 BufferHeader.SetCapacity(_buffer, value, _elementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1,
                     m_MemoryInitPattern, _internalCapacity);
 #else
-                BufferHeader.SetCapacity(_buffer, value, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0, _internalCapacity);
+                BufferHeader.SetCapacity(_buffer, value, _elementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0, _internalCapacity);
 #endif
             }
         }
@@ -183,7 +183,7 @@ namespace NZCore
             BufferHeader.EnsureCapacity(_buffer, length, _elementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, m_UseMemoryInitPattern == 1,
                 m_MemoryInitPattern);
 #else
-            BufferHeader.EnsureCapacity(_buffer, length, ElementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0);
+            BufferHeader.EnsureCapacity(_buffer, length, _elementSize, _alignOf, BufferHeader.TrashMode.RetainOldData, false, 0);
 #endif
         }
 

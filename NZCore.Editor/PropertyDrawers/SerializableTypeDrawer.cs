@@ -13,7 +13,7 @@ namespace NZCore.Editor
     {
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            var nameProp = property.FindPropertyRelative("assemblyQualifiedName");
+            var nameProp = property.FindPropertyRelative("_assemblyQualifiedName");
 
             var container = new VisualElement
             {
