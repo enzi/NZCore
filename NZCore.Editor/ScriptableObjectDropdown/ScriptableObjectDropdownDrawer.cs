@@ -100,7 +100,7 @@ namespace NZCore.Editor
 
             root.Add(inputContainer);
 
-            inputContainer.RegisterCallback<PointerDownEvent>(_ =>
+            inputContainer.RegisterCallback<PointerDownEvent>(evt =>
             {
                 var menu = new GenericDropdownMenu();
 
@@ -123,6 +123,8 @@ namespace NZCore.Editor
 #else
                 menu.DropDown(inputContainer.worldBound, inputContainer, true);
 #endif
+
+                evt.StopPropagation();
             });
 
             //labelWidthUpdater = new LabelWidthUpdater(root, label);
