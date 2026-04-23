@@ -35,7 +35,15 @@ namespace NZCore.Settings
         {
             var filter = type.Namespace == null ? type.Name : $"{type.Namespace}.{type.Name}";
             var assets = AssetDatabase.FindAssets($"t:{filter}");
-            return AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(assets.First()));
+            var guid = assets.FirstOrDefault();
+
+            if (string.IsNullOrEmpty(guid))
+            {
+                Debug.LogError($"Couldn't resolve {typeof(T)}!");
+                return null;
+            }
+            
+            return AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(guid));
         }
     }
 }

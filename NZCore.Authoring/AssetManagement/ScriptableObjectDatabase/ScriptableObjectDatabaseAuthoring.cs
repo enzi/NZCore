@@ -8,9 +8,17 @@ using UnityEngine;
 
 namespace NZCore.Authoring
 {
+    public enum ScriptableObjectDatabaseLogging
+    {
+        None,
+        Converters,
+        All
+    }
+    
     public class ScriptableObjectDatabaseAuthoring : MonoBehaviour
     {
         public ScriptableObjectDatabaseVersion Version;
+        public ScriptableObjectDatabaseLogging Logging;
 
         private class ScriptableObjectDatabaseBaker : Baker<ScriptableObjectDatabaseAuthoring>
         {
@@ -23,6 +31,11 @@ namespace NZCore.Authoring
 
                 foreach (var converter in ScriptableObjectDatabaseCollector.SettingConverters)
                 {
+                    if (authoring.Logging > ScriptableObjectDatabaseLogging.None)
+                    {
+                        Debug.Log($"Converting setting {converter.Name}");
+                    }
+                    
                     var instance = ScriptableObject.CreateInstance(converter);
 
                     if (instance is ISettingsDatabase settingsDatabase)
@@ -30,12 +43,15 @@ namespace NZCore.Authoring
                         var entity = CreateAdditionalEntity(TransformUsageFlags.None, false, converter.Name);
                         settingsDatabase.BakeDatabase(this, entity);
                     }
-
-                    //DestroyImmediate(instance);
                 }
 
                 foreach (var converter in ScriptableObjectDatabaseCollector.BlobConverters)
                 {
+                    if (authoring.Logging > ScriptableObjectDatabaseLogging.None)
+                    {
+                        Debug.Log($"Converting blob {converter.Name}");
+                    }
+                    
                     var instance = ScriptableObject.CreateInstance(converter);
 
                     if (instance is IConvertToBlob blobBaker)
