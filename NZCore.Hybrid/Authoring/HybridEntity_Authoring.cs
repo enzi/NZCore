@@ -2,6 +2,7 @@
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
 using NZCore.Components;
 using Unity.Entities;
 using Unity.Entities.Content;
@@ -19,7 +20,8 @@ namespace NZCore.Hybrid
     public enum HybridEntityResourceType
     {
         GameObject,
-        Addressable
+        Addressable,
+        Manual
     }
 
     public enum GizmoType
@@ -126,63 +128,75 @@ namespace NZCore.Hybrid
                 }
 
                 var entity = GetEntity(TransformUsageFlags.Dynamic | TransformUsageFlags.WorldSpace);
-                var presentationEntity = CreateAdditionalEntity(TransformUsageFlags.None, false, authoring.name + "_PresentationSpawner");
-
-                //this.AddRemoveFromLinkedEntityGroup(presentationEntity, entity);
-
-                AddComponent(presentationEntity, new RemoveFromLinkedEntityGroupCleanupSetup
-                {
-                    Parent = entity
-                });
-
+                
                 AddComponent(entity, new HybridAnimator());
                 AddComponent(entity, new AnimatorOverride());
+               
+                switch (authoring.ResourceType)
+                {
+                    case HybridEntityResourceType.GameObject when authoring.Prefab != null:
+                    {
+                        var presentationEntity = CreateAdditionalEntity(TransformUsageFlags.None, false, authoring.name + "_PresentationSpawner");
+                        AddComponent(presentationEntity, new RemoveFromLinkedEntityGroupCleanupSetup { Parent = entity });
+                        
+                        if (authoring.UsePooling)
+                        {
+                            Debug.LogError("TODO pooling is not working");
+                            
+                            AddComponent(presentationEntity, new HybridSpawnPrefabFromPool
+                            {
+                                HybridEntity = entity,
+                                Prefab = authoring.Prefab != null ? new WeakObjectReference<GameObject>(authoring.Prefab) : default,
+                                SetTransform = authoring.SetTransform.ToByte(),
+                                DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
+                            });
+                        }
+                        else
+                        {
+                            AddComponent(presentationEntity, new HybridSpawnPrefab
+                            {
+                                HybridEntity = entity,
+                                Prefab = authoring.Prefab != null ? new WeakObjectReference<GameObject>(authoring.Prefab) : default,
+                                SetTransform = authoring.SetTransform.ToByte(),
+                                DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
+                            });
+                        }
 
-                if (authoring.ResourceType == HybridEntityResourceType.GameObject && authoring.Prefab != null)
-                {
-                    if (authoring.UsePooling)
-                    {
-                        AddComponent(presentationEntity, new HybridSpawnPrefabFromPool
-                        {
-                            HybridEntity = entity,
-                            Prefab = authoring.Prefab != null ? new WeakObjectReference<GameObject>(authoring.Prefab) : default,
-                            SetTransform = authoring.SetTransform.ToByte(),
-                            DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
-                        });
+                        break;
                     }
-                    else
+                    case HybridEntityResourceType.Addressable when authoring.Addressable != null:
                     {
-                        AddComponent(presentationEntity, new HybridSpawnPrefab
+                        var presentationEntity = CreateAdditionalEntity(TransformUsageFlags.None, false, authoring.name + "_PresentationSpawner");
+                        AddComponent(presentationEntity, new RemoveFromLinkedEntityGroupCleanupSetup { Parent = entity });
+                        
+                        if (authoring.UsePooling)
                         {
-                            HybridEntity = entity,
-                            Prefab = authoring.Prefab != null ? new WeakObjectReference<GameObject>(authoring.Prefab) : default,
-                            SetTransform = authoring.SetTransform.ToByte(),
-                            DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
-                        });
-                    }
-                }
-                else if (authoring.ResourceType == HybridEntityResourceType.Addressable && authoring.Addressable != null)
-                {
-                    if (authoring.UsePooling)
-                    {
-                        AddComponent(presentationEntity, new HybridSpawnAddressableFromPool
+                            Debug.LogError("TODO pooling is not working");
+                            AddComponent(presentationEntity, new HybridSpawnAddressableFromPool
+                            {
+                                HybridEntity = entity,
+                                AddressableHash = new Hash128(authoring.Addressable.AssetGUID),
+                                SetTransform = authoring.SetTransform.ToByte(),
+                                DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
+                            });
+                        }
+                        else
                         {
-                            HybridEntity = entity,
-                            AddressableHash = new Hash128(authoring.Addressable.AssetGUID),
-                            SetTransform = authoring.SetTransform.ToByte(),
-                            DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
-                        });
+                            AddComponent(presentationEntity, new HybridSpawnAddressable
+                            {
+                                HybridEntity = entity,
+                                AddressableHash = new Hash128(authoring.Addressable.AssetGUID),
+                                SetTransform = authoring.SetTransform.ToByte(),
+                                DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
+                            });
+                        }
+
+                        break;
                     }
-                    else
-                    {
-                        AddComponent(presentationEntity, new HybridSpawnAddressable
-                        {
-                            HybridEntity = entity,
-                            AddressableHash = new Hash128(authoring.Addressable.AssetGUID),
-                            SetTransform = authoring.SetTransform.ToByte(),
-                            DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
-                        });
-                    }
+                    case HybridEntityResourceType.Manual:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
         }

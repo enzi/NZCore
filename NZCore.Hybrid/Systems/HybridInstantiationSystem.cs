@@ -134,7 +134,14 @@ namespace NZSpellCasting
 
                         if (finishedRequest.Result.Animator.IsValid())
                         {
-                            state.EntityManager.SetComponentData(bindToEntity, finishedRequest.Result.HybridAnimator);
+                            if (state.EntityManager.HasComponent<HybridAnimator>(bindToEntity))
+                            {
+                                state.EntityManager.SetComponentData(bindToEntity, finishedRequest.Result.HybridAnimator);
+                            }
+                            else
+                            {
+                                Debug.LogError($"{bindToEntity} has no HybridAnimator!");
+                            }
                         }
 
                         if (SystemAPI.HasBuffer<HybridObjectBuffer>(bindToEntity))

@@ -57,6 +57,22 @@ namespace NZCore.Hybrid
 
                 ref var animatorOverride = ref animatorOverrideRW.ValueRW;
 
+                if (animatorOverride.State == AnimatorOverrideEnum.Requested)
+                {
+                    var clip = animatorOverrideRW.ValueRO.AnimationClip;
+
+                    if (!clip.IsReferenceValid ||
+                        !assetLoader.Load(clip) ||
+                        !assetLoader.HasLoaded(clip))
+                    {
+                        continue;
+                    }
+
+                    animatorComp.ChangeClip(clip, animatorOverrideRW.ValueRO.Speed);
+                    animatorComp.Graph.Play();
+                    animatorOverride.State = AnimatorOverrideEnum.Playing;
+                }
+
                 if (animatorComp.TransitionTo != HybridAnimatorTransitionPhase.None)
                 {
                     var transitionSpeed = TransitionSpeed * deltaTime;
@@ -95,22 +111,6 @@ namespace NZCore.Hybrid
                             }
                         }
                     }
-                }
-
-                if (animatorOverride.State == AnimatorOverrideEnum.Requested)
-                {
-                    var clip = animatorOverrideRW.ValueRO.AnimationClip;
-
-                    if (!clip.IsReferenceValid ||
-                        !assetLoader.Load(clip) ||
-                        !assetLoader.HasLoaded(clip))
-                    {
-                        continue;
-                    }
-
-                    animatorComp.ChangeClip(clip, animatorOverrideRW.ValueRO.Speed);
-                    animatorComp.Graph.Play();
-                    animatorOverride.State = AnimatorOverrideEnum.Playing;
                 }
             }
         }
