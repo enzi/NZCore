@@ -64,12 +64,13 @@ namespace NZCore
 
         public static bool operator !=(UnityObjectRefForBlob<T> left, UnityObjectRefForBlob<T> right) => !left.Equals(right);
 
-        public static implicit operator UnityObjectRef<T>(UnityObjectRefForBlob<T> value) =>
-            new()
+        public static implicit operator UnityObjectRef<T>(UnityObjectRefForBlob<T> value)
+        {
+            return new UnityObjectRef<T>()
             {
-                Id = value.Id,
-                Value = value.Value
+                Id = value.Id
             };
+        }
     }
 
     [Serializable]
