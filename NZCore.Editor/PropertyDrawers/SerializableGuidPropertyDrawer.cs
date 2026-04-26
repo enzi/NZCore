@@ -20,7 +20,7 @@ namespace NZCore.Editor
         {
             var root = new VisualElement();
 
-            var serializedGuid = property.FindPropertyRelative("serializedGuid");
+            var serializedGuid = property.FindPropertyRelative("_serializedGuid");
 
             var propGuid = new PropertyField(serializedGuid);
             propGuid.BindProperty(serializedGuid);
@@ -50,7 +50,7 @@ namespace NZCore.Editor
             EditorGUI.BeginProperty(position, label, property);
 
             // Get property
-            var serializedGuid = property.FindPropertyRelative("serializedGuid");
+            var serializedGuid = property.FindPropertyRelative("_serializedGuid");
 
             // Draw label
             position = EditorGUI.PrefixLabel(new Rect(position.x, position.y + _ySep / 2, position.width, position.height),
