@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using NZCore.Interfaces;
 
 namespace NZCore.Components
 {

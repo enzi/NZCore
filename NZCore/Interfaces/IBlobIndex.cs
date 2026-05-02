@@ -4,7 +4,7 @@
 
 using Unity.Collections;
 
-namespace NZCore.Interfaces
+namespace NZCore
 {
     public interface IBlobIndex
     {

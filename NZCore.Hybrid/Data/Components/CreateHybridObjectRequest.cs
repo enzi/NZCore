@@ -4,7 +4,6 @@
 
 using System;
 using System.Runtime.InteropServices;
-using NZCore.Interfaces;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Content;

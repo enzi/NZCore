@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using NZCore.Interfaces;
 using Unity.Entities;
 
 namespace NZCore
@@ -82,6 +81,12 @@ namespace NZCore
             where T : unmanaged, IComponentData, IDisposable
         {
             state.GetSingleton<T>().Dispose();
+            state.EntityManager.DestroyEntity(state.GetSingletonEntity<T>());
+        }
+        
+        public static void DestroySingleton<T>(this ref SystemState state)
+            where T : unmanaged, IComponentData
+        {
             state.EntityManager.DestroyEntity(state.GetSingletonEntity<T>());
         }
     }

@@ -4,10 +4,10 @@
 
 using Unity.Entities;
 
-namespace NZCore.Interfaces
+namespace NZCore
 {
     public interface IInitSingleton : IComponentData
     {
-        public void Init();
+        public void Init() { }
     }
 }
