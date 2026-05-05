@@ -132,7 +132,7 @@ namespace NZCore.Hybrid
             state.Dependency = new SyncPositionToEntityJob
             {
                 Entities = _mapping.EntitiesList.AsArray(),
-                EntitiesToRemove = _entitiesToRemove, // use normal NativeList because the job is scheduled only
+                EntitiesToRemove = _entitiesToRemove.AsParallelWriter(),
                 LocalToWorld_Lookup = SystemAPI.GetComponentLookup<LocalToWorld>(true)
             }.Schedule(_mapping.TransformArray, state.Dependency);
         }
@@ -148,7 +148,7 @@ namespace NZCore.Hybrid
         private unsafe struct SyncPositionToEntityJob : IJobParallelForTransform
         {
             [ReadOnly] public NativeArray<TrackedHybridEntity> Entities;
-            [NativeDisableParallelForRestriction] public NativeList<int> EntitiesToRemove;
+            public NativeList<int>.ParallelWriter EntitiesToRemove;
             [ReadOnly] public UnsafeComponentLookup<LocalToWorld> LocalToWorld_Lookup;
 
             public void Execute(int index, TransformAccess transform)
@@ -162,7 +162,7 @@ namespace NZCore.Hybrid
                 }
                 else if (!LocalToWorld_Lookup.EntityExists(entity))
                 {
-                    //Debug.Log($"Queuing destroying hybrid entity on {entity}");
+                    //Debug.Log($"Queuing destroying hybrid entity on {entity} with index {index}");
                     EntitiesToRemove.AddNoResize(index);
                 }
             }
