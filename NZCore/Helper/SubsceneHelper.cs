@@ -203,5 +203,27 @@ namespace NZCore
 
             return sections.AsArray();
         }
+
+        public static void MoveEntityToSubScene(this ref SystemState state, Entity entity, Entity subSceneEntity, int sectionIndex = 0)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (!state.EntityManager.HasComponent<ResolvedSectionEntity>(subSceneEntity))
+            {
+                Debug.LogError("SubSceneEntity has no ResolvedSectionEntity!");
+                return;
+            }
+#endif
+            var sections = state.EntityManager.GetBuffer<ResolvedSectionEntity>(subSceneEntity);
+            
+            var sectionEntity = sections[0].SectionEntity;
+            var sceneSectionData = state.EntityManager.GetComponentData<SceneSectionData>(sectionEntity);
+                
+            state.EntityManager.AddSharedComponent(entity, new SceneTag { SceneEntity = sectionEntity });
+            state.EntityManager.AddSharedComponent(entity, new SceneSection() 
+            {
+                SceneGUID = sceneSectionData.SceneGUID, 
+                Section = sceneSectionData.SubSectionIndex
+            });
+        }
     }
 }
