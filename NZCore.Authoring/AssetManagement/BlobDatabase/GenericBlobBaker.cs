@@ -177,7 +177,7 @@ namespace NZCore
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"{e.Message}", so);
+                    Debug.LogError($"{e.Message}\n{e.StackTrace}", so);
                 }
             }
         }
