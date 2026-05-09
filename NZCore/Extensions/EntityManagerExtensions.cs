@@ -219,7 +219,7 @@ namespace NZCore
         /////////////////////////////
         /// SharedComponentLookup ///
         /////////////////////////////
-        public static SharedComponentLookup<T> GetSharedComponentLookup<T>(this EntityManager entityManager, bool isReadOnly)
+        private static SharedComponentLookup<T> GetSharedComponentLookup<T>(this EntityManager entityManager, bool isReadOnly)
             where T : unmanaged, ISharedComponentData
         {
             var access = entityManager.GetCheckedEntityDataAccess();

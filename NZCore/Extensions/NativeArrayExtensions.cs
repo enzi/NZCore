@@ -45,7 +45,7 @@ namespace NZCore
             return slicedArray;
         }
 
-        public static unsafe NativeArray<T> ToNativeArray<T>(void* ptr, int length) where T : struct
+        public static unsafe NativeArray<T> AsNativeArray<T>(void* ptr, int length) where T : struct
         {
             var array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(ptr, length, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -54,7 +54,7 @@ namespace NZCore
             return array;
         }
 
-        public static unsafe NativeArray<T> ToNativeArray<T>(ref this BlobArray<T> blobArray) where T : struct
+        public static unsafe NativeArray<T> AsNativeArray<T>(ref this BlobArray<T> blobArray) where T : struct
         {
             var array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(blobArray.GetUnsafePtr(), blobArray.Length, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
