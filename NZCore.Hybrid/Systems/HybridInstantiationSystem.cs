@@ -7,6 +7,7 @@ using NZCore;
 using NZCore.AssetManagement;
 using NZCore.Hybrid;
 using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Content;
@@ -14,6 +15,68 @@ using UnityEngine;
 
 namespace NZSpellCasting
 {
+#if NZSPELLCASTING
+    [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
+#else
+    [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
+#endif
+    [UpdateBefore(typeof(HybridInstantiationSystem))]
+    public partial struct HybridCreateRequestsSystem : ISystem
+    {
+        private EntityQuery _loadPresentation;
+
+        public void OnCreate(ref SystemState state)
+        {
+            _loadPresentation = SystemAPI.QueryBuilder()
+                                         .WithNone<HybridPresentationEnabled>()
+                                         .WithAll<EnableHybridPresentation, HybridPresentation>()
+                                         .Build();
+        }
+
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            state.Dependency = new CreateHybridInstantiationRequestsJob()
+            {
+                Entities_ReadHandle = SystemAPI.GetEntityTypeHandle(),
+                HybridPresentation_ReadHandle = SystemAPI.GetComponentTypeHandle<HybridPresentation>(true),
+                HybridPresentationEnabled_WriteHandle = SystemAPI.GetComponentTypeHandle<HybridPresentationEnabled>(false),
+                Requests = SystemAPI.GetSingleton<CreateHybridObjectRequestSingleton>().Requests.AsThreadWriter()
+            }.Schedule(_loadPresentation, state.Dependency);
+        }
+
+        [BurstCompile]
+        public struct CreateHybridInstantiationRequestsJob : IJobChunk
+        {
+            public ParallelList<CreateHybridObjectRequest>.ThreadWriter Requests;
+            public EntityTypeHandle Entities_ReadHandle;
+            public ComponentTypeHandle<HybridPresentationEnabled> HybridPresentationEnabled_WriteHandle; 
+            [ReadOnly] public ComponentTypeHandle<HybridPresentation> HybridPresentation_ReadHandle;
+            
+            public unsafe void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+            {
+                var entities = chunk.GetEntityDataPtrRO(Entities_ReadHandle);
+                var presentations = chunk.GetComponentDataPtrRO(ref HybridPresentation_ReadHandle);
+                
+                var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+
+                Requests.Begin();
+
+                while (enumerator.NextEntityIndex(out var i))
+                {
+                    Requests.Write(new CreateHybridObjectRequest
+                    {
+                        PrefabToLoad = presentations[i].Prefab,
+                        BindToEntity = entities[i],
+                        SpawnMode = CreateHybridSpawnMode.Position
+                    });
+
+                    chunk.SetComponentEnabled(ref HybridPresentationEnabled_WriteHandle, i, true);
+                }
+            }
+        }
+    }
+
 #if NZSPELLCASTING
     [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
 #else
@@ -34,7 +97,7 @@ namespace NZSpellCasting
         {
             _instantiateRequests = new NativeList<InstantiateGameObjectsRequest>(0, Allocator.Persistent);
             _instantiateGameObjectsFunction = new ManagedDelegate<InstantiateGameObjects>(Instantiate);
-
+            
             state.RequireForUpdate<TransformEntityMappingSingleton>();
             state.RequireForUpdate<WeakAssetLoaderSingleton>();
             state.RequireForUpdate<EntityRemapBuffer>();
@@ -125,7 +188,11 @@ namespace NZSpellCasting
                     if (bindToEntity != Entity.Null)
                     {
                         _entityMapping.AddTransform(
+#if UNITY_6000_4_OR_NEWER
+                            finishedRequest.Result.TransformEntityId,
+#else
                             finishedRequest.Result.TransformInstanceId,
+#endif
                             bindToEntity,
                             finishedRequest.Result.Instance,
                             finishedRequest.Result.Animator,
@@ -288,7 +355,11 @@ namespace NZSpellCasting
                 if (instance != null)
                 {
                     request.Result.Instance = instance;
+#if UNITY_6000_4_OR_NEWER
+                    request.Result.TransformEntityId = instance.transform.GetEntityId();
+#else
                     request.Result.TransformInstanceId = instance.transform.GetInstanceID();
+#endif
 
                     var animator = instance.GetComponent<Animator>();
                     if (animator != null)
@@ -311,7 +382,11 @@ namespace NZSpellCasting
             public UnityObjectRef<GameObject> Instance;
             public UnityObjectRef<Animator> Animator;
             public HybridAnimator HybridAnimator;
+#if UNITY_6000_4_OR_NEWER
+            public EntityId TransformEntityId;
+#else
             public int TransformInstanceId;
+#endif
         }
     }
 }

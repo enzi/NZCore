@@ -9,8 +9,18 @@ namespace NZCore
 {
     public static class UnityObjectRefExtensions
     {
+#if UNITY_6000_4_OR_NEWER
+        public static EntityId GetEntityId<T>(this UnityObjectRef<T> objectRef)
+            where T : Object
+        {
+            return objectRef.Id.entityId;
+        }
+#else
         public static int GetInstanceId<T>(this UnityObjectRef<T> objectRef)
-            where T : Object =>
-            objectRef.Id.instanceId;
+            where T : Object
+        {
+            return objectRef.Id.instanceId;
+        } 
+#endif
     }
 }

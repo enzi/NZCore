@@ -128,8 +128,7 @@ namespace NZCore
             var result = 0;
             for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
             {
-                var list = *(UnsafeList<T>*)(perThreadLists + i * PerThreadListSize);
-                result += list.m_length;
+                result += ((UnsafeList<T>*)(perThreadLists + i * PerThreadListSize))->m_length;
             }
 
             return result;
@@ -441,7 +440,7 @@ namespace NZCore
             public T* WriteAndReturn(in T value)
             {
                 var idx = _list->m_length;
-                if (_list->m_length + 1 > _list->Capacity)
+                if (idx + 1 > _list->Capacity)
                 {
                     _list->Resize(idx + 1);
                 }
@@ -459,7 +458,7 @@ namespace NZCore
             {
                 var idx = _list->m_length;
 
-                if (_list->m_length + 1 > _list->Capacity)
+                if (idx + 1 > _list->Capacity)
                 {
                     _list->Resize(idx + 1);
                 }

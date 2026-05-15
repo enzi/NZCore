@@ -13,12 +13,20 @@ namespace NZCore.Hybrid
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class GameObjectPoolSystem : SystemBase
     {
+#if UNITY_6000_4_OR_NEWER
+        private Dictionary<EntityId, Stack<GameObject>> _pool;
+#else
         private Dictionary<int, Stack<GameObject>> _pool;
+#endif
 
 
         protected override void OnCreate()
         {
+#if UNITY_6000_4_OR_NEWER
+            _pool = new Dictionary<EntityId, Stack<GameObject>>();
+#else
             _pool = new Dictionary<int, Stack<GameObject>>();
+#endif
             Enabled = false; // this sytem has no Update
         }
 
@@ -26,7 +34,11 @@ namespace NZCore.Hybrid
 
         public GameObject Get(GameObject prefab, out bool freshInstance)
         {
+#if UNITY_6000_4_OR_NEWER
+            var key = prefab.GetEntityId();
+#else
             var key = prefab.GetInstanceID();
+#endif
 
             if (_pool.TryGetValue(key, out var poolableObjects) && poolableObjects.Count > 0)
             {

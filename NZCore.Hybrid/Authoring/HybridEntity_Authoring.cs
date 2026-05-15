@@ -131,73 +131,16 @@ namespace NZCore.Hybrid
                 
                 AddComponent(entity, new HybridAnimator());
                 AddComponent(entity, new AnimatorOverride());
-               
-                switch (authoring.ResourceType)
+
+                AddComponent(entity, new EnableHybridPresentation());
+                AddComponent(entity, new HybridPresentationEnabled());
+                SetComponentEnabled<EnableHybridPresentation>(entity, true);
+                SetComponentEnabled<HybridPresentationEnabled>(entity, false);
+
+                AddComponent(entity, new HybridPresentation()
                 {
-                    case HybridEntityResourceType.GameObject when authoring.Prefab != null:
-                    {
-                        var presentationEntity = CreateAdditionalEntity(TransformUsageFlags.None, false, authoring.name + "_PresentationSpawner");
-                        AddComponent(presentationEntity, new RemoveFromLinkedEntityGroupCleanupSetup { Parent = entity });
-                        
-                        if (authoring.UsePooling)
-                        {
-                            Debug.LogError("TODO pooling is not working");
-                            
-                            AddComponent(presentationEntity, new HybridSpawnPrefabFromPool
-                            {
-                                HybridEntity = entity,
-                                Prefab = authoring.Prefab != null ? new WeakObjectReference<GameObject>(authoring.Prefab) : default,
-                                SetTransform = authoring.SetTransform.ToByte(),
-                                DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
-                            });
-                        }
-                        else
-                        {
-                            AddComponent(presentationEntity, new HybridSpawnPrefab
-                            {
-                                HybridEntity = entity,
-                                Prefab = authoring.Prefab != null ? new WeakObjectReference<GameObject>(authoring.Prefab) : default,
-                                SetTransform = authoring.SetTransform.ToByte(),
-                                DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
-                            });
-                        }
-
-                        break;
-                    }
-                    case HybridEntityResourceType.Addressable when authoring.Addressable != null:
-                    {
-                        var presentationEntity = CreateAdditionalEntity(TransformUsageFlags.None, false, authoring.name + "_PresentationSpawner");
-                        AddComponent(presentationEntity, new RemoveFromLinkedEntityGroupCleanupSetup { Parent = entity });
-                        
-                        if (authoring.UsePooling)
-                        {
-                            Debug.LogError("TODO pooling is not working");
-                            AddComponent(presentationEntity, new HybridSpawnAddressableFromPool
-                            {
-                                HybridEntity = entity,
-                                AddressableHash = new Hash128(authoring.Addressable.AssetGUID),
-                                SetTransform = authoring.SetTransform.ToByte(),
-                                DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
-                            });
-                        }
-                        else
-                        {
-                            AddComponent(presentationEntity, new HybridSpawnAddressable
-                            {
-                                HybridEntity = entity,
-                                AddressableHash = new Hash128(authoring.Addressable.AssetGUID),
-                                SetTransform = authoring.SetTransform.ToByte(),
-                                DestroyWithEntity = authoring.DestroyWithEntity.ToByte()
-                            });
-                        }
-
-                        break;
-                    }
-                    case HybridEntityResourceType.Manual:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                    Prefab = authoring.Prefab != null ? new WeakObjectReference<GameObject>(authoring.Prefab) : default,
+                });
             }
         }
     }

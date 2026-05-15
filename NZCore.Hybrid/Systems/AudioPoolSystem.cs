@@ -98,7 +98,11 @@ namespace NZCore.Hybrid
                     if (request.FollowEntity != Entity.Null)
                     {
                         activeSource.Parented = mapping.AddTransform(
+#if UNITY_6000_4_OR_NEWER
+                            source.gameObject.GetEntityId(),
+#else
                             source.gameObject.GetInstanceID(),
+#endif
                             request.FollowEntity,
                             source.gameObject);
                     }

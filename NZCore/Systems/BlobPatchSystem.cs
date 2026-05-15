@@ -6,6 +6,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Scenes;
+using UnityEngine;
 
 namespace NZCore
 {
@@ -78,8 +79,13 @@ namespace NZCore
                         var blobPtr = (byte*)(ptr + element.BlobAssetReferenceIndex)->GetUnsafePtr();
 
                         // patch the instanceId so any UnityObjectRefForBlob<T> can be resolved correctly
+#if UNITY_6000_4_OR_NEWER
+                        var newEntityId = element.Asset.GetEntityId();
+                        *(EntityId*)(blobPtr + element.BlobOffset) = newEntityId;
+#else
                         var newInstanceId = element.Asset.GetInstanceId();
                         *(int*)(blobPtr + element.BlobOffset) = newInstanceId;
+#endif
                     }
 
                     state.EntityManager.SetComponentEnabled<UnityObjectReferencePatchBufferResolved>(entity, true);

@@ -75,7 +75,11 @@ namespace NZCore.Hybrid
         /// </summary>
         /// <returns>Returns parented bool</returns>
         public bool AddTransform(
+#if UNITY_6000_4_OR_NEWER
+            EntityId entityId,
+#else
             int instanceId,
+#endif
             Entity entity,
             UnityObjectRef<GameObject> instance,
             UnityObjectRef<Animator> animator = default,
@@ -95,8 +99,11 @@ namespace NZCore.Hybrid
 
                 return true;
             }
-
+#if UNITY_6000_4_OR_NEWER
+            TransformArray.Add(entityId);
+#else
             TransformArray.Add(instanceId);
+#endif
             IndexLookup.Add(entity, EntitiesList.Length);
             EntitiesList.Add(new TrackedHybridEntity
             {

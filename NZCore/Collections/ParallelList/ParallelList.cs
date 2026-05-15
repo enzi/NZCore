@@ -635,8 +635,8 @@ namespace NZCore
 
                 var sizeOf = sizeof(T);
 
-                void* dst = List.GetUnsafePtr() + List.m_ListData->m_length;
-                Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+                var newLength = Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+                void* dst = List.GetUnsafePtr() + (newLength - threadListLength);
                 UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
             }
         }
@@ -654,7 +654,6 @@ namespace NZCore
             {
                 var parallelListCount = ParallelList.Length;
                 List.SetCapacity(List.Length + parallelListCount);
-                //List.Clear();
                 ArrayHashMap.SetCapacity(List.Length + parallelListCount);
                 ArrayHashMap.SetValuesPtr((byte*)List.m_ListData->Ptr);
             }
@@ -708,8 +707,6 @@ namespace NZCore
                 }
 
                 var sizeOf = sizeof(T);
-                //void* dst = List.GetUnsafePtr() + List.m_ListData->m_length;
-                //Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
                 var newLength = Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
                 void* dst = List.GetUnsafePtr() + (newLength - threadListLength);
                 UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
@@ -747,36 +744,12 @@ namespace NZCore
                     return;
                 }
 
-                // if (!tmpList1.IsCreated)
-                // {
-                //     tmpList1 = new NativeList<T>(threadListLength, Allocator.Temp);
-                // }
-                // else
-                // {
-                //     tmpList1.Clear();
-                // }
-                //
                 var sizeOf = UnsafeUtility.SizeOf<T>();
-                //
-                // tmpList1.ResizeUninitialized(threadListLength);
-                // var tmpListArray = tmpList1.AsArray();
-                // var tmpListPtr = (T*) tmpListArray.GetUnsafeReadOnlyPtr();
-                //
-                // for (int i = 0; i < threadListLength; i++)
-                // {
-                //     tmpListArray[i] = threadList[i];
-                // }
-
-
                 var newLength = Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
                 void* dst = List.GetUnsafePtr() + (newLength - threadListLength);
-                //UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
                 UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
 
-                //ArrayHashMap1.CalculateBucketsParallel(tmpListPtr, threadListLength);
-                //ArrayHashMap2.CalculateBucketsParallel(tmpListPtr, threadListLength);
-
-                //ArrayHashMap1.CalculateBucketsParallel(threadList.Ptr, threadListLength);
+                ArrayHashMap1.CalculateBucketsParallel(threadList.Ptr, threadListLength);
                 ArrayHashMap2.CalculateBucketsParallel(threadList.Ptr, threadListLength);
             }
         }
@@ -789,6 +762,7 @@ namespace NZCore
 
             private UnsafeList<T>* _listPtr;
             public ref UnsafeList<T> Current => ref *_listPtr;
+            public UnsafeList<T>* CurrentPtr => _listPtr;
 
             public ParallelListEnumerator(ParallelList<T> list)
             {

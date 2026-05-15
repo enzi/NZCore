@@ -38,10 +38,10 @@ namespace NZCore.Hybrid
 
         [FieldOffset(58)] public CreateHybridSpawnMode SpawnMode;
 
-        // VFXSpawnMode.Position
+        // CreateHybridSpawnMode.Position
         [FieldOffset(59)] public HybridPositionData PositionData;
 
-        // VFXSpawnMode.Locator
+        // CreateHybridSpawnMode.Locator
         [FieldOffset(59)] public HybridLocatorData LocatorData;
     }
 

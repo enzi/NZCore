@@ -11,6 +11,22 @@ namespace NZCore
 {
     public static class UnsafeHashMapExtensions
     {
+        public static unsafe bool TryGetRefValue<TKey, TValue>(this UnsafeHashMap<TKey, TValue> hashMap, TKey key, out TValue* item)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            var idx = hashMap.m_Data.Find(key);
+
+            if (-1 != idx)
+            {
+                item = (TValue*)(hashMap.m_Data.Ptr + UnsafeUtility.SizeOf<TValue>() * idx);
+                return true;
+            }
+
+            item = null;
+            return false;
+        }
+        
         public static void Serialize<TKey, TValue>(this UnsafeHashMap<TKey, TValue> unsafeHashMap, ref ByteSerializer serializer)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged

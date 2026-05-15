@@ -9,6 +9,10 @@ namespace NZCore.Hybrid
 {
     public class GameObjectPrefabID : MonoBehaviour
     {
+#if UNITY_6000_4_OR_NEWER
+        public EntityId PrefabId;
+#else
         public int PrefabId;
+#endif
     }
 }
