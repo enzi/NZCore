@@ -165,8 +165,28 @@ namespace NZCore
             UnsafeUtility.MemCpy(hashMap.Ptr, ptr, totalSize);
             ptr += totalSize;
         }
+        
+        public static int CalculateDataSize<TKey, TData>(this UnsafeHashMap<TKey, TData> unsafeHashMap)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TData : unmanaged
+        {
+            if (unsafeHashMap.Count == 0)
+            {
+                return 4;
+            }
 
-        public static int CalculateDataSize(UnsafeHashMap<byte, byte> unsafeHashMap, int sizeOfTKey)
+            const int sizeOfInt = sizeof(int);
+
+            var valuesSize = unsafeHashMap.m_Data.SizeOfTValue * unsafeHashMap.Capacity;
+            var keysSize = UnsafeUtility.SizeOf<TKey>() * unsafeHashMap.Capacity;
+            var nextSize = sizeOfInt * unsafeHashMap.Capacity;
+            var bucketSize = sizeOfInt * unsafeHashMap.m_Data.BucketCapacity;
+            var totalSize = valuesSize + keysSize + nextSize + bucketSize;
+
+            return totalSize;
+        }
+
+        public static int CalculateDataSize(this UnsafeHashMap<byte, byte> unsafeHashMap, int sizeOfTKey)
         {
             if (unsafeHashMap.Count == 0)
             {

@@ -15,9 +15,4 @@ namespace NZCore
     {
         public byte* Ptr;
     }
-
-    public unsafe struct VoidPointer
-    {
-        public void* Ptr;
-    }
 }

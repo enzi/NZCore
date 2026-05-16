@@ -38,13 +38,13 @@ namespace NZCore
         public void Register<T>(int capacity) where T : unmanaged
         {
             var hash = StableTypeHashHelper.GetFixedHash(typeof(T));
-            Hash<T>.Value.Data = hash;
 
             if (_map->ContainsKey(hash))
             {
                 return;
             }
 
+            Hash<T>.Value.Data = hash;
             _map->Add(hash, new UnsafeList<byte>(capacity * UnsafeUtility.SizeOf<T>(), _allocator.ToAllocator, NativeArrayOptions.UninitializedMemory));
         }
 
@@ -67,10 +67,9 @@ namespace NZCore
             var hash = Hash<T>.Value.Data;
             var size = UnsafeUtility.SizeOf<T>();
 
-            var idx = _map->m_Data.Find(hash);
-            if (idx != -1)
+            if (_map->TryGetRefValue(hash, out var list))
             {
-                return SingleListPtr(_map, idx)->m_length / size;
+                return list->m_length / size;
             }
 
             return 0;
@@ -105,11 +104,14 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write<T>(in T evt) where T : unmanaged
         {
-            var idx = _map->m_Data.Find(Hash<T>.Value.Data);
+            var hash = Hash<T>.Value.Data;
 
-            fixed (void* evtPtr = &evt)
+            if (_map->TryGetRefValue(hash, out UnsafeList<byte>* list))
             {
-                AppendBytes(SingleListPtr(_map, idx), evtPtr, UnsafeUtility.SizeOf<T>());
+                fixed (void* evtPtr = &evt)
+                {
+                    AppendBytes(list, evtPtr, UnsafeUtility.SizeOf<T>());
+                }
             }
         }
 
@@ -118,10 +120,9 @@ namespace NZCore
         {
             var hash = Hash<T>.Value.Data;
 
-            var idx = _map->m_Data.Find(hash);
-            if (idx != -1)
+            if (_map->TryGetRefValue(hash, out UnsafeList<byte>* list))
             {
-                return new Reader<T>(SingleListPtr(_map, idx));
+                return new Reader<T>(*list);
             }
 
             return default;
@@ -133,10 +134,8 @@ namespace NZCore
             var hash = Hash<T>.Value.Data;
             var size = UnsafeUtility.SizeOf<T>();
 
-            var idx = _map->m_Data.Find(hash);
-            if (idx != -1)
+            if (_map->TryGetRefValue(hash, out UnsafeList<byte>* list))
             {
-                var list = SingleListPtr(_map, idx);
                 if (list->m_length >= size)
                 {
                     evt = *(T*)list->Ptr;
@@ -148,13 +147,6 @@ namespace NZCore
             return false;
         }
         
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static UnsafeList<byte>* SingleListPtr(UnsafeHashMap<ulong, UnsafeList<byte>>* mapPtr, int idx)
-        {
-            var size = UnsafeUtility.SizeOf<UnsafeList<byte>>();
-            return (UnsafeList<byte>*)(mapPtr->m_Data.Ptr + size * idx);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void AppendBytes(UnsafeList<byte>* list, void* src, int size)
         {
@@ -196,13 +188,30 @@ namespace NZCore
         /// </summary>
         public struct Reader<T> where T : unmanaged
         {
-            [NativeDisableUnsafePtrRestriction] private readonly UnsafeList<byte>* _singleList;
+            [NativeDisableUnsafePtrRestriction] private readonly UnsafeList<byte> _singleList;
             private int _byteIndex;
+            private T* _current;
+            public T Current => *_current;
 
-            internal Reader(UnsafeList<byte>* singleList)
+            internal Reader(UnsafeList<byte> singleList)
             {
                 _singleList = singleList;
                 _byteIndex = 0;
+                _current = null;
+            }
+
+            public bool MoveNext()
+            {
+                var size = UnsafeUtility.SizeOf<T>();
+               
+                if (_byteIndex + size <= _singleList.m_length)
+                {
+                    _current = (T*)(_singleList.Ptr + _byteIndex);
+                    _byteIndex += size;
+                    return true;
+                }
+
+                return false;
             }
             
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -210,9 +219,10 @@ namespace NZCore
             {
                 var size = UnsafeUtility.SizeOf<T>();
                
-                if (_byteIndex + size <= _singleList->m_length)
+                if (_byteIndex + size <= _singleList.m_length)
                 {
-                    evt = *(T*)(_singleList->Ptr + _byteIndex);
+                    _current = (T*)(_singleList.Ptr + _byteIndex);
+                    evt = *_current;
                     _byteIndex += size;
                     return true;
                 }
@@ -225,7 +235,7 @@ namespace NZCore
             public int Count()
             {
                 var size = UnsafeUtility.SizeOf<T>();
-                return _singleList->m_length / size;
+                return _singleList.m_length / size;
             }
         }
     }

@@ -39,4 +39,26 @@ namespace NZCore
 
         public override int GetHashCode() => unchecked((int)(long)Value);
     }
+    
+    public readonly unsafe struct VoidPtr : IEquatable<VoidPtr>
+    {
+        [NativeDisableUnsafePtrRestriction] public readonly void* Ptr;
+
+        public bool IsCreated => Ptr != null;
+
+        public VoidPtr(void* value)
+        {
+            Ptr = value;
+        }
+
+        public static bool operator ==(VoidPtr left, VoidPtr right) => left.Equals(right);
+
+        public static bool operator !=(VoidPtr left, VoidPtr right) => !left.Equals(right);
+
+        public bool Equals(VoidPtr other) => Ptr == other.Ptr;
+
+        public override bool Equals(object obj) => obj is VoidPtr other && Equals(other);
+
+        public override int GetHashCode() => unchecked((int)(long)Ptr);
+    }
 }

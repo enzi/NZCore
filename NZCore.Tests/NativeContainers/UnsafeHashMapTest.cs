@@ -29,7 +29,8 @@ namespace NZCore.Tests.NativeContainers
                 hashMap.Add(700, 'i');
             }
 
-            var serializer = new ByteSerializer(0, Allocator.Temp);
+            var size = hashMap.CalculateDataSize();
+            var serializer = new ByteSerializer(size, Allocator.Temp);
             hashMap.Serialize(ref serializer);
             
             var deserializer = new ByteDeserializer(serializer.Data.ToArray(Allocator.Temp));

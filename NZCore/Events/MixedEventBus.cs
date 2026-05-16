@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -18,10 +19,12 @@ namespace NZCore
         private struct MixedEventHeader
         {
             public int Type;
+            public int PayloadOffset;
             public int PayloadLength;
         }
         
-        [NativeDisableUnsafePtrRestriction] private UnsafeList<byte>* _bus;
+        [NativeDisableUnsafePtrRestriction] private UnsafeList<MixedEventHeader>* _headers;
+        [NativeDisableUnsafePtrRestriction] private UnsafeList<byte>* _payloads;
 
         private AllocatorManager.AllocatorHandle _allocator;
 
@@ -30,7 +33,8 @@ namespace NZCore
         {
             var bus = default(MixedEventBus<T>);
             bus._allocator = allocator;
-            bus._bus = UnsafeList<byte>.Create(initialTypeCapacity, allocator, NativeArrayOptions.UninitializedMemory);
+            bus._headers = UnsafeList<MixedEventHeader>.Create(16, allocator, NativeArrayOptions.UninitializedMemory);
+            bus._payloads = UnsafeList<byte>.Create(initialTypeCapacity, allocator, NativeArrayOptions.UninitializedMemory);
 
             return bus;
         }
@@ -38,33 +42,26 @@ namespace NZCore
         /// <summary>Disposes all allocations.</summary>
         public void Dispose()
         {
-            _bus->Dispose();
-            Memory.Unmanaged.Free(_bus, _allocator);
-            _bus = null;
+            _headers->Dispose();
+            Memory.Unmanaged.Free(_headers, _allocator);
+            _headers = null;
+
+            _payloads->Dispose();
+            Memory.Unmanaged.Free(_payloads, _allocator);
+            _payloads = null;
         }
 
         /// <summary>Total queued events for <typeparamref name="T"/>.</summary>
         public int Count(int type)
         {
-            int count = 0;
-
-            var reader = new NodeReader(_bus->Ptr, _bus->m_length);
-
-            while (reader.CanRead)
-            {
-                ref var header = ref reader.ReadFromNode<MixedEventHeader>();
-                reader.AddOffset(header.PayloadLength);
-
-                count++;
-            }
-
-            return count;
+            return _headers->m_length;
         }
 
         /// <summary>Clears all events</summary>
         public void Clear()
         {
-            _bus->Clear();
+            _headers->Clear();
+            _payloads->Clear();
         }
         
         /// <summary>Clears all queued events for <typeparamref name="T"/>.</summary>
@@ -77,81 +74,77 @@ namespace NZCore
         /// Single-threaded write
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Write<TData>(T type, in TData evt) 
+        public void Write<TData>(T type, in TData evt)
             where TData : unmanaged
         {
             fixed (void* evtPtr = &evt)
             {
                 var payloadSize = UnsafeUtility.SizeOf<TData>();
-                var header = new MixedEventHeader()
+                var payloadOffset = _payloads->m_length;
+
+                var newPayloadLength = payloadOffset + payloadSize;
+                if (newPayloadLength > _payloads->Capacity)
+                {
+                    _payloads->Resize(newPayloadLength);
+                }
+                else
+                {
+                    _payloads->m_length = newPayloadLength;
+                }
+
+                UnsafeUtility.MemCpy(_payloads->Ptr + payloadOffset, evtPtr, payloadSize);
+
+                _headers->Add(new MixedEventHeader
                 {
                     Type = UnsafeUtility.EnumToInt(type),
+                    PayloadOffset = payloadOffset,
                     PayloadLength = payloadSize
-                };
-                AppendBytes(_bus, &header, UnsafeUtility.SizeOf<MixedEventHeader>()); 
-                AppendBytes(_bus, evtPtr, payloadSize);
+                });
             }
         }
 
         /// <summary>Returns a sequential reader so all events can be processed linearly.</summary>
         public MixedBusReader AsReader()
         {
-            return new MixedBusReader(_bus->Ptr, _bus->m_length);
+            return new MixedBusReader(_headers->Ptr, _headers->m_length, _payloads->Ptr);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void AppendBytes(UnsafeList<byte>* list, void* src, int size)
-        {
-            var oldLen = list->m_length;
-            var newLen = oldLen + size;
-            if (newLen > list->Capacity)
-            {
-                list->Resize(newLen);
-            }
-            else
-            {
-                list->m_length = newLen;
-            }
-
-            UnsafeUtility.MemCpy(list->Ptr + oldLen, src, size);
-        }
 
         /// <summary>
         /// A linear reader to read all stored events in the MixedBus
         /// </summary>
         public struct MixedBusReader
         {
-            [NativeDisableUnsafePtrRestriction] private readonly byte* _ptr;
-            private readonly int _bufferLength;
-            private int _offset;
-            private int _payloadOffset;
+            [NativeDisableUnsafePtrRestriction] private readonly MixedEventHeader* _end;
+            [NativeDisableUnsafePtrRestriction] private MixedEventHeader* _nextHeader;
+            [NativeDisableUnsafePtrRestriction] private readonly byte* _payloadBase;
+            [NativeDisableUnsafePtrRestriction] private byte* _payload;
 
-            internal MixedBusReader(byte* ptr, int bufferLength)
+            internal MixedBusReader(void* headers, int headerCount, byte* payloadBase)
             {
-                _ptr = ptr;
-                _bufferLength = bufferLength;
-                _offset = 0;
-                _payloadOffset = 0;
+                _nextHeader = (MixedEventHeader*)headers;
+                _end = _nextHeader + headerCount;
+                _payloadBase = payloadBase;
+                _payload = null;
             }
 
-            public bool CanRead => _offset < _bufferLength;
+            public bool CanRead => _nextHeader < _end;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext(out T eventType)
             {
-                if (_offset >= _bufferLength)
+                if (Hint.Unlikely(_nextHeader >= _end))
                 {
                     eventType = default;
                     return false;
                 }
 
-                ref var header = ref UnsafeUtility.AsRef<MixedEventHeader>(_ptr + _offset);
-                _offset += UnsafeUtility.SizeOf<MixedEventHeader>();
-
-                var typeInt = header.Type;
+                var header = _nextHeader;
+                var typeInt = header->Type;
                 eventType = UnsafeUtility.As<int, T>(ref typeInt);
-                _payloadOffset = _offset;
-                _offset += header.PayloadLength;
+
+                _payload = _payloadBase + header->PayloadOffset;
+                _nextHeader++;
 
                 return true;
             }
@@ -159,7 +152,7 @@ namespace NZCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref TData GetPayload<TData>() where TData : unmanaged
             {
-                return ref UnsafeUtility.AsRef<TData>(_ptr + _payloadOffset);
+                return ref *(TData*)_payload;
             }
         }
     }

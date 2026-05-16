@@ -260,9 +260,8 @@ namespace NZCore.NativeContainers.DenseMap
             //_metadata = (sbyte*) Memory.Unmanaged.Allocate(arrayLength, JobsUtility.CacheLineSize, allocator.ToAllocator);
 
             _entries = (Entry*)block;
-            _metadata = (sbyte*)(block + _arrayLength * UnsafeUtility.SizeOf<Entry>());
-
             _arrayLength = (uint)newSize;
+            _metadata = (sbyte*)(block + _arrayLength * UnsafeUtility.SizeOf<Entry>());
 
             for (var i = 0; i < newSize; i++)
             {
