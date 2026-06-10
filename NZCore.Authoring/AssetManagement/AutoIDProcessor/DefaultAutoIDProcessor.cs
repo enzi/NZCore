@@ -39,7 +39,7 @@ namespace NZCore.Editor.AssetManagement
                     continue;
                 }
 
-                var assetType = asset.GetType();
+                var assetType = ReflectionUtility.GetRootType<ScriptableObjectWithDefaultAutoID>(asset.GetType());
                 ProcessDefaultAutoIDs(assetType);
             }
         }

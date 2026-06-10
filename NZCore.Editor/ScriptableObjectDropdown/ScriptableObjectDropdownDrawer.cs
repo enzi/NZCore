@@ -23,8 +23,15 @@ namespace NZCore.Editor
 
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            var baseType = property.type.Substring(6, property.type.Length - 7); // PPtr<$Schema_SpellCasterClass>
-            //Debug.Log(baseType);
+            var baseType = fieldInfo.FieldType;
+            if (baseType.IsArray)
+            {
+                baseType = baseType.GetElementType();
+            }
+            else if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                baseType = baseType.GetGenericArguments()[0];
+            }
 
             var attr = (ScriptableObjectDropdownAttribute)attribute;
 

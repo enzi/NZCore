@@ -78,9 +78,7 @@ namespace NZCore.AssetManagement
 
         public static void DeleteAsset(Object assetToBeDeleted)
         {
-            var type = assetToBeDeleted.GetType();
-
-            if (!TryGet(type, out var manager, out var managerObject, out var list))
+            if (!TryGet(assetToBeDeleted.GetType(), out var manager, out var managerObject, out var list, out _))
             {
                 return;
             }
@@ -104,7 +102,7 @@ namespace NZCore.AssetManagement
 
         public static void Update(Type type)
         {
-            if (!TryGet(type, out var manager, out var managerObject, out var list))
+            if (!TryGet(type, out var manager, out var managerObject, out var list, out var groupByType))
             {
                 return;
             }
@@ -128,11 +126,13 @@ namespace NZCore.AssetManagement
                 }
             }
 
-            var foundObjects = AssetDatabase.FindAssets($"t:{type.Name}")
+            var assetType = groupByType != null ? groupByType : type;
+
+            var foundObjects = AssetDatabase.FindAssets($"t:{assetType.Name}")
                                             .Select(AssetDatabase.GUIDToAssetPath)
                                             .Distinct()
                                             .SelectMany(AssetDatabase.LoadAllAssetsAtPath)
-                                            .Where(s => s.GetType() == type)
+                                            .Where(s => s != null && assetType.IsAssignableFrom(s.GetType()))
                                             .ToList();
 
             var currentSet = new HashSet<Object>(currentObjects);
@@ -168,17 +168,22 @@ namespace NZCore.AssetManagement
             AssetDatabase.SaveAssetIfDirty(manager);
         }
 
-        private static bool TryGet(Type type, out ScriptableObject manager, out SerializedObject managerObject, out SerializedProperty containerListProperty)
+        private static bool TryGet(Type type, 
+            out ScriptableObject manager, out SerializedObject managerObject, 
+            out SerializedProperty containerListProperty, out Type groupByType)
         {
             manager = null;
             managerObject = null;
             containerListProperty = null;
+            groupByType = null;
 
             var attribute = type.GetCustomAttributeRecursive<RegisterInScriptableObjectDatabaseAttribute>(out _);
             if (attribute == null)
             {
                 return false;
             }
+
+            groupByType = attribute.GroupByType;
 
             var managerGuid = AssetDatabase.FindAssets($"t:{attribute.ManagerType}");
 

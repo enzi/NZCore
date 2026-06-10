@@ -11,11 +11,13 @@ namespace NZCore.AssetManagement
     {
         public readonly string ManagerType;
         public readonly string ContainerListProperty;
+        public readonly Type GroupByType;
 
-        public RegisterInScriptableObjectDatabaseAttribute(string managerType, string containerListProperty)
+        public RegisterInScriptableObjectDatabaseAttribute(string managerType, string containerListProperty, Type groupByType = null)
         {
             ManagerType = managerType;
             ContainerListProperty = containerListProperty;
+            GroupByType = groupByType;
         }
     }
 }

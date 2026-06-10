@@ -5,7 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using JetBrains.Annotations;
+using NZCore.Editor;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -54,17 +56,28 @@ namespace NZCore.AssetManagement
                     continue;
                 }
 
-                processors.ProcessAsset(asset);
+                ProcessAsset(processors, asset);
 
                 foreach (var subAsset in AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath))
                 {
-                    processors.ProcessAsset(subAsset);
+                    ProcessAsset(processors, subAsset);
                 }
             }
 
             foreach (var processor in processors)
             {
-                ScriptableObjectDatabase.Update(processor.Value.Type);
+                if (processor.Value.RegisteredType != null)
+                {
+                    ScriptableObjectDatabase.Update(processor.Value.RegisteredType);
+                }
+            }
+        }
+        
+        internal static void ProcessAsset(Dictionary<Type, AutoIDProcessor> processors, Object asset)
+        {
+            if (processors.TryGetProcessor(asset, out var processor))
+            {
+                processor.Process(asset);
             }
         }
     }
@@ -72,14 +85,15 @@ namespace NZCore.AssetManagement
 
     internal class AutoIDProcessor
     {
-        public readonly Type Type;
+        public readonly Type ScanType;       // drives the asset filter and shared autoID pool (may be a group base)
+        public Type RegisteredType;          // concrete attribute-bearing type seen in this batch; null if none
         private readonly string _filter;
         private Dictionary<int, int> _map;
 
-        public AutoIDProcessor(Type type)
+        public AutoIDProcessor(Type scanType)
         {
-            Type = type;
-            _filter = $"t:{type.Name}";
+            ScanType = scanType;
+            _filter = $"t:{scanType.Name}";
         }
 
         private Dictionary<int, int> CreateMap()
@@ -94,7 +108,7 @@ namespace NZCore.AssetManagement
                 foreach (var asset in assets)
                 {
                     // account for sub assets
-                    if (asset == null || asset.GetType() != Type)
+                    if (asset == null || !ScanType.IsAssignableFrom(asset.GetType()))
                     {
                         continue;
                     }
@@ -153,41 +167,46 @@ namespace NZCore.AssetManagement
     {
         public static bool TryGetProcessor(this ScriptableObject asset, out AutoIDProcessor processor)
         {
-            if (asset is not IAutoID)
+            if (asset is not ScriptableObjectWithAutoID)
             {
                 processor = null;
                 return false;
             }
 
-            var assetType = asset.GetType();
-            processor = new AutoIDProcessor(assetType);
+            var scanType = ResolveScanType(asset.GetType(), out _);
+            processor = new AutoIDProcessor(scanType);
 
             return true;
         }
 
         public static bool TryGetProcessor(this Dictionary<Type, AutoIDProcessor> processors, Object asset, out AutoIDProcessor processor)
         {
-            if (asset is not IAutoID)
+            if (asset is not ScriptableObjectWithAutoID)
             {
                 processor = null;
                 return false;
             }
 
             var assetType = asset.GetType();
-            if (!processors.TryGetValue(assetType, out processor))
+            var scanType = ResolveScanType(assetType, out var attribute);
+
+            if (!processors.TryGetValue(scanType, out processor))
             {
-                processor = processors[assetType] = new AutoIDProcessor(assetType);
+                processor = processors[scanType] = new AutoIDProcessor(scanType);
+            }
+            
+            if (attribute != null)
+            {
+                processor.RegisteredType = assetType;
             }
 
             return true;
         }
 
-        internal static void ProcessAsset(this Dictionary<Type, AutoIDProcessor> processors, Object asset)
+        private static Type ResolveScanType(Type assetType, out RegisterInScriptableObjectDatabaseAttribute attribute)
         {
-            if (processors.TryGetProcessor(asset, out var processor))
-            {
-                processor.Process(asset);
-            }
+            attribute = assetType.GetCustomAttribute<RegisterInScriptableObjectDatabaseAttribute>();
+            return attribute?.GroupByType ?? ReflectionUtility.GetRootType<ScriptableObjectWithAutoID>(assetType);
         }
     }
 }

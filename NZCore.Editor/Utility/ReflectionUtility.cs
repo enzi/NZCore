@@ -34,5 +34,20 @@ namespace NZCore.Editor
 
             tableConfigProperty.SetValue(provider, value);
         }
+        
+        /// <summary>
+        /// Returns the higher type of a base T
+        /// </summary>
+        public static Type GetRootType<T>(Type type)
+            where T : class
+        {
+            var current = type;
+            while (current.BaseType != null && current.BaseType != typeof(T))
+            {
+                current = current.BaseType;
+            }
+
+            return current;
+        }
     }
 }

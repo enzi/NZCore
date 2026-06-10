@@ -39,7 +39,8 @@ namespace NZCore.Editor
 
         public VisualElement CreateInspectorGUI(VisualElement root)
         {
-            var hasChangesResult = ((ChangeProcessorAsset)_target).HasChanges(GetChangeProcessorAssets(_target.GetType()));
+            var targetAsset = (ChangeProcessorAsset)_target;
+            var hasChangesResult = targetAsset.HasChanges(GetChangeProcessorAssets(targetAsset.ProcessGroupType));
 
             if (hasChangesResult == HasChangeResult.None)
             {
@@ -97,7 +98,7 @@ namespace NZCore.Editor
 
         public static void RunDidChangeOnAssetType(ChangeProcessorAsset target)
         {
-            var targetType = target.GetType();
+            var targetType = target.ProcessGroupType;
             Debug.Log($"Updating {targetType.Name} ...");
 
             var assets = AssetDatabaseUtility.GetSubAssets(targetType);
@@ -132,7 +133,7 @@ namespace NZCore.Editor
                     continue;
                 }
 
-                var type = asset.GetType();
+                var type = changeProcessorAsset.ProcessGroupType;
 
                 if (!collector.TryGetValue(type, out var list))
                 {
@@ -147,7 +148,7 @@ namespace NZCore.Editor
             {
                 if (entry.Value.Count > 0)
                 {
-                    Debug.Log($"Updating {entry.Value[0].GetType()} ...");
+                    Debug.Log($"Updating {entry.Key} ...");
                     entry.Value[0].ProcessChanges(entry.Value);
                 }
             }
