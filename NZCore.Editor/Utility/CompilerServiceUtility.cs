@@ -19,6 +19,15 @@ namespace NZCore
 
         public static void AddAdditionalFiles(string cscPath, params string[] additionalFiles)
         {
+            // safeguard: only ever write /additionalfile: entries for paths that exist.
+            foreach (var additionalFile in additionalFiles)
+            {
+                if (!File.Exists(additionalFile))
+                {
+                    Debug.LogError($"CompilerServiceUtility: refusing to add non-existent additional file '{additionalFile}' to '{cscPath}'.");
+                }
+            }
+
             var lines = new List<string>();
             var randomSignature = $"#{Guid.NewGuid()}";
 
@@ -149,6 +158,8 @@ namespace NZCore
                     // fall back to absolute paths
                     jsonPath = Path.GetFullPath($"Packages/{packagePath}/{fileName}.settings.cs");
                 }
+
+                jsonPath = jsonPath.Replace(Path.DirectorySeparatorChar, '/'); // added
 
                 return (jsonPath, csVersion);
             }
