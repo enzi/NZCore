@@ -20,7 +20,6 @@ namespace NZCore.Editor
 
             if (attr.Inline)
             {
-                Debug.Log("NZPropertyDrawer inline");
                 var groupBox = new GroupBox
                 {
                     style =
@@ -76,7 +75,6 @@ namespace NZCore.Editor
             }
             else
             {
-                Debug.Log("NZPropertyDrawer default");
                 var element = CreatePropertyField(property, property.serializedObject);
                 root.Add(element);
             }
@@ -84,8 +82,23 @@ namespace NZCore.Editor
             return root;
         }
 
-        private static PropertyField CreatePropertyField(SerializedProperty property, SerializedObject serializedObject)
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            EditorGUI.PropertyField(position, property, label, true);
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.GetPropertyHeight(property, label, true);
+        }
+
+        private static VisualElement CreatePropertyField(SerializedProperty property, SerializedObject serializedObject)
+        {
+            if (NZReorderableListField.CanDraw(property))
+            {
+                return new NZReorderableListField(property);
+            }
+
             var field = new PropertyField(property);
             field.Bind(serializedObject);
             return field;

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
@@ -84,6 +85,12 @@ namespace NZCore.Editor
             {
                 var serializedProperty = list[i];
 
+                if (ShouldDrawNZReorderableList(serializedProperty))
+                {
+                    visualElement.Add(new NZReorderableListField(serializedProperty));
+                    continue;
+                }
+
                 var tmp = new PropertyField(serializedProperty);
                 visualElement.Add(tmp);
                 propertyFields.Add(serializedProperty.name, tmp);
@@ -143,6 +150,12 @@ namespace NZCore.Editor
                     continue;
                 }
 
+                if (ShouldDrawNZReorderableList(iterator))
+                {
+                    container.Add(new NZReorderableListField(iterator.Copy()));
+                    continue;
+                }
+
                 var propertyField = new PropertyField(iterator)
                 {
                     name = iterator.propertyPath,
@@ -172,6 +185,78 @@ namespace NZCore.Editor
             }
 
             return null;
+        }
+
+        private static bool ShouldDrawNZReorderableList(SerializedProperty property) =>
+            NZReorderableListField.CanDraw(property) && HasAttribute<NZPropertyFieldAttribute>(property);
+
+        private static bool HasAttribute<T>(SerializedProperty property)
+            where T : Attribute
+        {
+            var fieldInfo = GetFieldInfo(property);
+            return fieldInfo != null && fieldInfo.GetCustomAttribute<T>() != null;
+        }
+
+        private static FieldInfo GetFieldInfo(SerializedProperty property)
+        {
+            var type = property.serializedObject.targetObject.GetType();
+            var path = property.propertyPath.Replace(".Array.data[", "[");
+            var elements = path.Split('.');
+
+            FieldInfo fieldInfo = null;
+            foreach (var element in elements)
+            {
+                var fieldName = element;
+                var bracketIndex = fieldName.IndexOf('[');
+                if (bracketIndex >= 0)
+                {
+                    fieldName = fieldName[..bracketIndex];
+                }
+
+                fieldInfo = GetField(type, fieldName);
+                if (fieldInfo == null)
+                {
+                    return null;
+                }
+
+                type = GetElementOrFieldType(fieldInfo.FieldType);
+            }
+
+            return fieldInfo;
+        }
+
+        private static FieldInfo GetField(Type type, string fieldName)
+        {
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+            while (type != null)
+            {
+                var fieldInfo = type.GetField(fieldName, flags);
+                if (fieldInfo != null)
+                {
+                    return fieldInfo;
+                }
+
+                type = type.BaseType;
+            }
+
+            return null;
+        }
+
+        private static Type GetElementOrFieldType(Type type)
+        {
+            if (type.IsArray)
+            {
+                return type.GetElementType();
+            }
+
+            if (type.IsGenericType && type.GetInterfaces()
+                                           .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>)))
+            {
+                return type.GetGenericArguments()[0];
+            }
+
+            return type;
         }
     }
 }

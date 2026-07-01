@@ -12,6 +12,10 @@ namespace NZCore.Editor
     {
         public readonly bool Inline;
 
+        public NZPropertyFieldAttribute() : this(false)
+        {
+        }
+
         public NZPropertyFieldAttribute(bool inline)
         {
             Inline = inline;
