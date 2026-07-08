@@ -31,7 +31,7 @@ namespace NZCore
 
                 while (Volatile.Read(ref _lock) != 0)
                 {
-                    continue;
+                    Unity.Burst.Intrinsics.Common.Pause();
                 }
             }
         }
