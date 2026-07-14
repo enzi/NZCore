@@ -11,7 +11,6 @@ namespace NZCore
         where T : unmanaged
     {
         public BlobAssetReference<T> blob { get; set; }
-        public Guid guid { get; set; }
     }
 
     public interface IBlobAssetReference<T1, T2> : IComponentData
@@ -20,6 +19,5 @@ namespace NZCore
     {
         public BlobAssetReference<T1> blob1 { get; set; }
         public BlobAssetReference<T2> blob2 { get; set; }
-        public Guid guid { get; set; }
     }
 }

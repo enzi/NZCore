@@ -14,6 +14,11 @@ namespace NZCore.UI
     {
         //void OnPropertyChanging(in FixedString64Bytes property);
         void OnPropertyChanged(in FixedString64Bytes property);
+
+        public static bool TryGet(IntPtr ptr, out IViewModelBindingNotify viewModel)
+        {
+            return BurstUIInterop.Objects.TryGetValue(ptr, out viewModel);
+        }
     }
 
     public interface IViewModelBindingNotify<T> : IViewModelBindingNotify

@@ -55,7 +55,7 @@ namespace NZCore
             var typeIndexInArchetype = lookup.m_Cache.IndexInArchetype;
             archetype->Chunks.SetChangeVersion(typeIndexInArchetype, chunk.ListIndex, lookup.GlobalSystemVersion);
 
-#if (UNITY_EDITOR || DEVELOPMENT_BUILD) && !DISABLE_ENTITIES_JOURNALING
+#if (UNITY_EDITOR) && !DISABLE_ENTITIES_JOURNALING
             if (Hint.Unlikely(lookup.m_Access->EntityComponentStore->m_RecordToJournal != 0))
             {
                 lookup.m_Access->EntityComponentStore->GetComponentDataWithTypeRW(entity, lookup.m_TypeIndex,

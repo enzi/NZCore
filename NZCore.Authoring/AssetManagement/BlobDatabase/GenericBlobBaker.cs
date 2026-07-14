@@ -86,7 +86,7 @@ namespace NZCore
             {
                 ObjectRefBuffer.Add(new UnityObjectReferencePatchBuffer
                 {
-                    TypeIndex = TypeManager.GetTypeIndex<TBlobReference>(),
+                    StableTypeHash = TypeManager.GetTypeInfo<TBlobReference>().StableTypeHash,
                     BlobEntity = BlobEntity,
                     Asset = asset,
                     BlobOffset = (byte*)UnsafeUtility.AddressOf(ref blobField) - BlobAddress[blobAssetReferenceIndex],
@@ -98,7 +98,7 @@ namespace NZCore
             {
                 EntityRefBuffer.Add(new EntityRefPatchBuffer
                 {
-                    TypeIndex = TypeManager.GetTypeIndex<TBlobReference>(),
+                    StableTypeHash = TypeManager.GetTypeInfo<TBlobReference>().StableTypeHash,
                     BlobEntity = BlobEntity,
                     EntityToPatch = entity,
                     BlobOffset = (byte*)UnsafeUtility.AddressOf(ref blobField) - BlobAddress[blobAssetReferenceIndex],
@@ -168,7 +168,6 @@ namespace NZCore
 
                     var blobReferenceComp = new TBlobReference
                     {
-                        guid = Guid.Parse(guidString),
                         blob = blobReference
                     };
 
@@ -251,7 +250,6 @@ namespace NZCore
 
                 var blobReferenceComp = new TBlobReference
                 {
-                    guid = Guid.Parse(guidString),
                     blob1 = blobReference1,
                     blob2 = blobReference2
                 };

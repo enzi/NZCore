@@ -34,7 +34,7 @@ namespace NZCore
         [BurstCompile]
         public unsafe void OnUpdate(ref SystemState state)
         {
-            if (_patchEntityRefquery.IsEmpty)
+            if (!_patchEntityRefquery.IsEmpty)
             {
                 var entities = _patchEntityRefquery.ToEntityArray(Allocator.Temp);
 
@@ -44,12 +44,19 @@ namespace NZCore
 
                     foreach (var element in buffer)
                     {
-                        if (element.EntityToPatch == Entity.Null || element.TypeIndex == default || element.BlobOffset == 0)
+                        if (element.EntityToPatch == Entity.Null || element.StableTypeHash == 0 || element.BlobOffset == 0)
                         {
                             continue;
                         }
 
-                        var ptr = (BlobAssetReference<byte>*)state.EntityManager.GetComponentDataRawRW(element.BlobEntity, element.TypeIndex);
+                        var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(element.StableTypeHash);
+                        if (typeIndex == TypeIndex.Null)
+                        {
+                            Debug.LogError("BlobPatchSystem: could not resolve TypeIndex from StableTypeHash for EntityRefPatchBuffer");
+                            continue;
+                        }
+
+                        var ptr = (BlobAssetReference<byte>*)state.EntityManager.GetComponentDataRawRW(element.BlobEntity, typeIndex);
                         var blobPtr = (byte*)(ptr + element.BlobAssetReferenceIndex)->GetUnsafePtr();
 
                         // patch the Entity reference on a blob
@@ -70,12 +77,19 @@ namespace NZCore
 
                     foreach (var element in buffer)
                     {
-                        if (element.BlobEntity == Entity.Null || element.TypeIndex == default || element.BlobOffset == 0)
+                        if (element.BlobEntity == Entity.Null || element.StableTypeHash == 0 || element.BlobOffset == 0)
                         {
                             continue;
                         }
 
-                        var ptr = (BlobAssetReference<byte>*)state.EntityManager.GetComponentDataRawRW(element.BlobEntity, element.TypeIndex);
+                        var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(element.StableTypeHash);
+                        if (typeIndex == TypeIndex.Null)
+                        {
+                            Debug.LogError("BlobPatchSystem: could not resolve TypeIndex from StableTypeHash for UnityObjectReferencePatchBuffer");
+                            continue;
+                        }
+
+                        var ptr = (BlobAssetReference<byte>*)state.EntityManager.GetComponentDataRawRW(element.BlobEntity, typeIndex);
                         var blobPtr = (byte*)(ptr + element.BlobAssetReferenceIndex)->GetUnsafePtr();
 
                         // patch the instanceId so any UnityObjectRefForBlob<T> can be resolved correctly

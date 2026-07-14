@@ -17,7 +17,7 @@ namespace NZCore
 
     public struct UnityObjectReferencePatchBuffer : IBufferElementData
     {
-        public TypeIndex TypeIndex;
+        public ulong StableTypeHash;
         public Entity BlobEntity;
         public UnityObjectRef<Object> Asset;
         public long BlobOffset;

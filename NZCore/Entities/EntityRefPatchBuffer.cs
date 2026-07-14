@@ -11,7 +11,7 @@ namespace NZCore
     /// </summary>
     public struct EntityRefPatchBuffer : IBufferElementData
     {
-        public TypeIndex TypeIndex;
+        public ulong StableTypeHash;
         public Entity EntityToPatch;
         public Entity BlobEntity;
         public long BlobOffset;
