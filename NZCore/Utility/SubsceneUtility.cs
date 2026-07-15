@@ -32,6 +32,10 @@ namespace NZCore
             _requestSceneLoadedReadHandle.Update(ref state);
         }
 
+        /// <summary>
+        /// Request a load: adds <see cref="RequestSceneLoaded"/> to the scene and its sections.
+        /// Content streams in later via <see cref="SceneSectionStreamingSystem"/>.
+        /// </summary>
         public static void OpenScene(ref SystemState state, Entity entity)
         {
             if (!state.EntityManager.HasComponent<RequestSceneLoaded>(entity))
@@ -49,6 +53,11 @@ namespace NZCore
             }
         }
 
+        /// <summary>
+        /// Request a close: removes <see cref="RequestSceneLoaded"/> from the scene and its sections.
+        /// Content stays alive until <see cref="SceneSectionStreamingSystem"/> streams it out,
+        /// unlike SceneSystem.UnloadScene which destroys it immediately.
+        /// </summary>
         public static void CloseScene(ref SystemState state, Entity entity)
         {
             if (!state.EntityManager.HasComponent<RequestSceneLoaded>(entity))
@@ -70,6 +79,9 @@ namespace NZCore
             }
         }
 
+        /// <summary>
+        /// True when every section of the scene has StreamingStatus.Loaded.
+        /// </summary>
         public static bool IsSceneLoaded(ref SystemState state, Entity entity)
         {
             if (!state.EntityManager.HasComponent<SceneReference>(entity))
@@ -110,6 +122,9 @@ namespace NZCore
                    SceneSectionStreamingSystem.StreamingStatus.Loaded;
         }
 
+        /// <summary>
+        /// Lookup-based variant of <see cref="IsSceneLoaded(ref SystemState, Entity)"/>; call <see cref="Update"/> first.
+        /// </summary>
         public bool IsSceneLoaded(Entity entity)
         {
             if (!_sceneReferenceReadHandle.HasComponent(entity))
@@ -150,6 +165,9 @@ namespace NZCore
             return _streamingStateReadHandle[sectionEntity].Status == SceneSectionStreamingSystem.StreamingStatus.Loaded;
         }
 
+        /// <summary>
+        /// ECB variant of <see cref="OpenScene(ref SystemState, Entity)"/>; takes effect at ECB playback.
+        /// </summary>
         public void OpenScene(EntityCommandBuffer ecb, Entity entity)
         {
             if (_requestSceneLoadedReadHandle.HasComponent(entity))
@@ -167,6 +185,9 @@ namespace NZCore
             }
         }
 
+        /// <summary>
+        /// ECB variant of <see cref="CloseScene(ref SystemState, Entity)"/>; takes effect at ECB playback.
+        /// </summary>
         public void CloseScene(EntityCommandBuffer ecb, Entity entity)
         {
             if (!_requestSceneLoadedReadHandle.HasComponent(entity))
