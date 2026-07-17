@@ -48,7 +48,7 @@ namespace NZCore
 
             if (!_removedQuery.IsEmpty)
             {
-                var destructionMap = SystemAPI.GetSingleton<DestructionMap>();
+                var destructionMap = SystemAPI.GetSingletonRW<DestructionMap>().ValueRW;
                 var removedEntities = _removedQuery.ToEntityArray(Allocator.Temp);
 
                 foreach (var removedEntity in removedEntities)

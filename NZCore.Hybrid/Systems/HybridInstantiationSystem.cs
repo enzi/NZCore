@@ -41,7 +41,7 @@ namespace NZSpellCasting
                 Entities_ReadHandle = SystemAPI.GetEntityTypeHandle(),
                 HybridPresentation_ReadHandle = SystemAPI.GetComponentTypeHandle<HybridPresentation>(true),
                 HybridPresentationEnabled_WriteHandle = SystemAPI.GetComponentTypeHandle<HybridPresentationEnabled>(false),
-                Requests = SystemAPI.GetSingleton<CreateHybridObjectRequestSingleton>().Requests.AsThreadWriter()
+                Requests = SystemAPI.GetSingletonRW<CreateHybridObjectRequestSingleton>().ValueRW.Requests.AsThreadWriter()
             }.Schedule(_loadPresentation, state.Dependency);
         }
 

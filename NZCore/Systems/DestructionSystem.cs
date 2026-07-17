@@ -126,7 +126,7 @@ namespace NZCore
 
             if (!_destroyQuery.IsEmpty)
             {
-                var destructionMap = SystemAPI.GetSingleton<DestructionMap>();
+                var destructionMap = SystemAPI.GetSingletonRW<DestructionMap>().ValueRW;
 
                 var entities = _destroyQuery.ToEntityArray(Allocator.Temp);
 

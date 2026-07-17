@@ -21,13 +21,13 @@ namespace NZCore
     /// High-performance hashmap backed by a DynamicBuffer using open addressing with linear probing.
     ///
     /// TBuffer allows multiple hashmaps per entity by defining different buffer element types:
-    /// <code>
+    /// <code><![CDATA[
     /// public struct InventoryHashMapBuffer : IDynamicHashMap { public byte Value; }
     /// public struct SkillHashMapBuffer : IDynamicHashMap { public byte Value; }
     ///
-    /// var inventoryMap = new DynamicHashMap&lt;InventoryHashMapBuffer, int, Item&gt;(inventoryBuffer);
-    /// var skillMap = new DynamicHashMap&lt;SkillHashMapBuffer, int, Skill&gt;(skillBuffer);
-    /// </code>
+    /// var inventoryMap = new DynamicHashMap<InventoryHashMapBuffer, int, Item>(inventoryBuffer);
+    /// var skillMap = new DynamicHashMap<SkillHashMapBuffer, int, Skill>(skillBuffer);
+    /// ]]></code>
     ///
     /// Memory layout in buffer:
     /// [Header (16 bytes)] [Metadata array (1 byte per slot)] [Padding to align] [Entries array (Key+Value per slot)]
