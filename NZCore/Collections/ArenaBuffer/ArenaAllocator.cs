@@ -30,15 +30,25 @@ namespace NZCore
     /// </summary>
     public unsafe struct ArenaAllocator : IDisposable
     {
-        /// <summary>Bits of a handle used for the byte offset inside a page.</summary>
-        public const int PageShift = 16;
+        /// <summary>
+        /// Bits of a handle used for the byte offset inside a page, so a page is 1 MB.
+        ///
+        /// Raised from 16 (64 KB) as an experiment: across three measured page sizes the multi type read
+        /// throughput moved monotonically with page size - 16 KB scored 0.45x, 64 KB 1.00x and 1 MB 1.44x
+        /// against 64 KB paged - which points at page size, rather than any per chunk grouping, as what the
+        /// ChunkPaged and SharedChunkPaged modes were actually buying.
+        /// </summary>
+        public const int PageShift = 20;
 
         public const int PageSizeBytes = 1 << PageShift;
 
         private const int PageOffsetMask = PageSizeBytes - 1;
 
-        /// <summary>Keeps every handle positive, so -1 stays available as "unreserved".</summary>
-        public const int MaxPages = 1 << 14;
+        /// <summary>
+        /// Keeps every handle positive, so -1 stays available as "unreserved". A handle spends
+        /// <see cref="PageShift"/> bits on the offset, leaving 11 for the page index out of an int's 31.
+        /// </summary>
+        public const int MaxPages = 1 << 11;
 
         /// <summary>Power of two size classes, covering blocks of 1 to 2^30 elements.</summary>
         public const int SizeClassCount = 31;

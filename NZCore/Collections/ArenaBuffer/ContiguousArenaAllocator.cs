@@ -36,10 +36,12 @@ namespace NZCore
         private const int MinBlockBytes = 4;
 
         /// <summary>
-        /// Bytes of tail taken per carve. Matches <see cref="ArenaAllocator.PageSizeBytes"/> so both allocators
-        /// batch identically and a benchmark between them isolates the resolve, not the carve frequency.
+        /// Bytes of tail taken per carve. Pinned to 64 KB rather than tracking
+        /// <see cref="ArenaAllocator.PageSizeBytes"/>: that constant is being varied to measure the effect of
+        /// page size on the paged allocator, and this one has to hold still for that comparison to mean
+        /// anything. The two were equal by construction when both were 64 KB.
         /// </summary>
-        private const int CarveBytes = ArenaAllocator.PageSizeBytes;
+        private const int CarveBytes = 1 << 16;
 
         /// <summary>Backing bytes taken on the first carve, when no capacity hint was given.</summary>
         private const int InitialBytes = CarveBytes;

@@ -520,7 +520,7 @@ namespace NZCore.Tests.NativeContainers
 
             UpdateReserveSystem();
 
-            // 256 blocks of 8 four byte elements is 8 KB of a 64 KB page, so they all belong to page 0.
+            // 256 blocks of 8 four byte elements is 8 KB, well inside a single page, so all belong to page 0.
             var stride = Arena->BlockStride(ArenaAllocator.SizeClassOf(capacity));
             var offsets = new NativeHashSet<int>(entityCount, Allocator.Temp);
             var maxOffset = 0;
