@@ -1,0 +1,33 @@
+{
+    "name": "Localization.Authoring",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Entities",
+        "Unity.Entities.Hybrid",
+        "Unity.Mathematics",
+        "Unity.Collections",
+        "UnityEngine.UI",
+        "NZCore",
+        "NZCore.Stats.Editor",
+        "NZCore.Editor",
+        "AeonWeaver.UI.Data",
+        "NZCore.Stats.Data",
+        "NZCore.Stats.Authoring",
+        "AeonWeaver.Data",
+        "NZSpellCasting.Runtime",
+        "NZSpellCasting.Spells.Data",
+        "Localization.Data",
+        "Unity.Localization"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_EDITOR"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
