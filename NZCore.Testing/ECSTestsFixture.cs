@@ -73,6 +73,17 @@ namespace NZCore
             PlayerLoop.SetPlayerLoop(_previousPlayerLoop);
         }
 
+        /// <summary>
+        /// End of a simulated frame. Tests that drive system handles directly instead of calling
+        /// World.Update() must call this, otherwise the update allocator never rewinds and every frame's
+        /// allocations (EntityCommandBuffers, NativeStreams, ...) accumulate for the whole test.
+        /// </summary>
+        protected virtual void CleanUp()
+        {
+            // InitializationSystemGroup does this every real frame
+            World.Unmanaged.ResetUpdateAllocator();
+        }
+
         // calls JobUtility.ClearSystemIds() (internal method)
         private void JobUtility_ClearSystemIds() =>
             typeof(JobsUtility).GetMethod("ClearSystemIds", BindingFlags.Static | BindingFlags.NonPublic)?.Invoke(null, null);
