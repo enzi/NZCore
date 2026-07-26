@@ -14,9 +14,9 @@ namespace NZCore.UIToolkit
     [Serializable]
     public class UIAssets : IComponentData
     {
-        public Dictionary<string, VisualTreeAsset> VisualTreeAssets;
-        public Dictionary<string, SpriteAtlas> SpriteAtlasAssets;
-        public Dictionary<string, GameObject> WorldInterfaceAssets;
+        [SerializeField] public Dictionary<string, VisualTreeAsset> VisualTreeAssets;
+        [SerializeField] public Dictionary<string, SpriteAtlas> SpriteAtlasAssets;
+        [SerializeField] public Dictionary<string, GameObject> WorldInterfaceAssets;
 
         public UIAssets()
         {

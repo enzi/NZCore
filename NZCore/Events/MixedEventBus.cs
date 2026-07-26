@@ -65,7 +65,8 @@ namespace NZCore
         }
         
         /// <summary>Clears all queued events for <typeparamref name="T"/>.</summary>
-        public void ClearBus<T>() where T : unmanaged
+        public void ClearBus<TData>() 
+            where TData : unmanaged
         {
             throw new NotImplementedException();
         }

@@ -11,6 +11,7 @@ namespace NZCore.Editor
     public class ReserializeEditor : EditorWindow
     {
         private string _path = "Assets/";
+        private ForceReserializeAssetsOptions _options = ForceReserializeAssetsOptions.ReserializeAssets;
 
         [MenuItem("Tools/NZCore/Reserialize Assets")]
         private static void Init()
@@ -23,6 +24,7 @@ namespace NZCore.Editor
         {
             GUILayout.Label("Reserialize Assets", EditorStyles.boldLabel);
             _path = EditorGUILayout.TextField("Path", _path);
+            _options = (ForceReserializeAssetsOptions)EditorGUILayout.EnumFlagsField("Options", _options);
 
             if (GUILayout.Button("Reserialize"))
             {
@@ -30,7 +32,7 @@ namespace NZCore.Editor
                                          .Select(AssetDatabase.GUIDToAssetPath)
                                          .ToArray();
 
-                AssetDatabase.ForceReserializeAssets(paths, ForceReserializeAssetsOptions.ReserializeAssets);
+                AssetDatabase.ForceReserializeAssets(paths, _options);
 
                 Debug.Log("Reserializing done!");
             }

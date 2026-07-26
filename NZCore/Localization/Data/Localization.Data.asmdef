@@ -1,0 +1,25 @@
+{
+    "name": "Localization.Data",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.Burst",
+        "Unity.Localization",
+        "NZCore",
+        "NZCore.Math",
+        "NZCore.Stats",
+        "UnityEngine.UI",
+        "NZCore.Stats.Data"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

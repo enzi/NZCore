@@ -6,6 +6,7 @@
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
+        "Unity.Transforms",
         "Unity.Entities.Hybrid",
         "UnityEditor.TestRunner",
         "UnityEngine.TestRunner",

@@ -368,7 +368,8 @@ namespace NZCore
 
                 if (remainingItemCount > 0)
                 {
-                    _ptr = (byte*)((UnsafeList<T>*)(_perThreadListsPtr + chunkIndex * PerThreadListSize))->Ptr;
+                    var list = (UnsafeList<T>*)(_perThreadListsPtr + range.ListIndex * PerThreadListSize);
+                    _ptr = (byte*)list->Ptr;
                     _currentIndex = _ranges[chunkIndex].StartIndex;
                 }
                 else
