@@ -39,21 +39,5 @@ namespace NZCore
         {
             return (ContiguousArenaAllocator*)Arena.Data;
         }
-
-        /// <inheritdoc cref="GetContiguousArena"/>
-        public static unsafe ChunkPagedArenaAllocator* GetChunkPagedArena()
-        {
-            return (ChunkPagedArenaAllocator*)Arena.Data;
-        }
-
-        /// <summary>
-        /// The process wide arena every <see cref="ArenaAllocatorMode.SharedChunkPaged"/> type points at.
-        /// Unlike the others this is the same object for every such element type, which is what lets a chunk
-        /// hold buffers of different types on one page.
-        /// </summary>
-        public static unsafe SharedArenaAllocator* GetSharedArena()
-        {
-            return (SharedArenaAllocator*)Arena.Data;
-        }
     }
 }

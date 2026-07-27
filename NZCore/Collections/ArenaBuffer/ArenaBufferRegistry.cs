@@ -144,14 +144,8 @@ namespace NZCore
 
             switch (mode)
             {
-                case ArenaAllocatorMode.SharedChunkPaged:
-                    arena = GetOrCreateSharedArena();
-                    break;
                 case ArenaAllocatorMode.Contiguous:
                     arena = (IntPtr)ContiguousArenaAllocator.Create(elementSize, elementAlign, initialCapacity);
-                    break;
-                case ArenaAllocatorMode.ChunkPaged:
-                    arena = (IntPtr)ChunkPagedArenaAllocator.Create(elementSize, elementAlign, initialCapacity);
                     break;
                 default:
                     arena = (IntPtr)ArenaAllocator.Create(elementSize, elementAlign, initialCapacity);
@@ -167,21 +161,6 @@ namespace NZCore
                 Mode = mode,
                 ElementSize = elementSize
             });
-        }
-
-        // Every SharedChunkPaged type points at this one arena - that is what lets a chunk put buffers of
-        // different types on the same page. Created on first use rather than at Initialize, so projects with
-        // no shared types never allocate it.
-        private static IntPtr sharedArena;
-
-        private static IntPtr GetOrCreateSharedArena()
-        {
-            if (sharedArena == IntPtr.Zero)
-            {
-                sharedArena = (IntPtr)SharedArenaAllocator.Create();
-            }
-
-            return sharedArena;
         }
 
         // A SharedStatic rather than a plain static: the reserve system maintains this from Burst compiled
@@ -249,18 +228,7 @@ namespace NZCore
             {
                 var registration = (*registrations)[i];
 
-                // Skipped here and reset once below, since every shared type names the same arena.
-                if (registration.Mode == ArenaAllocatorMode.SharedChunkPaged)
-                {
-                    continue;
-                }
-
                 ArenaBufferDispatch.Reset(registration.Arena, registration.Mode);
-            }
-
-            if (sharedArena != IntPtr.Zero)
-            {
-                ((SharedArenaAllocator*)sharedArena)->Reset();
             }
         }
 
@@ -283,19 +251,7 @@ namespace NZCore
             {
                 var registration = (*registrations)[i];
 
-                // Several registrations point at the one shared arena; it is destroyed once, below.
-                if (registration.Mode == ArenaAllocatorMode.SharedChunkPaged)
-                {
-                    continue;
-                }
-
                 ArenaBufferDispatch.Destroy(registration.Arena, registration.Mode);
-            }
-
-            if (sharedArena != IntPtr.Zero)
-            {
-                SharedArenaAllocator.Destroy((SharedArenaAllocator*)sharedArena);
-                sharedArena = IntPtr.Zero;
             }
 
             registrations->Dispose();

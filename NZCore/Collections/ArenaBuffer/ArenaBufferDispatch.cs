@@ -25,17 +25,9 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Reallocate(IntPtr arena, ArenaAllocatorMode mode, ref ArenaBufferRefData refData, int requiredCount, int elementSize)
         {
-            if (mode == ArenaAllocatorMode.SharedChunkPaged)
-            {
-                ((SharedArenaAllocator*)arena)->Reallocate(ref refData, requiredCount, elementSize);
-            }
-            else if (mode == ArenaAllocatorMode.Contiguous)
+            if (mode == ArenaAllocatorMode.Contiguous)
             {
                 ((ContiguousArenaAllocator*)arena)->Reallocate(ref refData, requiredCount);
-            }
-            else if (mode == ArenaAllocatorMode.ChunkPaged)
-            {
-                ((ChunkPagedArenaAllocator*)arena)->Reallocate(ref refData, requiredCount);
             }
             else
             {
@@ -50,18 +42,9 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Free(IntPtr arena, ArenaAllocatorMode mode, IntPtr block, int capacity, int elementSize)
         {
-            if (mode == ArenaAllocatorMode.SharedChunkPaged)
-            {
-                // Byte oriented arena: the block size has to be rebuilt from the capacity and element size.
-                ((SharedArenaAllocator*)arena)->Free((int)block, SharedArenaAllocator.BlockBytes(capacity, elementSize));
-            }
-            else if (mode == ArenaAllocatorMode.Contiguous)
+            if (mode == ArenaAllocatorMode.Contiguous)
             {
                 ((ContiguousArenaAllocator*)arena)->Free((int)block, capacity);
-            }
-            else if (mode == ArenaAllocatorMode.ChunkPaged)
-            {
-                ((ChunkPagedArenaAllocator*)arena)->Free((int)block, capacity);
             }
             else
             {
@@ -74,12 +57,8 @@ namespace NZCore
         {
             switch (mode)
             {
-                case ArenaAllocatorMode.SharedChunkPaged:
-                    return ((SharedArenaAllocator*)arena)->LiveBlocks;
                 case ArenaAllocatorMode.Contiguous:
                     return ((ContiguousArenaAllocator*)arena)->LiveBlocks;
-                case ArenaAllocatorMode.ChunkPaged:
-                    return ((ChunkPagedArenaAllocator*)arena)->LiveBlocks;
                 default:
                     return ((ArenaAllocator*)arena)->LiveBlocks;
             }
@@ -87,17 +66,9 @@ namespace NZCore
 
         public static void Reset(IntPtr arena, ArenaAllocatorMode mode)
         {
-            if (mode == ArenaAllocatorMode.SharedChunkPaged)
-            {
-                ((SharedArenaAllocator*)arena)->Reset();
-            }
-            else if (mode == ArenaAllocatorMode.Contiguous)
+            if (mode == ArenaAllocatorMode.Contiguous)
             {
                 ((ContiguousArenaAllocator*)arena)->Reset();
-            }
-            else if (mode == ArenaAllocatorMode.ChunkPaged)
-            {
-                ((ChunkPagedArenaAllocator*)arena)->Reset();
             }
             else
             {
@@ -105,38 +76,11 @@ namespace NZCore
             }
         }
 
-        /// <summary>
-        /// Reserves <paramref name="blockCount"/> consecutive blocks of one size class on a page of their own,
-        /// returning the first handle and how many of the requested blocks landed on that page. Only
-        /// <see cref="ArenaAllocatorMode.ChunkPaged"/> supports this; the reserve system checks the mode
-        /// before calling rather than paying for a fallback here.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int AllocateChunk(IntPtr arena, int blockCount, int elementCount, out int blocksOnFirstPage)
-        {
-            return ((ChunkPagedArenaAllocator*)arena)->AllocateChunk(blockCount, elementCount, out blocksOnFirstPage);
-        }
-
-        /// <summary>Block stride of a size class, so the reserve system can walk a chunk page's blocks.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ChunkPagedBlockStride(IntPtr arena, int elementCount)
-        {
-            return ((ChunkPagedArenaAllocator*)arena)->BlockStride(ChunkPagedArenaAllocator.SizeClassOf(elementCount));
-        }
-
         public static void Destroy(IntPtr arena, ArenaAllocatorMode mode)
         {
-            if (mode == ArenaAllocatorMode.SharedChunkPaged)
-            {
-                SharedArenaAllocator.Destroy((SharedArenaAllocator*)arena);
-            }
-            else if (mode == ArenaAllocatorMode.Contiguous)
+            if (mode == ArenaAllocatorMode.Contiguous)
             {
                 ContiguousArenaAllocator.Destroy((ContiguousArenaAllocator*)arena);
-            }
-            else if (mode == ArenaAllocatorMode.ChunkPaged)
-            {
-                ChunkPagedArenaAllocator.Destroy((ChunkPagedArenaAllocator*)arena);
             }
             else
             {

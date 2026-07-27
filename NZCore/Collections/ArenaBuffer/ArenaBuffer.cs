@@ -142,9 +142,6 @@ namespace NZCore
         {
             CheckWriteAccess();
 
-            // Do not be tempted to drop the IsReserved test to save a load: it reads Handle *before* the
-            // Length store below, and GetAppendBasePtr's cache check then reuses that same register. Removing
-            // it forces Handle to be reloaded after the store, which measured 14-18% slower on append loops.
             if (_ref->IsReserved && length <= _ref->Capacity)
             {
                 return;
@@ -204,9 +201,23 @@ namespace NZCore
         public int Add(in T elem)
         {
             CheckWriteAccess();
-            var length = Length;
-            ResizeUninitialized(length + 1);
-            UnsafeUtility.WriteArrayElement(GetAppendBasePtr(), length, elem);
+            ref var refData = ref *_ref;
+            var length = refData.Length;
+            var newLength = length + 1;
+            CheckNegativeLength(newLength);
+
+            if (!refData.IsReserved || newLength > refData.Capacity)
+            {
+                // Preserve the requested capacity when first touching an unreserved record, just like
+                // EnsureCapacity does for the general resize path.
+                var required = refData.IsReserved
+                    ? newLength
+                    : math.max(newLength, refData.Capacity);
+                _arena->Reallocate(ref refData, required);
+            }
+
+            refData.Length = newLength;
+            UnsafeUtility.WriteArrayElement((T*)refData.Block, length, elem);
             return length;
         }
 
@@ -383,12 +394,6 @@ namespace NZCore
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private readonly T* GetBasePtr()
-        {
-            return (T*)_ref->Block;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private readonly T* GetAppendBasePtr()
         {
             return (T*)_ref->Block;
         }

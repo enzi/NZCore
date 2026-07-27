@@ -23,24 +23,6 @@ namespace NZCore.Tests.NativeContainers
     public struct MultiPagedB : IArenaBuffer { public int Value; }
     public struct MultiPagedC : IArenaBuffer { public int Value; }
 
-    [ArenaBuffer(Mode = ArenaAllocatorMode.ChunkPaged, InitialCapacity = 0)]
-    public struct MultiChunkPagedA : IArenaBuffer { public int Value; }
-
-    [ArenaBuffer(Mode = ArenaAllocatorMode.ChunkPaged, InitialCapacity = 0)]
-    public struct MultiChunkPagedB : IArenaBuffer { public int Value; }
-
-    [ArenaBuffer(Mode = ArenaAllocatorMode.ChunkPaged, InitialCapacity = 0)]
-    public struct MultiChunkPagedC : IArenaBuffer { public int Value; }
-
-    [ArenaBuffer(Mode = ArenaAllocatorMode.SharedChunkPaged, InitialCapacity = 0)]
-    public struct MultiSharedA : IArenaBuffer { public int Value; }
-
-    [ArenaBuffer(Mode = ArenaAllocatorMode.SharedChunkPaged, InitialCapacity = 0)]
-    public struct MultiSharedB : IArenaBuffer { public int Value; }
-
-    [ArenaBuffer(Mode = ArenaAllocatorMode.SharedChunkPaged, InitialCapacity = 0)]
-    public struct MultiSharedC : IArenaBuffer { public int Value; }
-
     [InternalBufferCapacity(8)]
     public struct MultiDynamicA : IBufferElementData { public int Value; }
 
@@ -96,8 +78,6 @@ namespace NZCore.Tests.NativeContainers
             _benchmarkSystem = World.CreateSystem<ArenaBenchmarkSystem>();
 
             _pagedQuery = Manager.CreateEntityQuery(ComponentType.ReadWrite<MultiPagedARef>());
-            _chunkPagedQuery = Manager.CreateEntityQuery(ComponentType.ReadWrite<MultiChunkPagedARef>());
-            _sharedQuery = Manager.CreateEntityQuery(ComponentType.ReadWrite<MultiSharedARef>());
             _dynamicQuery = Manager.CreateEntityQuery(ComponentType.ReadWrite<MultiDynamicA>());
 
             _result = new NativeReference<long>(Allocator.Persistent);
@@ -185,88 +165,6 @@ namespace NZCore.Tests.NativeContainers
             return entities;
         }
 
-        private NativeArray<Entity> CreateChunkPagedEntities(int elementsPerEntity)
-        {
-            var entities = new NativeArray<Entity>(EntityCount, Allocator.Persistent);
-
-            for (var i = 0; i < EntityCount; i++)
-            {
-                var entity = Manager.CreateEntity();
-                Manager.AddComponentData(entity, MultiChunkPagedARef.Request(math.max(1, elementsPerEntity)));
-                Manager.AddComponentData(entity, MultiChunkPagedBRef.Request(math.max(1, elementsPerEntity)));
-                Manager.AddComponentData(entity, MultiChunkPagedCRef.Request(math.max(1, elementsPerEntity)));
-                entities[i] = entity;
-            }
-
-            _reserveSystem.Update(World.Unmanaged);
-            World.Unmanaged.ResetUpdateAllocator();
-
-            var a = new MultiChunkPagedALookup(Manager);
-            var b = new MultiChunkPagedBLookup(Manager);
-            var c = new MultiChunkPagedCLookup(Manager);
-            var noise = new Random(0xC0FFEE);
-
-            for (var i = 0; i < EntityCount; i++)
-            {
-                var ba = a[entities[i]];
-                var bb = b[entities[i]];
-                var bc = c[entities[i]];
-
-                for (var e = 0; e < elementsPerEntity; e++)
-                {
-                    ba.Add(new MultiChunkPagedA { Value = e });
-                    bb.Add(new MultiChunkPagedB { Value = e });
-                    bc.Add(new MultiChunkPagedC { Value = e });
-                }
-
-                AllocateHeapNoise(ref noise);
-            }
-
-            Shuffle(entities);
-            return entities;
-        }
-
-        private NativeArray<Entity> CreateSharedEntities(int elementsPerEntity)
-        {
-            var entities = new NativeArray<Entity>(EntityCount, Allocator.Persistent);
-
-            for (var i = 0; i < EntityCount; i++)
-            {
-                var entity = Manager.CreateEntity();
-                Manager.AddComponentData(entity, MultiSharedARef.Request(math.max(1, elementsPerEntity)));
-                Manager.AddComponentData(entity, MultiSharedBRef.Request(math.max(1, elementsPerEntity)));
-                Manager.AddComponentData(entity, MultiSharedCRef.Request(math.max(1, elementsPerEntity)));
-                entities[i] = entity;
-            }
-
-            _reserveSystem.Update(World.Unmanaged);
-            World.Unmanaged.ResetUpdateAllocator();
-
-            var a = new MultiSharedALookup(Manager);
-            var b = new MultiSharedBLookup(Manager);
-            var c = new MultiSharedCLookup(Manager);
-            var noise = new Random(0xC0FFEE);
-
-            for (var i = 0; i < EntityCount; i++)
-            {
-                var ba = a[entities[i]];
-                var bb = b[entities[i]];
-                var bc = c[entities[i]];
-
-                for (var e = 0; e < elementsPerEntity; e++)
-                {
-                    ba.Add(new MultiSharedA { Value = e });
-                    bb.Add(new MultiSharedB { Value = e });
-                    bc.Add(new MultiSharedC { Value = e });
-                }
-
-                AllocateHeapNoise(ref noise);
-            }
-
-            Shuffle(entities);
-            return entities;
-        }
-
         private NativeArray<Entity> CreateDynamicEntities(int elementsPerEntity)
         {
             var entities = new NativeArray<Entity>(EntityCount, Allocator.Persistent);
@@ -329,70 +227,6 @@ namespace NZCore.Tests.NativeContainers
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
                 .SampleGroup(new SampleGroup($"ArenaBuffer.MultiTypeChunkSum_{elementsPerEntity}", SampleUnit.Microsecond))
-                .Run();
-
-            AssertSum(elementsPerEntity);
-            entities.Dispose();
-        }
-
-        [Test]
-        [Performance]
-        public void MultiTypeChunkSum_ChunkPagedArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
-        {
-            var entities = CreateChunkPagedEntities(elementsPerEntity);
-
-            var job = new ChunkPagedMultiSumJob
-            {
-                A = new MultiChunkPagedATypeHandle(ref BenchmarkState, true),
-                B = new MultiChunkPagedBTypeHandle(ref BenchmarkState, true),
-                C = new MultiChunkPagedCTypeHandle(ref BenchmarkState, true),
-                Result = _result
-            };
-
-            Measure
-                .Method(() =>
-                {
-                    _result.Value = 0;
-                    job.A.Update(ref BenchmarkState);
-                    job.B.Update(ref BenchmarkState);
-                    job.C.Update(ref BenchmarkState);
-                    job.Run(_chunkPagedQuery);
-                })
-                .WarmupCount(WarmupCount)
-                .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ChunkPagedArenaBuffer.MultiTypeChunkSum_{elementsPerEntity}", SampleUnit.Microsecond))
-                .Run();
-
-            AssertSum(elementsPerEntity);
-            entities.Dispose();
-        }
-
-        [Test]
-        [Performance]
-        public void MultiTypeChunkSum_SharedArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
-        {
-            var entities = CreateSharedEntities(elementsPerEntity);
-
-            var job = new SharedMultiSumJob
-            {
-                A = new MultiSharedATypeHandle(ref BenchmarkState, true),
-                B = new MultiSharedBTypeHandle(ref BenchmarkState, true),
-                C = new MultiSharedCTypeHandle(ref BenchmarkState, true),
-                Result = _result
-            };
-
-            Measure
-                .Method(() =>
-                {
-                    _result.Value = 0;
-                    job.A.Update(ref BenchmarkState);
-                    job.B.Update(ref BenchmarkState);
-                    job.C.Update(ref BenchmarkState);
-                    job.Run(_sharedQuery);
-                })
-                .WarmupCount(WarmupCount)
-                .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"SharedArenaBuffer.MultiTypeChunkSum_{elementsPerEntity}", SampleUnit.Microsecond))
                 .Run();
 
             AssertSum(elementsPerEntity);
@@ -471,82 +305,6 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void MultiTypeAddChurn_ChunkPagedArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
-        {
-            var entities = CreateChunkPagedEntities(0);
-
-            var job = new ChunkPagedMultiChurnJob
-            {
-                A = new MultiChunkPagedATypeHandle(ref BenchmarkState),
-                B = new MultiChunkPagedBTypeHandle(ref BenchmarkState),
-                C = new MultiChunkPagedCTypeHandle(ref BenchmarkState),
-                ElementCount = elementsPerEntity
-            };
-
-            Measure
-                .Method(() =>
-                {
-                    // Inside the measured region on purpose, and for every mode so the harness stays
-                    // symmetric. For the shared arena this is where ReHomeShared restores the one page per
-                    // chunk layout after buffers have grown out of it; for the others it is a no-op once
-                    // everything is reserved. Warmup absorbs the first re-homes, so the median shows the
-                    // settled state and the max shows what a re-home costs.
-                    _reserveSystem.Update(World.Unmanaged);
-                    World.Unmanaged.ResetUpdateAllocator();
-
-                    job.A.Update(ref BenchmarkState);
-                    job.B.Update(ref BenchmarkState);
-                    job.C.Update(ref BenchmarkState);
-                    job.Run(_chunkPagedQuery);
-                })
-                .WarmupCount(WarmupCount)
-                .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ChunkPagedArenaBuffer.MultiTypeAddChurn_{elementsPerEntity}", SampleUnit.Microsecond))
-                .Run();
-
-            entities.Dispose();
-        }
-
-        [Test]
-        [Performance]
-        public void MultiTypeAddChurn_SharedArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
-        {
-            var entities = CreateSharedEntities(0);
-
-            var job = new SharedMultiChurnJob
-            {
-                A = new MultiSharedATypeHandle(ref BenchmarkState),
-                B = new MultiSharedBTypeHandle(ref BenchmarkState),
-                C = new MultiSharedCTypeHandle(ref BenchmarkState),
-                ElementCount = elementsPerEntity
-            };
-
-            Measure
-                .Method(() =>
-                {
-                    // Inside the measured region on purpose, and for every mode so the harness stays
-                    // symmetric. For the shared arena this is where ReHomeShared restores the one page per
-                    // chunk layout after buffers have grown out of it; for the others it is a no-op once
-                    // everything is reserved. Warmup absorbs the first re-homes, so the median shows the
-                    // settled state and the max shows what a re-home costs.
-                    _reserveSystem.Update(World.Unmanaged);
-                    World.Unmanaged.ResetUpdateAllocator();
-
-                    job.A.Update(ref BenchmarkState);
-                    job.B.Update(ref BenchmarkState);
-                    job.C.Update(ref BenchmarkState);
-                    job.Run(_sharedQuery);
-                })
-                .WarmupCount(WarmupCount)
-                .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"SharedArenaBuffer.MultiTypeAddChurn_{elementsPerEntity}", SampleUnit.Microsecond))
-                .Run();
-
-            entities.Dispose();
-        }
-
-        [Test]
-        [Performance]
         public void MultiTypeAddChurn_DynamicBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
         {
             var entities = CreateDynamicEntities(0);
@@ -589,86 +347,6 @@ namespace NZCore.Tests.NativeContainers
             [ReadOnly] public MultiPagedATypeHandle A;
             [ReadOnly] public MultiPagedBTypeHandle B;
             [ReadOnly] public MultiPagedCTypeHandle C;
-            public NativeReference<long> Result;
-
-            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                var a = A.GetAccessor(chunk);
-                var b = B.GetAccessor(chunk);
-                var c = C.GetAccessor(chunk);
-                long sum = 0;
-
-                for (var i = 0; i < a.Length; i++)
-                {
-                    var ba = a[i];
-                    for (var e = 0; e < ba.Length; e++)
-                    {
-                        sum += ba[e].Value;
-                    }
-
-                    var bb = b[i];
-                    for (var e = 0; e < bb.Length; e++)
-                    {
-                        sum += bb[e].Value;
-                    }
-
-                    var bc = c[i];
-                    for (var e = 0; e < bc.Length; e++)
-                    {
-                        sum += bc[e].Value;
-                    }
-                }
-
-                Result.Value += sum;
-            }
-        }
-
-        [BurstCompile]
-        private struct ChunkPagedMultiSumJob : IJobChunk
-        {
-            [ReadOnly] public MultiChunkPagedATypeHandle A;
-            [ReadOnly] public MultiChunkPagedBTypeHandle B;
-            [ReadOnly] public MultiChunkPagedCTypeHandle C;
-            public NativeReference<long> Result;
-
-            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                var a = A.GetAccessor(chunk);
-                var b = B.GetAccessor(chunk);
-                var c = C.GetAccessor(chunk);
-                long sum = 0;
-
-                for (var i = 0; i < a.Length; i++)
-                {
-                    var ba = a[i];
-                    for (var e = 0; e < ba.Length; e++)
-                    {
-                        sum += ba[e].Value;
-                    }
-
-                    var bb = b[i];
-                    for (var e = 0; e < bb.Length; e++)
-                    {
-                        sum += bb[e].Value;
-                    }
-
-                    var bc = c[i];
-                    for (var e = 0; e < bc.Length; e++)
-                    {
-                        sum += bc[e].Value;
-                    }
-                }
-
-                Result.Value += sum;
-            }
-        }
-
-        [BurstCompile]
-        private struct SharedMultiSumJob : IJobChunk
-        {
-            [ReadOnly] public MultiSharedATypeHandle A;
-            [ReadOnly] public MultiSharedBTypeHandle B;
-            [ReadOnly] public MultiSharedCTypeHandle C;
             public NativeReference<long> Result;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -778,86 +456,6 @@ namespace NZCore.Tests.NativeContainers
                     for (var e = 0; e < ElementCount; e++)
                     {
                         bc.Add(new MultiPagedC { Value = e });
-                    }
-                }
-            }
-        }
-
-        [BurstCompile]
-        private struct ChunkPagedMultiChurnJob : IJobChunk
-        {
-            public MultiChunkPagedATypeHandle A;
-            public MultiChunkPagedBTypeHandle B;
-            public MultiChunkPagedCTypeHandle C;
-            public int ElementCount;
-
-            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                var a = A.GetAccessor(chunk);
-                var b = B.GetAccessor(chunk);
-                var c = C.GetAccessor(chunk);
-
-                for (var i = 0; i < a.Length; i++)
-                {
-                    var ba = a[i];
-                    ba.Clear();
-                    for (var e = 0; e < ElementCount; e++)
-                    {
-                        ba.Add(new MultiChunkPagedA { Value = e });
-                    }
-
-                    var bb = b[i];
-                    bb.Clear();
-                    for (var e = 0; e < ElementCount; e++)
-                    {
-                        bb.Add(new MultiChunkPagedB { Value = e });
-                    }
-
-                    var bc = c[i];
-                    bc.Clear();
-                    for (var e = 0; e < ElementCount; e++)
-                    {
-                        bc.Add(new MultiChunkPagedC { Value = e });
-                    }
-                }
-            }
-        }
-
-        [BurstCompile]
-        private struct SharedMultiChurnJob : IJobChunk
-        {
-            public MultiSharedATypeHandle A;
-            public MultiSharedBTypeHandle B;
-            public MultiSharedCTypeHandle C;
-            public int ElementCount;
-
-            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                var a = A.GetAccessor(chunk);
-                var b = B.GetAccessor(chunk);
-                var c = C.GetAccessor(chunk);
-
-                for (var i = 0; i < a.Length; i++)
-                {
-                    var ba = a[i];
-                    ba.Clear();
-                    for (var e = 0; e < ElementCount; e++)
-                    {
-                        ba.Add(new MultiSharedA { Value = e });
-                    }
-
-                    var bb = b[i];
-                    bb.Clear();
-                    for (var e = 0; e < ElementCount; e++)
-                    {
-                        bb.Add(new MultiSharedB { Value = e });
-                    }
-
-                    var bc = c[i];
-                    bc.Clear();
-                    for (var e = 0; e < ElementCount; e++)
-                    {
-                        bc.Add(new MultiSharedC { Value = e });
                     }
                 }
             }

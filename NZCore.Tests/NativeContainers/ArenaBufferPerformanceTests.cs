@@ -41,7 +41,7 @@ namespace NZCore.Tests.NativeContainers
     [Category("Performance")]
     public unsafe class ArenaBufferPerformanceTests : EcsTestsFixture
     {
-        private const int EntityCount = 5000;
+        private const int EntityCount = 50_000;
         private const int WarmupCount = 5;
         private const int MeasureCount = 20;
 
@@ -79,8 +79,6 @@ namespace NZCore.Tests.NativeContainers
 
             _arenaQuery = Manager.CreateEntityQuery(ComponentType.ReadWrite<ArenaTestElementRef>());
             _contiguousQuery = Manager.CreateEntityQuery(ComponentType.ReadWrite<ContiguousTestElementRef>());
-            _chunkPagedQuery = Manager.CreateEntityQuery(ComponentType.ReadWrite<ChunkPagedTestElementRef>());
-            _sharedQuery = Manager.CreateEntityQuery(ComponentType.ReadWrite<SharedTestElementARef>());
             _dynamicQuery = Manager.CreateEntityQuery(ComponentType.ReadWrite<DynamicTestElement>());
 
             _result = new NativeReference<long>(Allocator.Persistent);
@@ -172,77 +170,6 @@ namespace NZCore.Tests.NativeContainers
             return entities;
         }
 
-        /// <summary>Identical to <see cref="CreateArenaEntities"/>, including the noise sequence.</summary>
-        private NativeArray<Entity> CreateChunkPagedEntities(int elementsPerEntity)
-        {
-            var entities = new NativeArray<Entity>(EntityCount, Allocator.Persistent);
-
-            for (var i = 0; i < EntityCount; i++)
-            {
-                var entity = Manager.CreateEntity();
-                Manager.AddComponentData(entity, ChunkPagedTestElementRef.Request(math.max(1, elementsPerEntity)));
-                entities[i] = entity;
-            }
-
-            _reserveSystem.Update(World.Unmanaged);
-            World.Unmanaged.ResetUpdateAllocator();
-
-            var lookup = new ChunkPagedTestElementLookup(Manager);
-            var noise = new Random(0xC0FFEE);
-
-            for (var i = 0; i < EntityCount; i++)
-            {
-                var buffer = lookup[entities[i]];
-                for (var e = 0; e < elementsPerEntity; e++)
-                {
-                    buffer.Add(new ChunkPagedTestElement { Value = e });
-                }
-
-                AllocateHeapNoise(ref noise);
-            }
-
-            Shuffle(entities);
-            return entities;
-        }
-
-        /// <summary>
-        /// Same shape as the others, except every entity also carries a second shared type. That is the
-        /// arrangement the mode targets, and it is also what makes this benchmark not strictly comparable to
-        /// the single-type ones - the entities here simply hold more data.
-        /// </summary>
-        private NativeArray<Entity> CreateSharedEntities(int elementsPerEntity)
-        {
-            var entities = new NativeArray<Entity>(EntityCount, Allocator.Persistent);
-
-            for (var i = 0; i < EntityCount; i++)
-            {
-                var entity = Manager.CreateEntity();
-                Manager.AddComponentData(entity, SharedTestElementARef.Request(math.max(1, elementsPerEntity)));
-                Manager.AddComponentData(entity, SharedTestElementBRef.Request(math.max(1, elementsPerEntity)));
-                entities[i] = entity;
-            }
-
-            _reserveSystem.Update(World.Unmanaged);
-            World.Unmanaged.ResetUpdateAllocator();
-
-            var lookup = new SharedTestElementALookup(Manager);
-            var noise = new Random(0xC0FFEE);
-
-            for (var i = 0; i < EntityCount; i++)
-            {
-                var buffer = lookup[entities[i]];
-                for (var e = 0; e < elementsPerEntity; e++)
-                {
-                    buffer.Add(new SharedTestElementA { Value = e });
-                }
-
-                AllocateHeapNoise(ref noise);
-            }
-
-            Shuffle(entities);
-            return entities;
-        }
-
         private NativeArray<Entity> CreateDynamicEntities(int elementsPerEntity)
         {
             var entities = new NativeArray<Entity>(EntityCount, Allocator.Persistent);
@@ -299,7 +226,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void ChunkSum_ArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
+        public void ChunkSum_ArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
         {
             var entities = CreateArenaEntities(elementsPerEntity);
 
@@ -327,7 +254,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void ChunkSum_ContiguousArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
+        public void ChunkSum_ContiguousArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
         {
             var entities = CreateContiguousEntities(elementsPerEntity);
 
@@ -355,63 +282,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void ChunkSum_ChunkPagedArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
-        {
-            var entities = CreateChunkPagedEntities(elementsPerEntity);
-
-            var job = new ChunkPagedChunkSumJob
-            {
-                Handle = new ChunkPagedTestElementTypeHandle(ref BenchmarkState, true),
-                Result = _result
-            };
-
-            Measure
-                .Method(() =>
-                {
-                    _result.Value = 0;
-                    job.Handle.Update(ref BenchmarkState);
-                    job.Run(_chunkPagedQuery);
-                })
-                .WarmupCount(WarmupCount)
-                .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ChunkPagedArenaBuffer.ChunkSum_{elementsPerEntity}", SampleUnit.Microsecond))
-                .Run();
-
-            AssertSum(elementsPerEntity);
-            entities.Dispose();
-        }
-
-        [Test]
-        [Performance]
-        public void ChunkSum_SharedArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
-        {
-            var entities = CreateSharedEntities(elementsPerEntity);
-
-            var job = new SharedChunkSumJob
-            {
-                Handle = new SharedTestElementATypeHandle(ref BenchmarkState, true),
-                Result = _result
-            };
-
-            Measure
-                .Method(() =>
-                {
-                    _result.Value = 0;
-                    job.Handle.Update(ref BenchmarkState);
-                    job.Run(_sharedQuery);
-                })
-                .WarmupCount(WarmupCount)
-                .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"SharedArenaBuffer.ChunkSum_{elementsPerEntity}", SampleUnit.Microsecond))
-                .Run();
-
-            AssertSum(elementsPerEntity);
-            entities.Dispose();
-        }
-
-        [Test]
-        [Performance]
-        public void ChunkSum_DynamicBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
+        public void ChunkSum_DynamicBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
         {
             var entities = CreateDynamicEntities(elementsPerEntity);
 
@@ -443,7 +314,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void LookupSum_ArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
+        public void LookupSum_ArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
         {
             var entities = CreateArenaEntities(elementsPerEntity);
 
@@ -473,7 +344,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void LookupSum_ContiguousArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
+        public void LookupSum_ContiguousArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
         {
             var entities = CreateContiguousEntities(elementsPerEntity);
 
@@ -501,43 +372,9 @@ namespace NZCore.Tests.NativeContainers
             entities.Dispose();
         }
 
-        /// <summary>
-        /// Included to show what the mode costs where it cannot help: a lookup has no chunk page to inherit,
-        /// so every resolve takes ChunkPagedArenaBuffer's fallback and this should land on the paged numbers.
-        /// </summary>
         [Test]
         [Performance]
-        public void LookupSum_ChunkPagedArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
-        {
-            var entities = CreateChunkPagedEntities(elementsPerEntity);
-
-            var job = new ChunkPagedLookupSumJob
-            {
-                Entities = entities,
-                Lookup = new ChunkPagedTestElementLookup(ref BenchmarkState, true),
-                Result = _result
-            };
-
-            Measure
-                .Method(() =>
-                {
-                    job.Run();
-                }).SetUp(() =>
-                {
-                    job.Lookup.Update(ref BenchmarkState);
-                })
-                .WarmupCount(WarmupCount)
-                .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ChunkPagedArenaBuffer.LookupSum_{elementsPerEntity}", SampleUnit.Microsecond))
-                .Run();
-
-            AssertSum(elementsPerEntity);
-            entities.Dispose();
-        }
-
-        [Test]
-        [Performance]
-        public void LookupSum_DynamicBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
+        public void LookupSum_DynamicBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
         {
             var entities = CreateDynamicEntities(elementsPerEntity);
 
@@ -571,7 +408,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void AddChurn_ArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
+        public void AddChurn_ArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
         {
             var entities = CreateArenaEntities(0);
 
@@ -597,7 +434,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void AddChurn_ContiguousArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
+        public void AddChurn_ContiguousArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
         {
             var entities = CreateContiguousEntities(0);
 
@@ -623,33 +460,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void AddChurn_ChunkPagedArenaBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
-        {
-            var entities = CreateChunkPagedEntities(0);
-
-            var job = new ChunkPagedChurnJob
-            {
-                Handle = new ChunkPagedTestElementTypeHandle(ref BenchmarkState),
-                ElementCount = elementsPerEntity
-            };
-
-            Measure
-                .Method(() =>
-                {
-                    job.Handle.Update(ref BenchmarkState);
-                    job.Run(_chunkPagedQuery);
-                })
-                .WarmupCount(WarmupCount)
-                .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ChunkPagedArenaBuffer.AddChurn_{elementsPerEntity}", SampleUnit.Microsecond))
-                .Run();
-
-            entities.Dispose();
-        }
-
-        [Test]
-        [Performance]
-        public void AddChurn_DynamicBuffer([Values(4, 64, 128, 256, 512, 1024)] int elementsPerEntity)
+        public void AddChurn_DynamicBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
         {
             var entities = CreateDynamicEntities(0);
 
@@ -712,56 +523,6 @@ namespace NZCore.Tests.NativeContainers
         private struct ContiguousChunkSumJob : IJobChunk
         {
             [ReadOnly] public ContiguousTestElementTypeHandle Handle;
-            public NativeReference<long> Result;
-
-            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                var accessor = Handle.GetAccessor(chunk);
-                long sum = 0;
-
-                for (var i = 0; i < accessor.Length; i++)
-                {
-                    var buffer = accessor[i];
-
-                    for (var e = 0; e < buffer.Length; e++)
-                    {
-                        sum += buffer[e].Value;
-                    }
-                }
-
-                Result.Value += sum;
-            }
-        }
-
-        [BurstCompile]
-        private struct ChunkPagedChunkSumJob : IJobChunk
-        {
-            [ReadOnly] public ChunkPagedTestElementTypeHandle Handle;
-            public NativeReference<long> Result;
-
-            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                var accessor = Handle.GetAccessor(chunk);
-                long sum = 0;
-
-                for (var i = 0; i < accessor.Length; i++)
-                {
-                    var buffer = accessor[i];
-
-                    for (var e = 0; e < buffer.Length; e++)
-                    {
-                        sum += buffer[e].Value;
-                    }
-                }
-
-                Result.Value += sum;
-            }
-        }
-
-        [BurstCompile]
-        private struct SharedChunkSumJob : IJobChunk
-        {
-            [ReadOnly] public SharedTestElementATypeHandle Handle;
             public NativeReference<long> Result;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -859,31 +620,6 @@ namespace NZCore.Tests.NativeContainers
         }
 
         [BurstCompile]
-        private struct ChunkPagedLookupSumJob : IJob
-        {
-            [ReadOnly] public NativeArray<Entity> Entities;
-            [ReadOnly] public ChunkPagedTestElementLookup Lookup;
-            public NativeReference<long> Result;
-
-            public void Execute()
-            {
-                long sum = 0;
-
-                for (var i = 0; i < Entities.Length; i++)
-                {
-                    var buffer = Lookup[Entities[i]];
-
-                    for (var e = 0; e < buffer.Length; e++)
-                    {
-                        sum += buffer[e].Value;
-                    }
-                }
-
-                Result.Value = sum;
-            }
-        }
-
-        [BurstCompile]
         private struct DynamicLookupSumJob : IJob
         {
             [ReadOnly] public NativeArray<Entity> Entities;
@@ -949,29 +685,6 @@ namespace NZCore.Tests.NativeContainers
                     for (var e = 0; e < ElementCount; e++)
                     {
                         buffer.Add(new ContiguousTestElement { Value = e });
-                    }
-                }
-            }
-        }
-
-        [BurstCompile]
-        private struct ChunkPagedChurnJob : IJobChunk
-        {
-            public ChunkPagedTestElementTypeHandle Handle;
-            public int ElementCount;
-
-            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                var accessor = Handle.GetAccessor(chunk);
-
-                for (var i = 0; i < accessor.Length; i++)
-                {
-                    var buffer = accessor[i];
-                    buffer.Clear();
-
-                    for (var e = 0; e < ElementCount; e++)
-                    {
-                        buffer.Add(new ChunkPagedTestElement { Value = e });
                     }
                 }
             }

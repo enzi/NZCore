@@ -63,34 +63,7 @@ namespace NZCore
         /// held across a growth of <b>any</b> buffer of this element type dangles. Handles and the free lists
         /// survive, because both are offsets rather than addresses.
         /// </summary>
-        Contiguous = 1,
-
-        /// <summary>
-        /// Pages again, but one per reserved entity chunk instead of a fixed size. Every buffer in a chunk is
-        /// on the chunk's page, so a chunk accessor resolves the page once and each buffer costs a compare and
-        /// an add - the page table load happens once per chunk rather than once per entity.
-        ///
-        /// A chunk's page uses a single size class, taken from the largest capacity requested in that chunk,
-        /// so buffers that asked for less are padded up to it. Reaching a buffer through a lookup instead of a
-        /// chunk gets no benefit at all, since there is no chunk page to inherit.
-        ///
-        /// Pointer lifetime matches <see cref="Paged"/>: pages never move.
-        /// </summary>
-        ChunkPaged = 2,
-
-        /// <summary>
-        /// <see cref="ChunkPaged"/>, but the page is shared by every element type in this mode rather than
-        /// being per type. A chunk gets one page holding all of its arena buffer types, one contiguous run
-        /// each, so an entity carrying several arena buffers has them within a page of each other.
-        ///
-        /// All types in this mode share a single process wide arena, which is what makes the sharing possible
-        /// without declaring groups. That arena is byte oriented, so a type's element size travels with its
-        /// registration instead of living in the allocator.
-        ///
-        /// Same padding cost as <see cref="ChunkPaged"/>, applied per type: within a chunk, every buffer of a
-        /// given type is padded to the largest capacity requested for that type in that chunk.
-        /// </summary>
-        SharedChunkPaged = 3
+        Contiguous = 1
     }
 
     /// <summary>
