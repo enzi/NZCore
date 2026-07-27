@@ -39,23 +39,13 @@ namespace NZCore
         [NativeDisableUnsafePtrRestriction] [NoAlias]
         private readonly ArenaBufferRefData* _ref;
 
-        // Cache for the append path only. Resolving a handle costs two dependent loads (the page table, then
-        // the page); in an Add loop those cannot be hoisted, because writing Length each iteration may alias
-        // the page table, so caching turns them into one hot load plus a predictable branch.
+        // There is deliberately no cached base pointer here any more. The record holds the block's address
+        // directly, so "resolving" is the load of a field the caller is already touching - there is nothing
+        // left to cache, and a cache would only add a compare and a branch to every access.
         //
-        // Read paths deliberately do NOT use this. GetBasePtr is readonly and pure, which lets Burst hoist
-        // the resolve out of a read loop entirely - measured 2.3x to 4.1x faster than a cached-but-mutating
-        // accessor, because a mutating accessor blocks that hoist.
-        //
-        // Either way the record's handle is the source of truth: a moved block shows up as a mismatch, so a
-        // stale cache cannot survive a reallocation.
-        [NativeDisableUnsafePtrRestriction] [NoAlias]
-        private T* _cachedBase;
-
-        private int _cachedHandle;
-
-        /// <summary>A handle value no record can hold, so the first access always resolves.</summary>
-        private const int NeverResolved = int.MinValue;
+        // This is what the paged mode buys by spending eight bytes on ArenaBufferRefData.Block instead of
+        // four: the earlier packed handle needed two dependent loads (page table, then page) to reach the
+        // elements, which read loops could hoist but Add loops could not.
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         // The handle guarding the component this buffer writes through, obtained from the lookup or type
@@ -67,8 +57,6 @@ namespace NZCore
         {
             _arena = arena;
             _ref = refData;
-            _cachedBase = null;
-            _cachedHandle = NeverResolved;
             m_Safety = safety;
             m_IsReadOnly = (byte)(isReadOnly ? 1 : 0);
         }
@@ -77,8 +65,6 @@ namespace NZCore
         {
             _arena = arena;
             _ref = refData;
-            _cachedBase = null;
-            _cachedHandle = NeverResolved;
         }
 #endif
 
@@ -112,13 +98,13 @@ namespace NZCore
             }
         }
 
-        /// <summary>Packed handle of this buffer's block inside the arena. Diagnostics only.</summary>
-        public int Handle
+        /// <summary>Address of this buffer's block inside the arena. Diagnostics only.</summary>
+        public IntPtr Block
         {
             get
             {
                 CheckReadAccess();
-                return _ref->Handle;
+                return _ref->Block;
             }
         }
 
@@ -387,32 +373,24 @@ namespace NZCore
         }
 
         /// <summary>
-        /// Pure resolve, used by everything except <see cref="Add"/>. Being readonly is the point: it lets
-        /// Burst lift the resolve out of a read loop.
+        /// The block's address, straight out of the record. Both the read and the append paths use this now -
+        /// there is no longer a cheap pure form and an expensive mutating one to keep apart.
+        ///
+        /// An unreserved record returns the all-ones sentinel rather than null, and that is deliberate: it is
+        /// never dereferenced, because an unreserved record has Length zero and every accessor bounds checks
+        /// against Length first. Branching to null here would put a test on the hot path to produce a value
+        /// that is equally invalid.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private readonly T* GetBasePtr()
         {
-            var handle = _ref->Handle;
-
-            // An unreserved record has no page. Length is zero in that state, so callers never dereference
-            // this, but resolving -1 would index the page table out of bounds.
-            return handle == ArenaBufferRefData.Unreserved ? null : (T*)_arena->Resolve(handle);
+            return (T*)_ref->Block;
         }
 
-        /// <summary>Cached resolve for the append path, where the pure form cannot be hoisted.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private T* GetAppendBasePtr()
+        private readonly T* GetAppendBasePtr()
         {
-            var handle = _ref->Handle;
-
-            if (Hint.Unlikely(_cachedHandle != handle))
-            {
-                _cachedHandle = handle;
-                _cachedBase = handle == ArenaBufferRefData.Unreserved ? null : (T*)_arena->Resolve(handle);
-            }
-
-            return _cachedBase;
+            return (T*)_ref->Block;
         }
 
         /// <summary>Supports foreach without going through IEnumerable, which would box in Burst compiled code.</summary>

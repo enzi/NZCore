@@ -43,25 +43,29 @@ namespace NZCore
             }
         }
 
+        /// <summary>
+        /// Releases a block. <paramref name="block"/> is the raw <see cref="ArenaBufferRefData.Block"/> field,
+        /// which the Paged branch reads as an address and every other branch reads as a packed handle.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Free(IntPtr arena, ArenaAllocatorMode mode, int handle, int capacity, int elementSize)
+        public static void Free(IntPtr arena, ArenaAllocatorMode mode, IntPtr block, int capacity, int elementSize)
         {
             if (mode == ArenaAllocatorMode.SharedChunkPaged)
             {
                 // Byte oriented arena: the block size has to be rebuilt from the capacity and element size.
-                ((SharedArenaAllocator*)arena)->Free(handle, SharedArenaAllocator.BlockBytes(capacity, elementSize));
+                ((SharedArenaAllocator*)arena)->Free((int)block, SharedArenaAllocator.BlockBytes(capacity, elementSize));
             }
             else if (mode == ArenaAllocatorMode.Contiguous)
             {
-                ((ContiguousArenaAllocator*)arena)->Free(handle, capacity);
+                ((ContiguousArenaAllocator*)arena)->Free((int)block, capacity);
             }
             else if (mode == ArenaAllocatorMode.ChunkPaged)
             {
-                ((ChunkPagedArenaAllocator*)arena)->Free(handle, capacity);
+                ((ChunkPagedArenaAllocator*)arena)->Free((int)block, capacity);
             }
             else
             {
-                ((ArenaAllocator*)arena)->Free(handle, capacity);
+                ((ArenaAllocator*)arena)->Free((byte*)block, capacity);
             }
         }
 

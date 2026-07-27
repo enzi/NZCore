@@ -17,16 +17,19 @@ namespace NZCore
     ///
     /// Memory comes in fixed size pages. A page is carved into equal blocks of a single power of two size
     /// class, and the free blocks of a class are threaded into a chain that lives <b>inside the free blocks
-    /// themselves</b> - a freed block's first four bytes hold the next free block's handle, so there is no
+    /// themselves</b> - a freed block's first eight bytes hold the next free block's address, so there is no
     /// side table and freeing is a two store push.
     ///
     /// Pages are never moved or reallocated, which is the property the whole design leans on: growing one
     /// buffer can never invalidate another buffer's memory. Only the buffer being grown moves, because it is
     /// copied into a block of the next size class.
     ///
-    /// Blocks are addressed by a packed handle rather than a pointer so the record in chunk memory stays a
-    /// plain 32 bit integer: the high bits index the page table, the low bits are the byte offset into that
-    /// page.
+    /// Because pages never move, blocks are addressed by their <b>address</b> rather than by a packed handle.
+    /// That is what makes reaching a buffer's elements free: the address sits in the record in chunk memory
+    /// that the caller is already reading, so there is no page table load and nothing to decode. The paged
+    /// allocator is the only mode that can do this - the others move blocks, so they must stay on handles.
+    /// The cost is four extra bytes per record, since <see cref="ArenaBufferRefData.Block"/> has to be
+    /// pointer wide.
     /// </summary>
     public unsafe struct ArenaAllocator : IDisposable
     {
@@ -42,25 +45,26 @@ namespace NZCore
 
         public const int PageSizeBytes = 1 << PageShift;
 
-        private const int PageOffsetMask = PageSizeBytes - 1;
-
         /// <summary>
-        /// Keeps every handle positive, so -1 stays available as "unreserved". A handle spends
-        /// <see cref="PageShift"/> bits on the offset, leaving 11 for the page index out of an int's 31.
+        /// Ceiling on the page table, and so on the arena at 1 MB a page. Addressing no longer constrains
+        /// this - blocks are reached by address, not by a handle with a fixed bit budget - so it is now a
+        /// budget check rather than a hard encoding limit, and can be raised if an arena legitimately needs
+        /// more than 2 GB.
         /// </summary>
         public const int MaxPages = 1 << 11;
 
         /// <summary>Power of two size classes, covering blocks of 1 to 2^30 elements.</summary>
         public const int SizeClassCount = 31;
 
-        /// <summary>A free block stores the next handle in its first four bytes, so it cannot be smaller.</summary>
-        private const int MinBlockBytes = 4;
+        /// <summary>A free block stores the next block's address in its first eight bytes, so it cannot be smaller.</summary>
+        private const int MinBlockBytes = 8;
 
         [NativeDisableUnsafePtrRestriction] [NoAlias]
         private byte** _pages;
 
+        /// <summary>Head of each size class's free chain. Null means the class has no free block left.</summary>
         [NativeDisableUnsafePtrRestriction]
-        private int* _freeHeads;
+        private byte** _freeHeads;
 
         private int _pageCount;
         private int _pageTableCapacity;
@@ -101,10 +105,10 @@ namespace NZCore
             arena->_elementSize = elementSize;
             arena->_blockAlign = math.max(alignOf, MinBlockBytes);
 
-            arena->_freeHeads = (int*)Memory.Unmanaged.Allocate(sizeof(int) * SizeClassCount, UnsafeUtility.AlignOf<int>(), Allocator.Persistent);
+            arena->_freeHeads = (byte**)Memory.Unmanaged.Allocate(sizeof(byte*) * SizeClassCount, UnsafeUtility.AlignOf<IntPtr>(), Allocator.Persistent);
             for (var i = 0; i < SizeClassCount; i++)
             {
-                arena->_freeHeads[i] = ArenaBufferRefData.Unreserved;
+                arena->_freeHeads[i] = null;
             }
 
             arena->_pageTableCapacity = 8;
@@ -162,7 +166,7 @@ namespace NZCore
 
             for (var i = 0; i < SizeClassCount; i++)
             {
-                _freeHeads[i] = ArenaBufferRefData.Unreserved;
+                _freeHeads[i] = null;
             }
         }
 
@@ -180,48 +184,42 @@ namespace NZCore
             return math.ceilpow2(math.max(1, elementCount));
         }
 
-        /// <summary>Resolves a block handle to its address. Pages never move, so the result stays valid.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly byte* Resolve(int handle)
-        {
-            return _pages[handle >> PageShift] + (handle & PageOffsetMask);
-        }
-
         /// <summary>
         /// Takes a block able to hold <paramref name="elementCount"/> elements off its size class free list,
         /// carving a new page first if that list is empty. The block's real capacity is
         /// <see cref="RoundCapacity"/> of the requested count.
         /// </summary>
-        public int Allocate(int elementCount)
+        public byte* Allocate(int elementCount)
         {
             var sizeClass = SizeClassOf(elementCount);
             CheckSizeClass(sizeClass);
 
-            if (_freeHeads[sizeClass] == ArenaBufferRefData.Unreserved)
+            if (_freeHeads[sizeClass] == null)
             {
                 CarvePage(sizeClass);
             }
 
-            var handle = _freeHeads[sizeClass];
+            var block = _freeHeads[sizeClass];
 
-            // The free block's own first four bytes are the chain link.
-            _freeHeads[sizeClass] = *(int*)Resolve(handle);
+            // The free block's own first eight bytes are the chain link.
+            _freeHeads[sizeClass] = *(byte**)block;
 
             _liveBlocks++;
             _usedElements += 1 << sizeClass;
 
-            return handle;
+            return block;
         }
 
         /// <summary>
         /// Pushes a block back onto the free list of its size class. <paramref name="capacity"/> must be the
         /// capacity the block was handed out with.
         /// </summary>
-        public void Free(int handle, int capacity)
+        public void Free(byte* block, int capacity)
         {
             // A capacity of zero means no block was ever handed out - freeing it would corrupt the size
-            // class 0 chain and drive the counters negative.
-            if (handle == ArenaBufferRefData.Unreserved || capacity <= 0)
+            // class 0 chain and drive the counters negative. The unreserved sentinel is all-ones rather than
+            // null, so both readings of an empty record have to be rejected here.
+            if (block == null || block == (byte*)ArenaBufferRefData.Unreserved || capacity <= 0)
             {
                 return;
             }
@@ -230,8 +228,8 @@ namespace NZCore
             CheckSizeClass(sizeClass);
             CheckFreedCapacity(capacity);
 
-            *(int*)Resolve(handle) = _freeHeads[sizeClass];
-            _freeHeads[sizeClass] = handle;
+            *(byte**)block = _freeHeads[sizeClass];
+            _freeHeads[sizeClass] = block;
 
             _liveBlocks--;
             _usedElements -= 1 << sizeClass;
@@ -250,20 +248,24 @@ namespace NZCore
                 return;
             }
 
-            var oldHandle = refData.Handle;
+            var oldBlock = (byte*)refData.Block;
             var oldCapacity = refData.Capacity;
+            var wasReserved = refData.IsReserved;
 
-            var newHandle = Allocate(requiredCount);
+            var newBlock = Allocate(requiredCount);
 
-            if (refData.IsReserved && refData.Length > 0)
+            if (wasReserved && refData.Length > 0)
             {
                 var copyCount = math.min(refData.Length, newCapacity);
-                UnsafeUtility.MemCpy(Resolve(newHandle), Resolve(oldHandle), (long)copyCount * _elementSize);
+                UnsafeUtility.MemCpy(newBlock, oldBlock, (long)copyCount * _elementSize);
             }
 
-            Free(oldHandle, oldCapacity);
+            if (wasReserved)
+            {
+                Free(oldBlock, oldCapacity);
+            }
 
-            refData.Handle = newHandle;
+            refData.Block = (IntPtr)newBlock;
             refData.Capacity = newCapacity;
             refData.Length = math.min(refData.Length, newCapacity);
         }
@@ -274,12 +276,12 @@ namespace NZCore
             CheckSizeClass(sizeClass);
 
             var count = 0;
-            var handle = _freeHeads[sizeClass];
+            var block = _freeHeads[sizeClass];
 
-            while (handle != ArenaBufferRefData.Unreserved)
+            while (block != null)
             {
                 count++;
-                handle = *(int*)Resolve(handle);
+                block = *(byte**)block;
             }
 
             return count;
@@ -322,11 +324,10 @@ namespace NZCore
             // consecutive in memory - the locality the arena exists for.
             for (var b = blocks - 1; b >= 0; b--)
             {
-                var byteOffset = b * stride;
-                var handle = (pageIndex << PageShift) | byteOffset;
+                var block = page + b * stride;
 
-                *(int*)(page + byteOffset) = head;
-                head = handle;
+                *(byte**)block = head;
+                head = block;
             }
 
             _freeHeads[sizeClass] = head;

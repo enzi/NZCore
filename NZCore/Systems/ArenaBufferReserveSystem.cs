@@ -774,7 +774,7 @@ namespace NZCore
                         continue;
                     }
 
-                    ArenaBufferDispatch.Free(set.Arena, set.Mode, refData.Handle, refData.Capacity, set.ElementSize);
+                    ArenaBufferDispatch.Free(set.Arena, set.Mode, refData.Block, refData.Capacity, set.ElementSize);
 
                     refData.Handle = ArenaBufferRefData.Unreserved;
                     refData.Length = 0;

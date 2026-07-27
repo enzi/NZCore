@@ -2,6 +2,7 @@
 // Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Unity.Collections;
@@ -291,13 +292,13 @@ namespace NZCore.Tests.NativeContainers
             buffer.Add(new ArenaTestElement { Value = 10 });
             buffer.Add(new ArenaTestElement { Value = 20 });
 
-            var handleBefore = buffer.Handle;
+            var blockBefore = buffer.Block;
             Assert.AreEqual(2, buffer.Capacity);
 
             buffer.Add(new ArenaTestElement { Value = 30 });
 
             var stored = Manager.GetComponentData<ArenaTestElementRef>(entity);
-            Assert.AreNotEqual(handleBefore, stored.Handle, "the grown block lives somewhere else and the component has to say so");
+            Assert.AreNotEqual(blockBefore, stored.Block, "the grown block lives somewhere else and the component has to say so");
             Assert.AreEqual(3, stored.Length);
             Assert.AreEqual(4, stored.Capacity);
 
@@ -346,7 +347,7 @@ namespace NZCore.Tests.NativeContainers
             var first = CreateArenaEntity(8);
             UpdateReserveSystem();
 
-            var reusedHandle = Manager.GetComponentData<ArenaTestElementRef>(first).Handle;
+            var reusedBlock = Manager.GetComponentData<ArenaTestElementRef>(first).Block;
             var pagesAfterFirst = Arena->PageCount;
 
             ReleaseAllAndDestroy(first);
@@ -354,7 +355,7 @@ namespace NZCore.Tests.NativeContainers
             var second = CreateArenaEntity(8);
             UpdateReserveSystem();
 
-            Assert.AreEqual(reusedHandle, Manager.GetComponentData<ArenaTestElementRef>(second).Handle);
+            Assert.AreEqual(reusedBlock, Manager.GetComponentData<ArenaTestElementRef>(second).Block);
             Assert.AreEqual(pagesAfterFirst, Arena->PageCount, "reusing a free block must not carve a new page");
         }
 
@@ -520,22 +521,33 @@ namespace NZCore.Tests.NativeContainers
 
             UpdateReserveSystem();
 
-            // 256 blocks of 8 four byte elements is 8 KB, well inside a single page, so all belong to page 0.
+            // 256 blocks of 8 four byte elements is 8 KB, well inside a single page. Blocks are addresses
+            // now rather than packed handles, so packing is measured as a distance from the lowest block
+            // handed out - which is the page base, since the carve walks the page back to front.
             var stride = Arena->BlockStride(ArenaAllocator.SizeClassOf(capacity));
+            var blocks = new NativeArray<long>(entityCount, Allocator.Temp);
+            var lowest = long.MaxValue;
+
+            for (var i = 0; i < entityCount; i++)
+            {
+                blocks[i] = (long)Manager.GetComponentData<ArenaTestElementRef>(entities[i]).Block;
+                lowest = math.min(lowest, blocks[i]);
+            }
+
             var offsets = new NativeHashSet<int>(entityCount, Allocator.Temp);
             var maxOffset = 0;
 
             for (var i = 0; i < entityCount; i++)
             {
-                var handle = Manager.GetComponentData<ArenaTestElementRef>(entities[i]).Handle;
+                var byteOffset = (int)(blocks[i] - lowest);
 
-                Assert.AreEqual(0, handle >> ArenaAllocator.PageShift, "every block of this size class fits in one page");
-
-                var byteOffset = handle & (ArenaAllocator.PageSizeBytes - 1);
+                Assert.IsTrue(byteOffset >= 0 && byteOffset < ArenaAllocator.PageSizeBytes,
+                    "every block of this size class fits in one page");
                 Assert.IsTrue(offsets.Add(byteOffset), "two entities were handed the same block");
                 maxOffset = math.max(maxOffset, byteOffset);
             }
 
+            blocks.Dispose();
             offsets.Dispose();
             entities.Dispose();
 
@@ -613,10 +625,10 @@ namespace NZCore.Tests.NativeContainers
                 GetBuffer(entities[i]).Add(new ArenaTestElement { Value = i });
             }
 
-            var handlesBefore = new NativeArray<int>(entityCount, Allocator.Temp);
+            var handlesBefore = new NativeArray<IntPtr>(entityCount, Allocator.Temp);
             for (var i = 0; i < entityCount; i++)
             {
-                handlesBefore[i] = GetBuffer(entities[i]).Handle;
+                handlesBefore[i] = GetBuffer(entities[i]).Block;
             }
 
             var pagesBefore = Arena->PageCount;
@@ -628,7 +640,7 @@ namespace NZCore.Tests.NativeContainers
             for (var i = 1; i < entityCount; i++)
             {
                 var buffer = GetBuffer(entities[i]);
-                Assert.AreEqual(handlesBefore[i], buffer.Handle, $"entity {i} block moved, but pages must never be relocated");
+                Assert.AreEqual(handlesBefore[i], buffer.Block, $"entity {i} block moved, but pages must never be relocated");
                 Assert.AreEqual(1, buffer.Length);
                 Assert.AreEqual(i, buffer[0].Value, $"entity {i} lost its data");
             }
