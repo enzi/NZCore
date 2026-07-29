@@ -470,6 +470,22 @@ namespace NZCore
 
                 UnsafeUtility.MemCpy(_list->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
             }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ref T Reserve()
+            {
+                var idx = _list->m_length;
+                if (idx + 1 > _list->Capacity)
+                {
+                    _list->Resize(idx + 1);
+                }
+                else
+                {
+                    _list->m_length += 1;
+                }
+
+                return ref *(_list->Ptr + idx);
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ref UnsafeList<T> GetList() => ref *_list;
