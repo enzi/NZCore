@@ -20,10 +20,10 @@ namespace NZCore
         /// <summary>
         /// Requests an <see cref="ArenaBuffer{T}"/> of <paramref name="capacity"/> elements for the entity.
         ///
-        /// Baking cannot touch arena memory, so this only bakes the request. <c>ArenaBufferReserveSystem</c>
-        /// hands out the actual block at runtime. The capacity is rounded up to a power of two.
+        /// The returned DynamicBuffer is temporary serialized storage. <c>ArenaBufferReserveSystem</c>
+        /// copies it into the arena and removes the staging component at runtime.
         /// </summary>
-        public static void AddArenaBuffer<T>(this IBaker baker, Entity entity, int capacity = 8)
+        public static DynamicBuffer<T> AddArenaBuffer<T>(this IBaker baker, Entity entity, int capacity)
             where T : unmanaged, IArenaBuffer
         {
             if (!ArenaBufferRegistry.TryGetBakerAdder(typeof(T), out var adder))
@@ -33,6 +33,9 @@ namespace NZCore
             }
 
             adder(baker, entity, capacity);
+            var staging = baker.AddBuffer<ArenaBufferStaging<T>>(entity);
+            staging.EnsureCapacity(capacity);
+            return staging.Reinterpret<T>();
         }
     }
 }

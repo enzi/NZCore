@@ -165,6 +165,69 @@ namespace NZCore.Tests.NativeContainers
             Assert.AreEqual(8, GetBuffer(entity).Capacity);
         }
 
+        [Test]
+        public void EntityManagerStaging_IsCopiedAndRemovedWhenReserved()
+        {
+            var entity = Manager.CreateEntity();
+            var staging = Manager.AddArenaBuffer<ArenaTestElement>(entity, 4);
+
+            staging.Add(new ArenaTestElement { Value = 11 });
+            staging.Add(new ArenaTestElement { Value = 22 });
+
+            Assert.IsTrue(Manager.HasBuffer<ArenaBufferStaging<ArenaTestElement>>(entity));
+            Assert.AreEqual(0, Arena->LiveBlocks);
+
+            UpdateReserveSystem();
+
+            Assert.IsFalse(Manager.HasBuffer<ArenaBufferStaging<ArenaTestElement>>(entity));
+
+            var buffer = GetBuffer(entity);
+            Assert.AreEqual(2, buffer.Length);
+            Assert.AreEqual(11, buffer[0].Value);
+            Assert.AreEqual(22, buffer[1].Value);
+        }
+
+        [Test]
+        public void EntityCommandBufferStaging_IsCopiedAfterPlayback()
+        {
+            var entity = Manager.CreateEntity();
+            using var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
+            var staging = commandBuffer.AddArenaBuffer<ArenaTestElement>(entity, 4);
+
+            staging.Add(new ArenaTestElement { Value = 31 });
+            staging.Add(new ArenaTestElement { Value = 42 });
+            commandBuffer.Playback(Manager);
+
+            Assert.IsTrue(Manager.HasBuffer<ArenaBufferStaging<ArenaTestElement>>(entity));
+            Assert.AreEqual(0, Arena->LiveBlocks);
+
+            UpdateReserveSystem();
+
+            Assert.IsFalse(Manager.HasBuffer<ArenaBufferStaging<ArenaTestElement>>(entity));
+
+            var buffer = GetBuffer(entity);
+            Assert.AreEqual(2, buffer.Length);
+            Assert.AreEqual(31, buffer[0].Value);
+            Assert.AreEqual(42, buffer[1].Value);
+        }
+
+        [Test]
+        public void SetArenaBuffer_ReplacesExistingContents()
+        {
+            var entity = Manager.CreateEntity();
+            var initial = Manager.AddArenaBuffer<ArenaTestElement>(entity, 2);
+            initial.Add(new ArenaTestElement { Value = 1 });
+            UpdateReserveSystem();
+
+            var replacement = Manager.SetArenaBuffer<ArenaTestElement>(entity, 2);
+            replacement.Add(new ArenaTestElement { Value = 99 });
+            UpdateReserveSystem();
+
+            var buffer = GetBuffer(entity);
+            Assert.AreEqual(1, buffer.Length);
+            Assert.AreEqual(99, buffer[0].Value);
+        }
+
         // ------------------------------------------------------------------------------------------------
         // Parity with DynamicBuffer
         // ------------------------------------------------------------------------------------------------

@@ -34,6 +34,9 @@ namespace NZCore
     public struct ArenaTypeRegistration
     {
         /// <summary>The generated <c>*Ref</c> component holding the block state.</summary>
+        /// <summary>The temporary DynamicBuffer used by baker and ECB writes.</summary>
+        public TypeIndex StagingTypeIndex;
+
         public TypeIndex RefTypeIndex;
 
         public IntPtr Arena;
@@ -123,6 +126,7 @@ namespace NZCore
         {
             Initialize();
 
+            var stagingTypeIndex = TypeManager.GetTypeIndex<ArenaBufferStaging<TElement>>();
             bakerAdders[typeof(TElement)] = bakerAdd;
 
             var refTypeIndex = TypeManager.GetTypeIndex<TRef>();
@@ -131,8 +135,12 @@ namespace NZCore
             {
                 if ((*registrations)[i].RefTypeIndex == refTypeIndex)
                 {
+                    ArenaBufferStorage<TElement>.RefTypeIndex.Data = refTypeIndex;
                     // Already registered, keep the existing arena so live buffers stay valid.
                     ArenaBufferStorage<TElement>.Arena.Data = (*registrations)[i].Arena;
+
+                    ArenaBufferRefStorage<TRef>.Arena.Data = (*registrations)[i].Arena;
+                    ArenaBufferRefStorage<TRef>.ElementSize.Data = (*registrations)[i].ElementSize;
                     return;
                 }
             }
@@ -152,10 +160,15 @@ namespace NZCore
                     break;
             }
 
+            ArenaBufferStorage<TElement>.RefTypeIndex.Data = refTypeIndex;
             ArenaBufferStorage<TElement>.Arena.Data = arena;
+
+            ArenaBufferRefStorage<TRef>.Arena.Data = arena;
+            ArenaBufferRefStorage<TRef>.ElementSize.Data = elementSize;
 
             registrations->Add(new ArenaTypeRegistration
             {
+                StagingTypeIndex = stagingTypeIndex,
                 RefTypeIndex = refTypeIndex,
                 Arena = arena,
                 Mode = mode,

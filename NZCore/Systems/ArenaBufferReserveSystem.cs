@@ -31,6 +31,9 @@ namespace NZCore
     {
         private struct ArenaQuerySet
         {
+            public EntityQuery StagingQuery;
+            public TypeIndex StagingTypeIndex;
+
             /// <summary>Order version filtered: only chunks that structurally changed can hold new records.</summary>
             public EntityQuery ChangedQuery;
 
@@ -65,7 +68,7 @@ namespace NZCore
 
             _sets = new UnsafeList<ArenaQuerySet>(registrations->Length, Allocator.Persistent);
 
-            var all = new NativeList<ComponentType>(1, Allocator.Temp);
+            var all = new NativeList<ComponentType>(2, Allocator.Temp);
 
             for (var i = 0; i < registrations->Length; i++)
             {
@@ -77,10 +80,24 @@ namespace NZCore
                 var changedQuery = new EntityQueryBuilder(Allocator.Temp).WithAll(ref all).Build(ref state);
                 changedQuery.SetOrderVersionFilter();
 
-                var allQuery = new EntityQueryBuilder(Allocator.Temp).WithAll(ref all).Build(ref state);
+                // Disabled entities are included deliberately. A record that was reserved while enabled keeps
+                // its block after SetEnabled(false), and a default query would not see it - so teardown would
+                // walk past a live block, and the leak check would count the block but not the record holding
+                // it. Prefabs stay excluded: they are never reserved (StagingQuery skips them too), so adding
+                // them would only pad the denominator and mask a real leak.
+                var allQuery = new EntityQueryBuilder(Allocator.Temp)
+                    .WithAll(ref all)
+                    .WithOptions(EntityQueryOptions.IncludeDisabledEntities)
+                    .Build(ref state);
+
+                all.Add(ComponentType.ReadOnly(registration.StagingTypeIndex));
+                var stagingQuery = new EntityQueryBuilder(Allocator.Temp).WithAll(ref all).Build(ref state);
+                all.RemoveAt(1);
 
                 _sets.Add(new ArenaQuerySet
                 {
+                    StagingQuery = stagingQuery,
+                    StagingTypeIndex = registration.StagingTypeIndex,
                     ChangedQuery = changedQuery,
                     AllQuery = allQuery,
                     RefTypeIndex = registration.RefTypeIndex,
@@ -117,12 +134,16 @@ namespace NZCore
             ArenaBufferRegistry.RemoveReserveSystem();
         }
 
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             for (var i = 0; i < _sets.Length; i++)
             {
                 var set = _sets[i];
+
+                if (!set.StagingQuery.IsEmpty)
+                {
+                    InitializeStaged(ref state, ref set);
+                }
 
                 if (!set.ChangedQuery.IsEmpty)
                 {
@@ -131,6 +152,56 @@ namespace NZCore
 
                 CheckForLeakedBlocks(ref set);
             }
+        }
+
+        private static void InitializeStaged(ref SystemState state, ref ArenaQuerySet set)
+        {
+            state.Dependency.Complete();
+
+            var entityManager = state.EntityManager;
+            using var entities = set.StagingQuery.ToEntityArray(Allocator.Temp);
+
+            for (var i = 0; i < entities.Length; i++)
+            {
+                var entity = entities[i];
+                var refData = (ArenaBufferRefData*)entityManager.GetComponentDataRaw(
+                    set.RefTypeIndex,
+                    entity,
+                    false);
+                var staging = (BufferHeaderExposed*)entityManager.GetComponentDataRaw(
+                    set.StagingTypeIndex,
+                    entity,
+                    true);
+
+                var requestedCapacity = Math.Max(refData->Capacity, staging->Capacity);
+
+                // ECB can add an untyped ref component but cannot record its generated Request value.
+                if (refData->Block == IntPtr.Zero && refData->Length == 0 && refData->Capacity == 0)
+                {
+                    refData->Handle = ArenaBufferRefData.Unreserved;
+                }
+
+                ArenaBufferDispatch.Reallocate(
+                    set.Arena,
+                    set.Mode,
+                    ref *refData,
+                    requestedCapacity,
+                    set.ElementSize);
+
+                if (staging->Length > 0)
+                {
+                    UnsafeUtility.MemCpy(
+                        ArenaBufferDispatch.Resolve(set.Arena, set.Mode, *refData),
+                        BufferHeaderExposed.GetElementPointer(staging),
+                        (long)staging->Length * set.ElementSize);
+                }
+
+                refData->Length = staging->Length;
+            }
+
+            entityManager.RemoveComponent(
+                set.StagingQuery,
+                ComponentType.FromTypeIndex(set.StagingTypeIndex));
         }
 
         private void Reserve(ref SystemState state, ref ArenaQuerySet set)

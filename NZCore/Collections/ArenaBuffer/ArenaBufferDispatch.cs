@@ -35,6 +35,14 @@ namespace NZCore
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte* Resolve(IntPtr arena, ArenaAllocatorMode mode, in ArenaBufferRefData refData)
+        {
+            return mode == ArenaAllocatorMode.Contiguous
+                ? ((ContiguousArenaAllocator*)arena)->Resolve(refData.Handle)
+                : (byte*)refData.Block;
+        }
+
         /// <summary>
         /// Releases a block. <paramref name="block"/> is the raw <see cref="ArenaBufferRefData.Block"/> field,
         /// which the Paged branch reads as an address and every other branch reads as a packed handle.
