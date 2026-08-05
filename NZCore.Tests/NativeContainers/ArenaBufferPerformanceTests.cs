@@ -41,6 +41,18 @@ namespace NZCore.Tests.NativeContainers
     [Category("Performance")]
     public unsafe class ArenaBufferPerformanceTests : EcsTestsFixture
     {
+        /// <summary>
+        /// Every benchmark runs both ways. Hot is the old behaviour, where 20 measurements back to back
+        /// leave the buffers resident and the numbers describe a cache that no real frame would hand you.
+        /// Cold evicts before every iteration, which is where a layout difference actually shows up.
+        /// Both states are produced by the same run, the only comparison these benchmarks support.
+        /// </summary>
+        public enum CacheState
+        {
+            Hot,
+            Cold
+        }
+
         private const int EntityCount = 50_000;
         private const int WarmupCount = 5;
         private const int MeasureCount = 20;
@@ -101,6 +113,18 @@ namespace NZCore.Tests.NativeContainers
         }
 
         private ref SystemState BenchmarkState => ref World.Unmanaged.GetExistingSystemState<ArenaBenchmarkSystem>();
+
+        /// <summary>
+        /// Runs in Measure's SetUp, which is outside the measured region, so the eviction itself is not
+        /// part of the sample.
+        /// </summary>
+        private static void ThrashIfCold(CacheState cacheState)
+        {
+            if (cacheState == CacheState.Cold)
+            {
+                CacheThrasher.Thrash();
+            }
+        }
 
         private NativeArray<Entity> CreateArenaEntities(int elementsPerEntity)
         {
@@ -226,7 +250,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void ChunkSum_ArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
+        public void ChunkSum_ArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity, [Values] CacheState cacheState)
         {
             var entities = CreateArenaEntities(elementsPerEntity);
 
@@ -243,9 +267,10 @@ namespace NZCore.Tests.NativeContainers
                     job.Handle.Update(ref BenchmarkState);
                     job.Run(_arenaQuery);
                 })
+                .SetUp(() => ThrashIfCold(cacheState))
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ArenaBuffer.ChunkSum_{elementsPerEntity}", SampleUnit.Microsecond))
+                .SampleGroup(new SampleGroup($"ArenaBuffer.ChunkSum_{elementsPerEntity}_{cacheState}", SampleUnit.Microsecond))
                 .Run();
 
             AssertSum(elementsPerEntity);
@@ -254,7 +279,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void ChunkSum_ContiguousArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
+        public void ChunkSum_ContiguousArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity, [Values] CacheState cacheState)
         {
             var entities = CreateContiguousEntities(elementsPerEntity);
 
@@ -271,9 +296,10 @@ namespace NZCore.Tests.NativeContainers
                     job.Handle.Update(ref BenchmarkState);
                     job.Run(_contiguousQuery);
                 })
+                .SetUp(() => ThrashIfCold(cacheState))
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ContiguousArenaBuffer.ChunkSum_{elementsPerEntity}", SampleUnit.Microsecond))
+                .SampleGroup(new SampleGroup($"ContiguousArenaBuffer.ChunkSum_{elementsPerEntity}_{cacheState}", SampleUnit.Microsecond))
                 .Run();
 
             AssertSum(elementsPerEntity);
@@ -282,7 +308,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void ChunkSum_DynamicBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
+        public void ChunkSum_DynamicBuffer([Values(4, 64, 128, 256)] int elementsPerEntity, [Values] CacheState cacheState)
         {
             var entities = CreateDynamicEntities(elementsPerEntity);
 
@@ -299,9 +325,10 @@ namespace NZCore.Tests.NativeContainers
                     job.Handle.Update(ref BenchmarkState);
                     job.Run(_dynamicQuery);
                 })
+                .SetUp(() => ThrashIfCold(cacheState))
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"DynamicBuffer.ChunkSum_{elementsPerEntity}", SampleUnit.Microsecond))
+                .SampleGroup(new SampleGroup($"DynamicBuffer.ChunkSum_{elementsPerEntity}_{cacheState}", SampleUnit.Microsecond))
                 .Run();
 
             AssertSum(elementsPerEntity);
@@ -314,7 +341,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void LookupSum_ArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
+        public void LookupSum_ArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity, [Values] CacheState cacheState)
         {
             var entities = CreateArenaEntities(elementsPerEntity);
 
@@ -331,11 +358,13 @@ namespace NZCore.Tests.NativeContainers
                     job.Run();
                 }).SetUp(() =>
                 {
+                    // after the handle refresh, so the lookup's own memory is cold as well
                     job.Lookup.Update(ref BenchmarkState);
+                    ThrashIfCold(cacheState);
                 })
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ArenaBuffer.LookupSum_{elementsPerEntity}", SampleUnit.Microsecond))
+                .SampleGroup(new SampleGroup($"ArenaBuffer.LookupSum_{elementsPerEntity}_{cacheState}", SampleUnit.Microsecond))
                 .Run();
 
             AssertSum(elementsPerEntity);
@@ -344,7 +373,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void LookupSum_ContiguousArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
+        public void LookupSum_ContiguousArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity, [Values] CacheState cacheState)
         {
             var entities = CreateContiguousEntities(elementsPerEntity);
 
@@ -362,10 +391,11 @@ namespace NZCore.Tests.NativeContainers
                 }).SetUp(() =>
                 {
                     job.Lookup.Update(ref BenchmarkState);
+                    ThrashIfCold(cacheState);
                 })
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ContiguousArenaBuffer.LookupSum_{elementsPerEntity}", SampleUnit.Microsecond))
+                .SampleGroup(new SampleGroup($"ContiguousArenaBuffer.LookupSum_{elementsPerEntity}_{cacheState}", SampleUnit.Microsecond))
                 .Run();
 
             AssertSum(elementsPerEntity);
@@ -374,7 +404,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void LookupSum_DynamicBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
+        public void LookupSum_DynamicBuffer([Values(4, 64, 128, 256)] int elementsPerEntity, [Values] CacheState cacheState)
         {
             var entities = CreateDynamicEntities(elementsPerEntity);
 
@@ -392,10 +422,11 @@ namespace NZCore.Tests.NativeContainers
                 }).SetUp(() =>
                 {
                     job.Lookup.Update(ref BenchmarkState);
+                    ThrashIfCold(cacheState);
                 })
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"DynamicBuffer.LookupSum_{elementsPerEntity}", SampleUnit.Microsecond))
+                .SampleGroup(new SampleGroup($"DynamicBuffer.LookupSum_{elementsPerEntity}_{cacheState}", SampleUnit.Microsecond))
                 .Run();
 
             AssertSum(elementsPerEntity);
@@ -408,7 +439,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void AddChurn_ArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
+        public void AddChurn_ArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity, [Values] CacheState cacheState)
         {
             var entities = CreateArenaEntities(0);
 
@@ -424,9 +455,10 @@ namespace NZCore.Tests.NativeContainers
                     job.Handle.Update(ref BenchmarkState);
                     job.Run(_arenaQuery);
                 })
+                .SetUp(() => ThrashIfCold(cacheState))
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ArenaBuffer.AddChurn_{elementsPerEntity}", SampleUnit.Microsecond))
+                .SampleGroup(new SampleGroup($"ArenaBuffer.AddChurn_{elementsPerEntity}_{cacheState}", SampleUnit.Microsecond))
                 .Run();
 
             entities.Dispose();
@@ -434,7 +466,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void AddChurn_ContiguousArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
+        public void AddChurn_ContiguousArenaBuffer([Values(4, 64, 128, 256)] int elementsPerEntity, [Values] CacheState cacheState)
         {
             var entities = CreateContiguousEntities(0);
 
@@ -450,9 +482,10 @@ namespace NZCore.Tests.NativeContainers
                     job.Handle.Update(ref BenchmarkState);
                     job.Run(_contiguousQuery);
                 })
+                .SetUp(() => ThrashIfCold(cacheState))
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"ContiguousArenaBuffer.AddChurn_{elementsPerEntity}", SampleUnit.Microsecond))
+                .SampleGroup(new SampleGroup($"ContiguousArenaBuffer.AddChurn_{elementsPerEntity}_{cacheState}", SampleUnit.Microsecond))
                 .Run();
 
             entities.Dispose();
@@ -460,7 +493,7 @@ namespace NZCore.Tests.NativeContainers
 
         [Test]
         [Performance]
-        public void AddChurn_DynamicBuffer([Values(4, 64, 128, 256)] int elementsPerEntity)
+        public void AddChurn_DynamicBuffer([Values(4, 64, 128, 256)] int elementsPerEntity, [Values] CacheState cacheState)
         {
             var entities = CreateDynamicEntities(0);
 
@@ -476,9 +509,10 @@ namespace NZCore.Tests.NativeContainers
                     job.Handle.Update(ref BenchmarkState);
                     job.Run(_dynamicQuery);
                 })
+                .SetUp(() => ThrashIfCold(cacheState))
                 .WarmupCount(WarmupCount)
                 .MeasurementCount(MeasureCount)
-                .SampleGroup(new SampleGroup($"DynamicBuffer.AddChurn_{elementsPerEntity}", SampleUnit.Microsecond))
+                .SampleGroup(new SampleGroup($"DynamicBuffer.AddChurn_{elementsPerEntity}_{cacheState}", SampleUnit.Microsecond))
                 .Run();
 
             entities.Dispose();
