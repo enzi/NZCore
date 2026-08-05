@@ -95,6 +95,38 @@ namespace NZCore
 #endif
         }
 
+        /// <summary>
+        /// The <see cref="ComponentTypeHandle{T}"/> counterpart of
+        /// <see cref="GetBufferAccessor{T}(ArchetypeChunk, ref BufferTypeHandle{T}, bool)"/>, for writes that
+        /// should not bump the change version.
+        ///
+        /// Arena buffers keep their state in a ref component, so a write that only touches the block's
+        /// contents still goes through a component handle and would otherwise mark the ref component changed
+        /// - re-triggering every change filter watching it.
+        /// </summary>
+        public static byte* GetComponentDataPtrRW<T>(this ArchetypeChunk chunk, ref ComponentTypeHandle<T> typeHandle, bool bumpVersion)
+            where T : unmanaged, IComponentData
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            AtomicSafetyHandle.CheckWriteAndThrow(typeHandle.m_Safety);
+#endif
+            var ecs = chunk.m_EntityComponentStore;
+            var archetype = ecs->GetArchetype(chunk.m_Chunk);
+
+            if (Hint.Unlikely(typeHandle.m_LookupCache.Archetype != archetype))
+            {
+                typeHandle.m_LookupCache.Update(archetype, typeHandle.m_TypeIndex);
+            }
+
+            var typeIndexInArchetype = typeHandle.m_LookupCache.IndexInArchetype;
+            if (typeIndexInArchetype == -1)
+            {
+                return null;
+            }
+
+            return GetComponentDataRW(chunk.m_Chunk, archetype, 0, typeIndexInArchetype, typeHandle.GlobalSystemVersion, bumpVersion);
+        }
+
         private static byte* GetComponentDataRW(ChunkIndex chunk, Archetype* archetype, int index, int indexInTypeArray, uint globalSystemVersion,
             bool bumpVersion = true)
         {

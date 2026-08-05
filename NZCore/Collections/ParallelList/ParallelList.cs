@@ -295,6 +295,9 @@ namespace NZCore
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public T* WriteAndReturn(in T value) => _threadWriter.WriteAndReturn(in value);
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ref T Reserve() => ref _threadWriter.Reserve();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void WriteMemCpy(ref T value)
