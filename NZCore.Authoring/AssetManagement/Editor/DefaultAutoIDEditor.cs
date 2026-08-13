@@ -23,7 +23,7 @@ namespace NZCore.Editor
 
             propertyFields["DefaultValue"].TrackPropertyValue(soDefault, (_) => { DefaultAutoIDProcessor.ProcessDefaultAutoIDs(target.GetType()); });
 
-            return root;
+            return new ChangeProcessorEditorElement(target).CreateInspectorGUI(root);
         }
     }
 }

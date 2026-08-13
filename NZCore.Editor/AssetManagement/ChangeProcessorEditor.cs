@@ -6,15 +6,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NZCore.AssetManagement;
-using Unity;
 using UnityEditor;
 using UnityEditor.Compilation;
+using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace NZCore.Editor
 {
-    [CustomEditor(typeof(ChangeProcessorAsset), true)]
+    [CustomEditor(typeof(ScriptableObject), true, isFallback = true)]
     [CanEditMultipleObjects]
     public class ChangeProcessorEditor : UnityEditor.Editor
     {
@@ -23,8 +23,7 @@ namespace NZCore.Editor
             var root = new VisualElement();
             serializedObject.FillDefaultInspector(root, true);
 
-            var element = new ChangeProcessorEditorElement(target);
-            return element.CreateInspectorGUI(root);
+            return new ChangeProcessorEditorElement(target).CreateInspectorGUI(root);
         }
     }
 
@@ -34,114 +33,77 @@ namespace NZCore.Editor
 
         public ChangeProcessorEditorElement(Object target)
         {
-            this._target = target;
+            _target = target;
         }
 
         public VisualElement CreateInspectorGUI(VisualElement root)
         {
-            var targetAsset = (ChangeProcessorAsset)_target;
-            var hasChangesResult = targetAsset.HasChanges(GetChangeProcessorAssets(targetAsset.ProcessGroupType));
+            if (_target is not IChangeProcessor targetAsset)
+            {
+                return root;
+            }
 
+            var hasChangesResult = targetAsset.HasChanges(GetChangeProcessorAssets(targetAsset.ProcessGroupType));
             if (hasChangesResult == HasChangeResult.None)
             {
                 return root;
             }
 
-            var btn = new Button(Click_CodeGen)
+            var changedSuffix = hasChangesResult == HasChangeResult.HasChanges ? " (*)" : string.Empty;
+            root.Add(new Button(() => RunDidChangeOnAssetType(targetAsset))
             {
-                text = $"Update {_target.GetType().Name} settings JSON {(hasChangesResult == HasChangeResult.HasChanges ? "(*)" : "")}"
-            };
-
-            var btn2 = new Button(Click_CodeGenAll)
+                text = $"Update {_target.GetType().Name} settings JSON{changedSuffix}"
+            });
+            root.Add(new Button(Click_CodeGenAll)
             {
-                text = $"Update every JSON setting {(hasChangesResult == HasChangeResult.HasChanges ? "(*)" : "")}"
-            };
-
-            root.Add(btn);
-            root.Add(btn2);
+                text = $"Update every JSON setting{changedSuffix}"
+            });
 
             return root;
         }
 
-        private void Click_CodeGen()
+        private static List<IChangeProcessor> GetChangeProcessorAssets(Type targetType)
         {
-            RunDidChangeOnAssetType((ChangeProcessorAsset)_target);
+            return AssetDatabaseUtility.GetSubAssets(targetType)
+                                       .OfType<IChangeProcessor>()
+                                       .ToList();
         }
 
-        public List<string> GetAssetPaths<T>() => GetAssetPaths(typeof(T).Name);
-
-        public List<string> GetAssetPaths(string targetTypeName) =>
-            AssetDatabase.FindAssets($"t:{targetTypeName}")
-                         .Select(AssetDatabase.GUIDToAssetPath)
-                         .ToList();
-
-        public List<ChangeProcessorAsset> GetChangeProcessorAssets(Type targetType)
-        {
-            var assetPaths = GetAssetPaths(targetType.Name);
-
-            var changeProcessorAssets = new List<ChangeProcessorAsset>();
-
-            foreach (var assetPath in assetPaths)
-            {
-                var asset = AssetDatabase.LoadAssetAtPath(assetPath, targetType);
-
-                if (asset == null || asset is not ChangeProcessorAsset)
-                {
-                    continue;
-                }
-
-                changeProcessorAssets.Add((ChangeProcessorAsset)asset);
-            }
-
-            return changeProcessorAssets;
-        }
-
-        public static void RunDidChangeOnAssetType(ChangeProcessorAsset target)
+        public static void RunDidChangeOnAssetType(IChangeProcessor target)
         {
             var targetType = target.ProcessGroupType;
             Debug.Log($"Updating {targetType.Name} ...");
 
             var assets = AssetDatabaseUtility.GetSubAssets(targetType);
-
-            var allAssets = new List<ChangeProcessorAsset>();
-
-            foreach (var asset in assets)
-            {
-                if (asset == null || asset is not ChangeProcessorAsset changeProcessorAsset)
-                {
-                    continue;
-                }
-
-                allAssets.Add(changeProcessorAsset);
-            }
+            var allAssets = assets.OfType<IChangeProcessor>().ToList();
 
             target.ProcessChanges(allAssets);
 
             CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.None);
         }
 
+        [MenuItem("Tools/Update every JSON setting")]
         public static void Click_CodeGenAll()
         {
-            var assets = AssetDatabaseUtility.GetSubAssets(typeof(ChangeProcessorAsset));
+            var processorTypes = TypeCache.GetTypesDerivedFrom<IChangeProcessor>()
+                                          .Where(t => !t.IsAbstract && typeof(ScriptableObject).IsAssignableFrom(t));
 
-            var collector = new Dictionary<Type, List<ChangeProcessorAsset>>();
+            var assets = processorTypes.SelectMany(AssetDatabaseUtility.GetSubAssets)
+                                       .OfType<IChangeProcessor>()
+                                       .Distinct();
+            var collector = new Dictionary<Type, List<IChangeProcessor>>();
 
             foreach (var asset in assets)
             {
-                if (asset == null || asset is not ChangeProcessorAsset changeProcessorAsset)
-                {
-                    continue;
-                }
-
-                var type = changeProcessorAsset.ProcessGroupType;
+                var type = asset.ProcessGroupType;
 
                 if (!collector.TryGetValue(type, out var list))
                 {
-                    list = new List<ChangeProcessorAsset>();
+                    list = new List<IChangeProcessor>();
                     collector[type] = list;
                 }
 
-                list.Add(changeProcessorAsset);
+                list.Add(asset);
             }
 
             foreach (var entry in collector)
