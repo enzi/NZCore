@@ -187,19 +187,24 @@ namespace NZCore.AssetManagement
 
             var managerGuid = AssetDatabase.FindAssets($"t:{attribute.ManagerType}");
 
-            if (managerGuid.Length == 0)
-            {
-                Debug.LogError($"No manager found for {attribute.ManagerType}");
-                return false;
-            }
-
             if (managerGuid.Length > 1)
             {
                 Debug.LogError($"More than one manager found for {attribute.ManagerType}");
                 return false;
             }
 
-            manager = AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(managerGuid[0]));
+            if (managerGuid.Length == 0)
+            {
+                if (!TryCreateManager(attribute.ManagerType, out manager))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                manager = AssetDatabase.LoadAssetAtPath<ScriptableObject>(AssetDatabase.GUIDToAssetPath(managerGuid[0]));
+            }
+
             if (manager == null)
             {
                 Debug.LogError("Manager wasn't a ScriptableObject");
@@ -218,6 +223,66 @@ namespace NZCore.AssetManagement
             {
                 Debug.LogError($"Property {attribute.ContainerListProperty} was not type of array for {attribute.ManagerType}");
                 return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryCreateManager(string managerTypeName, out ScriptableObject manager)
+        {
+            manager = null;
+            var managerTypes = TypeCache.GetTypesDerivedFrom<ScriptableObject>()
+                                        .Where(type => !type.IsAbstract
+                                                       && typeof(ISettingsDatabase).IsAssignableFrom(type)
+                                                       && (type.Name == managerTypeName || type.FullName == managerTypeName))
+                                        .ToList();
+
+            if (managerTypes.Count != 1)
+            {
+                Debug.LogError(managerTypes.Count == 0
+                    ? $"Manager type {managerTypeName} was not found"
+                    : $"More than one manager type found for {managerTypeName}");
+                return false;
+            }
+
+            var settingsRoot = SettingsOverviewWindow.SettingsRoot?.TrimEnd('/');
+            if (!EnsureFolder(settingsRoot))
+            {
+                return false;
+            }
+
+            var managerType = managerTypes[0];
+            var path = AssetDatabase.GenerateUniqueAssetPath($"{settingsRoot}/{managerType.Name}.asset");
+            manager = ScriptableObject.CreateInstance(managerType);
+            AssetDatabase.CreateAsset(manager, path);
+            Debug.Log($"Created {managerType.Name} at {path}", manager);
+            return true;
+        }
+
+        private static bool EnsureFolder(string path)
+        {
+            if (path == "Assets")
+            {
+                return true;
+            }
+
+            if (string.IsNullOrEmpty(path) || !path.StartsWith("Assets/", StringComparison.Ordinal))
+            {
+                Debug.LogError($"Settings folder must be inside Assets: {path}");
+                return false;
+            }
+
+            var parent = "Assets";
+            foreach (var folder in path.Substring("Assets/".Length).Split('/'))
+            {
+                var current = $"{parent}/{folder}";
+                if (!AssetDatabase.IsValidFolder(current) && string.IsNullOrEmpty(AssetDatabase.CreateFolder(parent, folder)))
+                {
+                    Debug.LogError($"Could not create settings folder: {current}");
+                    return false;
+                }
+
+                parent = current;
             }
 
             return true;
