@@ -18,7 +18,7 @@ namespace NZCore.Editor
     {
         private const string ScriptableObjectDatabaseTypeName = "NZCore.AssetManagement.ScriptableObjectDatabase`1";
 
-        public static string SettingsRoot => WindowSettings.instance.SettingsRoot;
+        public static string SettingsRoot => NZCoreProjectSettings.instance.SettingsRoot;
 
         private readonly Dictionary<Object, Button> _assetButtons = new();
         private readonly Dictionary<string, Button> _typeButtons = new();
@@ -36,20 +36,6 @@ namespace NZCore.Editor
         private ToolbarButton _recompileButton;
         private ToolbarButton _deleteButton;
         private ObjectField _settingsRoot;
-
-        [FilePath("ProjectSettings/NZCoreSettingsOverview.asset", FilePathAttribute.Location.ProjectFolder)]
-        private sealed class WindowSettings : ScriptableSingleton<WindowSettings>
-        {
-            [SerializeField] private string _settingsRoot = "Assets/Settings";
-
-            public string SettingsRoot => _settingsRoot;
-
-            public void SetSettingsRoot(string path)
-            {
-                _settingsRoot = path;
-                Save(true);
-            }
-        }
 
         [MenuItem("Tools/NZCore/Settings", false, 1)]
         public static void Open()
@@ -216,7 +202,7 @@ namespace NZCore.Editor
                 }
             }
 
-            var settingsRoot = WindowSettings.instance.SettingsRoot;
+            var settingsRoot = NZCoreProjectSettings.instance.SettingsRoot;
             if (AssetDatabase.IsValidFolder(settingsRoot))
             {
                 foreach (var guid in AssetDatabase.FindAssets(string.Empty, new[] { settingsRoot }))
@@ -248,7 +234,7 @@ namespace NZCore.Editor
 
         private static void SetSettingsRoot(string path)
         {
-            WindowSettings.instance.SetSettingsRoot(path);
+            NZCoreProjectSettings.instance.SetSettingsRoot(path);
             foreach (var window in Resources.FindObjectsOfTypeAll<SettingsOverviewWindow>())
             {
                 window.Refresh();
