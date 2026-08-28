@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEditor.UIElements;
@@ -14,6 +15,17 @@ using Object = UnityEngine.Object;
 
 namespace NZCore.Editor
 {
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
+    public sealed class SettingsOverviewFolderAttribute : Attribute
+    {
+        public string Folder { get; }
+
+        public SettingsOverviewFolderAttribute(string folder)
+        {
+            Folder = folder;
+        }
+    }
+
     public class SettingsOverviewWindow : EditorWindow
     {
         private const string ScriptableObjectDatabaseTypeName = "NZCore.AssetManagement.ScriptableObjectDatabase`1";
@@ -21,6 +33,7 @@ namespace NZCore.Editor
         public static string SettingsRoot => NZCoreProjectSettings.instance.SettingsRoot;
 
         private readonly Dictionary<Object, Button> _assetButtons = new();
+        private readonly Dictionary<string, Type> _assetTypes = new();
         private readonly Dictionary<string, Button> _typeButtons = new();
         private readonly List<SettingEntry> _settings = new();
 
@@ -184,6 +197,7 @@ namespace NZCore.Editor
 
             _settingsRoot?.SetValueWithoutNotify(AssetDatabase.LoadAssetAtPath<DefaultAsset>(SettingsRoot));
             _settings.Clear();
+            _assetTypes.Clear();
             var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var type in TypeCache.GetTypesDerivedFrom<ScriptableObject>()
                                           .Where(type => !type.IsAbstract && IsScriptableObjectDatabase(type)))
@@ -216,9 +230,25 @@ namespace NZCore.Editor
                     var asset = AssetDatabase.LoadMainAssetAtPath(path);
                     if (asset != null)
                     {
-                        _settings.Add(new SettingEntry(asset, path, settingsRoot));
+                        var setting = new SettingEntry(asset, path, settingsRoot);
+                        if (setting.IsGeneral)
+                        {
+                            _settings.Add(setting);
+                        }
+                        else if (asset.GetType().GetCustomAttribute<SettingsOverviewFolderAttribute>() != null)
+                        {
+                            _settings.Add(setting);
+                            _assetTypes[setting.TypeName] = asset.GetType();
+                        }
                     }
                 }
+            }
+
+            foreach (var type in TypeCache.GetTypesWithAttribute<SettingsOverviewFolderAttribute>()
+                                          .Where(type => !type.IsAbstract
+                                                         && typeof(ScriptableObject).IsAssignableFrom(type)))
+            {
+                _assetTypes[type.AssemblyQualifiedName] = type;
             }
 
             _settings.Sort((left, right) => string.Compare(left.Path, right.Path, StringComparison.OrdinalIgnoreCase));
@@ -246,13 +276,13 @@ namespace NZCore.Editor
             if (!string.IsNullOrEmpty(_selectedTypeName))
             {
                 var typeSettings = GetTypeSettings(_selectedTypeName).ToList();
-                if (typeSettings.Count == 0)
+                if (!_assetTypes.ContainsKey(_selectedTypeName))
                 {
                     _selectedTypeName = null;
                 }
                 else if (typeSettings.All(setting => setting.Asset != _selected))
                 {
-                    _selected = typeSettings[0].Asset;
+                    _selected = typeSettings.FirstOrDefault()?.Asset;
                 }
             }
 
@@ -276,8 +306,18 @@ namespace NZCore.Editor
             else
             {
                 var firstMatch = _settings.FirstOrDefault(setting => MatchesSearch(setting, search));
-                _selected = firstMatch?.Asset;
-                _selectedTypeName = firstMatch != null && !firstMatch.IsGeneral ? firstMatch.TypeName : null;
+                if (firstMatch != null)
+                {
+                    _selected = firstMatch.Asset;
+                    _selectedTypeName = firstMatch.IsGeneral ? null : firstMatch.TypeName;
+                }
+                else
+                {
+                    var type = _assetTypes.Values.FirstOrDefault(candidate => TypeMatchesSearch(candidate,
+                        GetTypeSettings(candidate.AssemblyQualifiedName), search));
+                    _selectedTypeName = type?.AssemblyQualifiedName;
+                    _selected = null;
+                }
             }
 
             RefreshNavigation();
@@ -306,24 +346,46 @@ namespace NZCore.Editor
                 }
             }
 
-            var types = _settings.Where(setting => !setting.IsGeneral)
-                                 .GroupBy(setting => setting.TypeName)
-                                 .Where(group => TypeMatchesSearch(group, search))
-                                 .OrderBy(group => GetTypeDisplayName(group.First().Asset.GetType()),
-                                     StringComparer.OrdinalIgnoreCase)
-                                 .ToList();
+            var types = _assetTypes.Values
+                                   .Select(type => new SettingTypeEntry(type,
+                                       GetTypeSettings(type.AssemblyQualifiedName).ToList()))
+                                   .Where(entry => TypeMatchesSearch(entry.Type, entry.Settings, search))
+                                   .ToList();
             if (types.Count > 0)
             {
                 _navigation.Add(CreateSectionLabel("Asset Types"));
             }
 
-            foreach (var type in types)
+            foreach (var folder in types.GroupBy(entry => entry.FolderPath[0])
+                                        .OrderBy(group => GetFolderOrder(group.Key))
+                                        .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
             {
-                _navigation.Add(CreateTypeButton(type.Key, type.First().Asset.GetType(), type.Count()));
+                _navigation.Add(CreateFolder(folder.Key, folder, 1));
             }
 
             _countLabel.text = _settings.Count.ToString();
             UpdateSelectionStyles();
+        }
+
+        private VisualElement CreateFolder(string name, IEnumerable<SettingTypeEntry> entries, int depth)
+        {
+            var foldout = new Foldout { text = name, value = true };
+            var list = entries.ToList();
+            foreach (var folder in list.Where(entry => entry.FolderPath.Length > depth)
+                                       .GroupBy(entry => entry.FolderPath[depth])
+                                       .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                foldout.Add(CreateFolder(folder.Key, folder, depth + 1));
+            }
+
+            foreach (var entry in list.Where(entry => entry.FolderPath.Length == depth)
+                                      .OrderBy(item => GetTypeDisplayName(item.Type),
+                                          StringComparer.OrdinalIgnoreCase))
+            {
+                foldout.Add(CreateTypeButton(entry.Type.AssemblyQualifiedName, entry.Type, entry.Settings.Count));
+            }
+
+            return foldout;
         }
 
         private Button CreateTypeButton(string typeName, Type type, int count)
@@ -481,20 +543,31 @@ namespace NZCore.Editor
 
         private void ShowType()
         {
+            if (!_assetTypes.TryGetValue(_selectedTypeName, out var type))
+            {
+                return;
+            }
+
             var allSettings = GetTypeSettings(_selectedTypeName).ToList();
-            var visibleSettings = FilterTypeSettings(allSettings).ToList();
+            var visibleSettings = FilterTypeSettings(type, allSettings).ToList();
             if (visibleSettings.Count > 0 && visibleSettings.All(setting => setting.Asset != _selected))
             {
                 _selected = visibleSettings[0].Asset;
             }
 
-            var type = allSettings[0].Asset.GetType();
             var header = CreateHeader(EditorGUIUtility.ObjectContent(null, type).image, GetTypeDisplayName(type), type.FullName);
             header.Add(CreateToolbarButton(CreateSelectedType, "Create", "Toolbar Plus", "Create setting asset"));
             _deleteButton = CreateToolbarButton(DeleteSelected, "Delete", "TreeEditor.Trash", "Move selected asset to trash");
             _deleteButton.SetEnabled(_selected != null);
             header.Add(_deleteButton);
             _inspector.Add(header);
+
+            if (allSettings.Count == 0)
+            {
+                _selected = null;
+                UpdateSelectionStyles();
+                return;
+            }
 
             if (allSettings.Count == 1)
             {
@@ -603,19 +676,23 @@ namespace NZCore.Editor
 
         private void CreateSelectedType()
         {
+            if (!_assetTypes.TryGetValue(_selectedTypeName, out var type))
+            {
+                return;
+            }
+
             var settings = GetTypeSettings(_selectedTypeName).ToList();
             var prototype = settings.FirstOrDefault(setting => setting.Asset == _selected) ?? settings.FirstOrDefault();
-            if (prototype != null)
-            {
-                CreateSetting(prototype);
-            }
+            CreateSetting(type, prototype);
         }
 
-        private void CreateSetting(SettingEntry prototype)
+        private void CreateSetting(Type type, SettingEntry prototype)
         {
-            var type = prototype.Asset.GetType();
-            var directory = System.IO.Path.GetDirectoryName(prototype.Path)?.Replace('\\', '/');
-            var fileName = $"New {ObjectNames.NicifyVariableName(type.Name)}.asset";
+            var directory = prototype == null
+                ? GetOrCreateTypeDirectory(type)
+                : System.IO.Path.GetDirectoryName(prototype.Path)?.Replace('\\', '/');
+            var defaultName = type.GetCustomAttribute<CreateAssetMenuAttribute>()?.fileName;
+            var fileName = $"{(string.IsNullOrEmpty(defaultName) ? $"New {GetTypeDisplayName(type)}" : defaultName)}.asset";
             var path = AssetDatabase.GenerateUniqueAssetPath($"{directory}/{fileName}");
             var asset = CreateInstance(type);
 
@@ -627,6 +704,23 @@ namespace NZCore.Editor
             _search?.SetValueWithoutNotify(string.Empty);
             Refresh();
             EditorGUIUtility.PingObject(asset);
+        }
+
+        private static string GetOrCreateTypeDirectory(Type type)
+        {
+            var folderName = GetTypeDisplayName(type).Replace(" ", string.Empty);
+            if (!folderName.EndsWith("s", StringComparison.OrdinalIgnoreCase))
+            {
+                folderName += "s";
+            }
+
+            var path = $"{SettingsRoot}/{folderName}";
+            if (!AssetDatabase.IsValidFolder(path))
+            {
+                AssetDatabase.CreateFolder(SettingsRoot, folderName);
+            }
+
+            return path;
         }
 
         private void DeleteSelected()
@@ -682,11 +776,11 @@ namespace NZCore.Editor
             return _settings.Where(setting => !setting.IsGeneral && setting.TypeName == typeName);
         }
 
-        private IEnumerable<SettingEntry> FilterTypeSettings(IEnumerable<SettingEntry> settings)
+        private IEnumerable<SettingEntry> FilterTypeSettings(Type type, IEnumerable<SettingEntry> settings)
         {
             var search = _search?.value?.Trim() ?? string.Empty;
             return string.IsNullOrEmpty(search)
-                   || GetTypeDisplayName(_selected.GetType()).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
+                   || GetTypeDisplayName(type).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
                 ? settings
                 : settings.Where(setting => MatchesSearch(setting, search));
         }
@@ -722,12 +816,11 @@ namespace NZCore.Editor
             _recompileButton?.SetEnabled(enabled);
         }
 
-        private static bool TypeMatchesSearch(IEnumerable<SettingEntry> settings, string search)
+        private static bool TypeMatchesSearch(Type type, IEnumerable<SettingEntry> settings, string search)
         {
-            var list = settings as IList<SettingEntry> ?? settings.ToList();
             return string.IsNullOrEmpty(search)
-                   || GetTypeDisplayName(list[0].Asset.GetType()).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
-                   || list.Any(setting => MatchesSearch(setting, search));
+                   || GetTypeDisplayName(type).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
+                   || settings.Any(setting => MatchesSearch(setting, search));
         }
 
         private static bool MatchesSearch(SettingEntry setting, string search) =>
@@ -750,6 +843,14 @@ namespace NZCore.Editor
 
             return ObjectNames.NicifyVariableName(name);
         }
+
+        private static int GetFolderOrder(string folder) => folder switch
+        {
+            "Stat" => 0,
+            "Saving" => 1,
+            "NZSpellCasting" => 2,
+            _ => 3
+        };
 
         private static bool IsScriptableObjectDatabase(Type type)
         {
@@ -820,6 +921,21 @@ namespace NZCore.Editor
                     : string.Join(" / ", directory?.Substring(settingsRoot.Length + 1)
                                                        .Split('/')
                                                        .Select(ObjectNames.NicifyVariableName));
+            }
+        }
+
+        private sealed class SettingTypeEntry
+        {
+            public readonly Type Type;
+            public readonly List<SettingEntry> Settings;
+            public readonly string[] FolderPath;
+
+            public SettingTypeEntry(Type type, List<SettingEntry> settings)
+            {
+                Type = type;
+                Settings = settings;
+                FolderPath = type.GetCustomAttribute<SettingsOverviewFolderAttribute>().Folder
+                                 .Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             }
         }
     }
