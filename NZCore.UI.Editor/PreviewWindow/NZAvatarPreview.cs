@@ -70,6 +70,7 @@ namespace NZCore.UI.Editor
         private const string ReferencePref = "AvatarpreviewShowReference";
         private const string SpeedPref = "AvatarpreviewSpeed";
         private const float TimeControlRectHeight = 20;
+        private const float DefaultCameraFieldOfView = 30.0f;
 
 #endregion
 
@@ -206,7 +207,7 @@ namespace NZCore.UI.Editor
                 {
                     camera =
                     {
-                        fieldOfView = 30.0f,
+                        fieldOfView = DefaultCameraFieldOfView,
                         allowHDR = false,
                         allowMSAA = false
                     },
@@ -694,6 +695,7 @@ namespace NZCore.UI.Editor
         {
             var probe = RenderSettings.ambientProbe;
             PreviewUtility.BeginPreview(previewRect, background);
+            PreviewUtility.camera.fieldOfView = GetPreviewFieldOfView(previewRect);
 
             Quaternion bodyRot;
             Quaternion rootRot;
@@ -799,7 +801,7 @@ namespace NZCore.UI.Editor
                 OnPreviewUpdateMethodInfo.Invoke(previewable, null);
             }
 
-            PreviewUtility.Render(Option != PreviewPopupOptions.DefaultModel);
+            PreviewUtility.Render(Option != PreviewPopupOptions.DefaultModel, false);
             SetPreviewCharacterEnabled(false, false);
 
             // Texture offset - negative in order to compensate the floor movement.
@@ -839,9 +841,15 @@ namespace NZCore.UI.Editor
 
             var clearMode = PreviewUtility.camera.clearFlags;
             PreviewUtility.camera.clearFlags = CameraClearFlags.Nothing;
-            PreviewUtility.Render(false);
+            PreviewUtility.Render(false, false);
             PreviewUtility.camera.clearFlags = clearMode;
             RenderTexture.ReleaseTemporary(shadowMap);
+        }
+
+        private static float GetPreviewFieldOfView(Rect previewRect)
+        {
+            var viewMultiplier = previewRect.width <= 0 ? 1.0f : Mathf.Max(1.0f, previewRect.height / previewRect.width);
+            return Mathf.Atan(viewMultiplier * Mathf.Tan(DefaultCameraFieldOfView * 0.5f * Mathf.Deg2Rad)) * Mathf.Rad2Deg * 2.0f;
         }
 
         private RenderTexture RenderPreviewShadowmap(Light light, float scale, Vector3 center, Vector3 floorPos, out Matrix4x4 outShadowMatrix)

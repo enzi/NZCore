@@ -81,17 +81,15 @@ namespace NZCore.Editor.AssetManagement
 
             var data = newDataList[0];
 
-            var attribute = data.AssetType.GetCustomAttributeRecursive<PackagePathAttribute>(out _);
-            var cscAttribute = data.AssetType.GetCustomAttributeRecursive<CscPathAttribute>(out _);
+            var attribute = data.AssetType.GetCustomAttributeRecursive<SourceGeneratorAttribute>(out _);
 
             if (attribute != null)
             {
-                var path = attribute.AddUniqueSettingsPath ? $"{attribute.Path}/{CompilerServiceUtility.GetUniqueSettingsPath()}" : attribute.Path;
-                CompilerServiceUtility.WriteJson(data, data.StructName, path, cscAttribute != null ? cscAttribute.Path : new[] { attribute.Path });
+                CompilerServiceUtility.WriteAdditionalFileJson(data, data.StructName, attribute.AssemblyName);
             }
             else
             {
-                Debug.LogError("IDefaultAutoID also requires a DefaultAutoIDPath attribute!");
+                Debug.LogError("IDefaultAutoID also requires a SourceGenerator attribute!");
             }
         }
 

@@ -62,7 +62,7 @@ namespace NZCore.Editor
             return new SettingsProvider("Project/NZCore", SettingsScope.Project)
             {
                 label = "NZCore",
-                keywords = new HashSet<string> { "NZCore", "Settings", "Folder" },
+                keywords = new HashSet<string> { "NZCore", "Settings", "Generated", "Folder" },
                 guiHandler = _ =>
                 {
                     var current = AssetDatabase.LoadAssetAtPath<DefaultAsset>(SettingsRoot);
@@ -71,9 +71,23 @@ namespace NZCore.Editor
                     if (EditorGUI.EndChangeCheck())
                     {
                         var path = AssetDatabase.GetAssetPath(selected);
-                        if (IsValidSettingsRoot(path))
+                        if (IsValidProjectFolder(path))
                         {
                             SetSettingsRoot(path);
+                        }
+                    }
+
+                    var generatedFilesRoot = NZCoreProjectSettings.instance.GeneratedFilesRoot;
+                    current = AssetDatabase.LoadAssetAtPath<DefaultAsset>(generatedFilesRoot);
+                    EditorGUI.BeginChangeCheck();
+                    selected = (DefaultAsset)EditorGUILayout.ObjectField("Generated Files Folder", current,
+                        typeof(DefaultAsset), false);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        var path = AssetDatabase.GetAssetPath(selected);
+                        if (IsValidProjectFolder(path))
+                        {
+                            NZCoreProjectSettings.instance.SetGeneratedFilesRoot(path);
                         }
                     }
                 }
@@ -133,7 +147,7 @@ namespace NZCore.Editor
             _settingsRoot.RegisterValueChangedCallback(change =>
             {
                 var path = AssetDatabase.GetAssetPath(change.newValue);
-                if (!IsValidSettingsRoot(path))
+                if (!IsValidProjectFolder(path))
                 {
                     _settingsRoot.SetValueWithoutNotify(change.previousValue);
                     return;
@@ -258,7 +272,7 @@ namespace NZCore.Editor
             UpdateActionState();
         }
 
-        private static bool IsValidSettingsRoot(string path) =>
+        private static bool IsValidProjectFolder(string path) =>
             AssetDatabase.IsValidFolder(path)
             && (path == "Assets" || path.StartsWith("Assets/", StringComparison.Ordinal));
 
