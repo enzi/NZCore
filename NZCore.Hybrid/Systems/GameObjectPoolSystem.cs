@@ -100,7 +100,13 @@ namespace NZCore.Hybrid
                 }
             }
 
-            foreach (var obj in Object.FindObjectsByType<GameObjectPrefabID>(FindObjectsSortMode.None))
+#if UNITY_6000_6_OR_NEWER
+            var tmp = Object.FindObjectsByType<GameObjectPrefabID>();
+#else
+            var tmp = Object.FindObjectsByType<GameObjectPrefabID>(FindObjectsSortMode.None);
+#endif
+
+            foreach (var obj in tmp)
             {
                 Object.Destroy(obj.gameObject);
 

@@ -40,7 +40,7 @@ namespace NZCore.Editor
             var context = SearchService.CreateContext(new SearchProvider[]
             {
                 provider
-            }, "type:", SearchFlags.Sorted | SearchFlags.Multiselect);
+            }, "type:", SearchFlags.Multiselect);
 
             var state = new SearchViewState(context)
             {

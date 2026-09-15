@@ -72,6 +72,7 @@ namespace NZCore
             query.Dispose();
         }
 
+#if !UNITY_6000_6_OR_NEWER
         public static T GetSingletonManaged<T>(this EntityManager entityManager)
             where T : class, IComponentData
         {
@@ -86,6 +87,7 @@ namespace NZCore
 
             return comp;
         }
+#endif
 
         public static DynamicBuffer<T> GetSingletonBuffer<T>(this EntityManager entityManager)
             where T : unmanaged, IBufferElementData
@@ -147,8 +149,7 @@ namespace NZCore
                 ? ChunkDataUtility.GetOptionalComponentDataWithTypeRO(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk,
                     typeIndex, ref lookupCache)
                 : ChunkDataUtility.GetOptionalComponentDataWithTypeRW(entityInChunk.Chunk, ecs->GetArchetype(entityInChunk.Chunk), entityInChunk.IndexInChunk,
-                    typeIndex, ecs->GlobalSystemVersion,
-                    ref lookupCache);
+                    typeIndex, ecs->GlobalSystemVersion, ref lookupCache);
         }
 
         public static byte* GetBufferPtr(this EntityManager entityManager, Entity entity, ComponentType componentType, bool isReadOnly = false)
@@ -242,7 +243,7 @@ namespace NZCore
         public static void AddSharedComponentData(this EntityManager entityManager, TypeIndex typeIndex, NativeArray<Entity> entities, void* ptrToData,
             void* ptrToDefaultData)
         {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
+#if (ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG) && !UNITY_6000_6_OR_NEWER
             if (TypeManager.IsManagedType(typeIndex))
             {
                 throw new ArgumentException(
@@ -253,10 +254,7 @@ namespace NZCore
             var changes = access->BeginStructuralChanges();
             var componentType = ComponentType.ReadWrite(typeIndex);
 
-            access->AddSharedComponentDataDuringStructuralChange_Unmanaged(entities,
-                componentType,
-                ptrToData,
-                ptrToDefaultData);
+            access->AddSharedComponentDataDuringStructuralChange_Unmanaged(entities, componentType, ptrToData, ptrToDefaultData);
             access->EndStructuralChanges(ref changes);
         }
 

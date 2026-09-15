@@ -74,7 +74,6 @@ namespace NZCore.UIToolkit
             var em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
             var entity = em.CreateEntity();
-            em.AddComponentObject(entity, uiAssets);
             em.AddComponent<UIAssetsLoaded>(entity);
 
             // todo, enable UI component group to reduce RequireForUpdate
