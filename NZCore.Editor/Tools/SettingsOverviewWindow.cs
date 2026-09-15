@@ -214,18 +214,17 @@ namespace NZCore.Editor
             _assetTypes.Clear();
             var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var type in TypeCache.GetTypesDerivedFrom<ScriptableObject>()
-                                          .Where(type => !type.IsAbstract && IsScriptableObjectDatabase(type)))
+                                          .Where(type => !type.IsAbstract && (IsScriptableObjectDatabase(type) || type.GetCustomAttribute<SettingsOverviewFolderAttribute>() != null)))
             {
-                var filter = type.Namespace == null ? type.Name : $"{type.Namespace}.{type.Name}";
-                foreach (var guid in AssetDatabase.FindAssets($"t:{filter}"))
+                var isGeneral = IsScriptableObjectDatabase(type);
+                foreach (var guid in AssetDatabase.FindAssets($"t:{type.Name}"))
                 {
                     var path = AssetDatabase.GUIDToAssetPath(guid);
                     var asset = AssetDatabase.LoadAssetAtPath(path, type);
 
-                    if (asset != null && asset.GetType() == type)
+                    if (asset != null && asset.GetType() == type && paths.Add(path))
                     {
-                        paths.Add(path);
-                        _settings.Add(new SettingEntry(asset, path, true));
+                        _settings.Add(new SettingEntry(asset, path, isGeneral));
                     }
                 }
             }
