@@ -75,7 +75,7 @@ namespace NZCore.Hybrid
         /// </summary>
         /// <returns>Returns parented bool</returns>
         public bool AddTransform(
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_3_OR_NEWER
             EntityId entityId,
 #else
             int instanceId,
@@ -99,7 +99,7 @@ namespace NZCore.Hybrid
 
                 return true;
             }
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_3_OR_NEWER
             TransformArray.Add(entityId);
 #else
             TransformArray.Add(instanceId);
