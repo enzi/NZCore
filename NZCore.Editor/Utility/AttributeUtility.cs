@@ -36,11 +36,7 @@ namespace NZCore.Editor
         public static List<TypeWithAttribute<T>> FindAttributes<T>()
             where T : Attribute
         {
-#if UNITY_6000_4_OR_NEWER
-            var assemblies = CurrentAssemblies.GetLoadedAssemblies()
-#else
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-#endif
+            var assemblies = AssemblyUtility.GetLoadedAssemblies();
 
             var list = new List<TypeWithAttribute<T>>();
 

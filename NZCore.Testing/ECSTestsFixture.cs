@@ -48,7 +48,7 @@ namespace NZCore
             _jobsDebuggerWasEnabled = JobsUtility.JobDebuggerEnabled;
             JobsUtility.JobDebuggerEnabled = true;
 
-#if (UNITY_INCLUDE_INSTRUMENTATION || (!UNITY_6000_6_OR_NEWER && (UNITY_EDITOR || DEBUG))) && !DISABLE_ENTITIES_JOURNALING
+#if UNITY_EDITOR && !UNITY_6000_6_OR_NEWER && !DISABLE_ENTITIES_JOURNALING
             // In case entities journaling is initialized, clear it
             EntitiesJournaling.Clear();
 #endif
