@@ -125,7 +125,7 @@ namespace NZCore.Editor
                     });
                 }
 
-#if UNITY_6000_3
+#if UNITY_6000_3_OR_NEWER
                 menu.DropDown(inputContainer.worldBound, inputContainer, DropdownMenuSizeMode.Auto);
 #else
                 menu.DropDown(inputContainer.worldBound, inputContainer, true);
