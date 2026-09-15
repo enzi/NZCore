@@ -29,7 +29,8 @@ namespace NZCore.Hybrid
         Sphere,
         Capsule,
         Box,
-        Circle
+        Circle,
+        Cylinder
     }
 
     public class DeferredGizmo

@@ -235,8 +235,22 @@ namespace NZCore.UI.Editor
                         GizmosUtility.DrawWireCapsule(deferredGizmo.Position, deferredGizmo.Position + point2, deferredGizmo.Size.x * deferredGizmo.Scale.x);
                         break;
                     case GizmoType.Box:
-                        Handles.DrawWireCube(deferredGizmo.Position, deferredGizmo.Size);
+                        using (new Handles.DrawingScope(Matrix4x4.TRS(deferredGizmo.Position, deferredGizmo.Rotation, deferredGizmo.Scale)))
+                            Handles.DrawWireCube(Vector3.zero, deferredGizmo.Size);
                         break;
+                    case GizmoType.Cylinder:
+                    {
+                        using var scope = new Handles.DrawingScope(Matrix4x4.TRS(deferredGizmo.Position, deferredGizmo.Rotation, deferredGizmo.Scale));
+                        var top = Vector3.up * (deferredGizmo.Size.y * 0.5f);
+                        var radius = deferredGizmo.Size.x;
+                        Handles.DrawWireDisc(top, Vector3.up, radius);
+                        Handles.DrawWireDisc(-top, Vector3.up, radius);
+                        Handles.DrawLine(top + Vector3.right * radius, -top + Vector3.right * radius);
+                        Handles.DrawLine(top - Vector3.right * radius, -top - Vector3.right * radius);
+                        Handles.DrawLine(top + Vector3.forward * radius, -top + Vector3.forward * radius);
+                        Handles.DrawLine(top - Vector3.forward * radius, -top - Vector3.forward * radius);
+                        break;
+                    }
                     case GizmoType.Circle:
                     {
                         Handles.DrawWireDisc(deferredGizmo.Position, Vector3.up, deferredGizmo.Size.x, 1.0f);
