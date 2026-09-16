@@ -12,6 +12,9 @@ namespace NZCore.UI
     /// <summary>
     /// Manipulator which monitors Press, Hold and Release events in order to drag visuals.
     /// </summary>
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     public class Draggable : Pressable
     {
         private static readonly PropertyInfo IsHandledByDraggablePropertyInfo = typeof(PointerMoveEvent)

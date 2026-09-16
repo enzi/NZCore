@@ -11,18 +11,18 @@ namespace NZCore
 {
     public static class CompilerServiceUtility
     {
-        public static bool CheckForAdditionalFileJsonChanges(object assets, string fileName,
-            string sourceGeneratorAssemblyName)
+        public static bool CheckForAdditionalFileJsonChanges(object assets, string fileName, string sourceGeneratorAssemblyName,
+            Formatting formatting = Formatting.Indented)
         {
-            var tuple = GetAdditionalFileJson(assets, fileName, sourceGeneratorAssemblyName);
+            var tuple = GetAdditionalFileJson(assets, fileName, sourceGeneratorAssemblyName, formatting);
 
             return FileUtility.CheckForChanges(tuple.resolvedPath, tuple.content);
         }
 
-        public static void WriteAdditionalFileJson(object assets, string fileName,
-            string sourceGeneratorAssemblyName)
+        public static void WriteAdditionalFileJson(object assets, string fileName, string sourceGeneratorAssemblyName,
+            Formatting formatting = Formatting.Indented)
         {
-            var tuple = GetAdditionalFileJson(assets, fileName, sourceGeneratorAssemblyName);
+            var tuple = GetAdditionalFileJson(assets, fileName, sourceGeneratorAssemblyName, formatting);
             if (FileUtility.WriteChanges(tuple.resolvedPath, tuple.content))
             {
                 AssetDatabase.ImportAsset(GetProjectRelativePath(tuple.resolvedPath), ImportAssetOptions.ForceUpdate);
@@ -43,25 +43,20 @@ namespace NZCore
             File.Delete($"{resolvedPath}.meta");
         }
 
-        public static string GetAdditionalFilePath(string fileName, string sourceGeneratorAssemblyName)
-        {
-            return Path.Combine(GetProjectPath(), NZCore.Editor.NZCoreProjectSettings.instance.GeneratedFilesRoot,
-                    $"{fileName}.{sourceGeneratorAssemblyName}.additionalfile")
-                .Replace(Path.DirectorySeparatorChar, '/');
-        }
+        public static string GetAdditionalFilePath(string fileName, string sourceGeneratorAssemblyName) =>
+            Path.Combine(GetProjectPath(), Editor.NZCoreProjectSettings.instance.GeneratedFilesRoot,
+                $"{fileName}.{sourceGeneratorAssemblyName}.additionalfile").Replace(Path.DirectorySeparatorChar, '/');
 
-        private static (string resolvedPath, string content) GetAdditionalFileJson(object assets, string fileName,
-            string sourceGeneratorAssemblyName)
+        private static (string resolvedPath, string content) GetAdditionalFileJson(object assets, string fileName, string sourceGeneratorAssemblyName,
+            Formatting formatting)
         {
-            var json = JsonConvert.SerializeObject(assets, Formatting.Indented);
+            var json = JsonConvert.SerializeObject(assets, formatting);
             return (GetAdditionalFilePath(fileName, sourceGeneratorAssemblyName), json);
         }
 
-        private static string GetProjectRelativePath(string resolvedPath)
-        {
-            return resolvedPath.Substring(GetProjectPath().TrimEnd(Path.DirectorySeparatorChar).Length + 1)
-                .Replace(Path.DirectorySeparatorChar, '/');
-        }
+        private static string GetProjectRelativePath(string resolvedPath) => resolvedPath
+                                                                             .Substring(GetProjectPath().TrimEnd(Path.DirectorySeparatorChar).Length + 1)
+                                                                             .Replace(Path.DirectorySeparatorChar, '/');
 
         public static string GetProjectPath()
         {

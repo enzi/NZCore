@@ -426,6 +426,9 @@ public class SpatialHashTests
         public void Dispose() => Value.Dispose();
     }
 
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     private sealed class Float3Comparer : IEqualityComparer<float3>
     {
         public static readonly Float3Comparer Instance = new();

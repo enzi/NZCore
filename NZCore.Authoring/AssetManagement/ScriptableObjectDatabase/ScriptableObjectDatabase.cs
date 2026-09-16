@@ -29,7 +29,10 @@ namespace NZCore.AssetManagement
         public void BakeDatabase(IBaker baker, Entity entity);
     }
 
-    public abstract class ScriptableObjectDatabase<T> : ScriptableObject, ISettingsBaker, ISettingsDatabase
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.AutoStaticsCleanup]
+#endif
+    public abstract partial class ScriptableObjectDatabase<T> : ScriptableObject, ISettingsBaker, ISettingsDatabase
         where T : ScriptableObject, ISettingsBaker
     {
         private static T instance;

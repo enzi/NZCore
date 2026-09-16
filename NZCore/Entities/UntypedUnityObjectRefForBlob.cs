@@ -60,7 +60,9 @@ namespace NZCore
                 return null;
             }
 
+#pragma warning disable CS0618 // Type or member is obsolete
             return (T)Resources.InstanceIDToObject(unityObjectRef.Id.instanceId);
+#pragma warning restore CS0618 // Type or member is obsolete
 #endif
         }
 
@@ -79,7 +81,9 @@ namespace NZCore
 #else
         public bool Equals(UnityObjectRefForBlob<T> other) => Id.instanceId == other.Id.instanceId;
         public override int GetHashCode() => Id.instanceId.GetHashCode();
+#pragma warning disable CS0618 // Type or member is obsolete
         public bool IsValid() => Resources.InstanceIDIsValid(Id.instanceId);
+#pragma warning restore CS0618 // Type or member is obsolete
 #endif
 
         public override bool Equals(object obj) => obj is UnityObjectRefForBlob<T> other && Equals(other);

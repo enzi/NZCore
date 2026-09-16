@@ -14,6 +14,9 @@ namespace NZCore.UIToolkit
     /// This class adds this functionality by calling UpdateLabelWidth
     /// on the root of the VisualElement and providing the Label where the width should be updated
     /// </summary>
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     public class LabelWidthUpdater
     {
         private const float Epsilon = 1E-30f;

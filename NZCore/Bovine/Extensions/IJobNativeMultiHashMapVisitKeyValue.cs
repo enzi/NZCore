@@ -66,6 +66,9 @@ namespace NZCore
         /// <typeparam name="TJob"> The type of the job. </typeparam>
         /// <typeparam name="TKey"> The type of the key in the hash map. </typeparam>
         /// <typeparam name="TValue"> The type of the value in the hash map. </typeparam>
+#if UNITY_6000_5_OR_NEWER
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
         internal struct JobNativeMultiHashMapVisitKeyValueProducer<TJob, TKey, TValue>
             where TJob : struct, IJobNativeMultiHashMapVisitKeyValue<TKey, TValue>
             where TKey : unmanaged, IEquatable<TKey>

@@ -13,6 +13,9 @@ namespace NZCore.Editor
     /// <br />
     /// Usage: style.cursor = UnityDefaultCursor.DefaultCursor(UnityDefaultCursor.CursorType.ResizeHorizontal);
     /// </summary>
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     public static class EditorMouseCursor
     {
         public enum CursorType

@@ -18,6 +18,9 @@ namespace NZCore.UI
             SharedStatic<FunctionPointer<NotifyDelegate>>.GetOrCreate<FunctionPointer<NotifyDelegate>>();
     }
     
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     internal static class BurstUIInterop
     {
         public static readonly Dictionary<IntPtr, IViewModelBindingNotify> Objects = new();

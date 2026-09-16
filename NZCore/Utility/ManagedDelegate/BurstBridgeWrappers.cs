@@ -8,6 +8,9 @@ using AOT;
 
 namespace NZCore
 {
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     internal static unsafe class BurstBridgeWrappers
     {
         // parameterless

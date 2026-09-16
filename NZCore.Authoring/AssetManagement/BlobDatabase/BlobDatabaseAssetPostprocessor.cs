@@ -12,6 +12,9 @@ namespace NZCore.Authoring
     /// Handles triggering ScriptableObjectDatabaseBaker via bumping the version.
     /// Only happens for created/deleted assets
     /// </summary>
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     public class BlobDatabaseAssetPostprocessor : AssetPostprocessor
     {
         private static bool pendingUpdate;

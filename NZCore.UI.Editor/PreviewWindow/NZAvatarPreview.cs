@@ -12,6 +12,9 @@ using Object = UnityEngine.Object;
 
 namespace NZCore.UI.Editor
 {
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     public class NZAvatarPreview
     {
 #region Reflection Access

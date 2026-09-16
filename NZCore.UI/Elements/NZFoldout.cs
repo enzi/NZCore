@@ -11,6 +11,9 @@ namespace NZCore.UI
 #if ENABLE_UXML_SERIALIZED_DATA
     [UxmlElement]
 #endif
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     public partial class NZFoldout : VisualElement
     {
 #if ENABLE_RUNTIME_DATA_BINDINGS

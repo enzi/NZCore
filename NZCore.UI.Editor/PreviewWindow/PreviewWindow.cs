@@ -18,6 +18,9 @@ using Object = UnityEngine.Object;
 namespace NZCore.UI.Editor
 {
     [UxmlElement]
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     public partial class PreviewWindow : VisualElement
     {
         private class PersistentData

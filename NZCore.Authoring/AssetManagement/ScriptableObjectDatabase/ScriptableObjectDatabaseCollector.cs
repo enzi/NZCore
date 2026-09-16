@@ -8,6 +8,9 @@ using UnityEditor;
 
 namespace NZCore.AssetManagement
 {
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     public static class ScriptableObjectDatabaseCollector
     {
         public static Type[] BlobConverters;

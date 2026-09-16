@@ -15,6 +15,9 @@ using UnityEngine;
 
 namespace NZCore
 {
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     public static unsafe class StableTypeManager
     {
         private static bool initialized;

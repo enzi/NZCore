@@ -11,7 +11,10 @@ using UnityEngine;
 
 namespace NZCore.Settings
 {
-    public static class SettingsUtility
+#if UNITY_6000_5_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.AutoStaticsCleanup]
+#endif
+    public static partial class SettingsUtility
     {
         private static readonly Dictionary<Type, ISettingsBaker> CachedSettings = new();
 
