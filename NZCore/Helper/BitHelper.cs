@@ -4,9 +4,9 @@
 
 using System.Runtime.CompilerServices;
 using Unity.Burst.Intrinsics;
-using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using Bitwise = NZCore.Internal.Bitwise;
 
 namespace NZCore.Helper
 {

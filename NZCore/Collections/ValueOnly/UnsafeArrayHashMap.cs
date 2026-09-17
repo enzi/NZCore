@@ -6,6 +6,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -350,7 +351,7 @@ namespace NZCore
         {
             if (bucketsAndNextList->IsCreated)
             {
-                UnsafeList<int>.Destroy(bucketsAndNextList, ref m_Allocator);
+                CollectionInternals.DestroyList(bucketsAndNextList, ref m_Allocator);
             }
         }
     }

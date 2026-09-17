@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -17,7 +18,7 @@ namespace NZCore
         {
             newCapacity = math.max(0, newCapacity);
 
-            CollectionHelper.CheckAllocator(list.Allocator);
+            CollectionInternals.CheckAllocator(list.Allocator);
             T* newPointer = null;
 
             var alignOf = UnsafeUtility.AlignOf<T>();
@@ -35,7 +36,7 @@ namespace NZCore
                 }
             }
 
-            list.Allocator.Free(list.Ptr, list.Capacity);
+            AllocatorManager.Free(list.Allocator, list.Ptr, list.Capacity);
 
             list.Ptr = newPointer;
             list.m_capacity = newCapacity;

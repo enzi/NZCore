@@ -8,6 +8,7 @@ using NZCore.Helper;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Memory = NZCore.Internal.CollectionMemory;
 
 namespace NZCore
 {

@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
@@ -47,10 +48,10 @@ namespace NZCore
             *currentRef = 0;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            CollectionHelper.CheckAllocator(allocator.Handle);
+            CollectionInternals.CheckAllocator(allocator.Handle);
 
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.Handle);
-            CollectionHelper.InitNativeContainer<T>(m_Safety);
+            CollectionInternals.InitNativeContainer<T>(m_Safety);
             CollectionHelper.SetStaticSafetyId<NativeWorkQueue<T>>(ref m_Safety, ref s_staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif

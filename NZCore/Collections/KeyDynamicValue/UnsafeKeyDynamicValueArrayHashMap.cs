@@ -5,6 +5,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -43,7 +44,7 @@ namespace NZCore
             NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
-            var unsafeArrayHashMap = allocator.Allocate(default(UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>), 1);
+            var unsafeArrayHashMap = CollectionInternals.Allocate(ref allocator, default(UnsafeKeyDynamicValueArrayHashMap<TKey, TKeyInterpreter>), 1);
 
             unsafeArrayHashMap->m_Allocator = allocator.Handle;
 
@@ -223,8 +224,8 @@ namespace NZCore
 
         public void Dispose()
         {
-            UnsafeList<DynamicValueIndexer>.Destroy(next, ref m_Allocator);
-            UnsafeList<DynamicValueIndexer>.Destroy(buckets, ref m_Allocator);
+            CollectionInternals.DestroyList(next, ref m_Allocator);
+            CollectionInternals.DestroyList(buckets, ref m_Allocator);
         }
     }
 

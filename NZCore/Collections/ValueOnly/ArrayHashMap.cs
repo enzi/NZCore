@@ -183,16 +183,16 @@ namespace NZCore
             this._target = target;
         }
 
-        public List<Pair<TKey, TValue>> Items
+        public List<KeyValuePair<TKey, TValue>> Items
         {
             get
             {
-                var result = new List<Pair<TKey, TValue>>();
+                var result = new List<KeyValuePair<TKey, TValue>>();
 
                 using var kva = _target.GetKeyValueArrays(Allocator.Temp);
                 for (var i = 0; i < kva.Length; ++i)
                 {
-                    result.Add(new Pair<TKey, TValue>(kva.Keys[i], kva.Values[i]));
+                    result.Add(new KeyValuePair<TKey, TValue>(kva.Keys[i], kva.Values[i]));
                 }
 
                 return result;

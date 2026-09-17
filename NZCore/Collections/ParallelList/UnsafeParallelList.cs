@@ -4,12 +4,14 @@
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
+using Memory = NZCore.Internal.CollectionMemory;
 
 namespace NZCore
 {
@@ -34,7 +36,7 @@ namespace NZCore
         internal static UnsafeParallelList<T>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
-            var unsafeParallelList = allocator.Allocate(default(UnsafeParallelList<T>), 1);
+            var unsafeParallelList = CollectionInternals.Allocate(ref allocator, default(UnsafeParallelList<T>), 1);
 
             unsafeParallelList->allocator = allocator.Handle;
 
@@ -173,8 +175,8 @@ namespace NZCore
 
         public NativeArray<int> GetStartIndexArray(ref SystemState state)
         {
-            var lengths = new NativeArray<int>();
-            lengths.Initialize(JobsUtility.ThreadIndexCount, state.WorldUpdateAllocator, NativeArrayOptions.UninitializedMemory);
+            var lengths = CollectionHelper.CreateNativeArray<int>(JobsUtility.ThreadIndexCount, state.WorldUpdateAllocator,
+                NativeArrayOptions.UninitializedMemory);
 
             var count = 0;
             for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)

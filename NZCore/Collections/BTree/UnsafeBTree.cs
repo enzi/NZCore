@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Collections;
 
 namespace NZCore.NativeContainers.BTree
@@ -26,8 +27,8 @@ namespace NZCore.NativeContainers.BTree
                 throw new ArgumentException($"BTree degree must be at least 2 not {degree}");
             }
 
-            var unsafeBTree = allocator.Allocate(default(UnsafeBTree<TKey, TValue>), 1);
-
+            var unsafeBTree = CollectionInternals.Allocate(ref allocator, default(UnsafeBTree<TKey, TValue>), 1);
+            
             unsafeBTree->_allocator = allocator.Handle;
             unsafeBTree->Root = new BTreeNode<TKey, TValue>(degree);
             unsafeBTree->Degree = degree;

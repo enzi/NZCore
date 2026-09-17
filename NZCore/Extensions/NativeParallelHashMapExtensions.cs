@@ -3,8 +3,10 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using UnsafeParallelHashMapData = NZCore.Internal.UnsafeParallelHashMapData;
 
 namespace NZCore
 {
@@ -13,10 +15,10 @@ namespace NZCore
         public static unsafe bool TryGetRefValue<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> hashMap, TKey key, out void* valuePtr)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged =>
-            TryGetFirstRefValueAtomic<TKey, TValue>(hashMap.m_HashMapData.m_Buffer, key, out valuePtr, out _);
+            TryGetFirstRefValueAtomic<TKey, TValue>(hashMap.GetData(), key, out valuePtr, out _);
 
         internal static unsafe bool TryGetFirstRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, TKey key, out void* valuePtr,
-            out NativeParallelMultiHashMapIterator<TKey> it)
+            out Internal.NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
@@ -37,7 +39,7 @@ namespace NZCore
         }
 
         internal static unsafe bool TryGetNextRefValueAtomic<TKey, TValue>(UnsafeParallelHashMapData* data, out void* valuePtr,
-            ref NativeParallelMultiHashMapIterator<TKey> it)
+            ref Internal.NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
@@ -73,7 +75,7 @@ namespace NZCore
             TKey key)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged =>
-            TryPeekFirstRefValue(hashmap.m_HashMapData.m_Buffer, key);
+            TryPeekFirstRefValue(hashmap.GetData(), key);
 
         private static unsafe bool TryPeekFirstRefValue<TKey>(
             UnsafeParallelHashMapData* data,

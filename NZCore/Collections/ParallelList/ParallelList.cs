@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -48,16 +49,16 @@ namespace NZCore
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             var totalSize = sizeof(T) * (long)initialCapacity;
-            CollectionHelper.CheckAllocator(allocator.Handle);
+            CollectionInternals.CheckAllocator(allocator.Handle);
             CheckInitialCapacity(initialCapacity);
             CheckTotalSize(initialCapacity, totalSize);
 
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.Handle);
-            CollectionHelper.InitNativeContainer<T>(m_Safety);
+            CollectionInternals.InitNativeContainer<T>(m_Safety);
 
             CollectionHelper.SetStaticSafetyId<ParallelList<T>>(ref m_Safety, ref s_staticSafetyId.Data);
 
-            m_SafetyIndexHint = allocator.Handle.AddSafetyHandle(m_Safety);
+            m_SafetyIndexHint = CollectionInternals.AddSafetyHandle(allocator.Handle, m_Safety);
 
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
@@ -351,7 +352,7 @@ namespace NZCore
             new UnsafeParallelListToArraySingleThreaded
             {
                 ParallelList = _unsafeParallelList,
-                List = nativeList.m_ListData
+                List = nativeList.GetData()
             }.Schedule(dependency);
 
         public JobHandle CopyToArraySingleAndIndex<TKey>(
@@ -457,7 +458,7 @@ namespace NZCore
 
                 List.ResizeUninitialized(newLength);
                 ArrayHashMap.SetCapacity(newLength);
-                var listPtr = (byte*)List.m_ListData->Ptr;
+                var listPtr = (byte*)List.GetData()->Ptr;
 
                 //Debug.Log($"Copying {parallelListLength} elements");
 
@@ -502,7 +503,7 @@ namespace NZCore
 
                 List.ResizeUninitialized(newLength);
 
-                var listPtr = (byte*)List.m_ListData->Ptr;
+                var listPtr = (byte*)List.GetData()->Ptr;
 
                 //Debug.Log($"Copying {parallelListLength} elements");
 
@@ -635,7 +636,7 @@ namespace NZCore
 
                 var sizeOf = sizeof(T);
 
-                var newLength = Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+                var newLength = Interlocked.Add(ref List.GetData()->m_length, threadListLength);
                 void* dst = List.GetUnsafePtr() + (newLength - threadListLength);
                 UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
             }
@@ -655,7 +656,7 @@ namespace NZCore
                 var parallelListCount = ParallelList.Length;
                 List.SetCapacity(List.Length + parallelListCount);
                 ArrayHashMap.SetCapacity(List.Length + parallelListCount);
-                ArrayHashMap.SetValuesPtr((byte*)List.m_ListData->Ptr);
+                ArrayHashMap.SetValuesPtr((byte*)List.GetData()->Ptr);
             }
         }
 
@@ -676,10 +677,10 @@ namespace NZCore
                 List.SetCapacity(List.Length + parallelListCount);
 
                 ArrayHashMap.SetCapacity(List.Length + parallelListCount);
-                ArrayHashMap.SetValuesPtr((byte*)List.m_ListData->Ptr);
+                ArrayHashMap.SetValuesPtr((byte*)List.GetData()->Ptr);
 
                 ArrayHashMap2.SetCapacity(List.Length + parallelListCount);
-                ArrayHashMap2.SetValuesPtr((byte*)List.m_ListData->Ptr);
+                ArrayHashMap2.SetValuesPtr((byte*)List.GetData()->Ptr);
             }
         }
 
@@ -707,7 +708,7 @@ namespace NZCore
                 }
 
                 var sizeOf = sizeof(T);
-                var newLength = Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+                var newLength = Interlocked.Add(ref List.GetData()->m_length, threadListLength);
                 void* dst = List.GetUnsafePtr() + (newLength - threadListLength);
                 UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
 
@@ -745,7 +746,7 @@ namespace NZCore
                 }
 
                 var sizeOf = UnsafeUtility.SizeOf<T>();
-                var newLength = Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+                var newLength = Interlocked.Add(ref List.GetData()->m_length, threadListLength);
                 void* dst = List.GetUnsafePtr() + (newLength - threadListLength);
                 UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
 

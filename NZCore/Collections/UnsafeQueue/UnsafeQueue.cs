@@ -6,11 +6,13 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
+using Memory = NZCore.Internal.CollectionMemory;
 
 namespace NZCore
 {
@@ -262,7 +264,7 @@ namespace NZCore
         /// <param name="allocator">The allocator to use.</param>
         public UnsafeQueue(AllocatorManager.AllocatorHandle allocator)
         {
-            CollectionHelper.CheckIsUnmanaged<T>();
+            CollectionInternals.CheckIsUnmanaged<T>();
 
             m_QueuePool = UnsafeQueueBlockPool.GetQueueBlockPool();
             m_AllocatorLabel = allocator;

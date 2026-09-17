@@ -10,6 +10,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
+using Memory = NZCore.Internal.CollectionMemory;
 
 namespace NZCore
 {

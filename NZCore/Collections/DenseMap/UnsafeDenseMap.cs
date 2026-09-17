@@ -5,6 +5,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using NZCore.Helper;
+using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -12,6 +13,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
+using Memory = NZCore.Internal.CollectionMemory;
 
 namespace NZCore.NativeContainers.DenseMap
 {
@@ -99,7 +101,7 @@ namespace NZCore.NativeContainers.DenseMap
 
         public static UnsafeDenseMap<TKey, TValue>* Create(uint length, double loadFactor, AllocatorManager.AllocatorHandle allocator)
         {
-            var map = allocator.Allocate(default(UnsafeDenseMap<TKey, TValue>), 1);
+            var map = CollectionInternals.Allocate(ref allocator, default(UnsafeDenseMap<TKey, TValue>), 1);
             *map = new UnsafeDenseMap<TKey, TValue>(length, loadFactor, allocator);
             return map;
         }

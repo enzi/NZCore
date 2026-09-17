@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -15,11 +16,11 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            var idx = hashMap.m_Data->Find(key);
+            var idx = hashMap.GetData()->Find(key);
 
             if (-1 != idx)
             {
-                item = (TValue*)(hashMap.m_Data->Ptr + UnsafeUtility.SizeOf<TValue>() * idx);
+                item = (TValue*)hashMap.GetData()->Ptr + idx;
                 return true;
             }
 
@@ -32,8 +33,8 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            hashMap.m_Data->Count = newLength;
-            hashMap.m_Data->AllocatedIndex = newLength;
+            hashMap.GetData()->Count = newLength;
+            hashMap.GetData()->AllocatedIndex = newLength;
         }
 
         public static unsafe void RecalculateBuckets<TKey, TValue>(
@@ -42,14 +43,14 @@ namespace NZCore
             where TValue : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckWriteAndThrow(hashMap.m_Safety);
+            AtomicSafetyHandle.CheckWriteAndThrow(hashMap.GetSafety());
 #endif
             var length = hashMap.Count;
 
-            var buckets = hashMap.m_Data->Buckets;
-            var nextPtrs = hashMap.m_Data->Next;
-            var keys = hashMap.m_Data->Keys;
-            var bucketCapacityMask = hashMap.m_Data->BucketCapacity - 1;
+            var buckets = hashMap.GetData()->Buckets;
+            var nextPtrs = hashMap.GetData()->Next;
+            var keys = hashMap.GetData()->Keys;
+            var bucketCapacityMask = hashMap.GetData()->BucketCapacity - 1;
 
             for (var idx = 0; idx < length; idx++)
             {

@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Memory = NZCore.Internal.CollectionMemory;
 
 namespace NZCore
 {

@@ -2,6 +2,7 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using NZCore.Internal;
 using Unity.Collections;
 
 namespace NZCore
@@ -10,6 +11,6 @@ namespace NZCore
     {
         public static T* GetPtr<T>(this FixedList4096Bytes<T> fixedList)
             where T : unmanaged =>
-            (T*)fixedList.Buffer;
+            fixedList.GetBuffer();
     }
 }

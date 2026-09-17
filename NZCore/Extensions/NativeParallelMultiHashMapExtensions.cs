@@ -5,9 +5,11 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using UnsafeParallelHashMapData = NZCore.Internal.UnsafeParallelHashMapData;
 
 namespace NZCore
 {
@@ -18,7 +20,7 @@ namespace NZCore
             TKey key)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged =>
-            TryPeekFirstRefValue(hashmap.m_MultiHashMapData.m_Buffer, key);
+            TryPeekFirstRefValue(hashmap.GetData(), key);
 
         private static unsafe bool TryPeekFirstRefValue<TKey>(UnsafeParallelHashMapData* data, TKey key)
             where TKey : unmanaged, IEquatable<TKey>
@@ -61,9 +63,9 @@ namespace NZCore
             where TValue : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckWriteAndThrow(hashMap.m_Safety);
+            AtomicSafetyHandle.CheckWriteAndThrow(hashMap.GetSafety());
 #endif
-            var length = hashMap.m_MultiHashMapData.m_Buffer->allocatedIndexLength;
+            var length = hashMap.GetData()->allocatedIndexLength;
 
             var data = hashMap.GetUnsafeBucketData();
             var buckets = (int*)data.buckets;
@@ -94,7 +96,7 @@ namespace NZCore
                 buckets[bucket] = idx;
             }
 
-            hashMap.m_MultiHashMapData.m_Buffer->allocatedIndexLength = keys.Length;
+            hashMap.GetData()->allocatedIndexLength = keys.Length;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -116,7 +118,7 @@ namespace NZCore
             [NoAlias] TValue* values,
             int length) where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged
         {
-            hashMap.m_Writer.m_Buffer->AddBatchUnsafeParallel(keys, values, length);
+            hashMap.GetData()->AddBatchUnsafeParallel(keys, values, length);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -168,7 +170,7 @@ namespace NZCore
             where TValue : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckWriteAndThrow(hashMap.m_Safety);
+            AtomicSafetyHandle.CheckWriteAndThrow(hashMap.GetSafety());
 #endif
 
             var oldLength = hashMap.Count();
@@ -197,14 +199,14 @@ namespace NZCore
                 buckets[bucket] = oldLength + idx;
             }
 
-            hashMap.m_MultiHashMapData.m_Buffer->allocatedIndexLength += length;
+            hashMap.GetData()->allocatedIndexLength += length;
         }
 
         public static unsafe void SetAllocatedIndexLength<TKey, TValue>([NoAlias] this NativeParallelMultiHashMap<TKey, TValue> hashMap, int length)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            hashMap.m_MultiHashMapData.m_Buffer->allocatedIndexLength = length;
+            hashMap.GetData()->allocatedIndexLength = length;
         }
 
         public static RefEnumerator<TKey, TValue> GetRefValuesForKey<TKey, TValue>(
@@ -214,7 +216,7 @@ namespace NZCore
             where TValue : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(hashmap.m_Safety);
+            AtomicSafetyHandle.CheckReadAndThrow(hashmap.GetSafety());
 #endif
             return new RefEnumerator<TKey, TValue>(hashmap, key);
         }
@@ -224,7 +226,7 @@ namespace NZCore
             where TValue : unmanaged
         {
             private readonly NativeParallelMultiHashMap<TKey, TValue> _hashmap;
-            private NativeParallelMultiHashMapIterator<TKey> _iterator;
+            private Internal.NativeParallelMultiHashMapIterator<TKey> _iterator;
             private byte* _value;
             private bool _isFirst;
 
@@ -232,7 +234,7 @@ namespace NZCore
             {
                 _isFirst = true;
                 _hashmap = hashmap;
-                _iterator = new NativeParallelMultiHashMapIterator<TKey>
+                _iterator = new Internal.NativeParallelMultiHashMapIterator<TKey>
                 {
                     key = key,
                     EntryIndex = -1,
@@ -249,10 +251,10 @@ namespace NZCore
                 if (_isFirst)
                 {
                     _isFirst = false;
-                    return TryGetFirstRefValue<TKey, TValue>(_hashmap.m_MultiHashMapData.m_Buffer, out _value, ref _iterator);
+                    return TryGetFirstRefValue<TKey, TValue>(_hashmap.GetData(), out _value, ref _iterator);
                 }
 
-                return TryGetNextRefValue<TKey, TValue>(_hashmap.m_MultiHashMapData.m_Buffer, out _value, ref _iterator);
+                return TryGetNextRefValue<TKey, TValue>(_hashmap.GetData(), out _value, ref _iterator);
             }
 
             public void Reset() => _isFirst = true;
@@ -260,7 +262,7 @@ namespace NZCore
         }
 
         private static unsafe bool TryGetFirstRefValue<TKey, TValue>(UnsafeParallelHashMapData* data, out byte* itemPtr,
-            ref NativeParallelMultiHashMapIterator<TKey> it)
+            ref Internal.NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
@@ -279,7 +281,7 @@ namespace NZCore
         }
 
         private static unsafe bool TryGetNextRefValue<TKey, TValue>(UnsafeParallelHashMapData* data, out byte* itemPtr,
-            ref NativeParallelMultiHashMapIterator<TKey> it)
+            ref Internal.NativeParallelMultiHashMapIterator<TKey> it)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {

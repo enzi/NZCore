@@ -3,9 +3,11 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
+using Memory = NZCore.Internal.CollectionMemory;
 
 namespace NZCore
 {
@@ -15,11 +17,12 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            var idx = hashMap.m_Data.Find(key);
+            ref var data = ref hashMap.GetData();
+            var idx = data.Find(key);
 
             if (-1 != idx)
             {
-                item = (TValue*)(hashMap.m_Data.Ptr + UnsafeUtility.SizeOf<TValue>() * idx);
+                item = (TValue*)(data.Ptr + UnsafeUtility.SizeOf<TValue>() * idx);
                 return true;
             }
 
@@ -31,21 +34,21 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            Serialize(unsafeHashMap.m_Data, ref serializer);
+            Serialize(unsafeHashMap.GetData(), ref serializer);
         }
 
         public static void Serialize(this UnsafeHashMap<byte, byte> unsafeHashMap, ref ByteSerializer serializer, int sizeOfTKey)
         {
-            Serialize(unsafeHashMap.m_Data, ref serializer, sizeOfTKey);
+            Serialize(unsafeHashMap.GetData(), ref serializer, sizeOfTKey);
         }
 
-        private static void Serialize<TKey>(HashMapHelper<TKey> hashMap, ref ByteSerializer serializer)
+        private static void Serialize<TKey>(Internal.HashMapHelper<TKey> hashMap, ref ByteSerializer serializer)
             where TKey : unmanaged, IEquatable<TKey>
         {
-            Serialize(UnsafeUtility.As<HashMapHelper<TKey>, HashMapHelper<byte>>(ref hashMap), ref serializer, UnsafeUtility.SizeOf<TKey>());
+            Serialize(UnsafeUtility.As<Internal.HashMapHelper<TKey>, Internal.HashMapHelper<byte>>(ref hashMap), ref serializer, UnsafeUtility.SizeOf<TKey>());
         }
 
-        private static unsafe void Serialize(HashMapHelper<byte> hashMap, ref ByteSerializer serializer, int sizeOfTKey)
+        private static unsafe void Serialize(Internal.HashMapHelper<byte> hashMap, ref ByteSerializer serializer, int sizeOfTKey)
         {
             serializer.AddNoResize(hashMap.Count);
 
@@ -71,26 +74,26 @@ namespace NZCore
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            Deserialize(ref unsafeHashMap.m_Data, ref deserializer, allocator);
+            Deserialize(ref unsafeHashMap.GetData(), ref deserializer, allocator);
         }
 
         public static void Deserialize(this ref UnsafeHashMap<byte, byte> unsafeHashMap, ref ByteDeserializer deserializer, Allocator allocator)
         {
-            Deserialize(ref unsafeHashMap.m_Data, ref deserializer, allocator);
+            Deserialize(ref unsafeHashMap.GetData(), ref deserializer, allocator);
         }
 
         public static unsafe void Deserialize(this ref UnsafeHashMap<byte, byte> unsafeHashMap, ref byte* payloadPtr, Allocator allocator)
         {
-            Deserialize(ref unsafeHashMap.m_Data, ref payloadPtr, allocator);
+            Deserialize(ref unsafeHashMap.GetData(), ref payloadPtr, allocator);
         }
 
-        private static void Deserialize<TKey>(ref HashMapHelper<TKey> hashMap, ref ByteDeserializer deserializer, Allocator allocator)
+        private static void Deserialize<TKey>(ref Internal.HashMapHelper<TKey> hashMap, ref ByteDeserializer deserializer, Allocator allocator)
             where TKey : unmanaged, IEquatable<TKey>
         {
-            Deserialize(ref UnsafeUtility.As<HashMapHelper<TKey>, HashMapHelper<byte>>(ref hashMap), ref deserializer, allocator);
+            Deserialize(ref UnsafeUtility.As<Internal.HashMapHelper<TKey>, Internal.HashMapHelper<byte>>(ref hashMap), ref deserializer, allocator);
         }
 
-        private static unsafe void Deserialize(ref HashMapHelper<byte> hashMap, ref ByteDeserializer deserializer, Allocator allocator)
+        private static unsafe void Deserialize(ref Internal.HashMapHelper<byte> hashMap, ref ByteDeserializer deserializer, Allocator allocator)
         {
             var count = deserializer.Read<int>();
 
@@ -127,7 +130,7 @@ namespace NZCore
             UnsafeUtility.MemCpy(hashMap.Ptr, data, totalSize);
         }
 
-        private static unsafe void Deserialize(ref HashMapHelper<byte> hashMap, ref byte* ptr, Allocator allocator)
+        private static unsafe void Deserialize(ref Internal.HashMapHelper<byte> hashMap, ref byte* ptr, Allocator allocator)
         {
             var count = *(int*)(ptr + 0);
 
@@ -177,10 +180,11 @@ namespace NZCore
 
             const int sizeOfInt = sizeof(int);
 
-            var valuesSize = unsafeHashMap.m_Data.SizeOfTValue * unsafeHashMap.Capacity;
+            ref var data = ref unsafeHashMap.GetData();
+            var valuesSize = data.SizeOfTValue * unsafeHashMap.Capacity;
             var keysSize = UnsafeUtility.SizeOf<TKey>() * unsafeHashMap.Capacity;
             var nextSize = sizeOfInt * unsafeHashMap.Capacity;
-            var bucketSize = sizeOfInt * unsafeHashMap.m_Data.BucketCapacity;
+            var bucketSize = sizeOfInt * data.BucketCapacity;
             var totalSize = valuesSize + keysSize + nextSize + bucketSize;
 
             return totalSize;
@@ -195,10 +199,11 @@ namespace NZCore
 
             const int sizeOfInt = sizeof(int);
 
-            var valuesSize = unsafeHashMap.m_Data.SizeOfTValue * unsafeHashMap.Capacity;
+            ref var data = ref unsafeHashMap.GetData();
+            var valuesSize = data.SizeOfTValue * unsafeHashMap.Capacity;
             var keysSize = sizeOfTKey * unsafeHashMap.Capacity;
             var nextSize = sizeOfInt * unsafeHashMap.Capacity;
-            var bucketSize = sizeOfInt * unsafeHashMap.m_Data.BucketCapacity;
+            var bucketSize = sizeOfInt * data.BucketCapacity;
             var totalSize = valuesSize + keysSize + nextSize + bucketSize;
 
             return totalSize;
@@ -231,20 +236,21 @@ namespace NZCore
                 return result;
             }
 
+            ref var data = ref unsafeHashMap.GetData();
             var resultPtr = (byte*)result.GetUnsafePtr();
 
-            for (int i = 0, count = 0, max = result.Length, capacity = unsafeHashMap.m_Data.BucketCapacity;
+            for (int i = 0, count = 0, max = result.Length, capacity = data.BucketCapacity;
                  i < capacity && count < max;
                  ++i
                 )
             {
-                var bucket = unsafeHashMap.m_Data.Buckets[i];
+                var bucket = data.Buckets[i];
 
                 while (bucket != -1)
                 {
-                    UnsafeUtility.MemCpy(resultPtr, unsafeHashMap.m_Data.Keys + bucket * keySize, keySize);
+                    UnsafeUtility.MemCpy(resultPtr, data.Keys + bucket * keySize, keySize);
 
-                    bucket = unsafeHashMap.m_Data.Next[bucket];
+                    bucket = data.Next[bucket];
                     resultPtr += keySize;
                 }
             }
@@ -255,20 +261,21 @@ namespace NZCore
         public static unsafe NativeArray<byte> GetUntypedValueArray(UnsafeHashMap<byte, byte> unsafeHashMap, int valueSize)
         {
             var result = CollectionHelper.CreateNativeArray<byte>(unsafeHashMap.Count * valueSize, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            ref var data = ref unsafeHashMap.GetData();
             var resultPtr = (byte*)result.GetUnsafePtr();
 
-            for (int i = 0, count = 0, max = result.Length, capacity = unsafeHashMap.m_Data.BucketCapacity;
+            for (int i = 0, count = 0, max = result.Length, capacity = data.BucketCapacity;
                  i < capacity && count < max;
                  ++i
                 )
             {
-                var bucket = unsafeHashMap.m_Data.Buckets[i];
+                var bucket = data.Buckets[i];
 
                 while (bucket != -1)
                 {
-                    UnsafeUtility.MemCpy(resultPtr, unsafeHashMap.m_Data.Ptr + bucket * valueSize, valueSize);
+                    UnsafeUtility.MemCpy(resultPtr, data.Ptr + bucket * valueSize, valueSize);
 
-                    bucket = unsafeHashMap.m_Data.Next[bucket];
+                    bucket = data.Next[bucket];
                     resultPtr += valueSize;
                 }
             }

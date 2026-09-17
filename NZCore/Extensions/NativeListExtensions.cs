@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -17,7 +18,7 @@ namespace NZCore
             where T : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckWriteAndThrow(list.m_Safety);
+            AtomicSafetyHandle.CheckWriteAndThrow(list.GetSafety());
 #endif
         }
 
@@ -73,12 +74,12 @@ namespace NZCore
 
         public static void MemCpy(this NativeList<byte> list, byte* ptr, int size)
         {
-            UnsafeUtility.MemCpy(list.m_ListData->Ptr, ptr, size);
+            UnsafeUtility.MemCpy(list.GetData()->Ptr, ptr, size);
         }
 
         public static void MemClear(this NativeList<byte> list)
         {
-            UnsafeUtility.MemClear(list.m_ListData->Ptr, list.m_ListData->m_capacity);
+            UnsafeUtility.MemClear(list.GetData()->Ptr, list.GetData()->m_capacity);
         }
 
         public static void ReinterpretLengthAndCapacity<T>(this NativeList<byte> list)
@@ -91,13 +92,13 @@ namespace NZCore
 
         public static void ReinterpretLengthAndCapacity(this NativeList<byte> list, int size)
         {
-            list.m_ListData->m_length /= size;
-            list.m_ListData->m_capacity /= size;
+            list.GetData()->m_length /= size;
+            list.GetData()->m_capacity /= size;
         }
 
         public static void SetLengthNoResizeMemClear(this NativeList<byte> list, int size)
         {
-            list.m_ListData->m_length = size;
+            list.GetData()->m_length = size;
             list.MemClear();
         }
 
@@ -105,10 +106,10 @@ namespace NZCore
             where T : unmanaged
         {
             newCapacity = math.max(0, newCapacity);
-            var listPtr = list.m_ListData;
+            var listPtr = list.GetData();
             var allocator = listPtr->Allocator;
 
-            CollectionHelper.CheckAllocator(allocator);
+            CollectionInternals.CheckAllocator(allocator);
             T* newPointer = null;
 
             var alignOf = UnsafeUtility.AlignOf<T>();
@@ -126,7 +127,7 @@ namespace NZCore
                 }
             }
 
-            allocator.Free(listPtr->Ptr, listPtr->Capacity);
+            AllocatorManager.Free(allocator, listPtr->Ptr, listPtr->Capacity);
 
             listPtr->Ptr = newPointer;
             listPtr->m_capacity = newCapacity;
@@ -137,10 +138,10 @@ namespace NZCore
             where T : unmanaged
         {
             newCapacity = math.max(0, newCapacity);
-            var listPtr = list.m_ListData;
+            var listPtr = list.GetData();
             var allocator = listPtr->Allocator;
 
-            CollectionHelper.CheckAllocator(allocator);
+            CollectionInternals.CheckAllocator(allocator);
             T* newPointer = null;
 
             var sizeOf = sizeof(T);
@@ -157,7 +158,7 @@ namespace NZCore
                 }
             }
 
-            allocator.Free(listPtr->Ptr, listPtr->Capacity);
+            AllocatorManager.Free(allocator, listPtr->Ptr, listPtr->Capacity);
 
             listPtr->Ptr = newPointer;
             listPtr->m_capacity = newCapacity;
