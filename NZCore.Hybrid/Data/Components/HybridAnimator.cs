@@ -65,6 +65,21 @@ namespace NZCore.Hybrid
             TransitionTo = HybridAnimatorTransitionPhase.ToDefault;
         }
 
+        /// <summary> Sets the local time of the playing override clip </summary>
+        public void SetOverrideTime(double time)
+        {
+            if (!Mixer.IsValid() || Mixer.GetInputCount() < 2)
+            {
+                return;
+            }
+
+            var overridePlayable = Mixer.GetInput(1);
+            if (overridePlayable.IsValid())
+            {
+                overridePlayable.SetTime(time);
+            }
+        }
+
         public void SetTime(float normalizedTime)
         {
             Mixer.SetInputWeight(1, 1.0f);

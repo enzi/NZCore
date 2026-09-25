@@ -13,9 +13,11 @@ namespace NZCore.Hybrid
         private WeakObjectReference<AnimationClip> _animationClip;
         private float _speed;
         public AnimatorOverrideEnum State;
+        public AnimatorOverrideFlags Flags;
 
         public WeakObjectReference<AnimationClip> AnimationClip => _animationClip;
         public float Speed => _speed;
+        public bool IsOwned => (Flags & AnimatorOverrideFlags.Owned) != 0;
 
         public void SetClip(WeakObjectReference<AnimationClip> clip, float speed)
         {
@@ -23,13 +25,24 @@ namespace NZCore.Hybrid
 
             _animationClip = clip;
             _speed = speed;
+            Flags = AnimatorOverrideFlags.None;
         }
 
         public void Clear()
         {
             _animationClip = default;
             State = AnimatorOverrideEnum.Default;
+            Flags = AnimatorOverrideFlags.None;
         }
+    }
+
+    [System.Flags]
+    public enum AnimatorOverrideFlags : byte
+    {
+        None = 0,
+
+        /// <summary> Owned by another system: clip requests are ignored, and the owner drives the clip's time and ends it. </summary>
+        Owned = 1 << 0
     }
 
     public enum AnimatorOverrideEnum : byte

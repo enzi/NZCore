@@ -2,30 +2,43 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using AOT;
 using NZCore.AssetManagement;
+using Unity.Burst;
 using Unity.Entities;
+using Unity.Entities.Content;
+using Unity.Entities.Serialization;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Playables;
 
 namespace NZCore.Hybrid
 {
-    public partial class HybridAnimationOverrideSystem : SystemBase
+    public partial struct HybridAnimationOverrideSystem : ISystem
     {
         private const float TransitionSpeed = 5;
+        
+        private delegate void ChangeClipDelegate(ref HybridAnimator animator, in UntypedWeakReferenceId clipId, float speed);
+        private ManagedDelegate<ChangeClipDelegate> _changeClipFunction;
 
-        protected override void OnCreate()
+        public void OnCreate(ref SystemState state)
         {
-            CheckedStateRef.CreateSingleton<HybridAnimatorRequestSingleton>();
+            state.CreateSingleton<HybridAnimatorRequestSingleton>();
+
+            _changeClipFunction = new ManagedDelegate<ChangeClipDelegate>(ChangeClip);
         }
 
-        protected override void OnDestroy()
+        public void OnDestroy(ref SystemState state)
         {
-            CheckedStateRef.DisposeSingleton<HybridAnimatorRequestSingleton>();
+            _changeClipFunction.Dispose();
+
+            state.DisposeSingleton<HybridAnimatorRequestSingleton>();
         }
 
-        protected override void OnUpdate()
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
         {
-            EntityManager.CompleteDependencyBeforeRW<HybridAnimatorRequestSingleton>();
+            state.EntityManager.CompleteDependencyBeforeRW<HybridAnimatorRequestSingleton>();
 
             var assetLoader = SystemAPI.GetSingleton<WeakAssetLoaderSingleton>();
             var deltaTime = SystemAPI.Time.DeltaTime;
@@ -39,14 +52,16 @@ namespace NZCore.Hybrid
                 foreach (var clipRequest in request)
                 {
                     ref var animatorOverride = ref SystemAPI.GetComponentRW<AnimatorOverride>(clipRequest.Entity).ValueRW;
-                    animatorOverride.SetClip(clipRequest.Clip, clipRequest.Speed);
+                    if (!animatorOverride.IsOwned)
+                    {
+                        animatorOverride.SetClip(clipRequest.Clip, clipRequest.Speed);
+                    }
                 }
 
                 request.Clear();
             }
 
-            foreach (var (hybridAnimatorRW, animatorOverrideRW)
-                     in SystemAPI.Query<RefRW<HybridAnimator>, RefRW<AnimatorOverride>>())
+            foreach (var (hybridAnimatorRW, animatorOverrideRW) in SystemAPI.Query<RefRW<HybridAnimator>, RefRW<AnimatorOverride>>())
             {
                 ref var animatorComp = ref hybridAnimatorRW.ValueRW;
 
@@ -57,18 +72,24 @@ namespace NZCore.Hybrid
 
                 ref var animatorOverride = ref animatorOverrideRW.ValueRW;
 
+                if (animatorOverride.State == AnimatorOverrideEnum.Default && animatorComp.Weight > 0)
+                {
+                    animatorComp.Reset();
+                }
+
                 if (animatorOverride.State == AnimatorOverrideEnum.Requested)
                 {
-                    var clip = animatorOverrideRW.ValueRO.AnimationClip;
+                    var clip = animatorOverride.AnimationClip;
 
-                    if (!clip.IsReferenceValid ||
+                    if (!clip.IsValidBurst() ||
                         !assetLoader.Load(clip) ||
                         !assetLoader.HasLoaded(clip))
                     {
                         continue;
                     }
 
-                    animatorComp.ChangeClip(clip, animatorOverrideRW.ValueRO.Speed);
+                    // unbursted call
+                    _changeClipFunction.Ptr.Invoke(ref animatorComp, clip.Id, animatorOverride.Speed);
                     animatorComp.Graph.Play();
                     animatorOverride.State = AnimatorOverrideEnum.Playing;
                 }
@@ -76,11 +97,14 @@ namespace NZCore.Hybrid
                 if (animatorComp.TransitionTo != HybridAnimatorTransitionPhase.None)
                 {
                     var transitionSpeed = TransitionSpeed * deltaTime;
-                    animatorComp.Weight = animatorComp.TransitionTo == HybridAnimatorTransitionPhase.ToCustom
-                        ? Mathf.Min(animatorComp.Weight + transitionSpeed, 1.0f)
-                        : Mathf.Max(animatorComp.Weight - transitionSpeed, 0.0f);
+                    var target = animatorComp.TransitionTo == HybridAnimatorTransitionPhase.ToCustom ? 1.0f : 0.0f;
 
-                    if (Mathf.Approximately(animatorComp.Weight, animatorComp.TransitionTo == HybridAnimatorTransitionPhase.ToCustom ? 1.0f : 0.0f))
+                    animatorComp.Weight = animatorComp.TransitionTo == HybridAnimatorTransitionPhase.ToCustom
+                        ? math.min(animatorComp.Weight + transitionSpeed, 1.0f)
+                        : math.max(animatorComp.Weight - transitionSpeed, 0.0f);
+
+                    // min/max clamp to exactly the target, so an exact compare is enough
+                    if (animatorComp.Weight == target)
                     {
                         animatorComp.TransitionTo = HybridAnimatorTransitionPhase.None;
                     }
@@ -89,7 +113,8 @@ namespace NZCore.Hybrid
                     animatorComp.Mixer.SetInputWeight(1, animatorComp.Weight);
                 }
 
-                if (animatorOverride.State == AnimatorOverrideEnum.Playing)
+                // An owned override's time and end are up to its owner.
+                if (animatorOverride.State == AnimatorOverrideEnum.Playing && !animatorOverride.IsOwned)
                 {
                     if (animatorComp.Mixer.IsValid() && animatorComp.Mixer.GetInputCount() >= 2)
                     {
@@ -107,12 +132,18 @@ namespace NZCore.Hybrid
                             {
                                 //Debug.Log($"Clip finished! Time: {currentTime} / Duration: {duration}");
                                 animatorComp.Reset();
-                                animatorOverrideRW.ValueRW.Clear();
+                                animatorOverride.Clear();
                             }
                         }
                     }
                 }
             }
+        }
+
+        [MonoPInvokeCallback(typeof(ChangeClipDelegate))]
+        private static void ChangeClip(ref HybridAnimator animator, in UntypedWeakReferenceId clipId, float speed)
+        {
+            animator.ChangeClip(new WeakObjectReference<AnimationClip>(clipId), speed);
         }
     }
 }
