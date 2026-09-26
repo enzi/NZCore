@@ -54,7 +54,7 @@ namespace NZCore.Editor
 
                 choices.Add(new DropdownWrapper
                 {
-                    DisplayName = data[i].name,
+                    DisplayName = data[i] is ScriptableObjectWithAutoID autoIdAsset ? autoIdAsset.DisplayName : data[i].name,
                     Value = data[i]
                 });
 
