@@ -54,7 +54,7 @@ namespace NZCore.UI.Editor
             EditorUtilityType.GetMethod("InstantiateForAnimatorPreview", BindingFlags.NonPublic | BindingFlags.Static);
 
         private static readonly MethodInfo InitInstantiatedPreviewRecursiveMethodInfo =
-            EditorUtilityType.GetMethod("InstantiateForAnimatorPreview", BindingFlags.NonPublic | BindingFlags.Static);
+            EditorUtilityType.GetMethod("InitInstantiatedPreviewRecursive", BindingFlags.NonPublic | BindingFlags.Static);
 
         private static readonly Type IAnimationPreviewableType = typeof(Animator).Assembly.GetType("UnityEngine.Animations.IAnimationPreviewable");
 
