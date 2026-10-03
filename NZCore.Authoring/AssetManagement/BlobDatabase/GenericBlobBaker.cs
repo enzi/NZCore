@@ -240,21 +240,28 @@ namespace NZCore
                     BlobAddress = new[] { (byte*)UnsafeUtility.AddressOf(ref blob1), (byte*)UnsafeUtility.AddressOf(ref blob2) }
                 };
 
-                so.ToBlobData(context, ref blobBuilder1, ref blob1, ref blob2);
-
-                var blobReference1 = blobBuilder1.CreateBlobAssetReference<TBlobStruct1>(Allocator.Persistent);
-                var blobReference2 = blobBuilder2.CreateBlobAssetReference<TBlobStruct2>(Allocator.Persistent);
-
-                baker.AddBlobAsset(ref blobReference1, out _);
-                baker.AddBlobAsset(ref blobReference2, out _);
-
-                var blobReferenceComp = new TBlobReference
+                try
                 {
-                    blob1 = blobReference1,
-                    blob2 = blobReference2
-                };
+                    so.ToBlobData(context, ref blobBuilder1, ref blob1, ref blob2);
 
-                baker.AddComponent(blobReferenceEntity, blobReferenceComp);
+                    var blobReference1 = blobBuilder1.CreateBlobAssetReference<TBlobStruct1>(Allocator.Persistent);
+                    var blobReference2 = blobBuilder2.CreateBlobAssetReference<TBlobStruct2>(Allocator.Persistent);
+
+                    baker.AddBlobAsset(ref blobReference1, out _);
+                    baker.AddBlobAsset(ref blobReference2, out _);
+
+                    var blobReferenceComp = new TBlobReference
+                    {
+                        blob1 = blobReference1,
+                        blob2 = blobReference2
+                    };
+
+                    baker.AddComponent(blobReferenceEntity, blobReferenceComp);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"{e.Message}\n{e.StackTrace}", so);
+                }
             }
         }
     }
