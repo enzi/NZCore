@@ -23,8 +23,9 @@ namespace NZCore.Editor
                 }
             };
 
-            var label = new Label("Type")
+            var label = new Label(property.displayName)
             {
+                tooltip = property.tooltip,
                 style =
                 {
                     minWidth = 120,
