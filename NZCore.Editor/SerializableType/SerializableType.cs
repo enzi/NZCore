@@ -20,4 +20,18 @@ namespace NZCore.Editor
             set => _assemblyQualifiedName = value?.AssemblyQualifiedName ?? "";
         }
     }
+
+    /// <summary>
+    /// Limits the type picker of a SerializableType field to types deriving from or implementing BaseType.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class SerializableTypeFilterAttribute : Attribute
+    {
+        public Type BaseType { get; }
+
+        public SerializableTypeFilterAttribute(Type baseType)
+        {
+            BaseType = baseType;
+        }
+    }
 }

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine.UIElements;
 
@@ -43,9 +44,11 @@ namespace NZCore.Editor
             };
             RefreshLabel(button, nameProp.stringValue);
 
+            var baseType = fieldInfo.GetCustomAttribute<SerializableTypeFilterAttribute>()?.BaseType ?? typeof(object);
+
             button.clicked += () =>
             {
-                new TypeSearchProvider(typeof(object)).Show(
+                new TypeSearchProvider(baseType).Show(
                     item =>
                     {
                         if (item?.data is Type t)
