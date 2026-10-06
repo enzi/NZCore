@@ -14,8 +14,8 @@ namespace NZCore.Helper
      * This class initial purpose was to ignore hashing safety fields for NativeContainers
      * but as the StableTypeHash provided from Unity isn't stable across different Entities versions
      * this was also repurposed to give a safe method of hashing types without breaking changes.
-     * CoreCLR could shake things up a bit with assembly names being different (primitives change from mscorlib to netstandard)
-     * but there's still an opportunity to handle it here.
+     * CoreCLR reports primitives in System.Private.CoreLib instead of Mono's mscorlib, which changes every hash containing them.
+     * Define NZCORE_STABLE_TYPE_HASH_MSCORLIB to keep hashing them as mscorlib so hashes created under Mono still match.
      * */
     public static class StableTypeHashHelper
     {
@@ -197,7 +197,7 @@ namespace NZCore.Helper
         {
             var hash = HashNamespace(type);
             hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Name));
-            hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Assembly.GetName().Name));
+            hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(GetAssemblyName(type)));
 
             foreach (var ga in type.GenericTypeArguments)
             {
@@ -211,7 +211,7 @@ namespace NZCore.Helper
         {
             var hash = HashNamespaceVerbose(type);
             hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Name));
-            hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(type.Assembly.GetName().Name));
+            hash = TypeHash.CombineFNV1A64(hash, TypeHash.FNV1A64(GetAssemblyName(type)));
 
             foreach (var ga in type.GenericTypeArguments)
             {
@@ -220,6 +220,18 @@ namespace NZCore.Helper
             }
 
             return hash;
+        }
+
+        private static string GetAssemblyName(Type type)
+        {
+            var assemblyName = type.Assembly.GetName().Name;
+#if NZCORE_STABLE_TYPE_HASH_MSCORLIB
+            if (assemblyName == "System.Private.CoreLib")
+            {
+                return "mscorlib";
+            }
+#endif
+            return assemblyName;
         }
 
         private static ulong HashNamespace(Type type)
