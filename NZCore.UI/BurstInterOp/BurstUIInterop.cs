@@ -24,11 +24,13 @@ namespace NZCore.UI
     internal static class BurstUIInterop
     {
         public static readonly Dictionary<IntPtr, IViewModelBindingNotify> Objects = new();
-        //public static FunctionPointer<OnPropertyChangedDelegate> Notify;
 
         static BurstUIInterop()
         {
-            BurstUINotify.Notify.Data = new FunctionPointer<NotifyDelegate>(Marshal.GetFunctionPointerForDelegate<NotifyDelegate>(NotifyForwarding));
+            // CoreCLR can free the function pointer. alloc to keep it alive
+            NotifyDelegate notifyForwarding = NotifyForwarding;
+            GCHandle.Alloc(notifyForwarding);
+            BurstUINotify.Notify.Data = new FunctionPointer<NotifyDelegate>(Marshal.GetFunctionPointerForDelegate(notifyForwarding));
         }
 
         [AOT.MonoPInvokeCallback(typeof(NotifyDelegate))]
