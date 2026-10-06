@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-#if UNITY_6000
+#if UNITY_6000_0_OR_NEWER
 namespace NZCore.UI
 {
     public interface IModelBinding { }

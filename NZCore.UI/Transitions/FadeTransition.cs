@@ -2,7 +2,7 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-#if UNITY_6000
+#if UNITY_6000_0_OR_NEWER
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;

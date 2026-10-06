@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using Unity.Properties;
 using UnityEngine.UIElements;
 
-#if UNITY_6000
+#if UNITY_6000_0_OR_NEWER
 namespace NZCore.UIToolkit
 {
     [UxmlObject]

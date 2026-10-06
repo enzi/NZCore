@@ -6,7 +6,7 @@ using Unity.Entities.Content;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-#if UNITY_6000
+#if UNITY_6000_0_OR_NEWER
 namespace NZCore.UI
 {
     [UxmlElement]

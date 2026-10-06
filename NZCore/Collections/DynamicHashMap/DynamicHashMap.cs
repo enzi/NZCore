@@ -4,10 +4,10 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Unity.Assertions;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
+using Assert = UnityEngine.Assertions.Assert;
 
 namespace NZCore
 {
