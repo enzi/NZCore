@@ -54,7 +54,7 @@ namespace NZCore
         protected override void OnUpdate() { }
         
         [BurstCompile]
-        private unsafe struct BlobIndexResizeListJob : IJobChunk
+        public unsafe struct BlobIndexResizeListJob : IJobChunk
         {
             public NativeList<TBlobReference> List;
             public ComponentTypeHandle<TBlobReference> BlobReference_ReadHandle;
@@ -87,7 +87,7 @@ namespace NZCore
         }
 
         [BurstCompile]
-        private unsafe struct BlobIndexListJob : IJobChunk
+        public unsafe struct BlobIndexListJob : IJobChunk
         {
             public NativeList<TBlobReference> List;
             public ComponentTypeHandle<TBlobReference> BlobReference_ReadHandle;
@@ -151,7 +151,7 @@ namespace NZCore
         protected override void OnUpdate() { }
 
         [BurstCompile]
-        private unsafe struct BlobIndexMapJob : IJobChunk
+        public unsafe struct BlobIndexMapJob : IJobChunk
         {
             public NativeHashMap<int, TBlobReference> Map;
             public ComponentTypeHandle<TBlobReference> BlobReference_ReadHandle;
