@@ -23,9 +23,6 @@ namespace NZCore
         private static bool initialized;
         private static bool appDomainUnloadRegistered;
 
-        private static UnsafeHashMap<ulong, StableTypeIndex> stableTypeMap;
-        private static UnsafeHashMap<StableTypeIndex, ulong> stableHashMap;
-
 #if UNITY_EDITOR
         public static Dictionary<string, ulong> TypeNameMap;
 
@@ -43,24 +40,15 @@ namespace NZCore
 
             TypeManager.Initialize();
 
-            stableTypeMap = new UnsafeHashMap<ulong, StableTypeIndex>(1024, Allocator.Persistent);
-            stableHashMap = new UnsafeHashMap<StableTypeIndex, ulong>(1024, Allocator.Persistent);
+            // The maps live in SharedStatic memory, not in static fields: CoreCLR can move static structs, so a pointer to one goes stale
+            StableTypeMap.Ref.Data = new UnsafeHashMap<ulong, StableTypeIndex>(1024, Allocator.Persistent);
+            StableHashMap.Ref.Data = new UnsafeHashMap<StableTypeIndex, ulong>(1024, Allocator.Persistent);
 
 #if UNITY_EDITOR
             TypeNameMap = new Dictionary<string, ulong>();
 #endif
 
             BuildMap();
-
-            fixed (UnsafeHashMap<ulong, StableTypeIndex>* ptr = &stableTypeMap)
-            {
-                StableTypeMap.Ref.Data = new IntPtr(ptr);
-            }
-
-            fixed (UnsafeHashMap<StableTypeIndex, ulong>* ptr = &stableHashMap)
-            {
-                StableHashMap.Ref.Data = new IntPtr(ptr);
-            }
 
             if (!appDomainUnloadRegistered)
             {
@@ -90,13 +78,15 @@ namespace NZCore
 
             initialized = false;
 
-            stableHashMap.Dispose();
-            stableTypeMap.Dispose();
+            StableHashMap.Ref.Data.Dispose();
+            StableTypeMap.Ref.Data.Dispose();
         }
 
         private static void BuildMap()
         {
             var allTypes = TypeManager.GetAllTypes();
+            ref var stableTypeMap = ref StableTypeMap.Ref.Data;
+            ref var stableHashMap = ref StableHashMap.Ref.Data;
 
             stableTypeMap.Add(0, new StableTypeIndex { Value = 0 });
             stableHashMap.Add(new StableTypeIndex { Value = 0 }, 0);
@@ -139,9 +129,7 @@ namespace NZCore
 
         public static bool TryGetTypeIndexFromStableTypeHash(ulong hash, out TypeIndex typeIndex)
         {
-            var map = *(UnsafeHashMap<ulong, StableTypeIndex>*)StableTypeMap.Ref.Data;
-
-            if (map.TryGetValue(hash, out var typeIndex2))
+            if (StableTypeMap.Ref.Data.TryGetValue(hash, out var typeIndex2))
             {
                 typeIndex = typeIndex2;
                 return true;
@@ -153,9 +141,7 @@ namespace NZCore
 
         public static TypeIndex GetTypeIndexFromStableTypeHash(ulong hash)
         {
-            var map = *(UnsafeHashMap<ulong, StableTypeIndex>*)StableTypeMap.Ref.Data;
-
-            if (map.TryGetValue(hash, out var stableTypeIndex))
+            if (StableTypeMap.Ref.Data.TryGetValue(hash, out var stableTypeIndex))
             {
                 return stableTypeIndex;
             }
@@ -177,22 +163,20 @@ namespace NZCore
 
         public static TypeManager.TypeInfo GetTypeInfo(TypeIndex typeIndex) => TypeManager.GetTypeInfo(typeIndex);
 
-        public static ulong GetStableTypeHashFromTypeIndex(TypeIndex typeIndex)
-        {
-            var map = *(UnsafeHashMap<StableTypeIndex, ulong>*)StableHashMap.Ref.Data;
-            return map.TryGetValue(typeIndex, out var hash) ? hash : 0;
-        }
+        public static ulong GetStableTypeHashFromTypeIndex(TypeIndex typeIndex) => StableHashMap.Ref.Data.TryGetValue(typeIndex, out var hash) ? hash : 0;
 
         private struct StableTypeManagerKey { }
 
         private struct StableTypeMap
         {
-            public static readonly SharedStatic<IntPtr> Ref = SharedStatic<IntPtr>.GetOrCreate<StableTypeManagerKey, StableTypeMap>();
+            public static readonly SharedStatic<UnsafeHashMap<ulong, StableTypeIndex>> Ref =
+                SharedStatic<UnsafeHashMap<ulong, StableTypeIndex>>.GetOrCreate<StableTypeManagerKey, StableTypeMap>();
         }
 
         private struct StableHashMap
         {
-            public static readonly SharedStatic<IntPtr> Ref = SharedStatic<IntPtr>.GetOrCreate<StableTypeManagerKey, StableHashMap>();
+            public static readonly SharedStatic<UnsafeHashMap<StableTypeIndex, ulong>> Ref =
+                SharedStatic<UnsafeHashMap<StableTypeIndex, ulong>>.GetOrCreate<StableTypeManagerKey, StableHashMap>();
         }
     }
 
