@@ -12,7 +12,6 @@ namespace NZCore.UI
 {
     public interface IViewModelBindingNotify : INotifyBindablePropertyChanged
     {
-        //void OnPropertyChanging(in FixedString64Bytes property);
         void OnPropertyChanged(in FixedString64Bytes property);
 
         public static bool TryGet(IntPtr ptr, out IViewModelBindingNotify viewModel)
