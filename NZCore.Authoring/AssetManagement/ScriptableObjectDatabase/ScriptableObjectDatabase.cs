@@ -70,6 +70,12 @@ namespace NZCore.AssetManagement
         {
             var settings = SettingsUtility.GetSettings<T>();
             baker.DependsOn(settings);
+
+            if (settings is IIndexableDatabase indexableDatabase)
+            {
+                indexableDatabase.CreateLookup();
+            }
+
             settings.Bake(baker, entity);
         }
     }
