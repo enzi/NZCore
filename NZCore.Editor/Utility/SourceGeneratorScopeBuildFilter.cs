@@ -18,12 +18,16 @@ namespace NZCore.Editor
     {
         private const string ScopeAssemblySuffix = ".SourceGenerators.dll";
 
+        // Generator attributes are [Conditional("UNITY_EDITOR")], so player assemblies never reference them.
+        private const string AttributesAssemblySuffix = ".SourceGenerator.Attributes.dll";
+
         public int callbackOrder => 0;
 
         public string[] OnFilterAssemblies(BuildOptions buildOptions, string[] assemblies)
         {
             return assemblies
-                   .Where(assembly => !assembly.EndsWith(ScopeAssemblySuffix, StringComparison.Ordinal))
+                   .Where(assembly => !assembly.EndsWith(ScopeAssemblySuffix, StringComparison.Ordinal) &&
+                                      !assembly.EndsWith(AttributesAssemblySuffix, StringComparison.Ordinal))
                    .ToArray();
         }
     }
