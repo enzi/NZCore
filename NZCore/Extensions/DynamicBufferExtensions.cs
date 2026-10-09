@@ -108,7 +108,7 @@ namespace NZCore
             return (BufferHeaderExposed*)bufferExposed.m_Buffer;
         }
 
-        public static void AddToByteBuffer<TBuffer, TData>(this DynamicBuffer<TBuffer> buffer, TData data)
+        public static void AddToByteBuffer<TBuffer, TData>(this ref DynamicBuffer<TBuffer> buffer, TData data)
             where TData : unmanaged
             where TBuffer : unmanaged
         {
