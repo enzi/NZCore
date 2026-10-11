@@ -33,7 +33,7 @@
             "define": "ENABLE_UXML_SERIALIZED_DATA"
         },
         {
-            "name": "com.enzisoft.nzcore.mvvm",
+            "name": "com.enzisoft.mvvm",
             "expression": "0",
             "define": "NZCORE_MVVM"
         }

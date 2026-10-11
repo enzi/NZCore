@@ -29,7 +29,7 @@
       "define": "DOTS_PHYSICS"
     },
     {
-      "name": "com.nzspellcasting",
+      "name": "com.enzisoft.nzspellcasting",
       "expression": "0",
       "define": "NZSPELLCASTING"
     },
