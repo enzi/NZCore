@@ -18,6 +18,9 @@ namespace NZCore
         [ExcludeFromBurstCompatTesting("")]
         public static Type ExecutingSystemType(this World world) => world.Unmanaged.GetTypeOfSystem(world.Unmanaged.ExecutingSystem);
 
+        [ExcludeFromBurstCompatTesting("Returns managed type")]
+        public static Type GetSystemType(this WorldUnmanaged world, SystemHandle handle) => world.GetTypeOfSystem(handle);
+
         public static bool SystemExists<T>(this WorldUnmanaged world)
         {
             var typeIndex = TypeManager.GetSystemTypeIndex<T>();
