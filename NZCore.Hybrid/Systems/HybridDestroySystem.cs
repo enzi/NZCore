@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace NZCore.Hybrid
 {
+    [UpdateInGroup(typeof(NZDestroySystemGroup))]
     public partial class HybridDestroySystem : SystemBase
     {
         private EntityQuery _query;
