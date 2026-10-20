@@ -5,6 +5,7 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using NZCore.Internal;
 using Unity;
 using Unity.Entities;
 
@@ -26,7 +27,7 @@ namespace NZCore.Helper
             var hash = HashTypeName(type);
             // If we shouldn't walk the type's fields just return the type name hash.
             // UnityEngine objects have their own serialization mechanism so exclude hashing their internals
-            if (type.IsArray || type.IsPointer || type.IsPrimitive || type.IsEnum || TypeManager.UnityEngineObjectType?.IsAssignableFrom(type) == true)
+            if (type.IsArray || type.IsPointer || type.IsPrimitive || type.IsEnum || EntityInternals.UnityEngineObjectType?.IsAssignableFrom(type) == true)
             {
                 return hash;
             }
@@ -112,7 +113,7 @@ namespace NZCore.Helper
             var hash = HashTypeNameVerbose(type);
             // If we shouldn't walk the type's fields just return the type name hash.
             // UnityEngine objects have their own serialization mechanism so exclude hashing their internals
-            if (type.IsArray || type.IsPointer || type.IsPrimitive || type.IsEnum || TypeManager.UnityEngineObjectType?.IsAssignableFrom(type) == true)
+            if (type.IsArray || type.IsPointer || type.IsPrimitive || type.IsEnum || EntityInternals.UnityEngineObjectType?.IsAssignableFrom(type) == true)
             {
                 return hash;
             }
@@ -231,6 +232,12 @@ namespace NZCore.Helper
                 return "mscorlib";
             }
 #endif
+            // Entities moved into an engine module in Unity 7; keep hashes identical to the package assembly.
+            if (assemblyName == "UnityEngine.EntitiesModule")
+            {
+                return "Unity.Entities";
+            }
+
             return assemblyName;
         }
 

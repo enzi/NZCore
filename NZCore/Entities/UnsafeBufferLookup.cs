@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -89,9 +90,10 @@ namespace NZCore
             if (header != null)
             {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                bufferData = new DynamicBuffer<T>(header, m_Safety0, m_ArrayInvalidationSafety, m_IsReadOnly != 0, false, 0, m_InternalCapacity);
+                bufferData = EntityInternals.CreateDynamicBuffer<T>(header, m_Safety0, m_ArrayInvalidationSafety, m_IsReadOnly != 0, false, 0,
+                    m_InternalCapacity);
 #else
-                bufferData = new DynamicBuffer<T>(header, m_InternalCapacity);
+                bufferData = EntityInternals.CreateDynamicBuffer<T>(header, m_InternalCapacity);
 #endif
                 return true;
             }
@@ -162,9 +164,9 @@ namespace NZCore
                     : (BufferHeader*)ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                return new DynamicBuffer<T>(header, m_Safety0, m_ArrayInvalidationSafety, m_IsReadOnly != 0, false, 0, m_InternalCapacity);
+                return EntityInternals.CreateDynamicBuffer<T>(header, m_Safety0, m_ArrayInvalidationSafety, m_IsReadOnly != 0, false, 0, m_InternalCapacity);
 #else
-                return new DynamicBuffer<T>(header, m_InternalCapacity);
+                return EntityInternals.CreateDynamicBuffer<T>(header, m_InternalCapacity);
 #endif
             }
         }
@@ -191,7 +193,7 @@ namespace NZCore
 
         public void Update(SystemBase system)
         {
-            Update(ref *system.m_StatePtr);
+            Update(ref *system.GetStatePtr());
         }
 
         public void Update(ref SystemState systemState)
@@ -199,12 +201,12 @@ namespace NZCore
             // NOTE: We could in theory fetch all this data from m_Access.EntityComponentStore and void the SystemState from being passed in.
             //       That would unfortunately allow this API to be called from a job. So we use the required system parameter as a way of signifying to the user that this can only be invoked from main thread system code.
             //       Additionally this makes the API symmetric to ComponentTypeHandle.
-            m_GlobalSystemVersion = systemState.m_EntityComponentStore->GlobalSystemVersion;
+            m_GlobalSystemVersion = systemState.GetEntityComponentStore()->GlobalSystemVersion;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var safetyHandles = &m_Access->DependencyManager->Safety;
-            m_Safety0 = safetyHandles->GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
-            m_ArrayInvalidationSafety = safetyHandles->GetBufferHandleForBufferLookup(m_TypeIndex);
+            ref var safetyHandles = ref m_Access->DependencyManager->Safety;
+            m_Safety0 = safetyHandles.GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
+            m_ArrayInvalidationSafety = safetyHandles.GetBufferHandleForBufferLookup(m_TypeIndex);
 #endif
         }
 
@@ -299,9 +301,9 @@ namespace NZCore
                 : (BufferHeader*)ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new DynamicBuffer<T>(header, m_Safety0, m_ArrayInvalidationSafety, m_IsReadOnly != 0, false, 0, m_InternalCapacity);
+            return EntityInternals.CreateDynamicBuffer<T>(header, m_Safety0, m_ArrayInvalidationSafety, m_IsReadOnly != 0, false, 0, m_InternalCapacity);
 #else
-                return new DynamicBuffer<T>(header, m_InternalCapacity);
+                return EntityInternals.CreateDynamicBuffer<T>(header, m_InternalCapacity);
 #endif
         }
 

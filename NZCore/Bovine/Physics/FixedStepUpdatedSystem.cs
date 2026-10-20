@@ -3,6 +3,7 @@
 // </copyright>
 
 #if DOTS_PHYSICS
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Jobs;
@@ -48,7 +49,7 @@ namespace NZCore.Physics
         protected override void OnCreate()
         {
             _buildPhysicsWorld = World.GetExistingSystem<BuildPhysicsWorld>();
-            _buildPhysicsWorldSystemState = World.Unmanaged.ResolveSystemStateChecked(_buildPhysicsWorld);
+            _buildPhysicsWorldSystemState = EntityInternals.ResolveSystemStateChecked(World.Unmanaged, _buildPhysicsWorld);
 
             CheckedStateRef.AddSystemWriteDependency(TypeManager.GetTypeIndex<PhysicsWorldSingleton>());
         }

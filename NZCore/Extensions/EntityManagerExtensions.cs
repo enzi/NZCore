@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -121,7 +122,7 @@ namespace NZCore
 
         public static void ManualIncrement(this EntityManager entityManager)
         {
-            entityManager.GetCheckedEntityDataAccess()->EntityComponentStore->IncrementGlobalSystemVersion();
+            EntityInternals.GetCheckedEntityDataAccess(entityManager)->EntityComponentStore->IncrementGlobalSystemVersion();
         }
 
         public static void* GetComponentDataRaw(this EntityManager entityManager, Entity entity, ComponentType componentType, bool isReadOnly) =>
@@ -129,7 +130,7 @@ namespace NZCore
 
         public static void* GetComponentDataRaw(this EntityManager entityManager, Entity entity, TypeIndex typeIndex, bool isReadOnly)
         {
-            var access = entityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(entityManager);
             var ecs = access->EntityComponentStore;
 
             return isReadOnly
@@ -139,7 +140,7 @@ namespace NZCore
 
         public static byte* GetComponentDataRaw(this EntityManager entityManager, TypeIndex typeIndex, Entity entity, bool isReadOnly)
         {
-            var access = entityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(entityManager);
             var ecs = access->EntityComponentStore;
             var entityInChunk = ecs->GetEntityInChunk(entity);
 
@@ -156,7 +157,7 @@ namespace NZCore
         {
             // todo add safety
 
-            var access = entityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(entityManager);
             var ecs = access->EntityComponentStore;
             var typeIndex = componentType.TypeIndex;
 
@@ -186,12 +187,12 @@ namespace NZCore
         internal static ComponentLookup<T> GetComponentLookup<T>(this EntityManager entityManager, TypeIndex typeIndex, bool isReadOnly)
             where T : unmanaged, IComponentData
         {
-            var access = entityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(entityManager);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new ComponentLookup<T>(typeIndex, access, isReadOnly);
+            return EntityInternals.CreateComponentLookup<T>(typeIndex, access, isReadOnly);
 #else
-            return new ComponentLookup<T>(typeIndex, access);
+            return EntityInternals.CreateComponentLookup<T>(typeIndex, access);
 #endif
         }
 
@@ -208,7 +209,7 @@ namespace NZCore
         internal static UnsafeComponentLookup<T> GetUnsafeComponentLookup<T>(this EntityManager entityManager, TypeIndex typeIndex, bool isReadOnly)
             where T : unmanaged, IComponentData
         {
-            var access = entityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(entityManager);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new UnsafeComponentLookup<T>(typeIndex, access, isReadOnly);
@@ -223,7 +224,7 @@ namespace NZCore
         private static SharedComponentLookup<T> GetSharedComponentLookup<T>(this EntityManager entityManager, bool isReadOnly)
             where T : unmanaged, ISharedComponentData
         {
-            var access = entityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(entityManager);
             var typeIndex = TypeManager.GetTypeIndex<T>();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -236,7 +237,7 @@ namespace NZCore
         public static SharedComponentLookup<T> GetSharedComponentLookup<T>(ref this SystemState system, bool isReadOnly)
             where T : unmanaged, ISharedComponentData
         {
-            system.AddReaderWriter(isReadOnly ? ComponentType.ReadOnly<T>() : ComponentType.ReadWrite<T>());
+            EntityInternals.AddReaderWriter(ref system, isReadOnly ? ComponentType.ReadOnly<T>() : ComponentType.ReadWrite<T>());
             return system.EntityManager.GetSharedComponentLookup<T>(isReadOnly);
         }
 
@@ -250,7 +251,7 @@ namespace NZCore
                     $"Can't use this API with a Managed Shared Component, {TypeManager.GetType(typeIndex)} must be a blittable, unmanaged type");
             }
 #endif
-            var access = entityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(entityManager);
             var changes = access->BeginStructuralChanges();
             var componentType = ComponentType.ReadWrite(typeIndex);
 
@@ -263,16 +264,16 @@ namespace NZCore
         /////////////////////////////
         public static UntypedBufferLookup GetUntypedBufferLookup(this EntityManager entityManager, ComponentType componentType, bool isReadOnly)
         {
-            var access = entityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(entityManager);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var safetyHandles = &access->DependencyManager->Safety;
+            ref var safetyHandles = ref access->DependencyManager->Safety;
 #endif
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new UntypedBufferLookup(componentType.TypeIndex, access, isReadOnly,
-                safetyHandles->GetSafetyHandleForComponentLookup(componentType.TypeIndex, isReadOnly),
-                safetyHandles->GetBufferHandleForBufferLookup(componentType.TypeIndex));
+                safetyHandles.GetSafetyHandleForComponentLookup(componentType.TypeIndex, isReadOnly),
+                safetyHandles.GetBufferHandleForBufferLookup(componentType.TypeIndex));
 #else
             return new UntypedBufferLookup(componentType.TypeIndex, access, isReadOnly);
 #endif

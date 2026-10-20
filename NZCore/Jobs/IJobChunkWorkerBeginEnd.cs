@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Burst.CompilerServices;
 using Unity.Burst.Intrinsics;
@@ -180,7 +181,7 @@ namespace NZCore.Jobs
         internal static unsafe void RunByRefWithoutJobs<T>(this ref T jobData, EntityQuery query)
             where T : struct, IJobChunkWorkerBeginEnd
         {
-            var queryImpl = query._GetImpl();
+            var queryImpl = query.GetImpl();
             if (queryImpl->_Access->IsInExclusiveTransaction)
             {
                 throw new InvalidOperationException("You can't schedule an IJobChunkWorkerBeginEnd while an exclusive transaction is active");
@@ -212,11 +213,11 @@ namespace NZCore.Jobs
                 var cachedChunkList = queryImpl->GetMatchingChunkCache();
                 var chunkIndices = cachedChunkList.ChunkIndices;
                 var chunkCount = cachedChunkList.Length;
-                var chunk = new ArchetypeChunk(ChunkIndex.Null, cachedChunkList.EntityComponentStore);
+                var chunk = EntityInternals.CreateArchetypeChunk(ChunkIndex.Null, cachedChunkList.EntityComponentStore);
                 v128 defaultMask = default;
                 for (var chunkIndex = 0; chunkIndex < chunkCount; ++chunkIndex)
                 {
-                    chunk.m_Chunk = chunkIndices[chunkIndex];
+                    chunk.SetChunkIndex(chunkIndices[chunkIndex]);
                     //Assert.AreNotEqual(0, chunk.Count);
                     jobData.Execute(chunk, chunkIndex, false, defaultMask);
                 }
@@ -234,7 +235,7 @@ namespace NZCore.Jobs
             NativeArray<int> chunkBaseEntityIndices)
             where T : struct, IJobChunkWorkerBeginEnd
         {
-            var queryImpl = query._GetImpl();
+            var queryImpl = query.GetImpl();
             if (queryImpl->_Access->IsInExclusiveTransaction)
             {
                 throw new InvalidOperationException("You can't schedule an IJobChunkWorkerBeginEnd while an exclusive transaction is active");
@@ -364,11 +365,11 @@ namespace NZCore.Jobs
                     {
                         // Fast path with no entity/chunk filtering active: we can just iterate over the cached chunk list directly.
                         var chunkIndices = chunks.ChunkIndices;
-                        var chunk = new ArchetypeChunk(ChunkIndex.Null, chunks.EntityComponentStore);
+                        var chunk = EntityInternals.CreateArchetypeChunk(ChunkIndex.Null, chunks.EntityComponentStore);
                         v128 defaultMask = default;
                         for (var chunkIndex = beginChunkIndex; chunkIndex < endChunkIndex; ++chunkIndex)
                         {
-                            chunk.m_Chunk = chunkIndices[chunkIndex];
+                            chunk.SetChunkIndex(chunkIndices[chunkIndex]);
                             //Assert.AreNotEqual(0, chunk.Count);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                             // For containers passed in the job struct, parallel jobs can limit writes to a range of indices.

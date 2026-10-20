@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace NZCore.Hybrid
 {
-    public class GameObjectPoolSingleton : IComponentData { }
+    public struct GameObjectPoolSingleton : IComponentData { }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class GameObjectPoolSystem : SystemBase

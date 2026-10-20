@@ -9,6 +9,7 @@ namespace NZCore
 {
     public static class SingletonUtility
     {
+#if !UNITY_7000_0_OR_NEWER
         public static T CreateManagedSingleton<T>(this ref SystemState state)
             where T : class, IInitSingleton
         {
@@ -24,6 +25,7 @@ namespace NZCore
 
             return singletonData;
         }
+#endif
 
         public static void CreateSingleton<T>(this ref SystemState state)
             where T : unmanaged, IInitSingleton

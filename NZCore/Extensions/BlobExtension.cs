@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.IO;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -13,7 +14,7 @@ namespace NZCore
     {
         public static int GetLength<T>(this BlobAssetReference<T> blob)
             where T : unmanaged =>
-            blob.m_data.Header->Length;
+            blob.GetHeaderLength();
 
         /// <summary>
         /// Evaluate EXISTING blobs for valid data. used for live-rebaking
@@ -24,13 +25,13 @@ namespace NZCore
         public static bool IsInvalid<T>(this BlobAssetReference<T> blob)
             where T : unmanaged
         {
-            if (blob.m_data.m_Ptr == null) // likely default blob data which has never been created in the first place
+            if (blob.GetUnsafePtr() == null) // likely default blob data which has never been created in the first place
             {
                 return false; // so don't throw an invalid here
             }
 
-            var validationPtr = blob.m_data.Header->ValidationPtr;
-            return validationPtr != blob.m_data.m_Ptr;
+            var validationPtr = blob.GetHeaderValidationPtr();
+            return validationPtr != blob.GetUnsafePtr();
         }
 
         public static void AddBufferToBlob<T>(this BufferLookup<T> bufferLookup, Entity entity, ref BlobBuilder builder, ref BlobArray<T> blobArray)
@@ -53,24 +54,22 @@ namespace NZCore
         public static T* CopyBlob<T>(this ref BlobAssetReference<T> blobReference)
             where T : unmanaged
         {
-            var header = blobReference.m_data.Header;
-            var length = header->Length;
+            var length = blobReference.GetHeaderLength();
 
             var copyPtr = UnsafeUtility.Malloc(length, 16, Allocator.Persistent);
 
-            UnsafeUtility.MemCpy(copyPtr, blobReference.m_data.m_Ptr, length);
+            UnsafeUtility.MemCpy(copyPtr, blobReference.GetUnsafePtr(), length);
             return (T*)copyPtr;
         }
 
         public static void WriteBlobToDisk<T>(this ref BlobAssetReference<T> blobReference, string filePath)
             where T : unmanaged
         {
-            var header = blobReference.m_data.Header;
-            var length = header->Length;
+            var length = blobReference.GetHeaderLength();
 
             //var copyPtr = UnsafeUtility.Malloc(length, 16, Allocator.Persistent);
             //UnsafeUtility.MemCpy(copyPtr, blobReference.m_data.m_Ptr, length);
-            var startPtr = blobReference.m_data.m_Ptr;
+            var startPtr = (byte*)blobReference.GetUnsafePtr();
 
             var bytes = new byte[length];
 

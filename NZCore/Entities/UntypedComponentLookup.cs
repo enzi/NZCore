@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -31,8 +32,8 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal UntypedComponentLookup(TypeIndex typeIndex, EntityDataAccess* access, bool isReadOnly)
         {
-            var safetyHandles = &access->DependencyManager->Safety;
-            m_Safety = safetyHandles->GetSafetyHandleForComponentLookup(typeIndex, isReadOnly);
+            ref var safetyHandles = ref access->DependencyManager->Safety;
+            m_Safety = safetyHandles.GetSafetyHandleForComponentLookup(typeIndex, isReadOnly);
             m_IsReadOnly = isReadOnly ? (byte)1 : (byte)0;
             m_TypeIndex = typeIndex;
             m_Access = access;
@@ -61,7 +62,7 @@ namespace NZCore
         /// <param name="system">The system on which this type handle is cached.</param>
         public void Update(SystemBase system)
         {
-            Update(ref *system.m_StatePtr);
+            Update(ref *system.GetStatePtr());
         }
 
         /// <summary>
@@ -75,11 +76,11 @@ namespace NZCore
             // NOTE: We could in theory fetch all this data from m_Access.EntityComponentStore and void the SystemState from being passed in.
             //       That would unfortunately allow this API to be called from a job. So we use the required system parameter as a way of signifying to the user that this can only be invoked from main thread system code.
             //       Additionally this makes the API symmetric to ComponentTypeHandle.
-            m_GlobalSystemVersion = systemState.m_EntityComponentStore->GlobalSystemVersion;
+            m_GlobalSystemVersion = systemState.GetEntityComponentStore()->GlobalSystemVersion;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var safetyHandles = &m_Access->DependencyManager->Safety;
-            m_Safety = safetyHandles->GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
+            ref var safetyHandles = ref m_Access->DependencyManager->Safety;
+            m_Safety = safetyHandles.GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
 #endif
         }
 
@@ -140,9 +141,9 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
 
 #if ENTITIES_1_3_2
-            return ecs->HasComponent(system.m_Entity, m_TypeIndex, out _);
+            return ecs->HasComponent(system.GetEntity(), m_TypeIndex, out _);
 #else
-            return ecs->HasComponent(system.m_Entity, m_TypeIndex, ref m_Cache);
+            return ecs->HasComponent(system.GetEntity(), m_TypeIndex, ref m_Cache);
 #endif
         }
 
@@ -228,7 +229,7 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
-            return m_Access->IsComponentEnabled(systemHandle.m_Entity, m_TypeIndex, ref m_Cache);
+            return m_Access->IsComponentEnabled(systemHandle.GetEntity(), m_TypeIndex, ref m_Cache);
         }
 
         /// <summary>
@@ -246,7 +247,7 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
-            m_Access->SetComponentEnabled(systemHandle.m_Entity, m_TypeIndex, value, ref m_Cache);
+            m_Access->SetComponentEnabled(systemHandle.GetEntity(), m_TypeIndex, value, ref m_Cache);
         }
 
         private SafeBitRef MakeSafeBitRef(ulong* ptr, int offsetInBits)
@@ -466,9 +467,9 @@ namespace NZCore
         public static unsafe UntypedComponentLookup GetUntypedComponentLookup(this ref SystemState state, ComponentType componentType)
         {
             var isReadOnly = componentType.AccessModeType == ComponentType.AccessMode.ReadOnly;
-            state.AddReaderWriter(componentType);
+            EntityInternals.AddReaderWriter(ref state, componentType);
 
-            var access = state.EntityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(state.EntityManager);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new UntypedComponentLookup(componentType.TypeIndex, access, isReadOnly);
 #else

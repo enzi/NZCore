@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -197,17 +198,17 @@ namespace NZCore
 
         public void Update(SystemBase system)
         {
-            Update(ref *system.m_StatePtr);
+            Update(ref *system.GetStatePtr());
         }
 
         public void Update(ref SystemState systemState)
         {
-            m_GlobalSystemVersion = systemState.m_EntityComponentStore->GlobalSystemVersion;
+            m_GlobalSystemVersion = systemState.GetEntityComponentStore()->GlobalSystemVersion;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var safetyHandles = &m_Access->DependencyManager->Safety;
-            m_Safety0 = safetyHandles->GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
-            m_ArrayInvalidationSafety = safetyHandles->GetBufferHandleForBufferLookup(m_TypeIndex);
+            ref var safetyHandles = ref m_Access->DependencyManager->Safety;
+            m_Safety0 = safetyHandles.GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
+            m_ArrayInvalidationSafety = safetyHandles.GetBufferHandleForBufferLookup(m_TypeIndex);
 #endif
         }
 

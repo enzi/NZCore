@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEditor;
@@ -106,7 +107,7 @@ namespace NZCore.Editor
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Chunk", EditorStyles.boldLabel, GUILayout.Width(50));
-            EditorGUILayout.LabelField($"{_totalBytesInChunk} B ({Chunk.kChunkSize / _totalBytesInChunk})", GUILayout.Width(80));
+            EditorGUILayout.LabelField($"{_totalBytesInChunk} B ({EntityInternals.kChunkSize / _totalBytesInChunk})", GUILayout.Width(80));
             if (_totalBytesHeap > 0)
             {
                 EditorGUILayout.LabelField("Heap", EditorStyles.boldLabel, GUILayout.Width(40));
@@ -325,7 +326,7 @@ namespace NZCore.Editor
                 {
                     _totalBytesInChunk += typeInfo.SizeInChunk;
 
-                    var len = em.GetBufferLength(entity, typeIndex);
+                    var len = EntityInternals.GetBufferLength(em, entity, typeIndex);
                     entry.BufferLength = len;
 
                     if (len > typeInfo.BufferCapacity)
@@ -335,7 +336,7 @@ namespace NZCore.Editor
 
                     if (typeInfo.EntityOffsetCount > 0 && len > 0)
                     {
-                        var elems = (byte*)em.GetBufferRawRO(entity, typeIndex);
+                        var elems = (byte*)EntityInternals.GetBufferRawRO(em, entity, typeIndex);
                         var offsets = TypeManager.GetEntityOffsets(typeIndex, out var offsetCount);
                         for (var j = 0; j < len; j++)
                         {
@@ -357,7 +358,7 @@ namespace NZCore.Editor
 
                     if (typeInfo.EntityOffsetCount > 0)
                     {
-                        var data = (byte*)em.GetComponentDataRawRO(entity, typeIndex);
+                        var data = (byte*)EntityInternals.GetComponentDataRawRO(em, entity, typeIndex);
                         var offsets = TypeManager.GetEntityOffsets(typeIndex, out var offsetCount);
                         for (var k = 0; k < offsetCount; k++)
                         {

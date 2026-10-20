@@ -88,7 +88,7 @@ namespace NZSpellCasting
         private TransformEntityMappingSingleton _entityMapping;
         private WeakAssetLoaderSingleton _assetLoader;
 
-        private delegate void InstantiateGameObjects(in TransformEntityMappingSingleton mapping, in NativeArray<InstantiateGameObjectsRequest> requests);
+        internal delegate void InstantiateGameObjects(in TransformEntityMappingSingleton mapping, in NativeArray<InstantiateGameObjectsRequest> requests);
 
         private ManagedDelegate<InstantiateGameObjects> _instantiateGameObjectsFunction;
         private NativeList<InstantiateGameObjectsRequest> _instantiateRequests;

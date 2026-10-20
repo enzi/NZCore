@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -27,7 +28,7 @@ namespace NZCore
             for (var i = 0; i < filters.Count; i++)
             {
                 var indexInEntityQuery = filters.IndexInEntityQuery[i];
-                var component = query.__impl->_QueryData->RequiredComponents[indexInEntityQuery].TypeIndex;
+                var component = query.GetImplUnchecked()->_QueryData->RequiredComponents[indexInEntityQuery].TypeIndex;
                 if (component == requiredType)
                 {
                     scdIndex = filters.SharedComponentIndex[i];
@@ -40,12 +41,12 @@ namespace NZCore
         }
 
         public static SharedComponentData GetSharedFilters(this EntityQuery query) =>
-            UnsafeUtility.As<EntityQueryFilter.SharedComponentData, SharedComponentData>(ref query._GetImpl()->_Filter.Shared);
+            UnsafeUtility.As<EntityQueryFilter.SharedComponentData, SharedComponentData>(ref query.GetImpl()->_Filter.Shared);
 
         public static DynamicBuffer<T> GetSingletonBufferNoSync<T>(this EntityQuery query, bool isReadOnly)
             where T : unmanaged, IBufferElementData
         {
-            var impl = query._GetImpl();
+            var impl = query.GetImpl();
 
             var typeIndex = TypeManager.GetTypeIndex<T>();
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
@@ -66,10 +67,10 @@ namespace NZCore
 
             var archetype = impl->_Access->EntityComponentStore->GetArchetype(chunk);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var safetyHandles = &impl->_Access->DependencyManager->Safety;
+            ref var safetyHandles = ref impl->_Access->DependencyManager->Safety;
             var bufferAccessor = ChunkIterationUtility.GetChunkBufferAccessor<T>(archetype, chunk, !isReadOnly, indexInArchetype,
-                impl->_Access->EntityComponentStore->GlobalSystemVersion, safetyHandles->GetSafetyHandle(typeIndex, isReadOnly),
-                safetyHandles->GetBufferSafetyHandle(typeIndex));
+                impl->_Access->EntityComponentStore->GlobalSystemVersion, safetyHandles.GetSafetyHandle(typeIndex, isReadOnly),
+                safetyHandles.GetBufferSafetyHandle(typeIndex));
 #else
             var bufferAccessor = ChunkIterationUtility.GetChunkBufferAccessor<T>(archetype, chunk, !isReadOnly, indexInArchetype,
                 impl->_Access->EntityComponentStore->GlobalSystemVersion);

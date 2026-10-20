@@ -2,6 +2,7 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using NZCore.Internal;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
@@ -22,8 +23,8 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal SharedComponentLookup(TypeIndex typeIndex, EntityDataAccess* access, bool isReadOnly)
         {
-            var safetyHandles = &access->DependencyManager->Safety;
-            m_Safety = safetyHandles->GetSafetyHandleForComponentLookup(typeIndex, isReadOnly);
+            ref var safetyHandles = ref access->DependencyManager->Safety;
+            m_Safety = safetyHandles.GetSafetyHandleForComponentLookup(typeIndex, isReadOnly);
             m_IsReadOnly = isReadOnly ? (byte)1 : (byte)0;
             m_TypeIndex = typeIndex;
             m_Access = access;
@@ -97,7 +98,7 @@ namespace NZCore
 
         public void Update(SystemBase system)
         {
-            Update(ref *system.m_StatePtr);
+            Update(ref *system.GetStatePtr());
         }
 
         public void Update(ref SystemState systemState)
@@ -106,8 +107,8 @@ namespace NZCore
             //m_GlobalSystemVersion = systemState.m_EntityComponentStore->GlobalSystemVersion;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var safetyHandles = &m_Access->DependencyManager->Safety;
-            m_Safety = safetyHandles->GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
+            ref var safetyHandles = ref m_Access->DependencyManager->Safety;
+            m_Safety = safetyHandles.GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
 #endif
         }
     }

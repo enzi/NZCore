@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Burst.Intrinsics;
 using Unity.Collections.LowLevel.Unsafe;
@@ -17,81 +18,82 @@ namespace NZCore
         public static void SetChangeVersion<T>(this ArchetypeChunk chunk, ref ComponentTypeHandle<T> handle)
             where T : struct, IComponentData
         {
-            var ecs = chunk.m_EntityComponentStore;
-            var archetype = ecs->GetArchetype(chunk.m_Chunk);
+            var ecs = chunk.GetEntityComponentStore();
+            var archetype = ecs->GetArchetype(chunk.GetChunkIndex());
 
-            if (Hint.Unlikely(archetype != handle.m_LookupCache.Archetype))
+            if (Hint.Unlikely(archetype != handle.GetLookupCache().Archetype))
             {
-                handle.m_LookupCache.Update(archetype, handle.m_TypeIndex);
+                handle.GetLookupCache().Update(archetype, handle.GetTypeIndex());
             }
 
-            var typeIndexInArchetype = handle.m_LookupCache.IndexInArchetype;
+            var typeIndexInArchetype = handle.GetLookupCache().IndexInArchetype;
             if (typeIndexInArchetype == -1)
             {
                 return;
             }
 
-            archetype->Chunks.SetChangeVersion(typeIndexInArchetype, chunk.m_Chunk.ListIndex, handle.GlobalSystemVersion);
+            archetype->Chunks.SetChangeVersion(typeIndexInArchetype, chunk.GetChunkIndex().ListIndex, handle.GlobalSystemVersion);
         }
 
         public static void SetChangeVersion<T>(this ArchetypeChunk chunk, ref BufferTypeHandle<T> handle)
             where T : unmanaged, IBufferElementData
         {
-            var ecs = chunk.m_EntityComponentStore;
-            var archetype = ecs->GetArchetype(chunk.m_Chunk);
+            var ecs = chunk.GetEntityComponentStore();
+            var archetype = ecs->GetArchetype(chunk.GetChunkIndex());
 
-            if (Hint.Unlikely(archetype != handle.m_LookupCache.Archetype))
+            if (Hint.Unlikely(archetype != handle.GetLookupCache().Archetype))
             {
-                handle.m_LookupCache.Update(archetype, handle.m_TypeIndex);
+                handle.GetLookupCache().Update(archetype, handle.GetTypeIndex());
             }
 
-            var typeIndexInArchetype = handle.m_LookupCache.IndexInArchetype;
+            var typeIndexInArchetype = handle.GetLookupCache().IndexInArchetype;
             if (typeIndexInArchetype == -1)
             {
                 return;
             }
 
-            archetype->Chunks.SetChangeVersion(typeIndexInArchetype, chunk.m_Chunk.ListIndex, handle.GlobalSystemVersion);
+            archetype->Chunks.SetChangeVersion(typeIndexInArchetype, chunk.GetChunkIndex().ListIndex, handle.GlobalSystemVersion);
         }
 
         public static BufferAccessor<T> GetBufferAccessor<T>(this ArchetypeChunk chunk, ref BufferTypeHandle<T> bufferTypeHandle, bool bumpVersion = true)
             where T : unmanaged, IBufferElementData
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(bufferTypeHandle.m_Safety0);
+            AtomicSafetyHandle.CheckReadAndThrow(bufferTypeHandle.GetSafety0());
 #endif
-            var ecs = chunk.m_EntityComponentStore;
-            var archetype = ecs->GetArchetype(chunk.m_Chunk);
-            var typeIndex = bufferTypeHandle.m_TypeIndex;
+            var ecs = chunk.GetEntityComponentStore();
+            var archetype = ecs->GetArchetype(chunk.GetChunkIndex());
+            var typeIndex = bufferTypeHandle.GetTypeIndex();
 
-            if (Hint.Unlikely(bufferTypeHandle.m_LookupCache.Archetype != archetype))
+            if (Hint.Unlikely(bufferTypeHandle.GetLookupCache().Archetype != archetype))
             {
-                bufferTypeHandle.m_LookupCache.Update(ecs->GetArchetype(chunk.m_Chunk), typeIndex);
+                bufferTypeHandle.GetLookupCache().Update(ecs->GetArchetype(chunk.GetChunkIndex()), typeIndex);
             }
 
-            int typeIndexInArchetype = bufferTypeHandle.m_LookupCache.IndexInArchetype;
+            int typeIndexInArchetype = bufferTypeHandle.GetLookupCache().IndexInArchetype;
             if (typeIndexInArchetype == -1)
             {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                return new BufferAccessor<T>(null, 0, 0, true, bufferTypeHandle.m_Safety0, bufferTypeHandle.m_Safety1, 0);
+                return EntityInternals.CreateBufferAccessor<T>(null, 0, 0, true, bufferTypeHandle.GetSafety0(), bufferTypeHandle.GetSafety1(), 0);
 #else
-                return new BufferAccessor<T>(null, 0, 0, 0);
+                return EntityInternals.CreateBufferAccessor<T>(null, 0, 0, 0);
 #endif
             }
 
             var ptr = bufferTypeHandle.IsReadOnly
-                ? ChunkDataUtility.GetComponentDataRO(chunk.m_Chunk, archetype, 0, typeIndexInArchetype)
-                : GetComponentDataRW(chunk.m_Chunk, archetype, 0, typeIndexInArchetype, bufferTypeHandle.GlobalSystemVersion, bumpVersion);
+                ? ChunkDataUtility.GetComponentDataRO(chunk.GetChunkIndex(), archetype, 0, typeIndexInArchetype)
+                : GetComponentDataRW(chunk.GetChunkIndex(), archetype, 0, typeIndexInArchetype, bufferTypeHandle.GlobalSystemVersion, bumpVersion);
 
             var internalCapacity = archetype->BufferCapacities[typeIndexInArchetype];
             var length = chunk.Count;
             int stride = archetype->SizeOfs[typeIndexInArchetype];
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new BufferAccessor<T>(ptr, length, stride, bufferTypeHandle.IsReadOnly, bufferTypeHandle.m_Safety0, bufferTypeHandle.m_Safety1,
+            return EntityInternals.CreateBufferAccessor<T>(ptr, length, stride, bufferTypeHandle.IsReadOnly, bufferTypeHandle.GetSafety0(),
+                bufferTypeHandle.GetSafety1(),
                 internalCapacity);
 #else
-            return new BufferAccessor<T>(ptr, length, stride, internalCapacity);
+            return EntityInternals.CreateBufferAccessor<T>(ptr, length, stride, internalCapacity);
 #endif
         }
 
@@ -122,24 +124,24 @@ namespace NZCore
 
         public static byte* GetComponentDataRaw(this in ArchetypeChunk chunk, ref DynamicComponentTypeHandle dynamicHandle, bool isReadOnly, out ushort sizeOf)
         {
-            var archetype = chunk.Archetype.Archetype;
+            var archetype = chunk.Archetype.GetArchetype();
 
-            var indexInTypeArray = ChunkDataUtility.GetIndexInTypeArray(archetype, dynamicHandle.m_TypeIndex);
+            var indexInTypeArray = ChunkDataUtility.GetIndexInTypeArray(archetype, dynamicHandle.GetTypeIndex());
 
             var offset = archetype->Offsets[indexInTypeArray];
             sizeOf = archetype->SizeOfs[indexInTypeArray];
 
             if (!isReadOnly)
             {
-                archetype->Chunks.SetChangeVersion(indexInTypeArray, chunk.m_Chunk.ListIndex, chunk.m_EntityComponentStore->GlobalSystemVersion);
+                archetype->Chunks.SetChangeVersion(indexInTypeArray, chunk.GetChunkIndex().ListIndex, chunk.GetEntityComponentStore()->GlobalSystemVersion);
             }
 
-            return chunk.m_Chunk.Buffer + offset;
+            return chunk.GetChunkIndex().Buffer + offset;
         }
 
         public static byte* GetComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex, bool isReadOnly, out ushort sizeOf)
         {
-            var archetype = chunk.Archetype.Archetype;
+            var archetype = chunk.Archetype.GetArchetype();
 
             var indexInTypeArray = ChunkDataUtility.GetIndexInTypeArray(archetype, typeIndex);
 
@@ -148,53 +150,54 @@ namespace NZCore
 
             if (!isReadOnly)
             {
-                archetype->Chunks.SetChangeVersion(indexInTypeArray, chunk.m_Chunk.ListIndex, chunk.m_EntityComponentStore->GlobalSystemVersion);
+                archetype->Chunks.SetChangeVersion(indexInTypeArray, chunk.GetChunkIndex().ListIndex, chunk.GetEntityComponentStore()->GlobalSystemVersion);
             }
 
-            return chunk.m_Chunk.Buffer + offset;
+            return chunk.GetChunkIndex().Buffer + offset;
         }
 
         public static byte* GetComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex, int indexInChunk, bool isReadOnly)
         {
-            var ecs = chunk.m_EntityComponentStore;
+            var ecs = chunk.GetEntityComponentStore();
 
             return isReadOnly
-                ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, indexInChunk, typeIndex)
-                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, indexInChunk, typeIndex, ecs->GlobalSystemVersion);
+                ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.GetChunkIndex(), chunk.Archetype.GetArchetype(), indexInChunk, typeIndex)
+                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.GetChunkIndex(), chunk.Archetype.GetArchetype(), indexInChunk, typeIndex,
+                    ecs->GlobalSystemVersion);
         }
 
         public static byte* GetComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex, Entity entity, bool isReadOnly)
         {
-            var ecs = chunk.m_EntityComponentStore;
+            var ecs = chunk.GetEntityComponentStore();
             var entityInChunk = ecs->GetEntityInChunk(entity);
 
             return isReadOnly
-                ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex)
-                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, entityInChunk.IndexInChunk, typeIndex,
+                ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.GetChunkIndex(), chunk.Archetype.GetArchetype(), entityInChunk.IndexInChunk, typeIndex)
+                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.GetChunkIndex(), chunk.Archetype.GetArchetype(), entityInChunk.IndexInChunk, typeIndex,
                     ecs->GlobalSystemVersion);
         }
 
         public static byte* GetSharedComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex, Entity entity)
         {
-            var ecs = chunk.m_EntityComponentStore;
+            var ecs = chunk.GetEntityComponentStore();
             var sharedComponentIndex = ecs->GetSharedComponentDataIndex(entity, typeIndex);
             return (byte*)ecs->GetSharedComponentDataAddr_Unmanaged(sharedComponentIndex, typeIndex);
         }
 
         public static byte* GetSharedComponentDataRaw(this in ArchetypeChunk chunk, TypeIndex typeIndex)
         {
-            var ecs = chunk.m_EntityComponentStore;
+            var ecs = chunk.GetEntityComponentStore();
             var sharedComponentIndex = GetSharedComponentDataIndex(chunk, typeIndex);
             return (byte*)ecs->GetSharedComponentDataAddr_Unmanaged(sharedComponentIndex, typeIndex);
         }
 
         public static int GetSharedComponentDataIndex(this in ArchetypeChunk chunk, TypeIndex typeIndex)
         {
-            var ecs = chunk.m_EntityComponentStore;
-            var archetype = ecs->GetArchetype(chunk.m_Chunk);
+            var ecs = chunk.GetEntityComponentStore();
+            var archetype = ecs->GetArchetype(chunk.GetChunkIndex());
             var indexInTypeArray = ChunkDataUtility.GetIndexInTypeArray(archetype, typeIndex);
 
-            var sharedComponentValueArray = archetype->Chunks.GetSharedComponentValues(chunk.m_Chunk.ListIndex);
+            var sharedComponentValueArray = archetype->Chunks.GetSharedComponentValues(chunk.GetChunkIndex().ListIndex);
             var sharedComponentOffset = indexInTypeArray - archetype->FirstSharedComponent;
             return sharedComponentValueArray[sharedComponentOffset];
         }
@@ -204,13 +207,13 @@ namespace NZCore
             where T : unmanaged, IComponentData, IEnableableComponent
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckWriteAndThrow(typeHandle.m_Safety);
+            AtomicSafetyHandle.CheckWriteAndThrow(typeHandle.GetSafety());
 #endif
-            var archetype = archetypeChunk.m_EntityComponentStore->GetArchetype(archetypeChunk.m_Chunk);
+            var archetype = archetypeChunk.GetEntityComponentStore()->GetArchetype(archetypeChunk.GetChunkIndex());
 
-            if (Hint.Unlikely(typeHandle.m_LookupCache.Archetype != archetype))
+            if (Hint.Unlikely(typeHandle.GetLookupCache().Archetype != archetype))
             {
-                typeHandle.m_LookupCache.Update(archetype, typeHandle.m_TypeIndex);
+                typeHandle.GetLookupCache().Update(archetype, typeHandle.GetTypeIndex());
             }
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -220,17 +223,17 @@ namespace NZCore
             }
 
             // Must check this after computing the pointer, to make sure the cache is up to date
-            if (Hint.Unlikely(typeHandle.m_LookupCache.IndexInArchetype == -1))
+            if (Hint.Unlikely(typeHandle.GetLookupCache().IndexInArchetype == -1))
             {
-                var typeName = typeHandle.m_TypeIndex.ToFixedString();
+                var typeName = typeHandle.GetTypeIndex().ToFixedString();
                 throw new ArgumentException($"Required component {typeName} not found in archetype.");
             }
 #endif
 
             var ptr = ChunkDataUtility.GetEnabledRefRW(
-                archetypeChunk.m_Chunk,
-                archetypeChunk.Archetype.Archetype,
-                typeHandle.m_LookupCache.IndexInArchetype,
+                archetypeChunk.GetChunkIndex(),
+                archetypeChunk.Archetype.GetArchetype(),
+                typeHandle.GetLookupCache().IndexInArchetype,
                 typeHandle.GlobalSystemVersion,
                 out ptrChunkDisabledCount).Ptr;
 
@@ -262,31 +265,32 @@ namespace NZCore
             where T : unmanaged, IBufferElementData
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(bufferTypeHandle.m_Safety0);
+            AtomicSafetyHandle.CheckReadAndThrow(bufferTypeHandle.GetSafety0());
 #endif
-            var ecs = chunk.m_EntityComponentStore;
-            //var chunkPtr = chunk.m_Chunk;
-            var archetype = ecs->GetArchetype(chunk.m_Chunk);
-            var typeIndex = bufferTypeHandle.m_TypeIndex;
-            if (Hint.Unlikely(bufferTypeHandle.m_LookupCache.Archetype != archetype))
+            var ecs = chunk.GetEntityComponentStore();
+            //var chunkPtr = chunk.GetChunkIndex();
+            var archetype = ecs->GetArchetype(chunk.GetChunkIndex());
+            var typeIndex = bufferTypeHandle.GetTypeIndex();
+            if (Hint.Unlikely(bufferTypeHandle.GetLookupCache().Archetype != archetype))
             {
-                bufferTypeHandle.m_LookupCache.Update(archetype, typeIndex);
+                bufferTypeHandle.GetLookupCache().Update(archetype, typeIndex);
             }
 
             var ptr = bufferTypeHandle.IsReadOnly
-                ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, archetype, 0, typeIndex, ref bufferTypeHandle.m_LookupCache)
-                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, archetype, 0, typeIndex, bufferTypeHandle.GlobalSystemVersion,
-                    ref bufferTypeHandle.m_LookupCache);
+                ? ChunkDataUtility.GetComponentDataWithTypeRO(chunk.GetChunkIndex(), archetype, 0, typeIndex, ref bufferTypeHandle.GetLookupCache())
+                : ChunkDataUtility.GetComponentDataWithTypeRW(chunk.GetChunkIndex(), archetype, 0, typeIndex, bufferTypeHandle.GlobalSystemVersion,
+                    ref bufferTypeHandle.GetLookupCache());
 
-            var internalCapacity = archetype->BufferCapacities[bufferTypeHandle.m_LookupCache.IndexInArchetype];
+            var internalCapacity = archetype->BufferCapacities[bufferTypeHandle.GetLookupCache().IndexInArchetype];
             var length = chunk.Count;
-            int stride = bufferTypeHandle.m_LookupCache.ComponentSizeOf;
+            int stride = bufferTypeHandle.GetLookupCache().ComponentSizeOf;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new BufferAccessor<T>(ptr, length, stride, bufferTypeHandle.IsReadOnly, bufferTypeHandle.m_Safety0, bufferTypeHandle.m_Safety1,
+            return EntityInternals.CreateBufferAccessor<T>(ptr, length, stride, bufferTypeHandle.IsReadOnly, bufferTypeHandle.GetSafety0(),
+                bufferTypeHandle.GetSafety1(),
                 internalCapacity);
 #else
-            return new BufferAccessor<T>(ptr, length, stride, internalCapacity);
+            return EntityInternals.CreateBufferAccessor<T>(ptr, length, stride, internalCapacity);
 #endif
         }
 
@@ -296,41 +300,43 @@ namespace NZCore
             where TS : unmanaged, IComponentData, IEnableableComponent
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckWriteAndThrow(destination.m_Safety);
-            AtomicSafetyHandle.CheckReadAndThrow(source.m_Safety);
+            AtomicSafetyHandle.CheckWriteAndThrow(destination.GetSafety());
+            AtomicSafetyHandle.CheckReadAndThrow(source.GetSafety());
 #endif
-            var archetype = archetypeChunk.m_EntityComponentStore->GetArchetype(archetypeChunk.m_Chunk);
+            var archetype = archetypeChunk.GetEntityComponentStore()->GetArchetype(archetypeChunk.GetChunkIndex());
 
-            if (Hint.Unlikely(destination.m_LookupCache.Archetype != archetype))
+            if (Hint.Unlikely(destination.GetLookupCache().Archetype != archetype))
             {
-                destination.m_LookupCache.Update(archetype, destination.m_TypeIndex);
+                destination.GetLookupCache().Update(archetype, destination.GetTypeIndex());
             }
 
-            if (Hint.Unlikely(source.m_LookupCache.Archetype != archetype))
+            if (Hint.Unlikely(source.GetLookupCache().Archetype != archetype))
             {
-                source.m_LookupCache.Update(archetype, source.m_TypeIndex);
+                source.GetLookupCache().Update(archetype, source.GetTypeIndex());
             }
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (Hint.Unlikely(destination.m_LookupCache.IndexInArchetype == -1))
+            if (Hint.Unlikely(destination.GetLookupCache().IndexInArchetype == -1))
             {
                 throw new InvalidOperationException();
             }
 
-            if (Hint.Unlikely(source.m_LookupCache.IndexInArchetype == -1))
+            if (Hint.Unlikely(source.GetLookupCache().IndexInArchetype == -1))
             {
                 throw new InvalidOperationException();
             }
 #endif
             var dst = ChunkDataUtility.GetEnabledRefRW(
-                archetypeChunk.m_Chunk, archetypeChunk.Archetype.Archetype, destination.m_LookupCache.IndexInArchetype, destination.GlobalSystemVersion,
+                archetypeChunk.GetChunkIndex(), archetypeChunk.Archetype.GetArchetype(), destination.GetLookupCache().IndexInArchetype,
+                destination.GlobalSystemVersion,
                 out var dstPtrChunkDisabledCount).Ptr;
 
-            var src = ChunkDataUtility.GetEnabledRefRO(archetypeChunk.m_Chunk, archetypeChunk.Archetype.Archetype, source.m_LookupCache.IndexInArchetype).Ptr;
+            var src = ChunkDataUtility.GetEnabledRefRO(archetypeChunk.GetChunkIndex(), archetypeChunk.Archetype.GetArchetype(),
+                source.GetLookupCache().IndexInArchetype).Ptr;
 
-            var chunks = archetype->Chunks;
-            var memoryOrderIndexInArchetype = archetype->TypeIndexInArchetypeToMemoryOrderIndex[source.m_LookupCache.IndexInArchetype];
-            var srcPtrChunkDisabledCount = chunks.GetPointerToChunkDisabledCountForType(memoryOrderIndexInArchetype, archetypeChunk.m_Chunk.ListIndex);
+            ref var chunks = ref archetype->Chunks;
+            var memoryOrderIndexInArchetype = archetype->TypeIndexInArchetypeToMemoryOrderIndex[source.GetLookupCache().IndexInArchetype];
+            var srcPtrChunkDisabledCount = chunks.GetPointerToChunkDisabledCountForType(memoryOrderIndexInArchetype, archetypeChunk.GetChunkIndex().ListIndex);
 
             dst[0] = src[0];
             dst[1] = src[1];
@@ -341,11 +347,11 @@ namespace NZCore
             where T : unmanaged, IComponentData
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckWriteAndThrow(typeHandle.m_Safety);
+            AtomicSafetyHandle.CheckWriteAndThrow(typeHandle.GetSafety());
 #endif
-            var metaChunkEntity = archetypeChunk.m_Chunk.MetaChunkEntity;
-            archetypeChunk.m_EntityComponentStore->AssertEntityHasComponent(metaChunkEntity, typeHandle.m_TypeIndex);
-            var ptr = archetypeChunk.m_EntityComponentStore->GetComponentDataWithTypeRW(metaChunkEntity, typeHandle.m_TypeIndex,
+            var metaChunkEntity = archetypeChunk.GetChunkIndex().MetaChunkEntity;
+            archetypeChunk.GetEntityComponentStore()->AssertEntityHasComponent(metaChunkEntity, typeHandle.GetTypeIndex());
+            var ptr = archetypeChunk.GetEntityComponentStore()->GetComponentDataWithTypeRW(metaChunkEntity, typeHandle.GetTypeIndex(),
                 typeHandle.GlobalSystemVersion);
             return ref UnsafeUtility.AsRef<T>(ptr);
         }

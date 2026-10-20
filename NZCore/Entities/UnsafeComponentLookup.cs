@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -31,8 +32,8 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         internal UnsafeComponentLookup(TypeIndex typeIndex, EntityDataAccess* access, bool isReadOnly)
         {
-            var safetyHandles = &access->DependencyManager->Safety;
-            m_Safety = safetyHandles->GetSafetyHandleForComponentLookup(typeIndex, isReadOnly);
+            ref var safetyHandles = ref access->DependencyManager->Safety;
+            m_Safety = safetyHandles.GetSafetyHandleForComponentLookup(typeIndex, isReadOnly);
             m_IsReadOnly = isReadOnly ? (byte)1 : (byte)0;
             m_TypeIndex = typeIndex;
             m_Access = access;
@@ -61,7 +62,7 @@ namespace NZCore
         /// <param name="system">The system on which this type handle is cached.</param>
         public void Update(SystemBase system)
         {
-            Update(ref *system.m_StatePtr);
+            Update(ref *system.GetStatePtr());
         }
 
         /// <summary>
@@ -75,11 +76,11 @@ namespace NZCore
             // NOTE: We could in theory fetch all this data from m_Access.EntityComponentStore and void the SystemState from being passed in.
             //       That would unfortunately allow this API to be called from a job. So we use the required system parameter as a way of signifying to the user that this can only be invoked from main thread system code.
             //       Additionally this makes the API symmetric to ComponentTypeHandle.
-            m_GlobalSystemVersion = systemState.m_EntityComponentStore->GlobalSystemVersion;
+            m_GlobalSystemVersion = systemState.GetEntityComponentStore()->GlobalSystemVersion;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var safetyHandles = &m_Access->DependencyManager->Safety;
-            m_Safety = safetyHandles->GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
+            ref var safetyHandles = ref m_Access->DependencyManager->Safety;
+            m_Safety = safetyHandles.GetSafetyHandleForComponentLookup(m_TypeIndex, m_IsReadOnly != 0);
 #endif
         }
 
@@ -140,9 +141,9 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
 
 #if ENTITIES_1_3_2
-            return ecs->HasComponent(system.m_Entity, m_TypeIndex, out _);
+            return ecs->HasComponent(system.GetEntity(), m_TypeIndex, out _);
 #else
-            return ecs->HasComponent(system.m_Entity, m_TypeIndex, ref m_Cache);
+            return ecs->HasComponent(system.GetEntity(), m_TypeIndex, ref m_Cache);
 #endif
         }
 
@@ -294,8 +295,8 @@ namespace NZCore
         /// </remarks>
         public T this[SystemHandle system]
         {
-            get => this[system.m_Entity];
-            set => this[system.m_Entity] = value;
+            get => this[system.GetEntity()];
+            set => this[system.GetEntity()] = value;
         }
 
         /// <summary>
@@ -345,7 +346,7 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
-            return m_Access->IsComponentEnabled(systemHandle.m_Entity, m_TypeIndex, ref m_Cache);
+            return m_Access->IsComponentEnabled(systemHandle.GetEntity(), m_TypeIndex, ref m_Cache);
         }
 
         /// <summary>
@@ -363,7 +364,7 @@ namespace NZCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
-            m_Access->SetComponentEnabled(systemHandle.m_Entity, m_TypeIndex, value, ref m_Cache);
+            m_Access->SetComponentEnabled(systemHandle.GetEntity(), m_TypeIndex, value, ref m_Cache);
         }
 
         /// <summary>
@@ -378,19 +379,19 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(m_Safety);
 #endif
             var ecs = m_Access->EntityComponentStore;
-            ecs->AssertEntityHasComponent(system.m_Entity, m_TypeIndex);
+            ecs->AssertEntityHasComponent(system.GetEntity(), m_TypeIndex);
 
             if (m_IsZeroSized != 0)
             {
                 return default;
             }
 
-            void* ptr = ecs->GetComponentDataWithTypeRW(system.m_Entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
+            void* ptr = ecs->GetComponentDataWithTypeRW(system.GetEntity(), m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRW<T>(ptr, m_Safety);
+            return EntityInternals.CreateRefRW<T>(ptr, m_Safety);
 #else
-            return new RefRW<T> (ptr);
+            return EntityInternals.CreateRefRW<T>(ptr);
 #endif
         }
 
@@ -420,9 +421,9 @@ namespace NZCore
                     : ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRW<T>(ptr, m_Safety);
+            return EntityInternals.CreateRefRW<T>(ptr, m_Safety);
 #else
-            return new RefRW<T> (ptr);
+            return EntityInternals.CreateRefRW<T>(ptr);
 #endif
         }
 
@@ -447,9 +448,9 @@ namespace NZCore
 
             void* ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRO<T>(ptr, m_Safety);
+            return EntityInternals.CreateRefRO<T>(ptr, m_Safety);
 #else
-            return new RefRO<T> (ptr);
+            return EntityInternals.CreateRefRO<T>(ptr);
 #endif
         }
 
@@ -467,10 +468,10 @@ namespace NZCore
             if (!HasComponent(entity))
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             {
-                return new RefRW<T>(null, default);
+                return EntityInternals.CreateRefRW<T>(null, default);
             }
 #else
-                return new RefRW<T>(null);
+                return EntityInternals.CreateRefRW<T>(null);
 #endif
 
             if (m_IsZeroSized != 0)
@@ -485,9 +486,9 @@ namespace NZCore
                     : ecs->GetComponentDataWithTypeRW(entity, m_TypeIndex, m_GlobalSystemVersion, ref m_Cache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRW<T>(ptr, m_Safety);
+            return EntityInternals.CreateRefRW<T>(ptr, m_Safety);
 #else
-            return new RefRW<T> (ptr);
+            return EntityInternals.CreateRefRW<T>(ptr);
 #endif
         }
 
@@ -505,10 +506,10 @@ namespace NZCore
             if (!HasComponent(entity))
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             {
-                return new RefRO<T>(null, default);
+                return EntityInternals.CreateRefRO<T>(null, default);
             }
 #else
-                return new RefRO<T>(null);
+                return EntityInternals.CreateRefRO<T>(null);
 #endif
 
             if (m_IsZeroSized != 0)
@@ -519,9 +520,9 @@ namespace NZCore
             var ecs = m_Access->EntityComponentStore;
             void* ptr = ecs->GetComponentDataWithTypeRO(entity, m_TypeIndex, ref m_Cache);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new RefRO<T>(ptr, m_Safety);
+            return EntityInternals.CreateRefRO<T>(ptr, m_Safety);
 #else
-            return new RefRO<T> (ptr);
+            return EntityInternals.CreateRefRO<T>(ptr);
 #endif
         }
 

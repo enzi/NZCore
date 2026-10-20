@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -16,10 +17,11 @@ namespace NZCore
         /// <param name="world"></param>
         /// <returns></returns>
         [ExcludeFromBurstCompatTesting("")]
-        public static Type ExecutingSystemType(this World world) => world.Unmanaged.GetTypeOfSystem(world.Unmanaged.ExecutingSystem);
+        public static Type ExecutingSystemType(this World world) =>
+            EntityInternals.GetTypeOfSystem(world.Unmanaged, EntityInternals.GetExecutingSystem(world.Unmanaged));
 
         [ExcludeFromBurstCompatTesting("Returns managed type")]
-        public static Type GetSystemType(this WorldUnmanaged world, SystemHandle handle) => world.GetTypeOfSystem(handle);
+        public static Type GetSystemType(this WorldUnmanaged world, SystemHandle handle) => EntityInternals.GetTypeOfSystem(world, handle);
 
         public static bool SystemExists<T>(this WorldUnmanaged world)
         {

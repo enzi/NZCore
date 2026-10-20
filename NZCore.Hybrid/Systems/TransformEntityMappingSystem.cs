@@ -22,7 +22,7 @@ namespace NZCore.Hybrid
         private NativeList<int> _entitiesToRemove;
         private NativeList<DelayedDestroyRequest> _delayedDestroyRequests;
 
-        private delegate void DestroyGameObjects(in NativeArray<UnityObjectRef<GameObject>> requests);
+        internal delegate void DestroyGameObjects(in NativeArray<UnityObjectRef<GameObject>> requests);
 
         private ManagedDelegate<DestroyGameObjects> _destroyGameObjectsFunction;
 

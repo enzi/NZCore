@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -66,17 +67,17 @@ namespace NZCore
 
         public unsafe void Update(SystemBase system)
         {
-            Update(ref *system.m_StatePtr);
+            Update(ref *system.GetStatePtr());
         }
 
         public unsafe void Update(ref SystemState state)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            m_Safety0 = state.m_DependencyManager->Safety.GetSafetyHandleForDynamicComponentTypeHandle(TypeIndex, IsReadOnly);
+            m_Safety0 = state.GetDependencyManager()->Safety.GetSafetyHandleForDynamicComponentTypeHandle(TypeIndex, IsReadOnly);
             var numHandles = IsReadOnly ? m_SafetyReadOnlyCount : m_SafetyReadWriteCount;
             if (numHandles > 1)
             {
-                m_Safety1 = state.m_DependencyManager->Safety.GetBufferHandleForBufferTypeHandle(TypeIndex);
+                m_Safety1 = state.GetDependencyManager()->Safety.GetBufferHandleForBufferTypeHandle(TypeIndex);
             }
 #endif
             _globalSystemVersion = state.GlobalSystemVersion;
@@ -85,7 +86,7 @@ namespace NZCore
         public FixedString512Bytes ToFixedString()
         {
             var fs = new FixedString128Bytes((FixedString32Bytes)"UntypedComponentTypeHandle[");
-            fs.Append(TypeManager.GetTypeNameFixed(TypeIndex));
+            fs.Append(EntityInternals.GetTypeNameFixed(TypeIndex));
             fs.Append(']');
             return fs;
         }
@@ -95,14 +96,14 @@ namespace NZCore
     {
         public static UntypedComponentTypeHandle GetUntypedHandle(this ref SystemState state, ComponentType componentType)
         {
-            state.AddReaderWriter(componentType);
+            EntityInternals.AddReaderWriter(ref state, componentType);
             return GetUntypedComponentTypeHandle(ref state, componentType);
         }
 
         private static UntypedComponentTypeHandle GetUntypedComponentTypeHandle(ref SystemState state, ComponentType componentType)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var access = state.EntityManager.GetCheckedEntityDataAccess();
+            var access = EntityInternals.GetCheckedEntityDataAccess(state.EntityManager);
             if (!componentType.IsBuffer)
             {
                 return new UntypedComponentTypeHandle(componentType,
@@ -131,7 +132,7 @@ namespace NZCore
             AtomicSafetyHandle.CheckReadAndThrow(untypedHandle.m_Safety0);
 #endif
 
-            var ptr = ChunkDataUtility.GetComponentDataWithTypeRO(chunk.m_Chunk, chunk.Archetype.Archetype, 0,
+            var ptr = ChunkDataUtility.GetComponentDataWithTypeRO(chunk.GetChunkIndex(), chunk.Archetype.GetArchetype(), 0,
                 untypedHandle.TypeIndex, ref untypedHandle.LookupCache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG
@@ -151,7 +152,7 @@ namespace NZCore
             AtomicSafetyHandle.CheckWriteAndThrow(untypedHandle.m_Safety0);
 #endif
 
-            var ptr = ChunkDataUtility.GetComponentDataWithTypeRW(chunk.m_Chunk, chunk.Archetype.Archetype, 0,
+            var ptr = ChunkDataUtility.GetComponentDataWithTypeRW(chunk.GetChunkIndex(), chunk.Archetype.GetArchetype(), 0,
                 untypedHandle.TypeIndex, untypedHandle.GlobalSystemVersion, ref untypedHandle.LookupCache);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS || UNITY_DOTS_DEBUG

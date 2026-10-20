@@ -17,8 +17,8 @@ namespace NZCore.Hybrid
     public partial struct HybridAnimationOverrideSystem : ISystem
     {
         private const float TransitionSpeed = 5;
-        
-        private delegate void ChangeClipDelegate(ref HybridAnimator animator, in UntypedWeakReferenceId clipId, float speed);
+
+        internal delegate void ChangeClipDelegate(ref HybridAnimator animator, in UntypedWeakReferenceId clipId, float speed);
         private ManagedDelegate<ChangeClipDelegate> _changeClipFunction;
 
         public void OnCreate(ref SystemState state)

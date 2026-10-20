@@ -10,6 +10,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
+using NZCore.Internal;
 using Memory = NZCore.Internal.CollectionMemory;
 
 namespace NZCore
@@ -336,9 +337,10 @@ namespace NZCore
         public DynamicBuffer<TU> Reinterpret<TU>() where TU : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new DynamicBuffer<TU>(_buffer, m_Safety0, m_Safety1, m_IsReadOnly == 1, m_UseMemoryInitPattern == 1, m_MemoryInitPattern, _internalCapacity);
+            return EntityInternals.CreateDynamicBuffer<TU>(_buffer, m_Safety0, m_Safety1, m_IsReadOnly == 1, m_UseMemoryInitPattern == 1, m_MemoryInitPattern,
+                _internalCapacity);
 #else
-            return new DynamicBuffer<TU>(_buffer, _internalCapacity);
+            return EntityInternals.CreateDynamicBuffer<TU>(_buffer, _internalCapacity);
 #endif
         }
 
@@ -367,8 +369,9 @@ namespace NZCore
             ResizeUninitialized(v.Length);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckReadAndThrow(v.m_Safety0);
-            AtomicSafetyHandle.CheckReadAndThrow(v.m_Safety1);
+            ref var exposed = ref UnsafeUtility.As<DynamicBuffer<T>, DynamicBufferExposed<T>>(ref v);
+            AtomicSafetyHandle.CheckReadAndThrow(exposed.m_Safety0);
+            AtomicSafetyHandle.CheckReadAndThrow(exposed.m_Safety1);
 #endif
             CheckWriteAccess();
 

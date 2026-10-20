@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using NZCore.Internal;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -15,34 +16,34 @@ namespace NZCore
             where T : unmanaged
         {
             var tmp = TypeManager.GetTypeIndex<T>();
-            state.AddReaderWriter(ComponentType.ReadWrite(tmp));
+            EntityInternals.AddReaderWriter(ref state, ComponentType.ReadWrite(tmp));
         }
 
         public static void AddSystemWriteDependency(ref this SystemState state, TypeIndex typeIndex)
         {
-            state.AddReaderWriter(ComponentType.ReadWrite(typeIndex));
+            EntityInternals.AddReaderWriter(ref state, ComponentType.ReadWrite(typeIndex));
         }
 
         public static void AddSystemReadDependency(ref this SystemState state, TypeIndex typeIndex)
         {
-            state.AddReaderWriter(ComponentType.ReadOnly(typeIndex));
+            EntityInternals.AddReaderWriter(ref state, ComponentType.ReadOnly(typeIndex));
         }
 
         public static void AddSystemReadDependency<T>(ref this SystemState state)
             where T : unmanaged
         {
             var tmp = TypeManager.GetTypeIndex<T>();
-            state.AddReaderWriter(ComponentType.ReadOnly(tmp));
+            EntityInternals.AddReaderWriter(ref state, ComponentType.ReadOnly(tmp));
         }
 
-        public static JobHandle GetInternalDependency(ref this SystemState state) => state.m_JobHandle;
+        public static JobHandle GetInternalDependency(ref this SystemState state) => state.GetJobHandle();
 
         [ExcludeFromBurstCompatTesting("Returns managed system")]
-        public static ComponentSystemBase GetManagedSystem(ref this SystemState state) => state.ManagedSystem;
+        public static ComponentSystemBase GetManagedSystem(ref this SystemState state) => EntityInternals.GetManagedSystem(ref state);
 
         /// <summary> Name of the profiler marker the system's update is recorded under, managed and unmanaged systems use the same format. </summary>
         [ExcludeFromBurstCompatTesting("Returns managed string")]
-        public static string GetSystemProfilerMarkerName(ref this SystemState state, World world) => state.GetProfilerMarkerName(world);
+        public static string GetSystemProfilerMarkerName(ref this SystemState state, World world) => EntityInternals.GetProfilerMarkerName(ref state, world);
 
         /// <summary>
         /// Copies the component types the system registered for job dependencies (queries, type handles, lookups).
@@ -54,12 +55,12 @@ namespace NZCore
             reading.Clear();
             writing.Clear();
 
-            foreach (var dep in state.m_JobDependencyForReadingSystems)
+            foreach (var dep in state.GetJobDependencyForReadingSystems())
             {
                 reading.Add(dep);
             }
 
-            foreach (var dep in state.m_JobDependencyForWritingSystems)
+            foreach (var dep in state.GetJobDependencyForWritingSystems())
             {
                 writing.Add(dep);
             }
@@ -74,13 +75,13 @@ namespace NZCore
             queries.Clear();
             requiredQueries.Clear();
 
-            ref var all = ref state.EntityQueries;
+            ref var all = ref EntityInternals.GetEntityQueries(ref state);
             foreach (var query in all)
             {
                 queries.Add(query);
             }
 
-            ref var required = ref state.RequiredEntityQueries;
+            ref var required = ref EntityInternals.GetRequiredEntityQueries(ref state);
             foreach (var query in required)
             {
                 requiredQueries.Add(query);
@@ -126,7 +127,7 @@ namespace NZCore
 
         public static UntypedBufferLookup GetUntypedBufferLookup(ref this SystemState state, ComponentType componentType, bool isReadOnly)
         {
-            state.AddReaderWriter(componentType);
+            EntityInternals.AddReaderWriter(ref state, componentType);
             return state.EntityManager.GetUntypedBufferLookup(componentType, isReadOnly);
         }
     }

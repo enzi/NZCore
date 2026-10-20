@@ -39,7 +39,7 @@ namespace NZCore
                 if (chunkEnabledMask.DetermineFastPath())
                 {
                     var chunkEndIndex = 0;
-                    while (EnabledBitUtility.TryGetNextRange(chunkEnabledMask, chunkEndIndex, out var entityIndexInChunk, out chunkEndIndex))
+                    while (Internal.EnabledBitUtility.TryGetNextRange(chunkEnabledMask, chunkEndIndex, out var entityIndexInChunk, out chunkEndIndex))
                     {
                         while (entityIndexInChunk < chunkEndIndex)
                         {

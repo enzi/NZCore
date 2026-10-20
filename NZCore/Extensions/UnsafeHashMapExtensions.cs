@@ -42,13 +42,13 @@ namespace NZCore
             Serialize(unsafeHashMap.GetData(), ref serializer, sizeOfTKey);
         }
 
-        private static void Serialize<TKey>(Internal.HashMapHelper<TKey> hashMap, ref ByteSerializer serializer)
+        private static void Serialize<TKey>(HashMapHelper<TKey> hashMap, ref ByteSerializer serializer)
             where TKey : unmanaged, IEquatable<TKey>
         {
-            Serialize(UnsafeUtility.As<Internal.HashMapHelper<TKey>, Internal.HashMapHelper<byte>>(ref hashMap), ref serializer, UnsafeUtility.SizeOf<TKey>());
+            Serialize(UnsafeUtility.As<HashMapHelper<TKey>, HashMapHelper<byte>>(ref hashMap), ref serializer, UnsafeUtility.SizeOf<TKey>());
         }
 
-        private static unsafe void Serialize(Internal.HashMapHelper<byte> hashMap, ref ByteSerializer serializer, int sizeOfTKey)
+        private static unsafe void Serialize(HashMapHelper<byte> hashMap, ref ByteSerializer serializer, int sizeOfTKey)
         {
             serializer.AddNoResize(hashMap.Count);
 
@@ -87,13 +87,13 @@ namespace NZCore
             Deserialize(ref unsafeHashMap.GetData(), ref payloadPtr, allocator);
         }
 
-        private static void Deserialize<TKey>(ref Internal.HashMapHelper<TKey> hashMap, ref ByteDeserializer deserializer, Allocator allocator)
+        private static void Deserialize<TKey>(ref HashMapHelper<TKey> hashMap, ref ByteDeserializer deserializer, Allocator allocator)
             where TKey : unmanaged, IEquatable<TKey>
         {
-            Deserialize(ref UnsafeUtility.As<Internal.HashMapHelper<TKey>, Internal.HashMapHelper<byte>>(ref hashMap), ref deserializer, allocator);
+            Deserialize(ref UnsafeUtility.As<HashMapHelper<TKey>, HashMapHelper<byte>>(ref hashMap), ref deserializer, allocator);
         }
 
-        private static unsafe void Deserialize(ref Internal.HashMapHelper<byte> hashMap, ref ByteDeserializer deserializer, Allocator allocator)
+        private static unsafe void Deserialize(ref HashMapHelper<byte> hashMap, ref ByteDeserializer deserializer, Allocator allocator)
         {
             var count = deserializer.Read<int>();
 
@@ -130,7 +130,7 @@ namespace NZCore
             UnsafeUtility.MemCpy(hashMap.Ptr, data, totalSize);
         }
 
-        private static unsafe void Deserialize(ref Internal.HashMapHelper<byte> hashMap, ref byte* ptr, Allocator allocator)
+        private static unsafe void Deserialize(ref HashMapHelper<byte> hashMap, ref byte* ptr, Allocator allocator)
         {
             var count = *(int*)(ptr + 0);
 

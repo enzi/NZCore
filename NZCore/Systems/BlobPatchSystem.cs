@@ -2,6 +2,7 @@
 // Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using NZCore.Internal;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -56,7 +57,7 @@ namespace NZCore
                             continue;
                         }
 
-                        var ptr = (BlobAssetReference<byte>*)state.EntityManager.GetComponentDataRawRW(element.BlobEntity, typeIndex);
+                        var ptr = (BlobAssetReference<byte>*)EntityInternals.GetComponentDataRawRW(state.EntityManager, element.BlobEntity, typeIndex);
                         var blobPtr = (byte*)(ptr + element.BlobAssetReferenceIndex)->GetUnsafePtr();
 
                         // patch the Entity reference on a blob
@@ -89,7 +90,7 @@ namespace NZCore
                             continue;
                         }
 
-                        var ptr = (BlobAssetReference<byte>*)state.EntityManager.GetComponentDataRawRW(element.BlobEntity, typeIndex);
+                        var ptr = (BlobAssetReference<byte>*)EntityInternals.GetComponentDataRawRW(state.EntityManager, element.BlobEntity, typeIndex);
                         var blobPtr = (byte*)(ptr + element.BlobAssetReferenceIndex)->GetUnsafePtr();
 
                         // patch the instanceId so any UnityObjectRefForBlob<T> can be resolved correctly

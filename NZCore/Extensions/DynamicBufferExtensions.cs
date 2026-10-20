@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using NZCore.Internal;
 using Memory = NZCore.Internal.CollectionMemory;
 
 namespace NZCore
@@ -33,7 +34,7 @@ namespace NZCore
 
         public static int GetInternalCapacity<T>(this BufferTypeHandle<T> bufferHandle)
             where T : unmanaged, IBufferElementData =>
-            TypeManager.GetTypeInfo(bufferHandle.m_TypeIndex).BufferCapacity;
+            TypeManager.GetTypeInfo(bufferHandle.GetTypeIndex()).BufferCapacity;
 
         public static int GetInternalCapacity<T>(this BufferLookup<T> bufferLookup)
             where T : unmanaged, IBufferElementData
@@ -96,8 +97,9 @@ namespace NZCore
             where T : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.CheckWriteAndThrow(buffer.m_Safety0);
-            AtomicSafetyHandle.CheckWriteAndThrow(buffer.m_Safety1);
+            ref var exposed = ref UnsafeUtility.As<DynamicBuffer<T>, DynamicBufferExposed<T>>(ref buffer);
+            AtomicSafetyHandle.CheckWriteAndThrow(exposed.m_Safety0);
+            AtomicSafetyHandle.CheckWriteAndThrow(exposed.m_Safety1);
 #endif
         }
 
@@ -194,9 +196,9 @@ namespace NZCore
             tmpHeader->Length = length;
             tmpHeader->Pointer = (byte*)ptr;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var buffer = new DynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, length);
+            var buffer = EntityInternals.CreateDynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, length);
 #else
-            var buffer = new DynamicBuffer<T>(tmpHeader, length);
+            var buffer = EntityInternals.CreateDynamicBuffer<T>(tmpHeader, length);
 #endif
 
             return buffer;
@@ -215,9 +217,9 @@ namespace NZCore
             tmpHeader->Length = array.Length;
             tmpHeader->Pointer = (byte*)array.GetUnsafeReadOnlyPtr();
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            var buffer = new DynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, array.Length);
+            var buffer = EntityInternals.CreateDynamicBuffer<T>(tmpHeader, safetyHandle1, safetyHandle2, true, false, 0, array.Length);
 #else
-            var buffer = new DynamicBuffer<T>(tmpHeader, array.Length);
+            var buffer = EntityInternals.CreateDynamicBuffer<T>(tmpHeader, array.Length);
 #endif
 
             return buffer;
@@ -227,8 +229,9 @@ namespace NZCore
             where T : unmanaged
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            AtomicSafetyHandle.Release(buffer.m_Safety0);
-            AtomicSafetyHandle.Release(buffer.m_Safety1);
+            ref var exposed = ref UnsafeUtility.As<DynamicBuffer<T>, DynamicBufferExposed<T>>(ref buffer);
+            AtomicSafetyHandle.Release(exposed.m_Safety0);
+            AtomicSafetyHandle.Release(exposed.m_Safety1);
 #endif
         }
 
@@ -241,8 +244,8 @@ namespace NZCore
             ref var exposed = ref UnsafeUtility.As<DynamicBuffer<T>, DynamicBufferExposed<T>>(ref buffer);
             
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            return new UntypedDynamicBuffer(exposed.m_Buffer, buffer.m_Safety0, default, buffer.m_IsReadOnly == 1,
-                buffer.m_useMemoryInitPattern == 1, buffer.m_memoryInitPattern, exposed.m_InternalCapacity, elementSize, alignOf);
+            return new UntypedDynamicBuffer(exposed.m_Buffer, exposed.m_Safety0, default, exposed.m_IsReadOnly,
+                exposed.m_useMemoryInitPattern, exposed.m_memoryInitPattern, exposed.m_InternalCapacity, elementSize, alignOf);
 #else
             return new UntypedDynamicBuffer(exposed.m_Buffer, exposed.m_InternalCapacity, elementSize, alignOf);
 #endif

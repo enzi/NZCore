@@ -2,12 +2,13 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using NZCore.Internal;
 using Unity.Entities;
 
 namespace NZCore
 {
     public static class DynamicComponentTypeHandleExtensions
     {
-        public static ref readonly TypeIndex GetTypeIndex(this ref DynamicComponentTypeHandle handle) => ref handle.m_TypeIndex;
+        public static ref readonly TypeIndex GetTypeIndex(this ref DynamicComponentTypeHandle handle) => ref EntityInternals.GetTypeIndex(ref handle);
     }
 }
