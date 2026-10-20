@@ -5,6 +5,8 @@
 using NZCore.Internal;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using EntityDataAccess = NZCore.Internal.EntityDataAccess;
+using LookupCache = NZCore.Internal.LookupCache;
 
 namespace NZCore
 {

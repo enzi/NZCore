@@ -9,6 +9,7 @@ using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using UntypedUnityObjectRef = NZCore.Internal.UntypedUnityObjectRef;
 
 namespace NZCore
 {

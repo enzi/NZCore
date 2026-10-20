@@ -12,6 +12,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using NZCore.Internal;
 using Memory = NZCore.Internal.CollectionMemory;
+using BufferHeader = NZCore.Internal.BufferHeader;
 
 namespace NZCore
 {

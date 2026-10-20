@@ -10,6 +10,9 @@ using Unity.Burst.Intrinsics;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
+using Archetype = NZCore.Internal.Archetype;
+using ChunkDataUtility = NZCore.Internal.ChunkDataUtility;
+using ChunkIndex = NZCore.Internal.ChunkIndex;
 
 namespace NZCore
 {

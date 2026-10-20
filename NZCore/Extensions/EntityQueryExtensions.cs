@@ -7,6 +7,8 @@ using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using ChunkIterationUtility = NZCore.Internal.ChunkIterationUtility;
+using EntityQueryFilter = NZCore.Internal.EntityQueryFilter;
 
 namespace NZCore
 {

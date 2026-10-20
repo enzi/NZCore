@@ -8,6 +8,8 @@ using Unity.Burst.CompilerServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using ChunkDataUtility = NZCore.Internal.ChunkDataUtility;
+using LookupCache = NZCore.Internal.LookupCache;
 
 namespace NZCore
 {

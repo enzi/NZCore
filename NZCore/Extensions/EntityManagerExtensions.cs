@@ -6,6 +6,8 @@ using System;
 using NZCore.Internal;
 using Unity.Collections;
 using Unity.Entities;
+using ChunkDataUtility = NZCore.Internal.ChunkDataUtility;
+using LookupCache = NZCore.Internal.LookupCache;
 
 namespace NZCore
 {

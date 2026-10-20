@@ -8,6 +8,9 @@ using NZCore.Internal;
 using Unity.Burst.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using BufferHeader = NZCore.Internal.BufferHeader;
+using EntityDataAccess = NZCore.Internal.EntityDataAccess;
+using LookupCache = NZCore.Internal.LookupCache;
 
 namespace NZCore
 {

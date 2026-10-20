@@ -10,6 +10,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using NZCore.Internal;
 using Memory = NZCore.Internal.CollectionMemory;
+using BufferHeader = NZCore.Internal.BufferHeader;
 
 namespace NZCore
 {

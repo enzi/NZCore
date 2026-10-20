@@ -12,6 +12,12 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
+using ChunkIndex = NZCore.Internal.ChunkIndex;
+using EntityQueryFilter = NZCore.Internal.EntityQueryFilter;
+using EntityQuerySafetyHandles = NZCore.Internal.EntityQuerySafetyHandles;
+using UnsafeCachedChunkList = NZCore.Internal.UnsafeCachedChunkList;
+using UnsafeChunkCacheIterator = NZCore.Internal.UnsafeChunkCacheIterator;
+using UnsafeMatchingArchetypePtrList = NZCore.Internal.UnsafeMatchingArchetypePtrList;
 
 namespace NZCore.Jobs
 {
