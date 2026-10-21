@@ -9,5 +9,8 @@
     "com.unity.nuget.newtonsoft-json": "3.2.1"
   },
   "type": "library",
-  "description": "NZCore provides several ways to make Unity and DOTS development easier."
+    "description": "NZCore provides several ways to make Unity and DOTS development easier.",
+    "author": {
+        "name": "Enzisoft"
+    }
 }
