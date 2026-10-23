@@ -14,10 +14,12 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using ChunkIndex = NZCore.Internal.ChunkIndex;
 using EntityQueryFilter = NZCore.Internal.EntityQueryFilter;
-using EntityQuerySafetyHandles = NZCore.Internal.EntityQuerySafetyHandles;
 using UnsafeCachedChunkList = NZCore.Internal.UnsafeCachedChunkList;
 using UnsafeChunkCacheIterator = NZCore.Internal.UnsafeChunkCacheIterator;
 using UnsafeMatchingArchetypePtrList = NZCore.Internal.UnsafeMatchingArchetypePtrList;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+using EntityQuerySafetyHandles = NZCore.Internal.EntityQuerySafetyHandles;
+#endif
 
 namespace NZCore.Jobs
 {
