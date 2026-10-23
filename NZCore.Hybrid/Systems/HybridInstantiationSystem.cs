@@ -28,7 +28,7 @@ namespace NZSpellCasting
         public void OnCreate(ref SystemState state)
         {
             _loadPresentation = SystemAPI.QueryBuilder()
-                                         .WithNone<HybridPresentationEnabled>()
+                                         .WithDisabled<HybridPresentationEnabled>()
                                          .WithAll<EnableHybridPresentation, HybridPresentation>()
                                          .Build();
         }
