@@ -51,6 +51,12 @@ namespace NZCore.Hybrid
 
                 foreach (var clipRequest in request)
                 {
+                    // todo this will be removed 
+                    if (!SystemAPI.HasComponent<AnimatorOverride>(clipRequest.Entity))
+                    {
+                        continue;
+                    }
+
                     ref var animatorOverride = ref SystemAPI.GetComponentRW<AnimatorOverride>(clipRequest.Entity).ValueRW;
                     if (!animatorOverride.IsOwned)
                     {

@@ -38,6 +38,8 @@ namespace NZCore.UI.Editor
         public static PreviewWindow Instance;
         public static readonly List<DeferredGizmo> DeferredGizmos = new();
 
+        public static readonly List<Func<GameObject, GameObject>> PreviewModelResolvers = new();
+
         public Animator Animator;
         private HybridAnimator _hybridAnimator;
         public ref HybridAnimator HybridAnimator => ref _hybridAnimator;
@@ -177,8 +179,15 @@ namespace NZCore.UI.Editor
 
             // Get the Animator and Avatar
             var previewObjectAnimator = _previewObject.GetComponent<Animator>();
+            for (var i = 0; previewObjectAnimator == null && i < PreviewModelResolvers.Count; i++)
+            {
+                var model = PreviewModelResolvers[i](_previewObject);
+                previewObjectAnimator = model != null ? model.GetComponent<Animator>() : null;
+            }
+
             if (previewObjectAnimator == null || previewObjectAnimator.avatar == null)
             {
+                Debug.LogWarning($"{_previewObject.name} can't be previewed, it needs an Animator with an avatar.", _previewObject);
                 return;
             }
 
