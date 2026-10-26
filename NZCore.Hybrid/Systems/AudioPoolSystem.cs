@@ -104,7 +104,8 @@ namespace NZCore.Hybrid
                             source.gameObject.GetInstanceID(),
 #endif
                             request.FollowEntity,
-                            source.gameObject);
+                            source.gameObject,
+                            destroyHybridWithEntity: false); // the pool owns it, it stays where the destroyed entity was and plays out
                     }
 
                     requestList.RemoveAt(i);
