@@ -12,53 +12,6 @@ namespace NZCore
 {
     public static class SubSceneHelper
     {
-        public static void TriggerDestroyEntityInSubscene(this EntityManager entityManager, Entity sceneEntity)
-        {
-            var guid = entityManager.GetComponentData<SceneReference>(sceneEntity).SceneGUID;
-            var sections = entityManager.GetBuffer<ResolvedSectionEntity>(sceneEntity).Length;
-            var query = new EntityQueryBuilder(Allocator.Temp)
-                        .WithAll<SceneSection>()
-                        .WithDisabled<DestroyEntity>()
-                        .Build(entityManager);
-            
-            for (var i = 0; i < sections; i++)
-            {
-                query.SetSharedComponentFilter(new SceneSection { SceneGUID = guid, Section = i });
-                entityManager.SetComponentEnabled<DestroyEntity>(query, true);
-            }
-            
-            var destroyGroup = entityManager.World.GetExistingSystem<NZDestroySystemGroup>();
-            destroyGroup.Update(entityManager.WorldUnmanaged);
-        }
-        
-        
-        /// <summary>
-        /// Flag every entity in a subscene as destroyed via `DestroyEntity`
-        /// then update the destroy pipeline systems and finally unload the subscene completely
-        /// </summary>
-        public static void DestroyAndUnloadSubscene(this EntityManager entityManager, Entity sceneEntity,
-            SceneSystem.UnloadParameters unloadParams = SceneSystem.UnloadParameters.DestroyMetaEntities)
-        {
-            var guid = entityManager.GetComponentData<SceneReference>(sceneEntity).SceneGUID;
-            var sections = entityManager.GetBuffer<ResolvedSectionEntity>(sceneEntity).Length;
-
-            var query = new EntityQueryBuilder(Allocator.Temp)
-                        .WithAll<SceneSection>()
-                        .WithDisabled<DestroyEntity>()
-                        .Build(entityManager);
-
-            for (var i = 0; i < sections; i++)
-            {
-                query.SetSharedComponentFilter(new SceneSection { SceneGUID = guid, Section = i });
-                entityManager.SetComponentEnabled<DestroyEntity>(query, true);
-            }
-
-            var destroyGroup = entityManager.World.GetExistingSystem<NZDestroySystemGroup>();
-            destroyGroup.Update(entityManager.WorldUnmanaged);
-
-            SceneSystem.UnloadScene(entityManager.World.Unmanaged, sceneEntity, unloadParams);
-        }
-
         public static bool TryGetSceneEntity(ref SystemState state, Hash128 sceneGuid, out Entity sceneEntity)
         {
             var query = new EntityQueryBuilder(Allocator.Temp)

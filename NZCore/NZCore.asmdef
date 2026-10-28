@@ -12,8 +12,7 @@
     "Unity.Transforms",
     "Unity.Physics",
     "Unity.NetCode",
-    "Unity.Scenes",
-    "NZSpellCasting.SystemGroups"
+      "Unity.Scenes"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -27,11 +26,6 @@
       "name": "com.unity.physics",
       "expression": "0",
       "define": "DOTS_PHYSICS"
-    },
-    {
-      "name": "com.enzisoft.nzspellcasting",
-      "expression": "0",
-      "define": "NZSPELLCASTING"
     },
     {
       "name": "com.unity.entities",

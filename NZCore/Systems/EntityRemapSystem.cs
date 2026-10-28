@@ -6,9 +6,6 @@
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Entities;
-#if NZSPELLCASTING
-using NZSpellCasting;
-#endif
 
 namespace NZCore
 {
@@ -28,12 +25,7 @@ namespace NZCore
         [FieldOffset(20)] public byte Automatic;
     }
 
-#if NZSPELLCASTING
-    [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup))]
-    [UpdateAfter(typeof(BeginEffectsSystemGroupCommandBufferSystem))]
-#else
     [UpdateInGroup(typeof(NZCoreInitializationSystemGroup))]
-#endif
     public partial struct EntityRemapSystem : ISystem
     {
         public const int RemapLifetime = 300;
@@ -58,11 +50,8 @@ namespace NZCore
             }
         }
     }
-#if NZSPELLCASTING
-    [UpdateInGroup(typeof(NZSpellCastingInitializationSystemGroup), OrderLast = true)]
-#else
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
-#endif
+
+    [UpdateInGroup(typeof(NZCoreInitializationSystemGroup), OrderLast = true)]
     public partial struct EntityRemapClearSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)

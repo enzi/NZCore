@@ -3,9 +3,6 @@
 // </copyright>
 
 using Unity.Entities;
-#if UNITY_NETCODE
-using Unity.NetCode;
-#endif
 
 namespace NZCore
 {
@@ -14,8 +11,8 @@ namespace NZCore
     [UpdateBefore(typeof(VariableRateSimulationSystemGroup))]
     [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
 #if UNITY_NETCODE
-    [UpdateAfter(typeof(GhostSimulationSystemGroup))]
-    [UpdateBefore(typeof(PredictedSimulationSystemGroup))]
+    [UpdateAfter(typeof(Unity.Netcode.GhostSimulationSystemGroup))]
+    [UpdateBefore(typeof(Unity.Netcode.PredictedSimulationSystemGroup))]
 #endif
     public partial class BeginSimulationSystemGroup : ComponentSystemGroup { }
 }

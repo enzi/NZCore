@@ -3,15 +3,12 @@
 // </copyright>
 
 using Unity.Entities;
-#if UNITY_NETCODE
-using Unity.NetCode;
-#endif
 
 namespace NZCore
 {
     [WorldSystemFilter(WorldSystemFilterFlags.Presentation)]
 #if UNITY_NETCODE
-    [UpdateInGroup(typeof(GhostInputSystemGroup))]
+    [UpdateInGroup(typeof(Unity.Netcode.GhostInputSystemGroup))]
 #else
     [UpdateInGroup(typeof(BeginSimulationSystemGroup))]
 #endif
@@ -20,7 +17,7 @@ namespace NZCore
     [WorldSystemFilter(WorldSystemFilterFlags.Presentation)]
     [UpdateAfter(typeof(InputSystemGroup))]
 #if UNITY_NETCODE
-    [UpdateInGroup(typeof(GhostInputSystemGroup))]
+    [UpdateInGroup(typeof(Unity.Netcode.GhostInputSystemGroup))]
 #else
     [UpdateInGroup(typeof(BeginSimulationSystemGroup))]
 #endif
