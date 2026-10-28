@@ -11,8 +11,6 @@
         "NZCore",
         "NZCore.Authoring",
         "NZCore.UI",
-        "NZCore.Hybrid.Authoring",
-        "NZCore.Hybrid.Data",
         "NZCore.Editor"
     ],
     "includePlatforms": [

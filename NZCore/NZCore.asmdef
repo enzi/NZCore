@@ -12,7 +12,9 @@
     "Unity.Transforms",
     "Unity.Physics",
     "Unity.NetCode",
-      "Unity.Scenes"
+    "Unity.Scenes",
+    "Unity.ResourceManager",
+    "Unity.Addressables"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -36,6 +38,11 @@
       "name": "com.unity.netcode",
       "expression": "0",
       "define": "UNITY_NETCODE"
+    },
+    {
+      "name": "com.unity.addressables",
+      "expression": "0",
+      "define": "UNITY_ADDRESSABLES"
     }
   ],
   "noEngineReferences": false

@@ -9,7 +9,6 @@
         "Unity.Entities.Hybrid",
         "Unity.Entities.UI.Editor",
         "NZCore",
-        "NZCore.Hybrid.Data",
         "NZCore.Inject"
     ],
     "includePlatforms": [],
@@ -36,6 +35,11 @@
             "name": "com.enzisoft.mvvm",
             "expression": "0",
             "define": "NZCORE_MVVM"
+        },
+        {
+            "name": "com.unity.addressables",
+            "expression": "0",
+            "define": "UNITY_ADDRESSABLES"
         }
     ],
     "noEngineReferences": false

@@ -5,14 +5,12 @@
 using System;
 using System.Collections.Generic;
 using NZCore.Editor;
-using NZCore.Hybrid;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.UIElements;
-using GizmoType = NZCore.Hybrid.GizmoType;
 using Object = UnityEngine.Object;
 
 namespace NZCore.UI.Editor
@@ -41,8 +39,6 @@ namespace NZCore.UI.Editor
         public static readonly List<Func<GameObject, GameObject>> PreviewModelResolvers = new();
 
         public Animator Animator;
-        private HybridAnimator _hybridAnimator;
-        public ref HybridAnimator HybridAnimator => ref _hybridAnimator;
 
         public Action OnSetupFinished;
 
@@ -196,7 +192,6 @@ namespace NZCore.UI.Editor
 
             Animator = _avatarPreview.Animator;
             Animator.enabled = true;
-            _hybridAnimator = HybridEntity.CreatePlayableGraph(Animator);
 
             _previewRenderUtility = _avatarPreview._previewUtility;
 
@@ -274,11 +269,6 @@ namespace NZCore.UI.Editor
             }
 
             DeferredGizmos.Clear();
-        }
-
-        public void SetTimeRecursively(double time)
-        {
-            _hybridAnimator.SetTimeRecursively(time);
         }
     }
 }

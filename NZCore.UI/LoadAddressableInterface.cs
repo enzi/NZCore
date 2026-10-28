@@ -2,9 +2,9 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-#if UNITY_6000 && !NZCORE_MVVM
+#if UNITY_6000 && !NZCORE_MVVM && UNITY_ADDRESSABLES
 using System.Collections.Generic;
-using NZCore.Hybrid;
+using NZCore.AssetManagement;
 using NZCore.UI;
 using Unity.Entities;
 using UnityEngine;
