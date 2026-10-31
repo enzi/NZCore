@@ -123,14 +123,9 @@ namespace NZCore.Tests.NativeContainers
             Measure
                 .Method(() =>
                 {
-                    var buffer = Manager.GetBuffer<TestHashMapBuffer>(entity);
-                    var ptr = (byte*)buffer.GetUnsafePtr();
-                    var len = buffer.Length;
-
                     new DynamicHashMapInsertJob
                     {
-                        BufferPtr = ptr,
-                        BufferLength = len,
+                        Buffer = Manager.GetBuffer<TestHashMapBuffer>(entity),
                         Count = count
                     }.Run();
                 })
@@ -170,14 +165,9 @@ namespace NZCore.Tests.NativeContainers
             Measure
                 .Method(() =>
                 {
-                    var buffer = Manager.GetBuffer<TestHashMapBuffer>(entity);
-                    var ptr = (byte*)buffer.GetUnsafeReadOnlyPtr();
-                    var len = buffer.Length;
-
                     new DynamicHashMapLookupJob
                     {
-                        BufferPtr = ptr,
-                        BufferLength = len,
+                        Buffer = Manager.GetBuffer<TestHashMapBuffer>(entity, true),
                         Count = count,
                         FoundCount = foundCount
                     }.Run();
@@ -519,13 +509,12 @@ namespace NZCore.Tests.NativeContainers
         [BurstCompile]
         private struct DynamicHashMapInsertJob : IJob
         {
-            [NativeDisableUnsafePtrRestriction] public byte* BufferPtr;
-            public int BufferLength;
+            public DynamicBuffer<TestHashMapBuffer> Buffer;
             public int Count;
 
             public void Execute()
             {
-                var map = new DynamicHashMap<TestHashMapBuffer, int, int>(BufferPtr, BufferLength);
+                var map = Buffer.AsHashMap<TestHashMapBuffer, int, int>();
 
                 for (int i = 0; i < Count; i++)
                 {
@@ -537,14 +526,13 @@ namespace NZCore.Tests.NativeContainers
         [BurstCompile]
         private struct DynamicHashMapLookupJob : IJob
         {
-            [NativeDisableUnsafePtrRestriction] public byte* BufferPtr;
-            public int BufferLength;
+            [ReadOnly] public DynamicBuffer<TestHashMapBuffer> Buffer;
             public int Count;
             public NativeReference<int> FoundCount;
 
             public void Execute()
             {
-                var map = new DynamicHashMap<TestHashMapBuffer, int, int>(BufferPtr, BufferLength);
+                var map = Buffer.AsHashMap<TestHashMapBuffer, int, int>(true);
 
                 int found = 0;
                 for (int i = 0; i < Count; i++)

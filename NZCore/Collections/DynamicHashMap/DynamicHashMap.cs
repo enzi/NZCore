@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -43,8 +44,8 @@ namespace NZCore
         private const byte Occupied = 0x80; // High bit set = occupied
         private const byte Deleted = 0x7F; // Special marker for tombstone
 
-        [NativeDisableUnsafePtrRestriction] private readonly byte* _buffer;
-        private readonly int _bufferLength;
+        private readonly DynamicBuffer<TBuffer> _buffer;
+        private readonly bool _isReadOnly;
 
         /// <summary>
         /// Creates a DynamicHashMap wrapper around an existing DynamicBuffer.
@@ -57,48 +58,28 @@ namespace NZCore
                 Initialize(buffer, 16);
             }
 
-            if (isReadOnly)
-            {
-                _buffer = (byte*)buffer.GetUnsafeReadOnlyPtr();
-            }
-            else
-            {
-                _buffer = (byte*)buffer.GetUnsafePtr();
-            }
-
-            _bufferLength = buffer.Length * UnsafeUtility.SizeOf<TBuffer>();
-        }
-
-        /// <summary>
-        /// Creates a DynamicHashMap from a raw pointer (for use in jobs).
-        /// </summary>
-        public DynamicHashMap(byte* buffer, int length)
-        {
             _buffer = buffer;
-            _bufferLength = length;
+            _isReadOnly = isReadOnly;
         }
 
-        private ref Header GetHeader() => ref UnsafeUtility.AsRef<Header>(_buffer);
+        // growing moves the buffer, so each call takes the pointer fresh
+        private byte* Ptr => _isReadOnly ? (byte*)_buffer.GetUnsafeReadOnlyPtr() : (byte*)_buffer.GetUnsafePtr();
 
-        private Header* GetHeaderPtr() => (Header*)_buffer;
+        private int BufferLength => _buffer.Length * UnsafeUtility.SizeOf<TBuffer>();
 
-        private byte* GetMetadata() => _buffer + sizeof(Header);
+        private static byte* GetMetadata(byte* buffer) => buffer + sizeof(Header);
 
-        private Entry* GetEntries()
-        {
-            ref var header = ref GetHeader();
-            return (Entry*)(_buffer + header.EntriesOffset);
-        }
+        private static Entry* GetEntries(byte* buffer) => (Entry*)(buffer + ((Header*)buffer)->EntriesOffset);
 
         /// <summary>
         /// Number of elements in the hashmap.
         /// </summary>
-        public int Count => _bufferLength >= sizeof(Header) ? GetHeader().Count : 0;
+        public int Count => BufferLength >= sizeof(Header) ? ((Header*)Ptr)->Count : 0;
 
         /// <summary>
         /// Capacity of the hashmap (number of slots).
         /// </summary>
-        public int Capacity => _bufferLength >= sizeof(Header) ? GetHeader().Capacity : 0;
+        public int Capacity => BufferLength >= sizeof(Header) ? ((Header*)Ptr)->Capacity : 0;
 
         /// <summary>
         /// Initializes the hashmap with specified capacity. Must be called before use.
@@ -134,11 +115,12 @@ namespace NZCore
         /// </summary>
         public void Clear()
         {
-            Assert.IsTrue(_bufferLength >= sizeof(Header), "DynamicHashMap must be initialized before calling Clear()");
+            Assert.IsTrue(BufferLength >= sizeof(Header), "DynamicHashMap must be initialized before calling Clear()");
 
-            ref var header = ref GetHeader();
-            header.Count = 0;
-            UnsafeUtility.MemSet(GetMetadata(), Empty, header.Capacity);
+            var buffer = Ptr;
+            var header = (Header*)buffer;
+            header->Count = 0;
+            UnsafeUtility.MemSet(GetMetadata(buffer), Empty, header->Capacity);
         }
 
         /// <summary>
@@ -147,52 +129,16 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryAdd(TKey key, TValue value)
         {
-            var header = GetHeaderPtr();
-            var metadata = GetMetadata();
-            var entries = GetEntries();
-
+            var buffer = Ptr;
             var hash = (uint)key.GetHashCode();
-            var h2 = GetH2(hash);
-            var index = hash & (uint)header->CapacityMask;
 
-            var firstDeleted = -1;
-
-            for (var i = 0; i < header->Capacity; i++)
+            if (Find(buffer, key, hash, out var insertIndex) >= 0)
             {
-                var meta = metadata[index];
-
-                if (meta == Empty)
-                {
-                    // Found empty slot
-                    var insertIndex = firstDeleted >= 0 ? (uint)firstDeleted : index;
-                    metadata[insertIndex] = (byte)(Occupied | h2);
-                    entries[insertIndex].Key = key;
-                    entries[insertIndex].Value = value;
-                    header->Count++;
-                    return true;
-                }
-
-                if (meta == Deleted)
-                {
-                    if (firstDeleted < 0)
-                    {
-                        firstDeleted = (int)index;
-                    }
-                }
-                else if ((meta & 0x7F) == h2)
-                {
-                    // Potential match, check key
-                    if (entries[index].Key.Equals(key))
-                    {
-                        return false; // Key exists
-                    }
-                }
-
-                index = (index + 1) & (uint)header->CapacityMask;
+                return false;
             }
 
-            // Table is full (shouldn't happen with proper load factor management)
-            return false;
+            Insert(buffer, key, value, hash, insertIndex);
+            return true;
         }
 
         /// <summary>
@@ -201,15 +147,29 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddOrSet(TKey key, TValue value)
         {
-            var header = GetHeaderPtr();
-            var metadata = GetMetadata();
-            var entries = GetEntries();
-
+            var buffer = Ptr;
             var hash = (uint)key.GetHashCode();
+            var index = Find(buffer, key, hash, out var insertIndex);
+
+            if (index >= 0)
+            {
+                GetEntries(buffer)[index].Value = value;
+                return;
+            }
+
+            Insert(buffer, key, value, hash, insertIndex);
+        }
+
+        // the slot of the key or -1, insertIndex is the first empty or deleted slot on its probe
+        private static int Find(byte* buffer, TKey key, uint hash, out int insertIndex)
+        {
+            var header = (Header*)buffer;
+            var metadata = GetMetadata(buffer);
+            var entries = GetEntries(buffer);
+
             var h2 = GetH2(hash);
             var index = hash & (uint)header->CapacityMask;
-
-            var firstDeleted = -1;
+            insertIndex = -1;
 
             for (var i = 0; i < header->Capacity; i++)
             {
@@ -217,41 +177,93 @@ namespace NZCore
 
                 if (meta == Empty)
                 {
-                    var insertIndex = firstDeleted >= 0 ? (uint)firstDeleted : index;
-                    metadata[insertIndex] = (byte)(Occupied | h2);
-                    entries[insertIndex].Key = key;
-                    entries[insertIndex].Value = value;
-                    header->Count++;
-                    return;
+                    if (insertIndex < 0)
+                    {
+                        insertIndex = (int)index;
+                    }
+
+                    return -1;
                 }
 
                 if (meta == Deleted)
                 {
-                    if (firstDeleted < 0)
+                    if (insertIndex < 0)
                     {
-                        firstDeleted = (int)index;
+                        insertIndex = (int)index;
                     }
                 }
-                else if ((meta & 0x7F) == h2)
+                else if ((meta & 0x7F) == h2 && entries[index].Key.Equals(key))
                 {
-                    if (entries[index].Key.Equals(key))
-                    {
-                        entries[index].Value = value;
-                        return;
-                    }
+                    return (int)index;
                 }
 
                 index = (index + 1) & (uint)header->CapacityMask;
             }
 
-            // Insert at first deleted if we found one
-            if (firstDeleted >= 0)
+            return -1;
+        }
+
+        private void Insert(byte* buffer, TKey key, TValue value, uint hash, int insertIndex)
+        {
+            var header = (Header*)buffer;
+
+            // below 3/4 load the probe always finds a free slot and stays short
+            if ((header->Count + 1) * 4 > header->Capacity * 3)
             {
-                metadata[firstDeleted] = (byte)(Occupied | h2);
-                entries[firstDeleted].Key = key;
-                entries[firstDeleted].Value = value;
-                header->Count++;
+                buffer = Grow(header->Capacity * 2);
+                header = (Header*)buffer;
+                Find(buffer, key, hash, out insertIndex);
             }
+
+            GetMetadata(buffer)[insertIndex] = (byte)(Occupied | GetH2(hash));
+            GetEntries(buffer)[insertIndex] = new Entry { Key = key, Value = value };
+            header->Count++;
+        }
+
+        // rehashes the live entries into a buffer with the new capacity, deleted slots don't carry over
+        private byte* Grow(int capacity)
+        {
+            var buffer = Ptr;
+            var header = (Header*)buffer;
+            var metadata = GetMetadata(buffer);
+            var entries = GetEntries(buffer);
+
+            var count = header->Count;
+            var live = (Entry*)UnsafeUtility.Malloc(count * sizeof(Entry), UnsafeUtility.AlignOf<Entry>(), Allocator.Temp);
+            var liveCount = 0;
+
+            for (var i = 0; i < header->Capacity; i++)
+            {
+                if (metadata[i] != Empty && metadata[i] != Deleted)
+                {
+                    live[liveCount++] = entries[i];
+                }
+            }
+
+            Initialize(_buffer, capacity);
+
+            buffer = Ptr;
+            header = (Header*)buffer;
+            metadata = GetMetadata(buffer);
+            entries = GetEntries(buffer);
+
+            for (var i = 0; i < liveCount; i++)
+            {
+                var hash = (uint)live[i].Key.GetHashCode();
+                var index = hash & (uint)header->CapacityMask;
+
+                while (metadata[index] != Empty)
+                {
+                    index = (index + 1) & (uint)header->CapacityMask;
+                }
+
+                metadata[index] = (byte)(Occupied | GetH2(hash));
+                entries[index] = live[i];
+            }
+
+            header->Count = liveCount;
+            UnsafeUtility.Free(live, Allocator.Temp);
+            return buffer;
         }
 
         /// <summary>
@@ -260,9 +272,10 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetValue(TKey key, out TValue value)
         {
-            var header = GetHeaderPtr();
-            var metadata = GetMetadata();
-            var entries = GetEntries();
+            var buffer = Ptr;
+            var header = (Header*)buffer;
+            var metadata = GetMetadata(buffer);
+            var entries = GetEntries(buffer);
 
             var hash = (uint)key.GetHashCode();
             var h2 = GetH2(hash);
@@ -300,9 +313,10 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TValue GetValueRef(TKey key)
         {
-            var header = GetHeaderPtr();
-            var metadata = GetMetadata();
-            var entries = GetEntries();
+            var buffer = Ptr;
+            var header = (Header*)buffer;
+            var metadata = GetMetadata(buffer);
+            var entries = GetEntries(buffer);
 
             var hash = (uint)key.GetHashCode();
             var h2 = GetH2(hash);
@@ -337,9 +351,10 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetRefValue(TKey key, out TValue* value)
         {
-            var header = GetHeaderPtr();
-            var metadata = GetMetadata();
-            var entries = GetEntries();
+            var buffer = Ptr;
+            var header = (Header*)buffer;
+            var metadata = GetMetadata(buffer);
+            var entries = GetEntries(buffer);
 
             var hash = (uint)key.GetHashCode();
             var h2 = GetH2(hash);
@@ -377,9 +392,10 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(TKey key)
         {
-            var header = GetHeaderPtr();
-            var metadata = GetMetadata();
-            var entries = GetEntries();
+            var buffer = Ptr;
+            var header = (Header*)buffer;
+            var metadata = GetMetadata(buffer);
+            var entries = GetEntries(buffer);
 
             var hash = (uint)key.GetHashCode();
             var h2 = GetH2(hash);
@@ -414,9 +430,10 @@ namespace NZCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(TKey key)
         {
-            var header = GetHeaderPtr();
-            var metadata = GetMetadata();
-            var entries = GetEntries();
+            var buffer = Ptr;
+            var header = (Header*)buffer;
+            var metadata = GetMetadata(buffer);
+            var entries = GetEntries(buffer);
 
             var hash = (uint)key.GetHashCode();
             var h2 = GetH2(hash);
@@ -435,8 +452,8 @@ namespace NZCore
                 {
                     if (entries[index].Key.Equals(key))
                     {
-                        metadata[index] = Deleted;
                         header->Count--;
+                        RemoveAt(header, metadata, entries, index);
                         return true;
                     }
                 }
@@ -445,6 +462,42 @@ namespace NZCore
             }
 
             return false;
+        }
+
+        // shifts the following entries of the cluster back into the hole, a probe stops at the first empty slot and would miss them otherwise
+        private static void RemoveAt(Header* header, byte* metadata, Entry* entries, uint hole)
+        {
+            var mask = (uint)header->CapacityMask;
+            var next = (hole + 1) & mask;
+
+            for (var i = 1; i < header->Capacity; i++)
+            {
+                var meta = metadata[next];
+
+                if (meta == Empty)
+                {
+                    metadata[hole] = Empty;
+                    return;
+                }
+
+                if (meta != Deleted)
+                {
+                    var home = (uint)entries[next].Key.GetHashCode() & mask;
+
+                    // the hole lies on the probe from its home slot
+                    if (((next - home) & mask) >= ((next - hole) & mask))
+                    {
+                        metadata[hole] = meta;
+                        entries[hole] = entries[next];
+                        hole = next;
+                    }
+                }
+
+                next = (next + 1) & mask;
+            }
+
+            // no empty slot left, only a buffer from before the shift can be that full of deleted slots
+            metadata[hole] = Deleted;
         }
 
         /// <summary>
@@ -477,7 +530,7 @@ namespace NZCore
         /// <summary>
         /// Returns an enumerator that iterates through the hashmap.
         /// </summary>
-        public Enumerator GetEnumerator() => new(_buffer);
+        public Enumerator GetEnumerator() => new(Ptr);
 
         public struct Enumerator
         {
