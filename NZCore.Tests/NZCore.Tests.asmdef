@@ -8,11 +8,14 @@
         "Unity.Entities",
         "Unity.Transforms",
         "Unity.Entities.Hybrid",
+        "Unity.Scenes",
         "UnityEditor.TestRunner",
         "UnityEngine.TestRunner",
         "NZCore.Testing",
         "Unity.PerformanceTesting",
         "NZCore",
+        "NZCore.Authoring",
+        "NZCore.Editor",
         "UnityEngine.UI"
     ],
     "includePlatforms": [

@@ -127,15 +127,15 @@ namespace NZCore.AssetManagement
         {
             _map ??= CreateMap();
 
-            var autoIdAsset = (IAutoID)asset;
+            var autoIdAsset = (ScriptableObjectWithAutoID)asset;
 
             if (_map.TryGetValue(autoIdAsset.AutoID, out var count) && (autoIdAsset.AutoID == 0 || count > 1))
             {
-                var newId = GetFirstFreeID(_map);
+                var newId = GetFirstFreeID(_map, autoIdAsset.MaxAutoID);
 
                 if (newId == -1)
                 {
-                    Debug.LogError("AutoIDProcessor has run out of IDs!");
+                    Debug.LogError($"AutoIDProcessor has run out of IDs for {ScanType.Name}! The highest ID is {autoIdAsset.MaxAutoID}.", asset);
                     return;
                 }
 
@@ -146,12 +146,18 @@ namespace NZCore.AssetManagement
                 EditorUtility.SetDirty(asset);
                 AssetDatabase.SaveAssetIfDirty(asset);
             }
+            else if (autoIdAsset.AutoID > autoIdAsset.MaxAutoID)
+            {
+                Debug.LogError($"{asset.name} has AutoID {autoIdAsset.AutoID}, but the highest {ScanType.Name} ID is {autoIdAsset.MaxAutoID}.", asset);
+            }
         }
 
-        private static int GetFirstFreeID(Dictionary<int, int> map)
+        private static int GetFirstFreeID(Dictionary<int, int> map, int maxId)
         {
+            var lastId = Math.Min(maxId, int.MaxValue - 1);
+
             // we start at 1 and reserve 0 for "None" states
-            for (var i = 1; i < int.MaxValue; i++)
+            for (var i = 1; i <= lastId; i++)
             {
                 if (!map.ContainsKey(i))
                 {
