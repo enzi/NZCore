@@ -17,21 +17,29 @@ namespace NZCore.AssetManagement
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths,
             bool didDomainReload)
         {
-            if (didDomainReload || importedAssets.Length == 0)
+            if (didDomainReload)
+            {
+                return;
+            }
+
+            var affectsDefinitions = importedAssets.Any(CanAffectDefinitions);
+
+            if (affectsDefinitions || deletedAssets.Length > 0)
+            {
+                PrefabDefinition.ClearOwnerIndex();
+            }
+
+            if (!affectsDefinitions)
             {
                 return;
             }
 
             var imported = new HashSet<string>(importedAssets);
-            var definitions = AssetDatabase.FindAssets($"t:{nameof(PrefabDefinition)}")
-                                           .Select(AssetDatabase.GUIDToAssetPath)
-                                           .Distinct()
-                                           .Select(AssetDatabase.LoadAssetAtPath<PrefabDefinition>)
-                                           .Where(definition => definition != null)
-                                           .ToList();
+            var definitions = PrefabDefinition.FindAll();
 
             var changed = definitions.Where(definition => imported.Contains(AssetDatabase.GetAssetPath(definition)) ||
-                                                          (definition.Target != null && imported.Contains(AssetDatabase.GetAssetPath(definition.Target))))
+                                                          (definition.Target != null && imported.Contains(AssetDatabase.GetAssetPath(definition.Target))) ||
+                                                          (definition.Group != null && imported.Contains(AssetDatabase.GetAssetPath(definition.Group))))
                                      .ToList();
 
             if (changed.Count == 0)
@@ -43,7 +51,7 @@ namespace NZCore.AssetManagement
 
             foreach (var definition in definitions)
             {
-                var usedIds = GetUsedIds(usedIdsByGroup, definition.GroupId);
+                var usedIds = GetUsedIds(usedIdsByGroup, definition.ReservedGroupId != 0 ? definition.ReservedGroupId : definition.GroupId);
 
                 foreach (var reservedId in definition.ReservedIds)
                 {
@@ -51,6 +59,11 @@ namespace NZCore.AssetManagement
                     {
                         usedIds.Add(reservedId.Id);
                     }
+                }
+
+                foreach (var formerId in definition.FormerIds)
+                {
+                    GetUsedIds(usedIdsByGroup, formerId.Id.Group).Add(formerId.Id.Id);
                 }
             }
 
@@ -63,10 +76,66 @@ namespace NZCore.AssetManagement
                     continue;
                 }
 
-                Allocate(definition, GetUsedIds(usedIdsByGroup, definition.GroupId));
+                var usedIds = GetUsedIds(usedIdsByGroup, definition.GroupId);
+                var moved = MoveToCurrentGroup(definition, usedIds);
+                var allocated = Allocate(definition, usedIds);
+
+                if (moved || allocated)
+                {
+                    EditorUtility.SetDirty(definition);
+                    AssetDatabase.SaveAssetIfDirty(definition);
+                }
             }
 
             ReportDuplicates(definitions, changed);
+        }
+
+        private static bool CanAffectDefinitions(string path)
+        {
+            var type = AssetDatabase.GetMainAssetTypeAtPath(path);
+
+            return type == typeof(PrefabDefinition) || type == typeof(PrefabGroup) || type == typeof(GameObject) ||
+                   (type != null && typeof(IMultiPrefabSource).IsAssignableFrom(type));
+        }
+
+        private static bool MoveToCurrentGroup(PrefabDefinition definition, HashSet<int> usedIds)
+        {
+            if (definition.ReservedGroupId == definition.GroupId)
+            {
+                return false;
+            }
+
+            if (definition.ReservedGroupId != 0)
+            {
+                for (var i = 0; i < definition.ReservedIds.Count; i++)
+                {
+                    var reservedId = definition.ReservedIds[i];
+
+                    if (reservedId.Id == 0)
+                    {
+                        continue;
+                    }
+
+                    definition.FormerIds.Add(new FormerPrefabId { Key = reservedId.Key, Id = new PrefabId(definition.ReservedGroupId, reservedId.Id) });
+
+                    var id = GetFirstFreeId(usedIds);
+
+                    if (id == 0)
+                    {
+                        Debug.LogError($"Prefab group {definition.GroupId} has run out of IDs, so {definition.name} gets no ID for {KeyName(reservedId.Key)}.",
+                            definition);
+                    }
+                    else
+                    {
+                        usedIds.Add(id);
+                    }
+
+                    definition.ReservedIds[i] = new ReservedPrefabId { Key = reservedId.Key, Id = id };
+                }
+            }
+
+            definition.ReservedGroupId = definition.GroupId;
+            return true;
         }
 
         private static HashSet<int> GetUsedIds(Dictionary<int, HashSet<int>> usedIdsByGroup, int groupId)
@@ -79,7 +148,7 @@ namespace NZCore.AssetManagement
             return usedIds;
         }
 
-        private static void Allocate(PrefabDefinition definition, HashSet<int> usedIds)
+        private static bool Allocate(PrefabDefinition definition, HashSet<int> usedIds)
         {
             var allocated = false;
 
@@ -116,11 +185,7 @@ namespace NZCore.AssetManagement
                 allocated = true;
             }
 
-            if (allocated)
-            {
-                EditorUtility.SetDirty(definition);
-                AssetDatabase.SaveAssetIfDirty(definition);
-            }
+            return allocated;
         }
 
         private static int GetFirstFreeId(HashSet<int> usedIds)
@@ -153,6 +218,6 @@ namespace NZCore.AssetManagement
             }
         }
 
-        private static string KeyName(string key) => key == PrefabDefinition.DefaultKey ? "default key" : $"key {key}";
+        internal static string KeyName(string key) => key == PrefabDefinition.DefaultKey ? "default key" : $"key {key}";
     }
 }

@@ -43,6 +43,8 @@ namespace NZCore.AssetManagement
                 return;
             }
 
+            AutoIDConflicts.Clear();
+
             //Debug.Log("OnPostprocessAllAssets");
 
             var processors = new Dictionary<Type, AutoIDProcessor>();
@@ -87,50 +89,34 @@ namespace NZCore.AssetManagement
     {
         public readonly Type ScanType;       // drives the asset filter and shared autoID pool (may be a group base)
         public Type RegisteredType;          // concrete attribute-bearing type seen in this batch; null if none
-        private readonly string _filter;
-        private Dictionary<int, int> _map;
+        private readonly HashSet<int> _reportedConflicts = new();
+        private Dictionary<int, List<Object>> _map;
 
         public AutoIDProcessor(Type scanType)
         {
             ScanType = scanType;
-            _filter = $"t:{scanType.Name}";
-        }
-
-        private Dictionary<int, int> CreateMap()
-        {
-            var tmpMap = new Dictionary<int, int>();
-            var assetPaths = AssetDatabase.FindAssets(_filter).Select(AssetDatabase.GUIDToAssetPath).Distinct();
-
-            foreach (var assetPath in assetPaths)
-            {
-                var assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
-
-                foreach (var asset in assets)
-                {
-                    // account for sub assets
-                    if (asset == null || !ScanType.IsAssignableFrom(asset.GetType()))
-                    {
-                        continue;
-                    }
-
-                    var id = ((IAutoID)asset).AutoID;
-                    tmpMap.TryGetValue(id, out var count);
-                    count++;
-                    tmpMap[id] = count;
-                }
-            }
-
-            return tmpMap;
         }
 
         public void Process(Object asset)
         {
-            _map ??= CreateMap();
+            _map ??= AutoIDConflicts.Collect(ScanType);
 
             var autoIdAsset = (ScriptableObjectWithAutoID)asset;
 
-            if (_map.TryGetValue(autoIdAsset.AutoID, out var count) && (autoIdAsset.AutoID == 0 || count > 1))
+            if (_map.TryGetValue(autoIdAsset.AutoID, out var holders) && (autoIdAsset.AutoID == 0 || holders.Count > 1))
             {
+                if (autoIdAsset.AutoID != 0 && autoIdAsset.ConflictMode == AutoIDConflictMode.Error)
+                {
+                    if (_reportedConflicts.Add(autoIdAsset.AutoID))
+                    {
+                        var others = string.Join(", ", holders.Where(holder => holder != asset).Select(holder => holder.name));
+                        Debug.LogError($"{asset.name} and {others} share {ScanType.Name} AutoID {autoIdAsset.AutoID}. " +
+                                       "Each keeps it until you click Assign new ID on all but one.", asset);
+                    }
+
+                    return;
+                }
+
                 var newId = GetFirstFreeID(_map, autoIdAsset.MaxAutoID);
 
                 if (newId == -1)
@@ -139,9 +125,9 @@ namespace NZCore.AssetManagement
                     return;
                 }
 
-                _map[autoIdAsset.AutoID] = count - 1;
+                holders.Remove(asset);
                 autoIdAsset.AutoID = newId;
-                _map[newId] = 1;
+                _map[newId] = new List<Object> { asset };
 
                 EditorUtility.SetDirty(asset);
                 AssetDatabase.SaveAssetIfDirty(asset);
@@ -152,7 +138,7 @@ namespace NZCore.AssetManagement
             }
         }
 
-        private static int GetFirstFreeID(Dictionary<int, int> map, int maxId)
+        private static int GetFirstFreeID(Dictionary<int, List<Object>> map, int maxId)
         {
             var lastId = Math.Min(maxId, int.MaxValue - 1);
 
@@ -209,7 +195,7 @@ namespace NZCore.AssetManagement
             return true;
         }
 
-        private static Type ResolveScanType(Type assetType, out RegisterInScriptableObjectDatabaseAttribute attribute)
+        internal static Type ResolveScanType(Type assetType, out RegisterInScriptableObjectDatabaseAttribute attribute)
         {
             attribute = assetType.GetCustomAttribute<RegisterInScriptableObjectDatabaseAttribute>();
             return attribute?.GroupByType ?? ReflectionUtility.GetRootType<ScriptableObjectWithAutoID>(assetType);

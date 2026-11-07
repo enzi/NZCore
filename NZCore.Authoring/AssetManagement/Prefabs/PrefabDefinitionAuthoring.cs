@@ -4,7 +4,6 @@
 
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Transforms;
 using UnityEngine;
 
 namespace NZCore.AssetManagement
@@ -24,24 +23,19 @@ namespace NZCore.AssetManagement
                     return;
                 }
 
-                DependsOn(authoring.Definition);
-                DependsOn(authoring.Definition.Group);
-
                 if (authoring.gameObject.scene.IsValid())
                 {
+                    DependsOn(authoring.Definition);
                     BakeSpawner(authoring);
                     return;
                 }
 
-                if (!authoring.Definition.TryGetPrefabId(PrefabDefinition.DefaultKey, out var prefabId))
-                {
-                    Debug.LogError(
-                        $"{authoring.Definition.name} has no ID for its default key, so {authoring.name} bakes no PrefabId. Save the definition to assign one.",
-                        authoring);
-                    return;
-                }
+                var prefabId = PrefabIdBaking.FromDefinition(this, authoring.Definition);
 
-                AddComponent(GetEntity(TransformUsageFlags.None), prefabId);
+                if (!prefabId.IsNull)
+                {
+                    AddComponent(GetEntity(TransformUsageFlags.None), prefabId);
+                }
             }
 
             private void BakeSpawner(PrefabDefinitionAuthoring authoring)
@@ -63,27 +57,16 @@ namespace NZCore.AssetManagement
                     return;
                 }
 
-                if (authoring.Definition.Target is not GameObject prefab)
+                Debug.LogWarning($"{authoring.name} is a prefab placed directly in a subscene. It still spawns, but overrides on it are lost. " +
+                                 "Convert it with Tools/NZCore/Convert Placed Prefabs to Spawners.", authoring);
+
+                if (!PrefabSpawnerAuthoring.TryCreateSpawner(this, authoring.Definition, authoring, out var spawnerData))
                 {
-                    Debug.LogError($"{authoring.Definition.name} has no prefab, so the placed instance {authoring.name} spawns nothing.", authoring);
                     return;
                 }
 
-                var transform = GetComponent<Transform>();
-                var scale = transform.lossyScale;
-
-                if (!Mathf.Approximately(scale.x, scale.y) || !Mathf.Approximately(scale.x, scale.z))
-                {
-                    Debug.LogWarning($"{authoring.name} has a non-uniform scale {scale}. Its spawned instance uses the uniform scale {scale.x}.", authoring);
-                }
-
                 var spawner = CreateAdditionalEntity(TransformUsageFlags.None, false, $"{authoring.name} Spawner");
-
-                AddComponent(spawner, new PrefabInstanceSpawner
-                {
-                    Prefab = GetEntity(prefab, TransformUsageFlags.Dynamic),
-                    Transform = LocalTransform.FromPositionRotationScale(transform.position, transform.rotation, scale.x)
-                });
+                AddComponent(spawner, spawnerData);
             }
         }
     }

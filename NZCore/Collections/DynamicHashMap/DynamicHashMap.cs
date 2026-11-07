@@ -18,6 +18,10 @@ namespace NZCore
     /// </summary>
     public interface IDynamicHashMap : IBufferElementData { }
 
+    public interface IDynamicHashMap<TKey, TValue> : IDynamicHashMap
+        where TKey : unmanaged, IEquatable<TKey>
+        where TValue : unmanaged { }
+
     /// <summary>
     /// High-performance hashmap backed by a DynamicBuffer using open addressing with linear probing.
     ///

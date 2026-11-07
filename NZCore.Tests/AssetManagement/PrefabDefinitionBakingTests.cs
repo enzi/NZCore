@@ -2,19 +2,15 @@
 // Copyright © 2026 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using NZCore.AssetManagement;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Scenes;
 using Unity.Transforms;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using Hash128 = Unity.Entities.Hash128;
 
 namespace NZCore.Tests.AssetManagement
 {
@@ -27,6 +23,7 @@ namespace NZCore.Tests.AssetManagement
 
         private string _folder;
         private string _scenePath;
+        private PrefabDefinition _rootDefinition;
         private PrefabId _rootId;
         private PrefabId _childId;
 
@@ -43,32 +40,28 @@ namespace NZCore.Tests.AssetManagement
             _scenePath = $"{_folder}/Placed.unity";
 
             var group = TestAssets.Create<PrefabGroup>(_folder, "Group");
-            var rootDefinition = TestAssets.Create<PrefabDefinition>(_folder, "RootDefinition", definition => definition.Group = group);
+            _rootDefinition = TestAssets.Create<PrefabDefinition>(_folder, "RootDefinition", definition => definition.Group = group);
             var childDefinition = TestAssets.Create<PrefabDefinition>(_folder, "ChildDefinition", definition => definition.Group = group);
 
             var root = new GameObject("Root");
-            root.AddComponent<PrefabDefinitionAuthoring>().Definition = rootDefinition;
+            root.AddComponent<PrefabDefinitionAuthoring>().Definition = _rootDefinition;
             var child = new GameObject("Child");
             child.transform.SetParent(root.transform);
             child.AddComponent<PrefabDefinitionAuthoring>().Definition = childDefinition;
             new GameObject("Plain").transform.SetParent(child.transform);
             var prefab = TestAssets.CreatePrefab(_folder, root);
 
-            rootDefinition.Target = prefab;
-            TestAssets.Save(rootDefinition);
+            _rootDefinition.Target = prefab;
+            TestAssets.Save(_rootDefinition);
 
-            Assert.IsTrue(rootDefinition.TryGetPrefabId(PrefabDefinition.DefaultKey, out _rootId));
+            Assert.IsTrue(_rootDefinition.TryGetPrefabId(PrefabDefinition.DefaultKey, out _rootId));
             Assert.IsTrue(childDefinition.TryGetPrefabId(PrefabDefinition.DefaultKey, out _childId));
 
-            File.WriteAllText(_scenePath, "%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n");
-            AssetDatabase.ImportAsset(_scenePath);
-
-            var scene = EditorSceneManager.OpenScene(_scenePath, OpenSceneMode.Additive);
+            var scene = TestSubScenes.CreateAndOpen(_scenePath);
             var placed = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
             placed.transform.SetPositionAndRotation(PlacedPosition, PlacedRotation);
             placed.transform.localScale = Vector3.one * PlacedScale;
-            EditorSceneManager.SaveScene(scene);
-            EditorSceneManager.CloseScene(scene, true);
+            TestSubScenes.SaveAndClose(scene);
         }
 
         [TearDown]
@@ -81,7 +74,7 @@ namespace NZCore.Tests.AssetManagement
         [Test]
         public void PlacedInstance_BakesToOneSpawnerWhosePrefabCarriesTheDefinitionsId()
         {
-            LoadSubScene(_scenePath);
+            TestSubScenes.Load(World, _scenePath);
 
             var spawners = Query<PrefabInstanceSpawner>().ToComponentDataArray<PrefabInstanceSpawner>(Allocator.Temp);
 
@@ -97,7 +90,7 @@ namespace NZCore.Tests.AssetManagement
         [Test]
         public void Spawner_InstantiatesThePrefabAtThePlacedTransformAndRemovesItself()
         {
-            LoadSubScene(_scenePath);
+            TestSubScenes.Load(World, _scenePath);
 
             World.CreateSystem<PrefabInstanceSpawnerSystem>().Update(WorldUnmanaged);
 
@@ -114,47 +107,27 @@ namespace NZCore.Tests.AssetManagement
             Assert.AreEqual(PlacedScale, transform.Scale, 0.0001f);
         }
 
+        [Test]
+        public void ChangingTheDefinitionsId_RebakesThePrefabWithTheNewId()
+        {
+            const int newId = 100;
+
+            TestSubScenes.Unload(World, TestSubScenes.Load(World, _scenePath));
+
+            _rootDefinition.ReservedIds[0] = new ReservedPrefabId { Key = PrefabDefinition.DefaultKey, Id = newId };
+            TestAssets.Save(_rootDefinition);
+
+            TestSubScenes.Load(World, _scenePath);
+
+            var spawner = Query<PrefabInstanceSpawner>().GetSingleton<PrefabInstanceSpawner>();
+            Assert.AreEqual(new PrefabId(_rootId.Group, newId), Manager.GetComponentData<PrefabId>(spawner.Prefab));
+        }
+
         private EntityQuery Query<T>() => Manager.CreateEntityQuery(ComponentType.ReadOnly<T>());
 
         private bool IsSceneBookkeeping(Entity entity)
         {
             return Manager.GetComponentTypes(entity).ToArray().Any(type => type.GetManagedType().Name == "PublicEntityRef");
-        }
-
-        private void LoadSubScene(string scenePath)
-        {
-            var guid = AssetDatabase.AssetPathToGUID(scenePath);
-            Assert.That(guid, Is.Not.Empty, $"Scene not found: {scenePath}");
-
-            var sceneEntity = SceneSystem.LoadSceneAsync(
-                World.Unmanaged,
-                new Hash128(guid),
-                new SceneSystem.LoadParameters
-                {
-                    Flags = SceneLoadFlags.BlockOnImport | SceneLoadFlags.BlockOnStreamIn
-                });
-
-            var sceneSystemGroup = World.GetExistingSystemManaged<SceneSystemGroup>();
-
-            for (var update = 0; update < 1000; update++)
-            {
-                sceneSystemGroup.Update();
-                Manager.CompleteAllTrackedJobs();
-
-                var state = SceneSystem.GetSceneStreamingState(World.Unmanaged, sceneEntity);
-
-                if (state == SceneSystem.SceneStreamingState.LoadedSuccessfully)
-                {
-                    return;
-                }
-
-                Assert.That(state,
-                    Is.Not.EqualTo(SceneSystem.SceneStreamingState.FailedLoadingSceneHeader)
-                      .And.Not.EqualTo(SceneSystem.SceneStreamingState.LoadedWithSectionErrors),
-                    $"Failed to load scene {scenePath}: {state}");
-            }
-
-            Assert.Fail($"Timed out loading scene: {scenePath}");
         }
     }
 }

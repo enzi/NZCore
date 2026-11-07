@@ -64,6 +64,36 @@ namespace NZCore.Tests.AssetManagement
         }
 
         [Test]
+        public void BindingOneTypeToTwoGroupsWithDifferentKeys_IsAllowed()
+        {
+            TestAssets.Create<PrefabGroup>(_folder, "Effects", group => group.BoundType.Type = typeof(CappedAutoIDTestAsset));
+            var projectiles = TestAssets.Create<PrefabGroup>(_folder, "Projectiles");
+
+            projectiles.BoundType.Type = typeof(CappedAutoIDTestAsset);
+            projectiles.BoundKey = "Projectile";
+            TestAssets.Save(projectiles);
+
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void BindingOneTypeAndKeyToTwoGroups_ReportsAnErrorNamingTheKey()
+        {
+            TestAssets.Create<PrefabGroup>(_folder, "BoundA", group =>
+            {
+                group.BoundType.Type = typeof(CappedAutoIDTestAsset);
+                group.BoundKey = "Projectile";
+            });
+            var groupB = TestAssets.Create<PrefabGroup>(_folder, "BoundB");
+
+            LogAssert.Expect(LogType.Error,
+                new Regex("^CappedAutoIDTestAsset with key Projectile is bound to more than one PrefabGroup: (BoundA, BoundB|BoundB, BoundA)$"));
+            groupB.BoundType.Type = typeof(CappedAutoIDTestAsset);
+            groupB.BoundKey = "Projectile";
+            TestAssets.Save(groupB);
+        }
+
+        [Test]
         public void GroupIdAbove255_ReportsAnError()
         {
             LogAssert.Expect(LogType.Error, new Regex("^TooHigh has AutoID 256, but the highest PrefabGroup ID is 255"));

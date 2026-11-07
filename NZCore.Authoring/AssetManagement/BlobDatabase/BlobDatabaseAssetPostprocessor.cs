@@ -3,6 +3,7 @@
 // </copyright>
 
 using JetBrains.Annotations;
+using NZCore.AssetManagement;
 using UnityEditor;
 using UnityEngine;
 
@@ -45,7 +46,7 @@ namespace NZCore.Authoring
                     }
 
                     var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
-                    if (asset is IConvertToBlob)
+                    if (asset is IConvertToBlob or PrefabDefinition or PrefabMigrationAsset or PrefabGroup)
                     {
                         needsUpdate = true;
                         break;

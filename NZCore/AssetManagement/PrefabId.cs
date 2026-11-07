@@ -8,6 +8,7 @@ using Unity.Entities;
 
 namespace NZCore.AssetManagement
 {
+    [Serializable]
     public struct PrefabId : IComponentData, IEquatable<PrefabId>
     {
         public const int MaxGroup = 255;
@@ -50,6 +51,7 @@ namespace NZCore.AssetManagement
         public bool Equals(PrefabId other) => Value == other.Value;
         public override bool Equals(object obj) => obj is PrefabId other && Equals(other);
         public override int GetHashCode() => Value;
+        public override string ToString() => ToFixedString().ToString();
 
         public static bool operator ==(PrefabId a, PrefabId b) => a.Value == b.Value;
         public static bool operator !=(PrefabId a, PrefabId b) => a.Value != b.Value;

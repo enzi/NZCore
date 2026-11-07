@@ -33,6 +33,15 @@ namespace NZCore.Tests.AssetManagement
             return prefab;
         }
 
+        public static GameObject CreateVariant(string folder, GameObject basePrefab, string name)
+        {
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(basePrefab);
+            instance.name = name;
+            var variant = PrefabUtility.SaveAsPrefabAsset(instance, $"{folder}/{name}.prefab");
+            Object.DestroyImmediate(instance);
+            return variant;
+        }
+
         public static void Save(Object asset)
         {
             EditorUtility.SetDirty(asset);

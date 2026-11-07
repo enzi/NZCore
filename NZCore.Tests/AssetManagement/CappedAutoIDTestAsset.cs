@@ -22,6 +22,8 @@ namespace NZCore.Tests.AssetManagement
 
         public override int MaxAutoID => MaxId;
 
+        public override AutoIDConflictMode ConflictMode => AutoIDConflictMode.Error;
+
         public override HasChangeResult HasChanges(List<IChangeProcessor> allAssets) => HasChangeResult.None;
 
         public override void ProcessChanges(List<IChangeProcessor> allAssets) { }

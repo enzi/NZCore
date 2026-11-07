@@ -157,6 +157,78 @@ namespace NZCore.Tests.AssetManagement
             Assert.IsEmpty(definition.ReservedIds);
         }
 
+        [Test]
+        public void ChangingTheGroup_GivesEveryReservedIdANewIdAndKeepsTheOldOnesAsFormerIdsSoOldSavesCanMigrate()
+        {
+            var definition = CreateDefinition("Definition", CreateSource("Source", "Projectile"));
+            var oldIds = definition.ReservedIds.Select(reservedId => (reservedId.Key, new PrefabId(_group.AutoID, reservedId.Id))).ToArray();
+            var newGroup = TestAssets.Create<PrefabGroup>(_folder, "NewGroup");
+
+            definition.Group = newGroup;
+            TestAssets.Save(definition);
+
+            CollectionAssert.AreEquivalent(oldIds, definition.FormerIds.Select(formerId => (formerId.Key, formerId.Id)));
+            Assert.AreEqual(newGroup.AutoID, definition.ReservedGroupId);
+
+            foreach (var key in new[] { DefaultKey, "Projectile" })
+            {
+                Assert.IsTrue(definition.TryGetPrefabId(key, out var prefabId));
+                Assert.AreEqual(newGroup.AutoID, prefabId.Group);
+            }
+        }
+
+        [Test]
+        public void FormerIds_AreNeverHandedOutAgainSoAnOldSaveCantResolveToANewPrefab()
+        {
+            var moved = CreateDefinition("Moved");
+            var formerId = IdOf(moved, DefaultKey);
+
+            moved.Group = TestAssets.Create<PrefabGroup>(_folder, "NewGroup");
+            TestAssets.Save(moved);
+
+            var next = CreateDefinition("Next");
+
+            Assert.AreNotEqual(formerId, IdOf(next, DefaultKey));
+        }
+
+        [Test]
+        public void RenumberingTheGroup_KeepsTheOldIdsAsFormerIds()
+        {
+            var definition = CreateDefinition("Definition");
+            var oldId = new PrefabId(_group.AutoID, IdOf(definition, DefaultKey));
+            var usedGroupIds = new HashSet<int>(PrefabGroup.FindAll().Select(group => group.AutoID));
+            var newGroupId = Enumerable.Range(2, PrefabId.MaxGroup - 1).First(groupId => !usedGroupIds.Contains(groupId));
+
+            _group.AutoID = newGroupId;
+            TestAssets.Save(_group);
+
+            Assert.AreEqual(newGroupId, definition.ReservedGroupId);
+            CollectionAssert.AreEqual(new[] { oldId }, definition.FormerIds.Select(formerId => formerId.Id));
+        }
+
+        [Test]
+        public void TryFindOwner_FindsTheDefinitionByItsCurrentAndItsFormerIdsAfterAGroupChange()
+        {
+            var definition = CreateDefinition("Definition");
+            var oldId = new PrefabId(_group.AutoID, IdOf(definition, DefaultKey));
+
+            Assert.IsTrue(PrefabDefinition.TryFindOwner(oldId, out var owner, out var isFormerId));
+            Assert.AreEqual(definition, owner);
+            Assert.IsFalse(isFormerId);
+
+            definition.Group = TestAssets.Create<PrefabGroup>(_folder, "NewGroup");
+            TestAssets.Save(definition);
+            Assert.IsTrue(definition.TryGetPrefabId(DefaultKey, out var newId));
+
+            Assert.IsTrue(PrefabDefinition.TryFindOwner(newId, out owner, out isFormerId));
+            Assert.AreEqual(definition, owner);
+            Assert.IsFalse(isFormerId);
+
+            Assert.IsTrue(PrefabDefinition.TryFindOwner(oldId, out owner, out isFormerId));
+            Assert.AreEqual(definition, owner);
+            Assert.IsTrue(isFormerId);
+        }
+
         private PrefabDefinition CreateDefinition(string name, Object target = null, int reservedId = 0)
         {
             return TestAssets.Create<PrefabDefinition>(_folder, name, definition =>
@@ -167,6 +239,7 @@ namespace NZCore.Tests.AssetManagement
                 if (reservedId != 0)
                 {
                     definition.ReservedIds.Add(new ReservedPrefabId { Key = DefaultKey, Id = reservedId });
+                    definition.ReservedGroupId = _group.AutoID;
                 }
             });
         }

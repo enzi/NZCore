@@ -12,6 +12,7 @@ namespace NZCore.AssetManagement
     {
         public abstract int AutoID { get; set; }
         public virtual int MaxAutoID => int.MaxValue;
+        public virtual AutoIDConflictMode ConflictMode => AutoIDConflictMode.Renumber;
         public virtual string DisplayName => name;
         public virtual Type ProcessGroupType => GetType();
         public abstract HasChangeResult HasChanges(List<IChangeProcessor> allAssets);

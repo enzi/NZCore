@@ -16,6 +16,7 @@
         "NZCore",
         "NZCore.Authoring",
         "NZCore.Editor",
+        "NZCore.Tests.Authoring",
         "UnityEngine.UI"
     ],
     "includePlatforms": [
