@@ -8,12 +8,11 @@ using UnityEngine;
 namespace NZCore.AssetManagement
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(PrefabSpawnerAuthoring))]
     public class PrefabDefinitionOverrideAuthoring : MonoBehaviour
     {
         public GameObject Overrides;
 
-        internal static Entity Bake(IBaker baker, PrefabDefinitionOverrideAuthoring authoring)
+        public static Entity Bake(IBaker baker, PrefabDefinitionOverrideAuthoring authoring)
         {
             if (authoring == null || authoring.Overrides == null)
             {

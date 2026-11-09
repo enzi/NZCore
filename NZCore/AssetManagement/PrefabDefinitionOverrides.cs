@@ -6,6 +6,7 @@ using NZCore.Internal;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Transforms;
 using UnityEngine;
 using BufferHeader = NZCore.Internal.BufferHeader;
 
@@ -13,6 +14,22 @@ namespace NZCore.AssetManagement
 {
     public static unsafe class PrefabDefinitionOverrides
     {
+        public static NativeHashSet<TypeIndex> CreateDefaultTypes(AllocatorManager.AllocatorHandle allocator) =>
+            new(11, allocator)
+            {
+                SceneInternals.EditorRenderDataTypeIndex,
+                TypeManager.GetTypeIndex<Disabled>(),
+                TypeManager.GetTypeIndex<Simulate>(),
+                TypeManager.GetTypeIndex<EntityGuid>(),
+                TypeManager.GetTypeIndex<SceneTag>(),
+                TypeManager.GetTypeIndex<SceneSection>(),
+                TypeManager.GetTypeIndex<Static>(),
+                TypeManager.GetTypeIndex<LocalTransform>(),
+                TypeManager.GetTypeIndex<LocalToWorld>(),
+                TypeManager.GetTypeIndex<PostTransformMatrix>(),
+                TypeManager.GetTypeIndex<Parent>()
+            };
+
         public static void Apply(EntityManager entityManager, NativeHashSet<TypeIndex> defaultTypes, Entity spawner, Entity overrides, Entity instance)
         {
             var types = entityManager.GetComponentTypes(overrides, Allocator.Temp);

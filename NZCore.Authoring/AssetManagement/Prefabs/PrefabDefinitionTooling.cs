@@ -227,7 +227,7 @@ namespace NZCore.AssetManagement
             return error == null;
         }
 
-        internal static Dictionary<GameObject, PrefabDefinition> FindOwners()
+        public static Dictionary<GameObject, PrefabDefinition> FindOwners()
         {
             var owners = new Dictionary<GameObject, PrefabDefinition>();
 

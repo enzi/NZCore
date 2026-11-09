@@ -6,3 +6,4 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("NZCore.Editor")]
 [assembly: InternalsVisibleTo("NZCore.Tests")]
+[assembly: InternalsVisibleTo("NZCore.Lifetime.Tests")]

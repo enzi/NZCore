@@ -23,10 +23,18 @@ namespace NZCore.AssetManagement
                     return;
                 }
 
+                var parent = GetParent();
+
+                if (parent != null && (!authoring.gameObject.scene.IsValid() || GetComponentInParent<PrefabDefinitionAuthoring>(parent) != null))
+                {
+                    Debug.LogError($"{authoring.name} has a PrefabDefinitionAuthoring but isn't the root of its prefab. " +
+                                   $"Only a prefab's root can have a PrefabDefinition, so {authoring.name} bakes no PrefabId.", authoring);
+                    return;
+                }
+
                 if (authoring.gameObject.scene.IsValid())
                 {
-                    DependsOn(authoring.Definition);
-                    BakeSpawner(authoring);
+                    BakePlacedInstance(authoring);
                     return;
                 }
 
@@ -38,7 +46,7 @@ namespace NZCore.AssetManagement
                 }
             }
 
-            private void BakeSpawner(PrefabDefinitionAuthoring authoring)
+            private void BakePlacedInstance(PrefabDefinitionAuthoring authoring)
             {
                 var self = GetEntity(TransformUsageFlags.None);
                 AddComponent<BakingOnlyEntity>(self);
@@ -50,24 +58,13 @@ namespace NZCore.AssetManagement
                     children.Add(new BakingOnlyChild { Entity = GetEntity(child, TransformUsageFlags.None) });
                 }
 
-                var parent = GetParent();
-
-                if (!IsActive() || (parent != null && GetComponentInParent<PrefabDefinitionAuthoring>(parent) != null))
+                if (!IsActive())
                 {
                     return;
                 }
 
-                Debug.LogWarning($"{authoring.name} is a prefab placed directly in a subscene. It still spawns, but overrides on it are lost. " +
-                                 "Convert it with Tools/NZCore/Convert Placed Prefabs to Spawners.", authoring);
-
-                if (!PrefabSpawnerAuthoring.TryCreateSpawner(this, authoring.Definition, authoring, out var spawnerData))
-                {
-                    return;
-                }
-
-                var spawner = CreateAdditionalEntity(TransformUsageFlags.None, false, $"{authoring.name} Spawner");
-                AddComponent(spawner, spawnerData);
-                AddComponent<PrefabDefinitionSpawnRequest>(spawner);
+                Debug.LogError($"{authoring.name} is a prefab placed directly in a subscene, so it bakes nothing. " +
+                               "Convert it to a spawner with Tools/NZCore/Convert Placed Prefabs to Spawners.", authoring);
             }
         }
     }
