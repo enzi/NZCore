@@ -9,6 +9,7 @@ using NZCore.AssetManagement;
 using NZCore.Tests.Authoring;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Scenes;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -80,6 +81,22 @@ namespace NZCore.Tests.AssetManagement
             UpdateDatabaseSystem();
 
             Assert.IsFalse(Definitions().ContainsKey(duplicateId));
+        }
+
+        [Test]
+        public void DatabaseSystem_UpdatesBeforeSavingSoASectionRestoredInTheFrameItsSubSceneLoadsFindsThePrefabsThatSubSceneBuilds()
+        {
+            var initialization = World.GetOrCreateSystemManaged<InitializationSystemGroup>();
+            var saving = World.GetOrCreateSystemManaged<SavingSystemGroup>().SystemHandle;
+            var database = World.GetOrCreateSystem<PrefabDatabaseSystem>();
+
+            initialization.AddSystemToUpdateList(World.GetOrCreateSystemManaged<SceneSystemGroup>());
+            initialization.AddSystemToUpdateList(saving);
+            initialization.AddSystemToUpdateList(database);
+            initialization.SortSystems();
+
+            var order = initialization.GetAllSystems(Allocator.Temp);
+            Assert.Less(order.IndexOf(database), order.IndexOf(saving));
         }
 
         [Test]

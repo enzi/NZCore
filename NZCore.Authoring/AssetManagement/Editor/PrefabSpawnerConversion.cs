@@ -73,7 +73,8 @@ namespace NZCore.Editor
 
             if (hasOverrides)
             {
-                Debug.LogWarning($"{spawner.name} had overrides that the spawner doesn't keep. Add them as components on the spawner.", spawner);
+                Debug.LogWarning($"{spawner.name} had overrides that the spawner doesn't keep. Add them to a PrefabDefinitionOverrideAuthoring on the spawner.",
+                    spawner);
             }
 
             return true;

@@ -67,6 +67,7 @@ namespace NZCore.AssetManagement
 
                 var spawner = CreateAdditionalEntity(TransformUsageFlags.None, false, $"{authoring.name} Spawner");
                 AddComponent(spawner, spawnerData);
+                AddComponent<PrefabDefinitionSpawnRequest>(spawner);
             }
         }
     }

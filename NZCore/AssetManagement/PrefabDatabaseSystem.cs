@@ -11,6 +11,7 @@ namespace NZCore.AssetManagement
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     [UpdateAfter(typeof(SceneSystemGroup))]
+    [UpdateBefore(typeof(SavingSystemGroup))]
     public partial struct PrefabDatabaseSystem : ISystem
     {
         private EntityQuery _changedEntriesQuery;

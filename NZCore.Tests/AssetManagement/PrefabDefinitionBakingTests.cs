@@ -88,13 +88,17 @@ namespace NZCore.Tests.AssetManagement
         }
 
         [Test]
-        public void Spawner_InstantiatesThePrefabAtThePlacedTransformAndRemovesItself()
+        public void Spawner_InstantiatesThePrefabAtThePlacedTransformAndDisablesItsRequest()
         {
             TestSubScenes.Load(World, _scenePath);
 
             World.CreateSystem<PrefabInstanceSpawnerSystem>().Update(WorldUnmanaged);
 
-            Assert.IsTrue(Query<PrefabInstanceSpawner>().IsEmpty);
+            Assert.IsTrue(Query<PrefabDefinitionSpawnRequest>().IsEmpty);
+            Assert.AreEqual(1, Manager.CreateEntityQuery(new EntityQueryBuilder(Allocator.Temp)
+                                                         .WithAll<PrefabInstanceSpawner>()
+                                                         .WithDisabled<PrefabDefinitionSpawnRequest>())
+                                      .CalculateEntityCount());
 
             var prefabIds = Query<PrefabId>().ToComponentDataArray<PrefabId>(Allocator.Temp);
             CollectionAssert.AreEquivalent(new[] { _rootId, _childId }, prefabIds.ToArray());

@@ -53,7 +53,10 @@ namespace NZCore.AssetManagement
 
                 if (TryCreateSpawner(this, authoring.Definition, authoring, out var spawner))
                 {
-                    AddComponent(GetEntity(TransformUsageFlags.None), spawner);
+                    var entity = GetEntity(TransformUsageFlags.None);
+                    spawner.Overrides = PrefabDefinitionOverrideAuthoring.Bake(this, GetComponent<PrefabDefinitionOverrideAuthoring>());
+                    AddComponent(entity, spawner);
+                    AddComponent<PrefabDefinitionSpawnRequest>(entity);
                 }
             }
         }

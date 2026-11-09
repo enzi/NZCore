@@ -11,5 +11,8 @@ namespace NZCore.AssetManagement
     {
         public Entity Prefab;
         public LocalTransform Transform;
+        public Entity Overrides;
     }
+
+    public struct PrefabDefinitionSpawnRequest : IComponentData, IEnableableComponent, ISavable { }
 }

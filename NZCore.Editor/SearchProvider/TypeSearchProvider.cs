@@ -16,12 +16,14 @@ namespace NZCore.Editor
     public class TypeSearchProvider : BaseSearchProvider
     {
         private readonly Type _baseType;
+        private readonly Func<Type, bool> _filter;
         private readonly HashSet<Assembly> _assemblies = new();
 
-        public TypeSearchProvider(Type baseType)
+        public TypeSearchProvider(Type baseType, Func<Type, bool> filter = null)
             : base("type", "Type")
         {
             _baseType = baseType;
+            _filter = filter;
 
             QueryEngine.AddFilter("asm", o => o.Assembly.GetName().Name);
             QueryEngine.AddFilter("name", o => o.Name);
@@ -69,7 +71,7 @@ namespace NZCore.Editor
 
             foreach (var t in TypeCache.GetTypesDerivedFrom(_baseType))
             {
-                if (t.IsGenericType || t.Assembly == builderAssembly)
+                if (t.IsGenericType || t.Assembly == builderAssembly || (_filter != null && !_filter(t)))
                 {
                     continue;
                 }
