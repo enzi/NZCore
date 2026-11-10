@@ -8,6 +8,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
+using static NZCore.DynamicHashMapUtility;
 using Assert = UnityEngine.Assertions.Assert;
 
 namespace NZCore
@@ -44,10 +45,6 @@ namespace NZCore
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
-        private const byte Empty = 0;
-        private const byte Occupied = 0x80; // High bit set = occupied
-        private const byte Deleted = 0x7F; // Special marker for tombstone
-
         private readonly DynamicBuffer<TBuffer> _buffer;
         private readonly bool _isReadOnly;
 
@@ -84,6 +81,17 @@ namespace NZCore
         /// Capacity of the hashmap (number of slots).
         /// </summary>
         public int Capacity => BufferLength >= sizeof(Header) ? ((Header*)Ptr)->Capacity : 0;
+
+        public static int EntrySize => sizeof(Entry);
+
+        public static int ValueOffset
+        {
+            get
+            {
+                Entry entry = default;
+                return (int)((byte*)&entry.Value - (byte*)&entry);
+            }
+        }
 
         /// <summary>
         /// Initializes the hashmap with specified capacity. Must be called before use.
@@ -524,11 +532,6 @@ namespace NZCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static byte GetH2(uint hash) =>
-            // Use upper bits for h2 to get different bits than bucket index
-            (byte)((hash >> 25) & 0x7F);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int AlignUp(int value, int alignment) => (value + alignment - 1) & ~(alignment - 1);
 
         /// <summary>
@@ -596,7 +599,25 @@ namespace NZCore
             }
         }
 
-        private struct Header
+        private struct Entry
+        {
+            public TKey Key;
+            public TValue Value;
+        }
+    }
+
+    public interface IEntityRemap
+    {
+        bool TryGetNewEntity(Entity oldEntity, out Entity newEntity);
+    }
+
+    public static unsafe class DynamicHashMapUtility
+    {
+        internal const byte Empty = 0;
+        internal const byte Occupied = 0x80; // High bit set = occupied
+        internal const byte Deleted = 0x7F; // Special marker for tombstone
+
+        internal struct Header
         {
             public int Count;
             public int Capacity;
@@ -604,10 +625,73 @@ namespace NZCore
             public int EntriesOffset;
         }
 
-        private struct Entry
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static byte GetH2(uint hash) =>
+            // Use upper bits for h2 to get different bits than bucket index
+            (byte)((hash >> 25) & 0x7F);
+
+        public static void RemapEntities<TRemap>(byte* buffer, int length, int entrySize, bool entityKey, int* valueEntityOffsets, int valueEntityOffsetCount,
+            ref TRemap remap)
+            where TRemap : struct, IEntityRemap
         {
-            public TKey Key;
-            public TValue Value;
+            if (length < sizeof(Header) || ((Header*)buffer)->Count == 0)
+            {
+                return;
+            }
+
+            var header = (Header*)buffer;
+            var metadata = buffer + sizeof(Header);
+            var entries = buffer + header->EntriesOffset;
+            var kept = entityKey ? (byte*)UnsafeUtility.Malloc((long)header->Count * entrySize, 8, Allocator.Temp) : null;
+            var keptCount = 0;
+
+            for (var i = 0; i < header->Capacity; i++)
+            {
+                if (metadata[i] == Empty || metadata[i] == Deleted)
+                {
+                    continue;
+                }
+
+                var entry = entries + i * entrySize;
+
+                for (var j = 0; j < valueEntityOffsetCount; j++)
+                {
+                    ref var valueEntity = ref *(Entity*)(entry + valueEntityOffsets[j]);
+                    valueEntity = remap.TryGetNewEntity(valueEntity, out var newValueEntity) ? newValueEntity : Entity.Null;
+                }
+
+                if (entityKey && remap.TryGetNewEntity(*(Entity*)entry, out var newKey))
+                {
+                    *(Entity*)entry = newKey;
+                    UnsafeUtility.MemCpy(kept + keptCount * entrySize, entry, entrySize);
+                    keptCount++;
+                }
+            }
+
+            if (!entityKey)
+            {
+                return;
+            }
+
+            var mask = (uint)header->CapacityMask;
+            UnsafeUtility.MemSet(metadata, Empty, header->Capacity);
+
+            for (var i = 0; i < keptCount; i++)
+            {
+                var entry = kept + i * entrySize;
+                var hash = (uint)((Entity*)entry)->GetHashCode();
+                var index = hash & mask;
+
+                while (metadata[index] != Empty)
+                {
+                    index = (index + 1) & mask;
+                }
+
+                metadata[index] = (byte)(Occupied | GetH2(hash));
+                UnsafeUtility.MemCpy(entries + index * entrySize, entry, entrySize);
+            }
+
+            header->Count = keptCount;
         }
     }
 

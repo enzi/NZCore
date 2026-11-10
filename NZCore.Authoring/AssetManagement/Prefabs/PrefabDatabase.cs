@@ -54,6 +54,34 @@ namespace NZCore.AssetManagement
             {
                 migrationMap.TryAdd(migration.Key, migration.Value);
             }
+
+            var replacementMap = baker.AddBuffer<PrefabReplacementHashMap>(entity).AsHashMap<PrefabReplacementHashMap, PrefabId, PrefabId>();
+
+            foreach (var definition in definitions)
+            {
+                if (definition.ReplaceOnDestroy == null || definition.Retired)
+                {
+                    continue;
+                }
+
+                var prefabId = PrefabIdBaking.FromDefinition(baker, definition);
+                var replacementId = PrefabIdBaking.FromDefinition(baker, definition.ReplaceOnDestroy);
+
+                if (prefabId.IsNull)
+                {
+                    continue;
+                }
+
+                if (replacementId.IsNull || definition.ReplaceOnDestroy.Retired)
+                {
+                    Debug.LogError(
+                        $"{definition.name}'s replacement {definition.ReplaceOnDestroy.name} is retired or has no PrefabId, so {definition.name} leaves nothing behind.",
+                        definition);
+                    continue;
+                }
+
+                replacementMap.TryAdd(prefabId, replacementId);
+            }
         }
 
         private static List<PrefabDefinitionEntry> CollectPrefabs(IBaker baker, List<PrefabDefinition> definitions,

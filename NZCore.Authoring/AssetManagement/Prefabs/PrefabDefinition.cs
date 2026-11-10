@@ -23,6 +23,10 @@ namespace NZCore.AssetManagement
 
         public PrefabGroup Group;
         public Object Target;
+
+        [Tooltip("What an instance leaves behind when gameplay requests its destroy (DestroyRequest), for example a corpse. Empty leaves nothing.")]
+        public PrefabDefinition ReplaceOnDestroy;
+
         public List<ReservedPrefabId> ReservedIds = new();
         public List<FormerPrefabId> FormerIds = new();
         [HideInInspector] public int ReservedGroupId;

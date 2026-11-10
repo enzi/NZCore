@@ -53,6 +53,7 @@ namespace NZCore.Editor
 
             root.Add(targetField);
             root.Add(error);
+            root.Add(new PropertyField(serializedObject.FindProperty(nameof(PrefabDefinition.ReplaceOnDestroy))));
             root.Add(new PropertyField(serializedObject.FindProperty(nameof(PrefabDefinition.ReservedIds))));
             root.Add(new PropertyField(serializedObject.FindProperty(nameof(PrefabDefinition.FormerIds))));
 

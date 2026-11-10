@@ -24,4 +24,10 @@ namespace NZCore.AssetManagement
     {
         public byte Value;
     }
+
+    [InternalBufferCapacity(0)]
+    public struct PrefabReplacementHashMap : IDynamicHashMap<PrefabId, PrefabId>
+    {
+        public byte Value;
+    }
 }

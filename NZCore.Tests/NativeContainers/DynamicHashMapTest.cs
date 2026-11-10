@@ -506,6 +506,81 @@ namespace NZCore.Tests.NativeContainers
             Manager.DestroyEntity(entity);
         }
 
+        private struct EntityHashMapBuffer : IDynamicHashMap<Entity, EntityValue>
+        {
+            public byte Value;
+        }
+
+        private struct EntityValue
+        {
+            public int Amount;
+            public Entity Target;
+        }
+
+        private struct TestRemap : IEntityRemap
+        {
+            public NativeHashMap<Entity, Entity> Map;
+
+            public bool TryGetNewEntity(Entity oldEntity, out Entity newEntity) => Map.TryGetValue(oldEntity, out newEntity);
+        }
+
+        [Test]
+        public void Test_DynamicHashMap_RemapEntities()
+        {
+            const int count = 100;
+
+            var oldEntities = Manager.CreateEntity(Manager.CreateArchetype(), count, Allocator.Temp);
+            var newEntities = Manager.CreateEntity(Manager.CreateArchetype(), count, Allocator.Temp);
+            var buffer = Manager.GetBuffer<EntityHashMapBuffer>(Manager.CreateEntity(typeof(EntityHashMapBuffer)));
+            var map = buffer.AsHashMap<EntityHashMapBuffer, Entity, EntityValue>();
+            var remap = new TestRemap { Map = new NativeHashMap<Entity, Entity>(count, Allocator.Temp) };
+
+            for (var i = 0; i < count; i++)
+            {
+                map.TryAdd(oldEntities[i], new EntityValue { Amount = i, Target = oldEntities[(i + 1) % count] });
+
+                if (i % 4 != 0)
+                {
+                    remap.Map.Add(oldEntities[i], newEntities[i]);
+                }
+            }
+
+            var valueEntityOffset = DynamicHashMap<EntityHashMapBuffer, Entity, EntityValue>.ValueOffset +
+                                    UnsafeUtility.GetFieldOffset(typeof(EntityValue).GetField(nameof(EntityValue.Target)));
+
+            DynamicHashMapUtility.RemapEntities((byte*)buffer.GetUnsafePtr(), buffer.Length, DynamicHashMap<EntityHashMapBuffer, Entity, EntityValue>.EntrySize,
+                true,
+                &valueEntityOffset, 1, ref remap);
+
+            Assert.AreEqual(count - count / 4, map.Count, "only the keys that map stay");
+
+            for (var i = 0; i < count; i++)
+            {
+                Assert.IsFalse(map.ContainsKey(oldEntities[i]), $"old key {i} is still in the map");
+
+                if (i % 4 == 0)
+                {
+                    continue;
+                }
+
+                Assert.IsTrue(map.TryGetValue(newEntities[i], out var value), $"remapped key {i} isn't found at its new hash");
+                Assert.AreEqual(i, value.Amount, $"value of key {i} changed");
+
+                var target = (i + 1) % count;
+                Assert.AreEqual(target % 4 != 0 ? newEntities[target] : Entity.Null, value.Target, $"value entity of key {i}");
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                if (i % 4 != 0)
+                {
+                    Assert.IsTrue(map.Remove(newEntities[i]), $"remapped key {i} can't be removed");
+                }
+            }
+
+            Assert.AreEqual(0, map.Count);
+        }
+
         [BurstCompile]
         private struct DynamicHashMapInsertJob : IJob
         {

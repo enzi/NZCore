@@ -2,9 +2,9 @@
 // Copyright © 2025 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
-using System;
 using NZCore.Internal;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using ChunkDataUtility = NZCore.Internal.ChunkDataUtility;
 using LookupCache = NZCore.Internal.LookupCache;
@@ -261,8 +261,54 @@ namespace NZCore
             access->EndStructuralChanges(ref changes);
         }
 
+        public static Entity Instantiate<T>(this EntityManager entityManager, Entity srcEntity, T sharedComponent)
+            where T : unmanaged, ISharedComponentData
+        {
+            Entity entity;
+            Instantiate(entityManager, srcEntity, &entity, 1, sharedComponent);
+            return entity;
+        }
+
+        public static void Instantiate<T>(this EntityManager entityManager, Entity srcEntity, NativeArray<Entity> outputEntities, T sharedComponent)
+            where T : unmanaged, ISharedComponentData =>
+            Instantiate(entityManager, srcEntity, (Entity*)outputEntities.GetUnsafePtr(), outputEntities.Length, sharedComponent);
+
+        public static Entity Instantiate(this EntityManager entityManager, Entity srcEntity, SceneTag sceneTag, SceneSection sceneSection)
+        {
+            Entity entity;
+            Instantiate(entityManager, srcEntity, &entity, 1, sceneTag, sceneSection);
+            return entity;
+        }
+
+        public static void Instantiate(this EntityManager entityManager, Entity srcEntity, NativeArray<Entity> outputEntities, SceneTag sceneTag,
+            SceneSection sceneSection) =>
+            Instantiate(entityManager, srcEntity, (Entity*)outputEntities.GetUnsafePtr(), outputEntities.Length, sceneTag, sceneSection);
+
+        private static void Instantiate<T>(EntityManager entityManager, Entity srcEntity, Entity* outputEntities, int instanceCount, T sharedComponent)
+            where T : unmanaged, ISharedComponentData
+        {
+            var typeIndex = TypeManager.GetTypeIndex<T>();
+            var defaultValue = default(T);
+            void* value = &sharedComponent;
+            void* defaultValuePtr = &defaultValue;
+
+            InstantiateInternals.Instantiate(entityManager, srcEntity, outputEntities, instanceCount, &typeIndex, &value, &defaultValuePtr, 1);
+        }
+
+        private static void Instantiate(EntityManager entityManager, Entity srcEntity, Entity* outputEntities, int instanceCount, SceneTag sceneTag,
+            SceneSection sceneSection)
+        {
+            var typeIndices = stackalloc TypeIndex[] { TypeManager.GetTypeIndex<SceneTag>(), TypeManager.GetTypeIndex<SceneSection>() };
+            var defaultSceneTag = default(SceneTag);
+            var defaultSceneSection = default(SceneSection);
+            var values = stackalloc void*[] { &sceneTag, &sceneSection };
+            var defaultValues = stackalloc void*[] { &defaultSceneTag, &defaultSceneSection };
+
+            InstantiateInternals.Instantiate(entityManager, srcEntity, outputEntities, instanceCount, typeIndices, values, defaultValues, 2);
+        }
+
         /////////////////////////////
-        /// UntypedBufferLookip   ///
+        /// UntypedBufferLookup   ///
         /////////////////////////////
         public static UntypedBufferLookup GetUntypedBufferLookup(this EntityManager entityManager, ComponentType componentType, bool isReadOnly)
         {
